@@ -258,19 +258,48 @@ jobs:
             --deep-min-score 4
 
       - name: Commit conference retrieval results
+        shell: bash
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           branch="${GITHUB_REF_NAME:-main}"
 
+          echo "=== Git status before add ==="
+          git status --short
+
+          echo "=== Generated files under archive and docs ==="
+          find archive docs -maxdepth 5 \( -type f -o -type d \) 2>/dev/null | sort | head -300 || true
+
           shopt -s nullglob
-          paths=(archive/*/rank/conference-*.supabase.llm.json docs/_sidebar.md docs/conference docs/assets/figures docs/assets/tables)
-          if [ "${#paths[@]}" -eq 0 ]; then
+
+          candidates=(
+            archive/*/rank/conference-*.supabase.llm.json
+            archive/*/rank/conference-*.supabase.rerank.json
+            archive/*/filtered/conference-*.supabase.rrf.json
+            docs/_sidebar.md
+            docs/conference
+            docs/assets/figures
+            docs/assets/tables
+          )
+
+          existing_paths=()
+          for p in "${candidates[@]}"; do
+            if [ -e "$p" ]; then
+              existing_paths+=("$p")
+              echo "Will add: $p"
+            else
+              echo "Skip missing: $p"
+            fi
+          done
+
+          if [ "${#existing_paths[@]}" -eq 0 ]; then
             echo "No conference output files to commit."
             exit 0
           fi
 
-          git add "${paths[@]}"
+          git add "${existing_paths[@]}"
+
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
@@ -278,7 +307,7 @@ jobs:
 
           git commit -m "[chore] conference retrieval"
           git status --short
-          git reset --hard HEAD
+
           git fetch origin "$branch"
           git rebase -X theirs "origin/$branch"
           git push origin HEAD:"$branch"
