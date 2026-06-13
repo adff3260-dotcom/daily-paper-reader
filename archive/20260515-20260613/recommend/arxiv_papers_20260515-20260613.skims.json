@@ -1,0 +1,17 @@
+{
+  "mode": "skims",
+  "generated_at": "2026-06-13T02:20:16.833756+00:00",
+  "stats": {
+    "mode": "skims",
+    "forced_all_quick": true,
+    "min_score": 8.0,
+    "deep_divecandidates": 0,
+    "deep_cap": null,
+    "deep_selected": 0,
+    "quick_candidates": 0,
+    "quick_skim_target": null,
+    "quick_selected": 0
+  },
+  "deep_dive": [],
+  "quick_skim": []
+}
