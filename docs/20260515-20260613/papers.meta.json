@@ -1,8 +1,54 @@
 {
   "label": "2026-05-15 ~ 2026-06-13",
   "date": "2026-05-15 ~ 2026-06-13",
-  "generated_at": "2026-06-13T03:41:41",
-  "count": 0,
-  "papers": [],
+  "generated_at": "2026-06-13T05:39:22",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "20260515-20260613/2605.15619v1-wind-aware-optimal-trajectory-planning-for-efficient-gliding-of-fixed-wing-aerial-systems",
+      "section": "quick",
+      "title_en": "Wind-Aware Optimal Trajectory Planning for Efficient Gliding of Fixed-Wing Aerial Systems",
+      "authors": "Luca Morando, Nishanth Bobbili, Giuseppe Loianno",
+      "date": "2026-05-15",
+      "pdf": "https://arxiv.org/pdf/2605.15619v1",
+      "score": "9.0",
+      "evidence": "固定翼无人机滑翔的精确能量管理",
+      "tldr": "小型固定翼无人机滑翔需精确能量管理，传统TECS反应式调节难以适应风扰与障碍约束。本文提出非线性多代价轨迹规划器，将能量平衡约束融入优化，采用Bernstein多项式生成C3连续轨迹，并通过微分平坦性映射控制，集成模拟净垂直速度计在线重规划匹配下沉极曲线。CFD仿真与真实飞行实验表明，该方法能有效稳定下沉率、空速和滑翔比，实现动力与无动力混合飞行，为小型无人机长航时静音滑翔提供了可靠轨迹规划框架。",
+      "tags": "query:uav",
+      "abstract_en": "Gliding offers small fixed-wing UAVs extended endurance and silent operation but requires accurate energy management, especially under wind disturbances and obstacle constraints. Traditional Total Energy Control Systems based controllers regulate the trade between potential and kinetic energy reactively, often requiring fine-tuning and trim-conditions knowledge. In this work, we shift the regulation to the planning level and present a nonlinear, multi-cost trajectory planner for small UAV gliders. The method generates $\\mathcal{C}^3$ continuous trajectories based on Bernstein polynomials, mapped into control commands through differential flatness, and re-planned online to match experimentally derived sink polar curves. A simulated netto variometer is integrated into the optimization to estimate air mass motion, constraining the glide to energy-balanced states. Consecutive gliding trajectories are linked by cruising segments computed through trajectories initialized on Dubins path-based waypoints, enabling hybrid missions that combine powered and unpowered flight. The approach is validated in CFD simulations and real-world experiments with a fixed-wing platform, showing reliable stabilization of sink rate, airspeed, and glide ratio under wind gusts and in presence of obstacles.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "20260515-20260613/2606.03732v1-when-are-supercapacitors-practically-feasible-in-electric-vehicles",
+      "section": "quick",
+      "title_en": "When are supercapacitors practically feasible in electric vehicles?",
+      "authors": "Yue Wu, Ziqing Xia, Shaokun Li, Heng Li, Shengyu Tao, Zhiwu Huang",
+      "date": "2026-06-02",
+      "pdf": "https://arxiv.org/pdf/2606.03732v1",
+      "score": "8.0",
+      "evidence": "面向电动汽车混合储能系统的深度强化学习能量管理",
+      "tldr": "混合储能系统（HESS）虽可减缓电池老化，但在电动车中实际应用仍十分有限。为明确可行场景，提出多维技术经济评估框架，结合动态规划尺寸确定与深度强化学习能量管理，系统对比全生命周期经济性。结果表明城市公交因成本低、空间足最可行；乘用车受质量体积限制，重卡经济性不足，均需超级电容大幅降价。研究还揭示负载频率决定HESS可行性，并指出固态电池时代超级电容的资产保护价值。",
+      "tags": "query:uav",
+      "abstract_en": "While the hybrid energy storage system (HESS) can theoretically mitigate battery degradation in electric vehicles, its practical implementation remains highly limited. To delineate the specific scenarios and application boundaries where supercapacitors remain feasible, this study proposes a multi-dimensional techno-economic feasibility evaluation framework. First, a cross-vehicle sizing method based on dynamic programming is established to quantify physical mass-volume packaging constraints and identify feasible supercapacitor candidates across different vehicle types. Building upon the optimal sizing parameters derived from the battery aging Pareto front, an expert-guided deep reinforcement learning energy management strategy is integrated to yield near-optimal online performance, ensuring a fair life-cycle economic assessment. Finally, a comprehensive feasibility matrix is constructed to systematically evaluate mass, volume, battery lifespan, additional supercapacitor costs, total cost of ownership, future energy storage prices, and the influence of emerging solid-state batteries. Results reveal that city buses remain the most promising vehicle type for HESS due to minimal additional costs and sufficient packaging space. Current mass-volume penalties and limited economic benefits hinder HESS application in passenger vehicles and heavy-duty trucks, respectively. This situation may only improve if supercapacitor prices drop significantly in the future. Beyond vehicle types, the HESS feasibility is governed by load-frequency characteristics. Furthermore, looking toward the 2030+ solid-state battery era, we highlight that integrating increasingly affordable supercapacitors can provide substantial asset protection leverage.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "20260515-20260613/2605.24992v1-scaling-up-energy-aware-multi-agent-reinforcement-learning-for-mission-oriented-drone-networks-with-individual-reward",
+      "section": "quick",
+      "title_en": "Scaling up Energy-Aware Multi-Agent Reinforcement Learning for Mission-Oriented Drone Networks with Individual Reward",
+      "authors": "Changling Li, Ying Li",
+      "date": "2026-05-24",
+      "pdf": "https://arxiv.org/pdf/2605.24992v1",
+      "score": "6.0",
+      "evidence": "提出能源感知多智能体强化学习用于无人机任务执行，涉及无人机功率管理和能量管理策略。",
+      "tldr": "无人机网络中的动态环境与电池限制导致多智能体强化学习协作效率不高。本文提出能量感知MARL，采用DQN架构和个体奖励函数，奖励由任务执行进度和无人机剩余电量共同决定。在仿真中，无论任务位置和长度，成功率至少80%；当任务密度高时接近100%。与共享奖励MARL相比，在环境规模扩大和智能体数量增加时更加鲁棒，所需步数更少，能量效率更高。最终显著提升能效，为无人机集群协作提供了有效方案。",
+      "tags": "query:uav",
+      "abstract_en": "Multi-agent reinforcement learning (MARL) has shown wide applicability in collaborative systems such as autonomous driving and smart cities for its ability of learning through interaction. With the recent development of drone networks, researchers have also applied MARL to address the trajectory planning problems. However, the dynamic environment and the limited battery capacity are still challenging for using MARL to achieve efficient collaborative task execution. In this paper, we propose an energy-aware MARL model as an attempt to tackle these challenges, leveraging Deep Q-Networks (DQN) with \\emph{individual reward functions} driven by the task execution progress and the remaining battery of drones. We conduct a set of simulation studies for the proposed mode and compare it with the shared reward MARL~\\cite{Li2022MARL} to explore the impact of credit assignment in MARL. The results indicate that our proposed model can achieve at least 80\\% success rate regardless of the task locations and lengths. Similar to the shared reward mode, the individual reward mode can achieve a better success rate when the task density is high, and it can hit nearly a 100\\% success rate when task density gets close to 40\\%. The true advantage of our proposed model with individual reward is revealed when scaling up the environment. The comparison to the shared reward MARL shows that the our proposed model is more robust towards the change of the environment size and agent numbers. It can achieve higher success rate with fewer steps due to the clarity of the goal which improves energy efficiency even better.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
   "errors": []
 }

@@ -1,0 +1,133 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-13T05:37:19.338595+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 3,
+    "quick_skim_target": 11,
+    "quick_selected": 3
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2605.15619v1",
+      "source": "arxiv",
+      "title": "Wind-Aware Optimal Trajectory Planning for Efficient Gliding of Fixed-Wing Aerial Systems",
+      "abstract": "Gliding offers small fixed-wing UAVs extended endurance and silent operation but requires accurate energy management, especially under wind disturbances and obstacle constraints. Traditional Total Energy Control Systems based controllers regulate the trade between potential and kinetic energy reactively, often requiring fine-tuning and trim-conditions knowledge. In this work, we shift the regulation to the planning level and present a nonlinear, multi-cost trajectory planner for small UAV gliders. The method generates $\\mathcal{C}^3$ continuous trajectories based on Bernstein polynomials, mapped into control commands through differential flatness, and re-planned online to match experimentally derived sink polar curves. A simulated netto variometer is integrated into the optimization to estimate air mass motion, constraining the glide to energy-balanced states. Consecutive gliding trajectories are linked by cruising segments computed through trajectories initialized on Dubins path-based waypoints, enabling hybrid missions that combine powered and unpowered flight. The approach is validated in CFD simulations and real-world experiments with a fixed-wing platform, showing reliable stabilization of sink rate, airspeed, and glide ratio under wind gusts and in presence of obstacles.",
+      "authors": [
+        "Luca Morando",
+        "Nishanth Bobbili",
+        "Giuseppe Loianno"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-05-15T05:01:09+00:00",
+      "link": "https://arxiv.org/pdf/2605.15619v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Accurate energy management for fixed-wing UAV gliders via wind-aware optimal trajectory planning",
+      "llm_evidence_cn": "通过风感知最优轨迹规划实现固定翼无人机滑翔的精确能量管理",
+      "llm_evidence": "通过风感知最优轨迹规划实现固定翼无人机滑翔的精确能量管理",
+      "canonical_evidence": "通过风感知最优轨迹规划实现固定翼无人机滑翔的精确能量管理",
+      "llm_tldr_en": "Proposes a nonlinear multi-cost trajectory planner for gliding fixed-wing UAVs to manage kinetic and potential energy under wind disturbances, improving endurance without hybrid propulsion.",
+      "llm_tldr_cn": "针对小型固定翼无人机滑翔中动能与势能交换易受风扰影响的问题，提出一种基于伯恩斯坦多项式的非线性多目标轨迹规划器，通过微分平坦映射为控制指令并在线匹配气动特性，实现能量权衡优化。仿真表明该方法提高了复杂风场下的航时与鲁棒性，但仅针对纯滑翔机，未涉及混合电推进。",
+      "llm_tldr": "针对小型固定翼无人机滑翔中动能与势能交换易受风扰影响的问题，提出一种基于伯恩斯坦多项式的非线性多目标轨迹规划器，通过微分平坦映射为控制指令并在线匹配气动特性，实现能量权衡优化。仿真表明该方法提高了复杂风场下的航时与鲁棒性，但仅针对纯滑翔机，未涉及混合电推进。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "UAV power management",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.24992v1",
+      "source": "arxiv",
+      "title": "Scaling up Energy-Aware Multi-Agent Reinforcement Learning for Mission-Oriented Drone Networks with Individual Reward",
+      "abstract": "Multi-agent reinforcement learning (MARL) has shown wide applicability in collaborative systems such as autonomous driving and smart cities for its ability of learning through interaction. With the recent development of drone networks, researchers have also applied MARL to address the trajectory planning problems. However, the dynamic environment and the limited battery capacity are still challenging for using MARL to achieve efficient collaborative task execution. In this paper, we propose an energy-aware MARL model as an attempt to tackle these challenges, leveraging Deep Q-Networks (DQN) with \\emph{individual reward functions} driven by the task execution progress and the remaining battery of drones. We conduct a set of simulation studies for the proposed mode and compare it with the shared reward MARL~\\cite{Li2022MARL} to explore the impact of credit assignment in MARL. The results indicate that our proposed model can achieve at least 80\\% success rate regardless of the task locations and lengths. Similar to the shared reward mode, the individual reward mode can achieve a better success rate when the task density is high, and it can hit nearly a 100\\% success rate when task density gets close to 40\\%. The true advantage of our proposed model with individual reward is revealed when scaling up the environment. The comparison to the shared reward MARL shows that the our proposed model is more robust towards the change of the environment size and agent numbers. It can achieve higher success rate with fewer steps due to the clarity of the goal which improves energy efficiency even better.",
+      "authors": [
+        "Changling Li",
+        "Ying Li"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI",
+        "cs.AI",
+        "cs.LG",
+        "cs.MA"
+      ],
+      "published": "2026-05-24T10:41:33+00:00",
+      "link": "https://arxiv.org/pdf/2605.24992v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Proposes energy-aware multi-agent reinforcement learning for drone mission execution, directly relating to UAV power management and energy management strategy.",
+      "llm_evidence_cn": "提出能源感知多智能体强化学习用于无人机任务执行，涉及无人机功率管理和能量管理策略。",
+      "llm_evidence": "提出能源感知多智能体强化学习用于无人机任务执行，涉及无人机功率管理和能量管理策略。",
+      "canonical_evidence": "提出能源感知多智能体强化学习用于无人机任务执行，涉及无人机功率管理和能量管理策略。",
+      "llm_tldr_en": "Addresses battery-limited drone networks by proposing an energy-aware MARL model using DQN with individual rewards based on task progress and remaining battery, improving collaborative task efficiency.",
+      "llm_tldr_cn": "针对无人机网络电池容量限制问题，提出能源感知多智能体强化学习模型，利用深度Q网络和基于任务进度与剩余电量的个体奖励函数，实现高效协同任务执行。实验表明该方法能在大规模动态环境中提升任务完成率并降低能耗，为无人机能量管理提供了可扩展的强化学习框架。",
+      "llm_tldr": "针对无人机网络电池容量限制问题，提出能源感知多智能体强化学习模型，利用深度Q网络和基于任务进度与剩余电量的个体奖励函数，实现高效协同任务执行。实验表明该方法能在大规模动态环境中提升任务完成率并降低能耗，为无人机能量管理提供了可扩展的强化学习框架。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "| English keyword            | 中文含义       | | -------------------------- | ---------- | | hybrid-powered UAV         | 混合动力无人机    | | energy management strategy | 能量管理策略     | | hybrid-electric propulsion | 混合电推进      | | series hybrid UAV          | 串联混动无人机    | | fuel cell battery UAV      | 燃料电池/电池无人机 | | UAV power management       | 无人机功率管理    |",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.03732v1",
+      "source": "arxiv",
+      "title": "When are supercapacitors practically feasible in electric vehicles?",
+      "abstract": "While the hybrid energy storage system (HESS) can theoretically mitigate battery degradation in electric vehicles, its practical implementation remains highly limited. To delineate the specific scenarios and application boundaries where supercapacitors remain feasible, this study proposes a multi-dimensional techno-economic feasibility evaluation framework. First, a cross-vehicle sizing method based on dynamic programming is established to quantify physical mass-volume packaging constraints and identify feasible supercapacitor candidates across different vehicle types. Building upon the optimal sizing parameters derived from the battery aging Pareto front, an expert-guided deep reinforcement learning energy management strategy is integrated to yield near-optimal online performance, ensuring a fair life-cycle economic assessment. Finally, a comprehensive feasibility matrix is constructed to systematically evaluate mass, volume, battery lifespan, additional supercapacitor costs, total cost of ownership, future energy storage prices, and the influence of emerging solid-state batteries. Results reveal that city buses remain the most promising vehicle type for HESS due to minimal additional costs and sufficient packaging space. Current mass-volume penalties and limited economic benefits hinder HESS application in passenger vehicles and heavy-duty trucks, respectively. This situation may only improve if supercapacitor prices drop significantly in the future. Beyond vehicle types, the HESS feasibility is governed by load-frequency characteristics. Furthermore, looking toward the 2030+ solid-state battery era, we highlight that integrating increasingly affordable supercapacitors can provide substantial asset protection leverage.",
+      "authors": [
+        "Yue Wu",
+        "Ziqing Xia",
+        "Shaokun Li",
+        "Heng Li",
+        "Shengyu Tao",
+        "Zhiwu Huang"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-06-02T14:49:21+00:00",
+      "link": "https://arxiv.org/pdf/2606.03732v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "uses dynamic programming and deep reinforcement learning for HESS energy management",
+      "llm_evidence_cn": "采用动态规划与深度强化学习进行混合储能系统能量管理",
+      "llm_evidence": "采用动态规划与深度强化学习进行混合储能系统能量管理",
+      "canonical_evidence": "采用动态规划与深度强化学习进行混合储能系统能量管理",
+      "llm_tldr_en": "Evaluates supercapacitor feasibility in EVs via a framework combining dynamic programming sizing and expert-guided DRL energy management, obtaining near-optimal strategies. Methods are directly applicable to hybrid UAV power management.",
+      "llm_tldr_cn": "针对电动汽车中超级电容器的实际可行性问题，提出基于动态规划的跨车型尺寸方法和专家引导的深度强化学习能量管理策略。研究绘制了电池老化帕累托前沿，并得到接近最优的控制策略，为混合储能系统设计提供了新见解，其DP与RL方法可直接迁移至混合动力无人机能量管理。",
+      "llm_tldr": "针对电动汽车中超级电容器的实际可行性问题，提出基于动态规划的跨车型尺寸方法和专家引导的深度强化学习能量管理策略。研究绘制了电池老化帕累托前沿，并得到接近最优的控制策略，为混合储能系统设计提供了新见解，其DP与RL方法可直接迁移至混合动力无人机能量管理。",
+      "llm_tags": [
+        "query:uav:composite"
+      ],
+      "matched_query_tag": "query:uav:composite",
+      "matched_query_text": "Papers central to 查找关于混合动力无人机和混合电推垂直起降飞行器能量管理策略的综述论文和代表性研究。重点关注串联混合动力无人机、燃料电池/电池混合动力无人机、内燃机-发电机/电池混合动力无人机和混合电推垂直起降飞行器。总结主要的能量管理方法，包括基于规则控制、模糊逻辑控制、等效消耗最小化策略、自适应等效消耗最小化策略、动态规划、庞特里亚金极小值原理、模型预测控制和强化学习。优先考虑讨论系统建模、基于任务剖面的功率分配、电池荷电状态维持控制、降低油耗、发电机瞬态抑制、电池老化、实时实现以及实验或硬件验证的论文。识别当前局限性和潜在研究空白，以支持混合动力无人机能量管理的未来创新。, especially work that connects or combines: UAV power management; fuel cell battery UAV; hybrid-electric propulsion; energy management strategy for hybrid electric unmanned aerial vehicles; | English keyword            | 中文含义       | | -------------------------- | ---------- | | hybrid-powered UAV         | 混合动力无人机    | | energy management strategy | 能量管理策略     | | hybrid-electric propulsion | 混合电推进      | | series hybrid UAV          | 串联混动无人机    | | fuel cell battery UAV      | 燃料电池/电池无人机 | | UAV power management       | 无人机功率管理    |; equivalent consumption minimization strategy for hybrid electric vehicles; Which papers provide a clear taxonomy of rule based, fuzzy, ECMS, dynamic programming, PMP, MPC, and reinforcement learning methods?; What are the unsolved problems in hybrid UAV energy management, such as SOC control, fuel consumption, generator transients, and mission adaptation?; What are the main categories of energy management strategies for hybrid powered UAVs?; What are the current limitations and research gaps in hybrid UAV energy management?.",
+      "matched_requirement_id": "req-composite-uav",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
