@@ -2,7 +2,10 @@
 * <a class="dpr-sidebar-root-link dpr-sidebar-noactive-link" href="javascript:void(0)" data-dpr-hash="#/tutorial/README">使用教程</a>
 
 * Conference Papers
-  * ICML 2025 <!--dpr-conference:icml-2025-->
+  * NEURIPS 2025 <!--dpr-conference:neurips-2025-->
+    * uav <!--dpr-conference-topic:neurips-2025:query-uav-->
+      * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/conference/neurips-2025/openreview-neurips-2025-11fe8wkkmk-fully-autonomous-neuromorphic-navigation-and-dynamic-obstacle-avoidance" data-sidebar-item="{&quot;title&quot;: &quot;Fully Autonomous Neuromorphic Navigation and Dynamic Obstacle Avoidance&quot;, &quot;link&quot;: &quot;https://openreview.net/forum?id=11fe8wKkmk&quot;, &quot;score&quot;: &quot;4.0&quot;, &quot;selection_source&quot;: &quot;conference_retrieval&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;uav&quot;}], &quot;evidence&quot;: &quot;针对无人机机载计算的能量约束&quot;}">Fully Autonomous Neuromorphic Navigation and Dynamic Obstacle Avoidance</a>
+      * <a class="dpr-sidebar-item-link dpr-sidebar-item-structured" href="#/conference/neurips-2025/openreview-neurips-2025-suewcblybs-fuz-rl-a-fuzzy-guided-robust-framework-for-safe-reinforcement-learning-under-uncertainty" data-sidebar-item="{&quot;title&quot;: &quot;Fuz-RL: A Fuzzy-Guided Robust Framework for Safe Reinforcement Learning under Uncertainty&quot;, &quot;link&quot;: &quot;https://openreview.net/forum?id=SuewCbLYBS&quot;, &quot;score&quot;: &quot;4.0&quot;, &quot;selection_source&quot;: &quot;conference_retrieval&quot;, &quot;tags&quot;: [{&quot;kind&quot;: &quot;query&quot;, &quot;label&quot;: &quot;uav&quot;}], &quot;evidence&quot;: &quot;提出模糊测度引导的安全RL，与模糊逻辑方法关联&quot;}">Fuz-RL: A Fuzzy-Guided Robust Framework for Safe Reinforcement Learning under Uncertainty</a>
 * Daily Papers
   * 2026-05-15 ~ 2026-06-13 <!--dpr-date:20260515-20260613-->
     * 速读区
