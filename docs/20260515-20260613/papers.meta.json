@@ -1,54 +1,8 @@
 {
   "label": "2026-05-15 ~ 2026-06-13",
   "date": "2026-05-15 ~ 2026-06-13",
-  "generated_at": "2026-06-13T03:34:09",
-  "count": 3,
-  "papers": [
-    {
-      "paper_id": "20260515-20260613/2605.15619v1-wind-aware-optimal-trajectory-planning-for-efficient-gliding-of-fixed-wing-aerial-systems",
-      "section": "quick",
-      "title_en": "Wind-Aware Optimal Trajectory Planning for Efficient Gliding of Fixed-Wing Aerial Systems",
-      "authors": "Luca Morando, Nishanth Bobbili, Giuseppe Loianno",
-      "date": "2026-05-15",
-      "pdf": "https://arxiv.org/pdf/2605.15619v1",
-      "score": "9.0",
-      "evidence": "固定翼无人机滑翔的精确能量管理",
-      "tldr": "小型固定翼无人机滑翔需精确能量管理，传统TECS反应式调节难以适应风扰与障碍约束。本文提出非线性多代价轨迹规划器，将能量平衡约束融入优化，采用Bernstein多项式生成C3连续轨迹，并通过微分平坦性映射控制，集成模拟净垂直速度计在线重规划匹配下沉极曲线。CFD仿真与真实飞行实验表明，该方法能有效稳定下沉率、空速和滑翔比，实现动力与无动力混合飞行，为小型无人机长航时静音滑翔提供了可靠轨迹规划框架。",
-      "tags": "query:uav",
-      "abstract_en": "Gliding offers small fixed-wing UAVs extended endurance and silent operation but requires accurate energy management, especially under wind disturbances and obstacle constraints. Traditional Total Energy Control Systems based controllers regulate the trade between potential and kinetic energy reactively, often requiring fine-tuning and trim-conditions knowledge. In this work, we shift the regulation to the planning level and present a nonlinear, multi-cost trajectory planner for small UAV gliders. The method generates $\\mathcal{C}^3$ continuous trajectories based on Bernstein polynomials, mapped into control commands through differential flatness, and re-planned online to match experimentally derived sink polar curves. A simulated netto variometer is integrated into the optimization to estimate air mass motion, constraining the glide to energy-balanced states. Consecutive gliding trajectories are linked by cruising segments computed through trajectories initialized on Dubins path-based waypoints, enabling hybrid missions that combine powered and unpowered flight. The approach is validated in CFD simulations and real-world experiments with a fixed-wing platform, showing reliable stabilization of sink rate, airspeed, and glide ratio under wind gusts and in presence of obstacles.",
-      "source": "arxiv",
-      "selection_source": "fresh_fetch"
-    },
-    {
-      "paper_id": "20260515-20260613/2605.24865v1-communication-constrained-energy-optimal-trajectory-generation-for-quadrotor-uavs-in-urban-environments",
-      "section": "quick",
-      "title_en": "Communication-Constrained Energy-Optimal Trajectory Generation for Quadrotor UAVs in Urban Environments",
-      "authors": "Prateek Priyaranjan Pradhan, Ketan Rajawat, Mangal Kothari",
-      "date": "2026-05-24",
-      "pdf": "https://arxiv.org/pdf/2605.24865v1",
-      "score": "9.0",
-      "evidence": "考虑机载能量限制的能量最优轨迹生成",
-      "tldr": "城市复杂环境下，无人机需兼顾通信质量、避障与续航，传统简化模型难以保证动态可行性。本文提出通信受限下四旋翼能量最优轨迹生成框架，集成刚体动力学、城市无线通信模型与数据吞吐约束，通过序贯凸规划求解非凸最优控制问题。仿真表明，该方法能规划出通信感知、避障且能效优化的飞行轨迹，并依据中继需求自适应调整任务时长，为密集城区可靠通信自主飞行提供实用方案。",
-      "tags": "query:uav",
-      "abstract_en": "Communication-aware trajectory generation for unmanned aerial vehicles (UAVs) operating in urban environments requires simultaneous consideration of vehicle dynamics, wireless communication quality, obstacle avoidance, and onboard energy limitations. In such missions, UAVs must navigate through obstacle-rich environments while ensuring reliable relay of mission-critical sensory information to ground infrastructure. This results in a highly nonlinear and nonconvex optimal control problem involving coupled communication and flight-dynamics constraints. This paper presents a communication-constrained energy-optimal trajectory generation framework for quadrotor UAVs operating in urban environments. The proposed formulation incorporates full rigid-body quadrotor dynamics, urban wireless communication models, cumulative data throughput constraints, and obstacle avoidance requirements within a unified free-final-time optimal control framework. Unlike conventional approaches based on simplified kinematic or point-mass models, the proposed framework generates dynamically feasible trajectories suitable for practical aerial platforms. The resulting nonconvex optimal control problem is solved iteratively using sequential convex programming (SCP). Numerical simulations for multiple urban mission scenarios demonstrate the ability of the proposed framework to generate energy-efficient and communication-aware trajectories while adapting mission duration according to data relay requirements. The proposed methodology provides a practical framework for autonomous UAV operations requiring reliable communication in dense urban environments.",
-      "source": "arxiv",
-      "selection_source": "fresh_fetch"
-    },
-    {
-      "paper_id": "20260515-20260613/2606.03732v1-when-are-supercapacitors-practically-feasible-in-electric-vehicles",
-      "section": "quick",
-      "title_en": "When are supercapacitors practically feasible in electric vehicles?",
-      "authors": "Yue Wu, Ziqing Xia, Shaokun Li, Heng Li, Shengyu Tao, Zhiwu Huang",
-      "date": "2026-06-02",
-      "pdf": "https://arxiv.org/pdf/2606.03732v1",
-      "score": "8.0",
-      "evidence": "面向电动汽车混合储能系统的深度强化学习能量管理",
-      "tldr": "混合储能系统（HESS）虽可减缓电池老化，但在电动车中实际应用仍十分有限。为明确可行场景，提出多维技术经济评估框架，结合动态规划尺寸确定与深度强化学习能量管理，系统对比全生命周期经济性。结果表明城市公交因成本低、空间足最可行；乘用车受质量体积限制，重卡经济性不足，均需超级电容大幅降价。研究还揭示负载频率决定HESS可行性，并指出固态电池时代超级电容的资产保护价值。",
-      "tags": "query:uav",
-      "abstract_en": "While the hybrid energy storage system (HESS) can theoretically mitigate battery degradation in electric vehicles, its practical implementation remains highly limited. To delineate the specific scenarios and application boundaries where supercapacitors remain feasible, this study proposes a multi-dimensional techno-economic feasibility evaluation framework. First, a cross-vehicle sizing method based on dynamic programming is established to quantify physical mass-volume packaging constraints and identify feasible supercapacitor candidates across different vehicle types. Building upon the optimal sizing parameters derived from the battery aging Pareto front, an expert-guided deep reinforcement learning energy management strategy is integrated to yield near-optimal online performance, ensuring a fair life-cycle economic assessment. Finally, a comprehensive feasibility matrix is constructed to systematically evaluate mass, volume, battery lifespan, additional supercapacitor costs, total cost of ownership, future energy storage prices, and the influence of emerging solid-state batteries. Results reveal that city buses remain the most promising vehicle type for HESS due to minimal additional costs and sufficient packaging space. Current mass-volume penalties and limited economic benefits hinder HESS application in passenger vehicles and heavy-duty trucks, respectively. This situation may only improve if supercapacitor prices drop significantly in the future. Beyond vehicle types, the HESS feasibility is governed by load-frequency characteristics. Furthermore, looking toward the 2030+ solid-state battery era, we highlight that integrating increasingly affordable supercapacitors can provide substantial asset protection leverage.",
-      "source": "arxiv",
-      "selection_source": "fresh_fetch"
-    }
-  ],
+  "generated_at": "2026-06-13T03:41:41",
+  "count": 0,
+  "papers": [],
   "errors": []
 }

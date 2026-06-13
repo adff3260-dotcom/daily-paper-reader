@@ -1,129 +1,17 @@
 {
   "mode": "skims",
-  "generated_at": "2026-06-13T03:31:43.972622+00:00",
+  "generated_at": "2026-06-13T03:41:41.176598+00:00",
   "stats": {
     "mode": "skims",
     "forced_all_quick": true,
     "min_score": 8.0,
-    "deep_divecandidates": 3,
+    "deep_divecandidates": 0,
     "deep_cap": null,
     "deep_selected": 0,
-    "quick_candidates": 3,
+    "quick_candidates": 0,
     "quick_skim_target": null,
-    "quick_selected": 3
+    "quick_selected": 0
   },
   "deep_dive": [],
-  "quick_skim": [
-    {
-      "id": "2605.15619v1",
-      "source": "arxiv",
-      "title": "Wind-Aware Optimal Trajectory Planning for Efficient Gliding of Fixed-Wing Aerial Systems",
-      "abstract": "Gliding offers small fixed-wing UAVs extended endurance and silent operation but requires accurate energy management, especially under wind disturbances and obstacle constraints. Traditional Total Energy Control Systems based controllers regulate the trade between potential and kinetic energy reactively, often requiring fine-tuning and trim-conditions knowledge. In this work, we shift the regulation to the planning level and present a nonlinear, multi-cost trajectory planner for small UAV gliders. The method generates $\\mathcal{C}^3$ continuous trajectories based on Bernstein polynomials, mapped into control commands through differential flatness, and re-planned online to match experimentally derived sink polar curves. A simulated netto variometer is integrated into the optimization to estimate air mass motion, constraining the glide to energy-balanced states. Consecutive gliding trajectories are linked by cruising segments computed through trajectories initialized on Dubins path-based waypoints, enabling hybrid missions that combine powered and unpowered flight. The approach is validated in CFD simulations and real-world experiments with a fixed-wing platform, showing reliable stabilization of sink rate, airspeed, and glide ratio under wind gusts and in presence of obstacles.",
-      "authors": [
-        "Luca Morando",
-        "Nishanth Bobbili",
-        "Giuseppe Loianno"
-      ],
-      "primary_category": "cs.RO",
-      "categories": [
-        "cs.RO"
-      ],
-      "published": "2026-05-15T05:01:09+00:00",
-      "link": "https://arxiv.org/pdf/2605.15619v1",
-      "tags": [
-        "keyword:UAV",
-        "query:UAV"
-      ],
-      "llm_score": 9.0,
-      "llm_evidence_en": "accurate energy management for gliding fixed-wing UAVs",
-      "llm_evidence_cn": "固定翼无人机滑翔的精确能量管理",
-      "llm_evidence": "固定翼无人机滑翔的精确能量管理",
-      "canonical_evidence": "固定翼无人机滑翔的精确能量管理",
-      "llm_tldr_en": "A wind-aware optimal trajectory planner for small fixed-wing gliders, shifting energy management to planning level for improved efficiency.",
-      "llm_tldr_cn": "针对小型固定翼无人机滑翔中传统总能量控制器需调参且难以应对风扰的问题，提出一种风知最优轨迹规划方法。利用伯恩斯坦多项式生成三阶连续轨迹，结合微分平坦和实时重规划，匹配实测下沉极曲线。仿真显示，该方法在风扰下能有效管理势能与动能，提高滑翔续航，拓展了固定翼无人机能量管理的新范式。",
-      "llm_tldr": "针对小型固定翼无人机滑翔中传统总能量控制器需调参且难以应对风扰的问题，提出一种风知最优轨迹规划方法。利用伯恩斯坦多项式生成三阶连续轨迹，结合微分平坦和实时重规划，匹配实测下沉极曲线。仿真显示，该方法在风扰下能有效管理势能与动能，提高滑翔续航，拓展了固定翼无人机能量管理的新范式。",
-      "llm_tags": [
-        "query:uav"
-      ],
-      "matched_query_tag": "query:uav",
-      "matched_query_text": "UAV power management",
-      "matched_requirement_id": "req-1",
-      "selection_source": "fresh_fetch"
-    },
-    {
-      "id": "2605.24865v1",
-      "source": "arxiv",
-      "title": "Communication-Constrained Energy-Optimal Trajectory Generation for Quadrotor UAVs in Urban Environments",
-      "abstract": "Communication-aware trajectory generation for unmanned aerial vehicles (UAVs) operating in urban environments requires simultaneous consideration of vehicle dynamics, wireless communication quality, obstacle avoidance, and onboard energy limitations. In such missions, UAVs must navigate through obstacle-rich environments while ensuring reliable relay of mission-critical sensory information to ground infrastructure. This results in a highly nonlinear and nonconvex optimal control problem involving coupled communication and flight-dynamics constraints. This paper presents a communication-constrained energy-optimal trajectory generation framework for quadrotor UAVs operating in urban environments. The proposed formulation incorporates full rigid-body quadrotor dynamics, urban wireless communication models, cumulative data throughput constraints, and obstacle avoidance requirements within a unified free-final-time optimal control framework. Unlike conventional approaches based on simplified kinematic or point-mass models, the proposed framework generates dynamically feasible trajectories suitable for practical aerial platforms. The resulting nonconvex optimal control problem is solved iteratively using sequential convex programming (SCP). Numerical simulations for multiple urban mission scenarios demonstrate the ability of the proposed framework to generate energy-efficient and communication-aware trajectories while adapting mission duration according to data relay requirements. The proposed methodology provides a practical framework for autonomous UAV operations requiring reliable communication in dense urban environments.",
-      "authors": [
-        "Prateek Priyaranjan Pradhan",
-        "Ketan Rajawat",
-        "Mangal Kothari"
-      ],
-      "primary_category": "eess.SY",
-      "categories": [
-        "eess.SY"
-      ],
-      "published": "2026-05-24T04:51:40+00:00",
-      "link": "https://arxiv.org/pdf/2605.24865v1",
-      "tags": [
-        "keyword:UAV",
-        "query:UAV"
-      ],
-      "llm_score": 9.0,
-      "llm_evidence_en": "energy-optimal trajectory generation considering onboard energy limitations",
-      "llm_evidence_cn": "考虑机载能量限制的能量最优轨迹生成",
-      "llm_evidence": "考虑机载能量限制的能量最优轨迹生成",
-      "canonical_evidence": "考虑机载能量限制的能量最优轨迹生成",
-      "llm_tldr_en": "A communication-constrained energy-optimal trajectory planner for quadrotors in urban settings, balancing wireless relay and energy use.",
-      "llm_tldr_cn": "针对城市环境中四旋翼无人机需同时保证通信中继质量和机载能量效率的问题，提出一种通信约束下的能量最优轨迹生成框架。该框架将通信质量和能耗作为联合优化目标，生成满足避障和动力学约束的平滑轨迹。仿真表明，方法能在复杂城市环境中实现通信任务与能量消耗的有效折衷，延长作业时间。为通信感知无人机任务规划提供了新思路。",
-      "llm_tldr": "针对城市环境中四旋翼无人机需同时保证通信中继质量和机载能量效率的问题，提出一种通信约束下的能量最优轨迹生成框架。该框架将通信质量和能耗作为联合优化目标，生成满足避障和动力学约束的平滑轨迹。仿真表明，方法能在复杂城市环境中实现通信任务与能量消耗的有效折衷，延长作业时间。为通信感知无人机任务规划提供了新思路。",
-      "llm_tags": [
-        "query:uav"
-      ],
-      "matched_query_tag": "query:uav",
-      "matched_query_text": "UAV power management",
-      "matched_requirement_id": "req-1",
-      "selection_source": "fresh_fetch"
-    },
-    {
-      "id": "2606.03732v1",
-      "source": "arxiv",
-      "title": "When are supercapacitors practically feasible in electric vehicles?",
-      "abstract": "While the hybrid energy storage system (HESS) can theoretically mitigate battery degradation in electric vehicles, its practical implementation remains highly limited. To delineate the specific scenarios and application boundaries where supercapacitors remain feasible, this study proposes a multi-dimensional techno-economic feasibility evaluation framework. First, a cross-vehicle sizing method based on dynamic programming is established to quantify physical mass-volume packaging constraints and identify feasible supercapacitor candidates across different vehicle types. Building upon the optimal sizing parameters derived from the battery aging Pareto front, an expert-guided deep reinforcement learning energy management strategy is integrated to yield near-optimal online performance, ensuring a fair life-cycle economic assessment. Finally, a comprehensive feasibility matrix is constructed to systematically evaluate mass, volume, battery lifespan, additional supercapacitor costs, total cost of ownership, future energy storage prices, and the influence of emerging solid-state batteries. Results reveal that city buses remain the most promising vehicle type for HESS due to minimal additional costs and sufficient packaging space. Current mass-volume penalties and limited economic benefits hinder HESS application in passenger vehicles and heavy-duty trucks, respectively. This situation may only improve if supercapacitor prices drop significantly in the future. Beyond vehicle types, the HESS feasibility is governed by load-frequency characteristics. Furthermore, looking toward the 2030+ solid-state battery era, we highlight that integrating increasingly affordable supercapacitors can provide substantial asset protection leverage.",
-      "authors": [
-        "Yue Wu",
-        "Ziqing Xia",
-        "Shaokun Li",
-        "Heng Li",
-        "Shengyu Tao",
-        "Zhiwu Huang"
-      ],
-      "primary_category": "eess.SY",
-      "categories": [
-        "eess.SY"
-      ],
-      "published": "2026-06-02T14:49:21+00:00",
-      "link": "https://arxiv.org/pdf/2606.03732v1",
-      "tags": [
-        "keyword:UAV",
-        "query:UAV"
-      ],
-      "llm_score": 8.0,
-      "llm_evidence_en": "deep reinforcement learning energy management for hybrid energy storage in EVs",
-      "llm_evidence_cn": "面向电动汽车混合储能系统的深度强化学习能量管理",
-      "llm_evidence": "面向电动汽车混合储能系统的深度强化学习能量管理",
-      "canonical_evidence": "面向电动汽车混合储能系统的深度强化学习能量管理",
-      "llm_tldr_en": "Proposes a multi-dimensional techno-economic feasibility framework for supercapacitors in EVs, combining dynamic programming sizing and expert-guided deep RL energy management to identify feasible scenarios and mitigate battery degradation.",
-      "llm_tldr_cn": "针对电动汽车中超级电容器实际可行性问题，提出多维技术经济评估框架。采用动态规划进行跨车型尺寸优化，结合专家引导的深度强化学习能量管理策略，从电池老化帕累托前沿提取最优参数。通过仿真验证，该方法能够平衡电池老化与系统成本，揭示超级电容器的可行域，为混合储能系统实用化提供指导。",
-      "llm_tldr": "针对电动汽车中超级电容器实际可行性问题，提出多维技术经济评估框架。采用动态规划进行跨车型尺寸优化，结合专家引导的深度强化学习能量管理策略，从电池老化帕累托前沿提取最优参数。通过仿真验证，该方法能够平衡电池老化与系统成本，揭示超级电容器的可行域，为混合储能系统实用化提供指导。",
-      "llm_tags": [
-        "query:uav"
-      ],
-      "matched_query_tag": "query:uav",
-      "matched_query_text": "equivalent consumption minimization strategy for hybrid electric vehicles",
-      "matched_requirement_id": "req-6",
-      "selection_source": "fresh_fetch"
-    }
-  ]
+  "quick_skim": []
 }
