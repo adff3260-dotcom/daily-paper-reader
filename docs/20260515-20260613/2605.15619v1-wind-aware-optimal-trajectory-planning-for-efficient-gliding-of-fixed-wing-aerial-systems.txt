@@ -1,0 +1,634 @@
+Title: Wind-Aware Optimal Trajectory Planning for Efficient Gliding of Fixed-Wing Aerial Systems
+
+URL Source: https://arxiv.org/pdf/2605.15619v1
+
+Published Time: Mon, 18 May 2026 00:38:59 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# Wind-Aware Optimal Trajectory Planning for Efficient Gliding of Fixed-Wing Aerial Systems 
+
+Luca Morando 1,2, Nishanth Bobbili 2, Luca Masci 1,2, and Giuseppe Loianno 2
+
+Abstract — Gliding offers small fixed-wing UAVs extended endurance and silent operation but requires accurate energy management, especially under wind disturbances and obstacle constraints. Traditional Total Energy Control Systems based controllers regulate the trade between potential and kinetic en-ergy reactively, often requiring fine-tuning and trim-conditions knowledge. In this work, we shift the regulation to the planning level and present a nonlinear, multi-cost trajectory planner for small UAV gliders. The method generates C3 continuous tra-jectories based on Bernstein polynomials, mapped into control commands through differential flatness, and re-planned online to match experimentally derived sink polar curves. A simulated netto variometer is integrated into the optimization to estimate air mass motion, constraining the glide to energy-balanced states. Consecutive gliding trajectories are linked by cruising segments computed through trajectories initialized on Dubins path-based waypoints, enabling hybrid missions that combine powered and unpowered flight. The approach is validated in CFD simulations and real-world experiments with a fixed-wing platform, showing reliable stabilization of sink rate, airspeed, and glide ratio under wind gusts and in presence of obstacles. 
+
+I. I NTRODUCTION 
+
+Gliding, the art of unpowered flight, has fascinated hu-mans since the earliest manned flights, inspiring advances in both mechanics and software while drawing lessons from nature. In soaring, long-range glides are essential to tran-sition between lift sources through still air, and in manned aviation they are critical to maximize distance after sudden thrust loss [1], [2]. Gliding is also increasingly relevant for small Fixed-Wing Unmanned Aerial Vehicles (FW-UAVs), enabling tasks such as environmental monitoring [3] and low-altitude surveillance [4] with reduced motor noise and extended endurance. By exploiting natural lift sources like thermals [5], [6] or ridge lift [7], UAVs can reserve battery power for onboard systems and computing. Aircraft without thrust entirely rely on gravitational poten-tial energy, requiring a continuous trade-off between poten-tial and kinetic energy to stay airborne. This trade-off must account for velocity limits, motion feasibility, and precise sensing of both aircraft state and aerodynamic effects, in order to maintain flight within the safe envelope [8] and avoid stall or structural damage at extreme speeds [2]. Small FW-UAVs face additional challenges: their lower Reynolds number reduces achievable L/D , and their light                              
+
+> 1The authors are with New York University, NY 10012, USA. email:
+> {luca.morando, lm5175 }@nyu.edu .
+> 2The author is with the University of California Berkeley, Department of Electrical Engineering and Computer Sciences, Berkeley, CA 94720, USA. email: {nishanth.bobbili, loiannog }@eecs.berkeley.edu .This work was supported by the DARPA Albatross Grant HR00112590173. Approved for Public Release, Distribution Unlimited.
+
+mass and slower speeds make them more sensitive to wind disturbances, demanding rapid compensation at both planning and control levels [9]. Most of the existing so-lutions regulate this energy balance through altitude con-trol, typically using modified Total Energy Control System (TECS) controllers that adjust pitch to trade altitude for airspeed [2], [10], [11]. Traditional TECS controllers [12] respond reactively on sensor data, requiring careful tuning and knowledge of trim conditions, especially without thrust input. To overcome these limitations, we shift control to the planning level and propose a nonlinear, multi-cost tra-jectory planner for small fixed-wing gliders. Considering trajectories parametrized as Bernstein Polynomials [13], [14], the planner predicts optimal glide paths under wind and obstacle constraints, generating C3 continuous trajectories that are re-planned online to match the experimentally de-rived sink polar curve [15] while respecting flight dynamics and controllability [16], [17]. Consecutive glide waypoints are connected via optimized cruising trajectories initialized from Dubins paths [18], similar to [19]. The trajectory is mapped into control commands through differential flatness considering coordinated flight conditions. To realistically optimize the generation of glide trajecto-ries, we leverage the mathematical formulation of a simulated netto variometer, used to estimate the vertical speed of the surrounding air to detect stable glides or natural lift sources such as thermals or ridge effects [20], [21] and we directly incorporate it at the planning level in our trajectory optimization approach based on Bernstein Polynomials. The main contributions of this paper are:  
+
+> •
+
+A minimum-jerk, time-optimal, and wind-aware trajec-tory planner that generates glide paths that incorporate geometrical and dynamically constraints while respect-ing the path curvature and avoiding obstacles.  
+
+> •
+
+A variometer model represented with Bernstein poly-nomials, incorporated as a constraint in the trajectory optimization to predict sink rates accurately.  
+
+> •
+
+A continuous replanning strategy to overcome sim-plified stability assumptions for gliding based on the absence of wind.  
+
+> •
+
+Real-world experiments demonstrating effectiveness un-der wind and obstacle conditions, with performance compared to CFD simulations of the aircraft model. II. R ELATED WORKS 
+
+Compared to VTOL rotorcraft, FW-UAVs offer longer endurance [22], lower noise [23], and reduced battery use 
+
+> arXiv:2605.15619v1 [cs.RO] 15 May 2026 Final Gliding Waypoint Final Gliding Waypoint
+> before replanning Gliding trajectory Bernstein Cruising Waypoints Replanned Waypoints
+
+# topt 
+
+> {
+> Replanning Strategy Cruising trajectory
+
+Fig. 1: Full-scale mission in Google Earth. The trajectory shows accurate replanning in both gliding and cruising states while the red waypoint offset highlights altitude saved through continuous adjustment in windy conditions. by exploiting aerodynamics [24], especially during wind-assisted glides. However, these benefits come with stronger coupled dynamics and greater planning complexity [8], [25]. Safe glide trajectories remain underexplored despite their importance for emergency landings and soaring. Motion-primitive planners [26] and kinodynamic Rapidly Exploring Random Tree (RRT)* [1] ensure feasible descent paths but are computationally heavy for real-time use. More recent work [2] combines CL-RRT with a dissipative TECS con-troller for energy regulation and glide stablization, yet prac-tical deployment is still limited. Most existing methods rely on separate planners and energy-aware controllers, making velocity and altitude prediction along the path difficult. As noted in [13], the field still lacks fast planners generating trajectories directly in the flat-output space, despite the efficiency of differential flatness in mapping planned states to control inputs [27]–[29]. Building on gliding strategies from [11], [20], we propose a Bernstein-polynomial trajectory planner for both cruising and gliding flight. For actuated segments, we optimize a trajectory based on a sequence of waypoints sampled on a Dubins path [19], while for gliding we generate Bernstein-based trajectories that predict and preserve energy balance, taking into account wind and obstacle avoidance. We incorporate the variometer model [20], [22] directly into the planner by representing it as a Bernstein polynomial and embedding it in the trajectory optimization. This predictive design yields energy-feasible glide paths, reducing the reliance on reactive control (e.g., TECS) to compensate for unplanned losses. In emergency landing scenarios, this ensures that feasible sites can be safely reached without the risk of stalling or undershooting. In soaring conditions, it enables the proactive use of favor-able air masses to extend range and endurance beyond what control-level regulation alone can achieve. As in [13], [30], [31], our trajectories are parameterized in space to maintain constant velocity. Unlike previous works such as [31], [32], x
+
+> y
+
+z
+
+> Wind Triangle
+
+T
+
+> θ
+> ϕ
+> Va
+> W
+
+Vg
+
+> ωa
+> Va
+> W
+> W⊤
+> Vg
+> η
+
+Fig. 2: System overview and notation. The Body B and Velocity V frames. The angle γa defines the glide slope, which changes based on the wind W effects on the ground velocity Vg , according to the wind triangle convention. we validate our approach on small FW-UAVs in challenging outdoor conditions and demonstrate real-time deployment, bridging theory and practice. III. S YSTEM MODELING 
+
+As shown in Fig. 2, we adopt the following frame con-vention where the inertial frame is denoted by I while B
+
+denotes the vehicle’s rigid body frame that it is aligned with the FW’s longitudinal, lateral, and vertical axes. To consider the aerodynamics effect, we also define the velocity frame 
+
+V which is centered at B and is rotated with respect to the it by the sideslip angle β and the angle of attack α,therefore always keeping the corresponding Vx axis aligned with the direction of the aircraft velocity. The vehicle system dynamics, defined in the inertial frame I as 
+
+˙x = V Re 1, ¨x = g + Ra v ,
+
+˙R = R ˆωv , ˙ωv = J−1(−ωv × Jωv + τ ), (1) where the FW state is X = {x, ˙x, R, ωv }, where x ∈ R3
+
+with x ∈ R3 represents the position of FW in I, The rotation between B and V, is represented by RBV (α, β ), while X(t)
+
+Differential Flatness 
+
+Platform 
+
+> Wind Triangle Estimation
+> Variometer and Sink Polar
+> Glide Angle
+> Eq. (12-13)
+> Dubins Path Initialization
+> Gliding Mission
+> Cruising Mission
+> Planner and Trajectory Generation
+
+Mission Manager 
+
+Planner  Eq. (15-27)  Differential Flatness 
+
+Attitude Command adaptation Platform        
+
+> ud=[θcϕcωvxωvyaT]⊤
+> Eq. (4 -7)
+> Cruising Gliding
+> Flat outputs
+> States
+
+Fig. 3: An overview of the proposed planning architecture. The trajectory is generated based on the aircraft’s energy state, flight mode, environment, and obstacles. The Differential flatness block maps the trajectory into attitude commands. 
+
+R ∈ SO (3) with R = RIBRBV denotes the rotation of V
+
+with respect to I. The velocity of the FW is represented by the velocity vector ˙x = [ ˙ xx ˙xy ˙xz ]⊤, with a zero lateral velocity component ( ˙xy = 0 ) to satisfy the coordinated flight condition. Additionally, V = ∥ ˙x∥, g = [0 0 − g]⊤ is the gravity vector in I, e1 = [1 0 0] ⊤ is the unit vector aligned with the x direction of V, av = [ avx 0 avz ]⊤ contains the axial and normal accelerations, while ωv = [ ωvx ωvy ωvz ]⊤
+
+represents the angular velocity of V wrt. I, expressed in V
+
+and ˆωv its corresponding skew-symmetric matrix. Finally, 
+
+J ∈ R3×3 describes the inertia acting on each direction of the body frame B, while τ expresses the torque applied on the system due to the action of control surfaces, like ailerons, elevators, and rudder. Additional details on the FW dynamics for coordinated flight conditions is available in [13] and [30]. As shown in Fig. 2, under powered flight, thrust T acts along the longitudinal axis, balancing drag and wind-induced resistance. Once expressed in the inertial frame I, we can define a direct relationship between the ground velocity vector VI 
+
+> g
+
+, the airspeed vector VI 
+
+> a
+
+, and the estimated wind vector WI . Specifically, the wind vector WI modifies the ground velocity VI 
+
+> g
+
+such that the airspeed is related to VI
+
+> g
+
+through the classical wind triangle: VI 
+
+> a
+
+= VI 
+
+> g
+
+− WI .
+
+A. Aerodynamics for Longitudinal Gliding 
+
+The aerodynamic forces on the airframe decompose into lift L, drag D, and weight force Fg
+
+L = 12 ρV 2 
+
+> a
+
+SC L(α, β ),D = 12 ρV 2 
+
+> a
+
+S(CD0 + kC L(α)2 + kβ β2), F g = mg, 
+
+(2) where ρ is the air density, Va = ∥VI 
+
+> a
+
+∥ the airspeed, S
+
+the wing area, CL(α, β ) ≈ CL(α) the Lift Coefficient, kβ
+
+accounts for induced drag from sideslip and m is the mass. For simplicity, we consider 
+
+CL(α) = πARe, kC L(α)2 + kβ β2 = CL(α)2
+
+πARe , (3) with AR the aspect ratio and e the Oswald efficiency factor. In steady-state gliding flight with no wind, lift L and drag D balance the gravity force Fg such that no horizontal or vertical acceleration acts on the airframe. This defines a preservation in the exchange of kinetic to potential energy, validating the principle of energy conservation. Considering that Va and the glide angle γa (see Fig. 2) are constant, lift and drag are 
+
+L = mg cos γa, D = −mg sin γa, (4) where γa is the glide angle. Substituting the drag defined in eq. (2) in eq. (4) using CL(α) in eq. (3), we obtain 
+
+12 ρV 2 
+
+> a
+
+S
+
+
+
+CD0 + C2
+
+> L
+
+(α)
+
+πARe 
+
+
+
+= −mg sin γa. (5) With further analysis on Fig. 2, we can consider the lift coefficient directly affected by γa, such that CL(α) = 
+
+mg cos γa. Considering that (1 − sin 2 γa) = cos 2 γa, we can plug this value of CL(α) directly in eq. (5) and obtain 
+
+mg sin 2 γa −
+
+ 12 ρV 2 
+
+> a
+
+SπARe 
+
+
+
+sin γa − η = 0 , (6) where η = ((0 .5ρV 2 
+
+> a
+
+S)2πAReC D0 + ( mg )2)/mg .The quadratic equation can be solved for sinγ a showing that for each airspeed Va there exists a unique relative glide angle that yields steady-state flight without acceleration 
+
+sin γa = 
+
+> 12
+
+ρV 2 
+
+> a
+
+SπARe − υ
+
+2mg , (7) where υ =
+
+q
+
+( 12 ρV 2 
+
+> a
+
+S)2πAR (πARe + 4 CD0) + 4 m2g2.Considering eq. (7), for any airspeed Va there exists a unique glide angle γa which allows a stable glide. However, given the relationship between lift and drag, we can assume that there exists an optimal gliding airspeed, denoted as V ∗
+
+> a
+
+that minimizes the glide angle γa, therefore maximizing the lift-to-drag ratio (L/D ).Following [33], by substituting eq. (7) into the drag expression in eq. (4), we obtain the drag D as a function of Va. The minimum-drag airspeed V ∗ 
+
+> a
+
+corresponds to a saddle point of this function, which can be determined by differentiating with respect to Va. Solving the derivative for its roots yields the stationary points of the curve, one of which corresponds to the minimum-drag airspeed 
+
+V ∗ 
+
+> a
+
+= 4
+
+p(4 m2g2)/ρ 2S2CD0(πARe + 4 CD0). (8) At this airspeed, we obtain the maximum (L/D ) ratio 
+
+max( L/D ) = − 1tan γa
+
+=
+
+p1 − sin 2 γa
+
+− sin γa
+
+= 0 .5
+
+r kCD0
+
+.
+
+(9) as similarly obtained in [33], [34]. B. Variometer and Total Specific Energy 
+
+In establishing the glide angle providing the maximum drag-to-lift ratio, the key assumption is that the surrounding air is still, neglecting wind disturbances or vertical lift from thermals [22]. To compensate for these effects and maintain a constant airspeed Va thereby ensuring a stable glide, we rely on variometer data. As introduced in [20], a variometer estimates the vertical speed of the surrounding air, allowing the planner to detect sources of lift, such as thermals, and adjust the trajectory accordingly. Although no sensor directly measures vertical airspeed, the variometer infers it from the total specific energy capture changes of the aircraft due to lift or energy trade between altitude and speed. Following [20], the rate of exchange of energy is represented by the first derivative of the total energy of the aircraft during glide. Considering the optimal airspeed V ∗ 
+
+> a
+
+derived in the previous section, we can write the energy equation as 
+
+E = mgx z + 12 mV ∗
+
+> a
+> 2
+
+, (10) Dividing by mg and computing the first derivative, we obtain the energy rate as 
+
+dE dt = ˙E = ˙ xz + V ∗ 
+
+> a
+
+˙V ∗
+
+> a
+
+g . (11) The terms in these equations are obtained from onboard estimators or directly from the aircraft sensors. In particular, 
+
+˙xz is the vertical velocity in the inertial frame I, as in eq. (1), and ˙V ∗ 
+
+> a
+
+is the airspeed time derivative, obtained using a Savitzky golay filter [35], similarly to [22]. To estimate the true vertical speed of the surrounding air, 
+
+˙E is corrected with the aircraft’s natural sink rate 
+
+Vz (Va, ϕ ) = V ∗
+
+> a
+
+ PCL
+
++ BC L
+
+cos 2 ϕ
+
+
+
+, (12) where P and B are airframe-specific regression constants that can be obtained fitting them from experimental flight data (see Section III-B). The netto variometer signal is 
+
+˙Enet = ˙E + Vz (V ∗ 
+
+> a
+
+, ϕ ) = ˙ xz + V ∗ 
+
+> a
+
+˙V ∗
+
+> a
+
+g + Vz (V ∗ 
+
+> a
+
+, ϕ ). (13) This corrected measure ˙Enet , called the netto variometer, reads 0 m /s when the aircraft glides at its nominal sink rate in still air relative to the gliding airspeed V ∗ 
+
+> a
+
+. The sink rate 
+
+Vz (V ∗ 
+
+> a
+
+, ϕ ) can be obtained from the glider drag polar curve, experimentally or via Computational Fluid Dynamics (CFD). 
+
+C. Differential Flatness and Trajectory Parameterization 
+
+In this section, we revisit the differential flatness formu-lation for fixed-wing systems, parameterized by airspeed Va
+
+and traveled distance s (see Fig. 3), to show how planning maps to control. A system is flat if its states and inputs can be expressed via flat outputs and their derivatives. Following [13], the trajectory tracking problem considering the state x(t) is solved using a PID loop 
+
+x(3)  
+
+> c
+
+= x(3)  
+
+> r
+
++ k2¨e + k1 ˙e + k0e, (14) where e = xr − x and x(3)  
+
+> c
+
+is the third derivative input to the flat model, from which it is possible to obtain the desired geometric attitude of the aircraft expressed as rotation matrix Rc. We can then derive, the input commands uc =[θc ϕc ωvx ωvy T ]⊤, with θc, ϕ c, ψ c defining the Euler angles attitude commands and T the thrust. To avoid unsafe thrust variations from abrupt velocity or acceleration changes, the trajectory is parameterized by path length s(t) at reference airspeed Va,ref [13], [30], yielding xr = xr (s(t)) .IV. T RAJECTORY PLANNING 
+
+In this section, we address the design of constrained, dynamically feasible, and energy-aware trajectories by for-mulating a nonlinear optimization problem that exploits the differential flatness and represents trajectories using Bernstein polynomials. These show interesting properties in terms of smoothness and imposing global spatial constraints compared to time-based polynomials [14], [36]. For a given trajectory mj belonging to a set M such that j ∈ (0 , M ),this is represented by the following structure of degree nCn,m j (t) = 
+
+> n
+
+X
+
+> i=0
+
+pmj 
+
+> i,n
+
+βni (t), t ∈ [t0, t f ], (15) where pmj 
+
+> i,n
+
+are the Bernstein coefficient or control points of size n control, and βni (t) is the Bernstein basis. The kth 
+
+derivative of the polynomial can be obtained as 
+
+dk
+
+dt k Cn,m j (t) = n!(n − k)!( tf − t0)kn−kX
+
+> i=0
+
+pmj
+
+> ′
+> i,n −k
+
+βn−ki (t),
+
+(16) with pmj 
+
+> ′
+> i,n −k
+
+= pmj 
+
+> i,n
+
+Dk and Dk = diag (c⊛k, c⊛k, · · · , c⊛k)
+
+is the Differential matrix with c = [−1, 1] convoluted 
+
+k times. Considering M + 1 waypoints, a full trajectory 
+
+xr (t) can be modeled by stacking together M Bernstein polynomials connected at the extremal points as 
+
+xr (t) = 
+
+Pni=0 pm1 
+
+> i,n
+
+βni (T1 − t) for t ∈ [0 , T 1]
+
+Pni=0 pm2 
+
+> i,n
+
+βni (T2 − t) for t ∈ [T1, T 2]
+
+...
+
+Pni=0 pMi,n βni (TM − t) for t ∈ [TM −1, T M ]
+
+(17) where pmj 
+
+> i,n
+
+is the ith control point of the mj sub trajectory, with j ∈ [1 , M ], and the time instants T1, T 2, . . . , T M
+
+represent the allocated time for each of sub trajectory. Building on this framework, we formulate the trajectory design as a nonlinear optimization problem min σ0J + σ1T + σ2W
+
+s.t. y < G(t)pd < z (18) where  
+
+> •
+
+J = R tf 
+
+> 0
+
+x(3)  
+
+> r
+
+(t) 2
+
+dt is the integral of the squared trajectory jerk.  
+
+> •
+
+T = Pfj=0 tj is the total traversal time of the polyno-mial segments j ∈ [0 , t f ].• W⊥ = − Pnj=0 Wp accounts for wind effects at each derived control point of the polynomial, maximizing 
+
+Wp = WI · ˙xr (t) defined as the projection of the wind vector WI along the trajectory velocities ˙xr (t),described through the derivative ˙pd of the n optimiza-tion coefficients for the XY directions. Three optimization weights σ0, σ1, and σ2 allow trading off between minimum jerk, minimum traversal time, and wind exploitation. The vector pd contains the polynomial coefficients, and G(tj ) is the constraint matrix evaluated at segment of duration tj . The lower and upper bounds of the constraints are y and z respectively, are defined to impose the following conditions  
+
+> •
+
+Respect the geometry for coordinated flight conditions.  
+
+> •
+
+Bounding the maximum curvature κ of the trajectory.  
+
+> •
+
+Bounding the sink rate Vz so that the measurements from the netto variometer satisfy ˙Enet = 0 . 
+
+> •
+
+Continuous adaptation to local wind estimation and presence of obstacles Constraints are enforced using the convex hull property of Bernstein polynomials, which guarantees that the trajectory remains within the prescribed bounds 1. Endpoint constraint. Considering a starting time t0 and an ending time tf , we constrain xr at the reference waypoints position xr , velocity ˙xr , and acceleration ¨xr
+
+C(k)
+
+> n, 0
+
+(t0) = x(k)(t0), C(k) 
+
+> n,M
+
+(tf ) = x(k)(tf ). (19) 2. Continuity Constraints. The goal is to ensure the conti-nuity in position and higher derivatives of the trajectory 
+
+xr (t) at the junction of the M sub trajectories as 
+
+Cn,m (tf ) = Cn,m +1 (t0). (20) 3. Curvature or angular rate constraint. The curvature of a trajectory, defined as κ = f ( ˙ xrx , ˙xry , ¨xrx , ¨xry )
+
+evaluated from t0 to tf and differently from [13], can be directly expressed as a bernstein polynomial given its natural relationship with the derivative of the heading angle of the trajectory Ψ( t) = tan −1( ˙xry 
+
+> ˙xrx
+
+) as 
+
+˙Ψ( t) = ω(t) = ˙xrx ¨xry − ¨xrx ˙xry
+
+˙x2 
+
+> rx
+
++ ˙ x2
+
+> ry
+
+. (21) 4. Ground Cruising Speed Magnitude. Given the presence of wind, we model the magnitude of the trajectories ve-locities to respect the wind triangle constraint expressed in Section III-A. Given the squared norm of ˙xr as 
+
+∥ ˙xr ∥2 = Vg = ˙ xrx ˙xrx + ˙ xry ˙xry , (22) we can correct the nominal cruising speed given the wind magnitude W imposing the following wind trian-gle constraint 
+
+Vg − W − ξ ≤ ∥ ˙xr ∥2 ≤ Vg − W + ξ, (23) where ξ is defined as a small constraint relaxation value. 5. Sink Rate Constraint. To ensure that the gliding trajectory respects the aircraft’s nominal sink rate 
+
+Fig. 4: Trajectory optimization with more weight on a) time cost σ1, b) jerk cost σ0 and c) wind cost σ2.
+
+Vz,nom (Va, ϕ ), and maintains an energy-balanced state ( ˙Enet = 0 and Va = Va,ref , we integrate the energy estimator, represented in Fig. 3 and described in Sec-tion III-B, directly as a constraint as 
+
+Vz,nom (Va, ϕ ) − ξ ≤ ˙xrx ≤ Vz,nom (Va, ϕ ) + ξ, 
+
+(24) Similarly, the nominal sink rate Vz,nom (Va, ϕ ) can be expressed in terms of a Bernstein Polynomial with n
+
+control points, as for eq. (12) 
+
+Vz,nom (Va, ϕ ) = Va
+
+ PCL
+
++ BC L(1 + tan ϕ2)
+
+
+
+,
+
+(25) where tan ϕ = − V2 
+
+> a∗κg
+
+defines an approximation to express the squared cosine as Bernstein polynomial, where κ is polynomial describing the curvature as defined above in eq. (21). 6. Obstacle and No Fly Zone Avoidance. As shown in Fig. 3, a Gaussian-shaped obstacle is defined as O =[xo, y o, h, σ x, σ y ] with center (xo, y o), height h and variance (σx, σ y ). The obstacle is approximated by a Bernstein polynomial Cn,obs whose position is defined as xobs , allowing the Convex Hull property to enforce a safe distance from the trajectory. The squared distance in the XY plane is 
+
+d2(t) = ( xobs,x − xx)2 + ( xobs,y − xy )2, (26) 
+
+d2 
+
+> saf e
+
+≤ d2(t) ≤ ∞ . (27) Since the required obstacle representation diescretiza-tion due by the coefficients position Cn,obs , a 2D formulation suffices to maintain safety, preventing the trajectory from passing above or inside the gap between obstacle coefficients. In order to continuously compensate for updated wind estimations along the course of the gliding treajectory, we design a replanning technique visible in Fig. 1. The trajectory is continuously updated x(s(t)) r,j in order to keep the aircraft stable, also adjusting the terminal part x(s(tf )) r,j 
+
+so that Va = Va,ref and ˙E = 0 .V. R ESULTS 
+
+In this section, we outline the mission planning based on continuous optimization of Bernstein Polynomials as anticipated in Fig. 1, using the CASADI tool running the IPOPT solver [37]. Our modular framework, visualized in Fig. 2, is validated through simulations and real world experiments in a large outdoor field. The FW aircraft used for our experiments and shown in Fig. 1, is a Strix Stratosurfer, equipped with an OrangeCube Flight Controller running PX4 for low-level attitude control. Onboard computation is handled by an NVIDIA ® Jetson Xavier Orin board, running Ubuntu 22.04 and the ROS2 1 framework for intra-processes communications. Localization is based on a Drotek ® F9P GNSS receiver integrated with the PX4 EKF2-based state estimator, while airspeed is measured via CAN based sensor. The planner and trajectory manager, as illustrated in Fig. 3, operate at 100 Hz to ensure smooth and continuous control. Mission data is also transmitted to the trajectory manager via the QGroundControl ® interface. 
+
+A. Mission Planning 
+
+For both simulation and real world experiments, missions are planned via the QGroundControl (QGC) interface as (see Fig. 1). Waypoints are uploaded to the onboard computer us-ing map coordinates, and each waypoint defines an actuated or gliding flight segment through cost function weights σ0,2 
+
+> •
+
+Cruising Mode : The aircraft performs actuated cruising to recover altitude lost during gliding. Minimum-jerk Bernstein trajectories are generated using a seed based on a set of waypoints BD = [ BD, 0, . . . , BD,n ] ∈ D
+
+upsampled from a Dubins path, represented as yellow spheres in Fig. 1.  
+
+> •
+
+Gliding Mode : The planner generates trajectories con-sidering T = 0 between the waypoints wG =[BG,start , BG,end ] as visible in Fig. 1, activating all the cost objectives and constraints described in Section IV including the gliding constraint and the wind cost term 
+
+σ2. The gliding segments are in yellow in Fig. 1. For Cruising Mode, the weights are set as σ0 = 10 ,
+
+σ1 = 0 .1, σ2 = 0 .1. This provide the planner more freedom in generating minimum jerk trajectories, instead of minimum time, creating slower but more round trajectories between the waypoints, relaxing as well the curvature constraint and reducing the optimization time. In Fig. 4 illustrates an optimized Bernstein trajectory, comparing the value of 
+
+J obtained in case of minimum time and minimum Jerk optimization, respectively resulting in J = 0.279 m /s3
+
+and J = 0 .052 m /s3. The wind exploitation effect on the optimization is shown in Fig. 4 (right) with σ2 = 5 .0 and the wind velocity magnitude of 4 m /s.
+
+B. Sink rate estimation 
+
+To plan trajectories with respect to the aircraft sink rate 
+
+Vz (Va, ϕ ), we estimate it using CFD simulations and real flight data. The resulting sink polars are shown in Fig. 5, with load n = 1 /cosϕ on the y-axis, and airspeed Va on the x-axis. Data were collected over 20+ glides between 
+
+BG,start and BG,end varying the slope angle γ for each 
+
+> 1www.ros.org
+
+Fig. 5: Sink Polar and relative sink rate as obtained through empirical data (green) and CFD analysis (red). 
+
+Fig. 6: 2D real world mission visualization in presence of 5 m/s tailwind. The recorded sink rate is stable at 
+
+Vz (Va, ϕ ) = −1.48 m /s.reference airspeed Va,ref ∈ [10 , 18] m /s. For each Va,ref ,the corresponding Vz is extracted to construct the sink polar. The tangent from the origin identifies the airspeed that maximizes L/D , minimizing drag during the glide. Both CFD and experimental polars indicate an optimal gliding speed of V ∗ 
+
+> a,ref
+
+≈ 12 m /s, yielding Vz = 1 .51 m /s. Given the V ∗ 
+
+> a,ref
+
+, we further identify the proper amount of throttle required to cruise condition such that Vz = 0 , defined as 
+
+ucruise = 0 .376 ∈ [0 , 1] , as visible in red in Fig. 5. 
+
+C. Real world experiments 
+
+A sample real world mission is visible in 3D in Fig. 1 and in 2D with wind directionality in Fig. 6. performing consecutive glides between BG,start and BG,end , approxi-mately 400 m apart, starting at 120 m altitude. The planner computes the altitude of the end waypoint and the slope of the trajectory and the vertical velocity based on the airspeed, sink rate and wind, while onboard sensors continuously estimate energy, airspeed and wind conditions. After each glide, a trajectory (sampled on 8 waypoints derived from a Dubins path) returns the aircraft to the starting waypoint. We selected Va,ref ≈ 15 m /s during actuated flight, for higher wind resilience, while we decrease it to Va,ref ≈ 12 .5 m /sFig. 7: Glide Properties. The gray region corresponds to un-actuated flight. The aircraft stabilizes at Va,ref with ˙Enet ≈
+
+0, achieving steady glide despite wind, visible between the ground speed Vg (red) and airspeed Va offset in the top plot. 
+
+Fig. 8: Continuous replanning adjusts the predicted sink rate based on most recent wind estimations. during the glide part, given an onboard estimated wind of 
+
+5.2 m /s in south west direction. During the colorful glide in Fig. 6, the planner successfully stabilizes the aircraft to the nominal values of airspeed and sink rate, respectively Va = Va,ref = 12 .5 m /s at 
+
+V z = Vz,ref = −1.48 m /s, such that ˙Enet ≈ 0, as visible in Fig. 7, throughout the entirety of the various glides, despite a recorded speed on the ground of Vg ≈ 20 m /s, showing the important tailwind effect. Referring to the results shown in Fig. 7, we demonstrate the accuracy of the planner in generat-ing gliding trajectories such that the RM SE Va = 1 .09 m /s,
+
+RM SE Vz = 0.39 m /s and RM SE ˙Enet = 0.69 m /s over a net glide length of 489 .77 m . From the recorded data, it is possible to quantify a net aircraft glide ratio of 9.83 : 1 m ,which is pretty low compared a standard sailplane glide ratio of 70 : 1 m . However, the results shows effectivness of the planner and the re-planning technique shown in Fig. 8, which immediately stabilizes the plane on a balance glide despite the mechanical structural properties of the platform, that are not comparable to a glider. 
+
+Fig. 9: 2D mission visualization in presence of gaussian obstacle and lateral estimated wind. 
+
+Fig. 10: Gliding details based on recorded Va, Vz (Va, ϕ ) and 
+
+˙Enet in case of deviations due by the obstacle. 
+
+D. Real world experiments with obstacle avoidance 
+
+We also evaluate the planner in challenging scenarios where an obstacle is present along the glide path. A Gaussian obstacle with variance σx = σy = 50 m and height 
+
+z = 90 m was placed at position OI = [100 , −80] m , as visible in Fig. 9. The reference gliding airspeed was set to 
+
+Va,ref = 12 .5 m /s as in the previous experiment. Even in this scenario, the planner successfully generated trajectories that quickly stabilized the aircraft at the desired gliding airspeed and nominal sink rate, as visible in Fig. 10, while ensuring a minimum safe distance of dsaf e = 20 m . Some oscillations are observed when the trajectory crosses the wind direction at 90 ◦, a singular configuration where the wind cost becomes negligible. In this case, the aircraft compensates by trading altitude for speed, which explains the temporary increase in airspeed visible in Fig. 10. Despite this, the performance remained within acceptable limits, with RMSE values of RM SE Va = 1 .31 m /s, RM SE Vz = 0 .42 m /s
+
+and RM SE ˙Enet = 0 .78 m /s. The glide covers a distance of 425 .86 m with an altitude loss of 59 .65 m , showing a net glide ratio of 7.10 : 1 m . This reduction compared to the previous test is expected and mainly due to the heading variation imposed by the obstacle and the additional energy required to counteract the wind. VI. C ONCLUSION 
+
+In this work, we presented a real-time planner for efficient gliding in windy conditions. Starting from steady-state glide analysis, we introduce an energy-based method that embeds netto variometer equations directly into the optimization. The sink-rate polar is obtained from empirical and CFD data, and the approach is validated in both simulation and real-world tests. Using differential flatness, we generate fast, online Bernstein trajectories for gliding and cruising, yielding smooth paths that exploit favorable wind. Experiments under varying winds and obstacles demon-strate the planner’s robustness in maintaining steady glide. Future work includes extending the method to soaring, where atmospheric lift supports sustained flight, and integrating the energy-based constraints directly into an NMPC formulation for short-horizon, glide-aware trajectories. REFERENCES [1] P. V´ aˇ na, J. Sl´ ama, J. Faigl, and P. Paˇ ces, “Any-time trajectory planning for safe emergency landing,” in IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , 2018, pp. 5691–5696. [2] S. J. Deal, H. L. Nichols, and A. Mazumdar, “Autonomous emergency landing for fixed-wing aircraft with energy-constrained closed-loop prediction,” Journal of Aerospace Information Systems , vol. 21, no. 5, pp. 430–442, 2024. [3] D. R. Green, J. J. Hagon, C. G´ omez, and B. J. Gregory, “Chapter 21 - using low-cost uavs for environmental monitoring, mapping, and modelling: Examples from the coastal zone,” in Coastal Management ,R. Krishnamurthy, M. Jonathan, S. Srinivasalu, and B. Glaeser, Eds. Academic Press, 2019, pp. 465–501. [4] A. Jaimes, S. Kota, and J. Gomez, “An approach to surveillance an area using swarm of fixed wing and quad-rotor unmanned aerial vehicles uav(s),” in IEEE International Conference on System of Systems Engineering , 2008, pp. 1–6. [5] N. O. Renn´ o and E. R. Williams, “Quasi-lagrangian measurements in convective boundary layer plumes and their implications for the calculation of cape,” Monthly weather review , vol. 123, no. 9, pp. 2733–2742, 1995. [6] C. Gall, W. Fichter, and A. Ahmad, “End-to-end thermal updraft detection and estimation for autonomous soaring using temporal con-volutional networks,” in IEEE International Conference on Robotics and Automation (ICRA) , 2024, pp. 17 875–17 881. [7] J. Lim, F. Achermann, R. Girod, N. Lawrance, and R. Siegwart, “Safe low-altitude navigation in steep terrain with fixed-wing aerial vehicles,” IEEE Robotics and Automation Letters , vol. 9, no. 5, pp. 4599–4606, 2024. [8] R. van den Brandt and C. de Visser, “Safe flight envelope uncer-tainty quantification using probabilistic reachability analysis,” IFAC-PapersOnLine , vol. 51, no. 24, pp. 628–635, 2018, 10th IFAC Sym-posium on Fault Detection, Supervision and Safety for Technical Processes SAFEPROCESS 2018. [9] H. Lu, L. Gao, Y. Yan, M. Hou, and C. Wang, “Wind disturbance compensated path-following control for fixed-wing uavs in arbitrarily strong winds,” Chinese Journal of Aeronautics , vol. 37, no. 2, pp. 431–445, 2024. [10] H. Xin, Q. Chen, Y. Xian, P. Wang, Y. Wang, X. Yao, Y. Lu, and Z. Hou, “Longitudinal decoupling control of altitude and velocity for a fixed-wing aircraft,” IEEE Transactions on Intelligent Vehicles , vol. 9, no. 10, pp. 6738–6748, 2024. [11] P. Oettershagen, T. Stastny, T. Hinzmann, K. Rudin, T. Mantel, A. Melzer, B. Wawrzacz, G. Hitz, and R. Siegwart, “Robotic technolo-gies for solar-powered uavs: Fully autonomous updraft-aware aerial sensing for multiday search-and-rescue missions,” Journal of Field Robotics , vol. 35, no. 4, pp. 612–640, 2018. [12] A. Anandakumar, D. Bernstein, and A. Goel, Adaptive Energy Control of Longitudinal Aircraft Dynamics .[13] L. Morando, S. A. Salunkhe, N. Bobbili, J. Mao, L. Masci, C. de Souza, N. Hung, and G. Loianno, “Trajectory planning and control for differentially flat fixed-wing aerial systems,” in IEEE International Conference on Robotics and Automation (ICRA) , 2025, pp. 6336–6342. [14] C. Kielas-Jensen and V. Cichella, “Bebot: Bernstein polynomial toolkit for trajectory generation,” in IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , 2019, pp. 3288–3293. [15] O. P. Neto and F. Signor, “A method for sailplane preliminary aerodynamic design,” in 2023 Regional Student Conferences .[16] N. Tekles, J. Chongvisal, E. Xargay, R. Choe, D. A. Talleur, N. Hov-akimyan, and C. M. Belcastro, “Design of a flight envelope protection system for nasa’s transport class model,” Journal of Guidance, Control, and Dynamics , vol. 40, no. 4, pp. 863–877, 2017. [17] J. Stephan, O. Pfeifle, S. Notter, F. Pinchetti, and W. Fichter, “Precise tracking of extended three-dimensional dubins paths for fixed-wing aircraft,” Journal of Guidance, Control, and Dynamics , vol. 43, no. 12, pp. 2399–2405, 2020. [18] I. Lugo-C´ ardenas, G. R. Flores, S. Salazar, and R. Lozano, “Dubins path generation for a fixed wing uav,” International Conference on Unmanned Aircraft Systems (ICUAS) , pp. 339–346, 2014. [19] A. Bry, C. Richter, A. Bachrach, and N. Roy, “Aggressive flight of fixed-wing and quadrotor aircraft in dense indoor environments,” The International Journal of Robotics Research , vol. 34, no. 7, pp. 969– 1002, 2015. [20] S. Tabor, I. Guilliard, and A. Kolobov, “Ardusoar: An open-source thermalling controller for resource-constrained autopilots,” in 
+
+IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , 2018, pp. 6255–6262. [21] S. Dupont, “How accurate is netto,” NASA. Langley Res. Center The Sci. and Technol. of Low Speed and Motorless Flight, Pt. 1 , 1979. [22] N. T. Depenbusch, J. J. Bird, and J. W. Langelaan, “The autosoar autonomous soaring aircraft, part 1: Autonomy algorithms,” Journal of Field Robotics , vol. 35, no. 6, pp. 868–889, 2018. [23] M. B. Galles and B. A. Newman, “Reducing the noise impact of small aircraft through indirect trajectory optimization,” in AIAA Aviation 2020 Forum , 2020, p. 2594. [24] P. Oettershagen, J. F¨ orster, L. Wirth, G. Hitz, R. Siegwart, and J. Amb¨ uhl, “Meteorology-aware multi-goal path planning for large-scale inspection missions with solar-powered aircraft,” Journal of Aerospace Information Systems , vol. 16, no. 10, pp. 390–408, 2019. [25] V. Dobrokhodov, Kinematics and Dynamics of Fixed-Wing UAVs .Cham: Springer International Publishing, 2020, pp. 1–40. [26] E. M. Atkins, I. A. Portillo, and M. J. Strube, “Emergency flight planning applied to total loss of thrust,” Journal of Aircraft , vol. 43, no. 4, pp. 1205–1216, 2006. [27] A. J. Barry, T. Jenks, A. Majumdar, H.-T. Lin, I. G. Ros, A. A. Biewener, and R. Tedrake, “Flying between obstacles with an au-tonomous knife-edge maneuver,” in IEEE International Conference on Robotics and Automation (ICRA) , 2014, pp. 2559–2559. [28] J. Levin, A. Paranjape, and M. Nahon, “Motion planning for asmall aerobatic fixed-wing unmanned aerial vehicle,” in IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) ,2018, pp. 8464–8470. [29] M. van Nieuwstadt, M. Rathinam, and R. M. Murray, “Differential flatness and absolute equivalence of nonlinear control systems,” SIAM Journal on Control and Optimization , vol. 36, no. 4, pp. 1225–1239, 1998. [30] J. Hauser and R. Hindman, “Aggressive flight maneuvers,” in 36th IEEE Conference on Decision and Control (CDC) , vol. 5, 1997, pp. 4186–4191. [31] A. Bry, C. Richter, A. Bachrach, and N. Roy, “Aggressive flight of fixed-wing and quadrotor aircraft in dense indoor environments,” The International Journal of Robotics Research , vol. 34, pp. 1002 – 969, 2015. [32] T. Liu, J. Li, F. Zou, B. Wang, and Y. Niu, “Differential flatness-based trajectory planning and tracking for fixed-wing aircraft in clustered environments,” in 42nd Chinese Control Conference (CCC) , 2023, pp. 3627–3631. [33] N. R. Lawrance, “Autonomous soaring flight for unmanned aerial vehicles,” Ph.D. dissertation, 2011. [34] M. Owen, R. W. Beard, and T. W. McLain, Implementing Dubins Air-plane Paths on Fixed-Wing UAVs . Dordrecht: Springer Netherlands, 2015, pp. 1677–1701. [35] N. B. Gallagher, “Savitzky-golay smoothing and differentiation filter,” 
+
+Eigenvector Research Incorporated , vol. 2, p. 4, 2020. [36] C. Kielas-Jensen, V. Cichella, T. Berry, I. Kaminer, C. Walton, and A. Pascoal, “Bernstein polynomial-based method for solving optimal trajectory generation problems,” Sensors , vol. 22, no. 5, p. 1869, 2022. [37] A. W¨ achter and L. T. Biegler, “On the implementation of a primal– dual interior point filter line search algorithm for large-scale nonlinear programming,” Mathematical Programming , vol. 106, no. 1, pp. 25– 57, 2006, used as the canonical reference for IPOPT.

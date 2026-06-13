@@ -1,0 +1,873 @@
+Title: Communication-Constrained Energy-Optimal Trajectory Generation for Quadrotor UAVs in Urban Environments
+
+URL Source: https://arxiv.org/pdf/2605.24865v1
+
+Published Time: Tue, 26 May 2026 02:04:07 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+> 1
+
+# Communication-Constrained Energy-Optimal Trajectory Generation for Quadrotor UAVs in Urban Environments 
+
+Prateek Priyaranjan Pradhan, Ketan Rajawat, and Mangal Kothari 
+
+Abstract—Communication-aware trajectory generation for unmanned aerial vehicles (UAVs) operating in urban environ-ments requires simultaneous consideration of vehicle dynamics, wireless communication quality, obstacle avoidance, and on-board energy limitations. In such missions, UAVs must navigate through obstacle-rich environments while ensuring reliable re-lay of mission-critical sensory information to ground infrastruc-ture. This results in a highly nonlinear and nonconvex optimal control problem involving coupled communication and flight-dynamics constraints. This paper presents a communication-constrained energy-optimal trajectory generation framework for quadrotor UAVs operating in urban environments. The proposed formulation incorporates full rigid-body quadrotor dynamics, realistic urban wireless communication models, cu-mulative data throughput constraints, and obstacle avoidance requirements within a unified free-final-time optimal control framework. Unlike conventional approaches based on simplified kinematic or point-mass models, the proposed formulation generates dynamically feasible trajectories that remain directly implementable on practical aerial platforms. The resulting nonconvex optimal control problem is solved iteratively using sequential convex programming (SCP), enabling computation-ally tractable trajectory generation while preserving dynamic feasibility and communication constraints. Numerical simula-tions are presented for multiple urban mission scenarios in-volving varying communication-throughput requirements and obstacle configurations. The results demonstrate the ability of the proposed framework to generate energy-efficient and communication-aware trajectories while adapting mission du-ration according to data relay requirements. The proposed methodology provides a practical framework for autonomous UAV operations requiring reliable communication in dense urban environments. Index Terms—Communication-aware trajectory optimiza-tion, free-final-time optimal control, quadrotor UAV, sequential convex programming, urban autonomous navigation, obstacle avoidance, energy-optimal trajectory generation, UAV commu-nication relay. 
+
+I. Introduction Unmanned aerial vehicles (UAVs), also commonly known as drones, promise a wide variety of exciting 
+
+Prateek Priyaranjan Pradhan is with the Department of Aerospace Engineering, Indian Institute of Technology Kanpur, Kanpur, India (e-mail: prateekpp20@iitk.ac.in). Ketan Rajawat is with the Department of Electrical Engineering, Indian Institute of Technology Kanpur, Kanpur, India (e-mail: ketan@iitk.ac.in). Mangal Kothari was with the Department of Aerospace Engineer-ing, Indian Institute of Technology Kanpur, Kanpur, India. He is currently with ADASI, EDGE Group, Abu Dhabi, UAE. This work was carried out while he was with the Indian Institute of Technology Kanpur (e-mail: mangalgnc@gmail.com). 
+
+applications in the modern world [1]. In earlier decades, UAVs were mainly used in military applications and deployed in hostile territory for remote surveillance and armed attacks to reduce pilot losses [1]. Thanks to recent advancements in digital communication, sensing technolo-gies, and robotics, UAVs have extended their applications to civilian and commercial sectors [2]. With that, the demand for UAVs in aerial inspection, photography, search and rescue, package delivery, intelligent transportation monitoring, and persistent aerial surveillance is growing rapidly in urban cities. Trajectory generation and autonomous navigation for UAVs operating in constrained urban environments have remained active areas of research over the past decade. Earlier works investigated robust UAV path planning in uncertain urban environments using probabilistically robust rapidly-exploring random trees (RRTs) [3], urban path-following strategies under wind disturbances [4], and distributed probabilistic motion planning algorithms for multi-agent systems [5]. In parallel, significant re-search efforts have focused on cooperative UAV systems, target-centric formations, distributed optimization, and multi-agent coordination strategies [6]–[9]. More recently, communication-aware autonomy and low-bandwidth UAV networking architectures have gained increasing attention due to their relevance in swarm robotics, distributed sensing, and network-enabled autonomous systems [10]. Due to the infrastructural developments in urban cities, generating a feasible and safe trajectory autonomously for a UAV is not only desirable but also necessary for the execution of any task. Failing to generate a safe trajectory that obeys the vehicular dynamics may result in loss of the vehicle payload or even harm to human lives in the envi-ronment. Along with generating safe trajectories, reliable UAV communication is essential in various applications such as urban traffic monitoring, infrastructure inspection, package delivery, and city surveillance. Existing literature broadly classifies UAV-enabled communication into two categories: UAV as an aerial base station [11] provid-ing seamless wireless coverage within the serving area, and UAV as a mobile relay or data collector [12]. The presented work focuses on the latter case in an urban environment. Such scenarios are common when the UAV has collected sensory data but processing the data onboard is inefficient due to limited computational resources. In these situations, the UAV can transmit the data to a 
+
+> arXiv:2605.24865v1 [eess.SY] 24 May 2026 2
+
+ground station (GS) for further processing, saving energy for longer endurance. Figure 1 illustrates a scenario similar to the problem discussed in this paper, where a UAV is required to generate a feasible and optimal trajectory from a specified starting point to a goal position in an urban environment while avoiding obstacles (buildings and trees) and relaying data to a GS. Start  
+
+> Goal
+> Fig. 1. Illustration of a UAV mission scenario in an urban environ-ment
+
+One critical issue in UAV-enabled wireless communi-cation is the limited onboard energy of UAVs, which needs to be efficiently utilized to enhance communication performance and prolong the UAV’s endurance. The authors of [13] were the first to propose an energy-efficient UAV communication model for a quadrotor UAV, where the energy consumption is derived as a function of UAV velocity. Adopting the energy consumption model in [13], a robust resource allocation algorithm was investigated in [14] by jointly optimizing the UAV trajectory and the transmit beamforming vector. Moreover, a 3D energy consumption model was proposed in [15], assuming that the UAV moves smoothly with small acceleration and constant cruising speed. However, these works consider the UAV as a point mass model and do not take into account the rigid body dynamics. Since kinematic equations do not consider the forces that generate the motion, the resulting designed trajectory is difficult to implement directly in practice. In [16], the authors presented an energy model with rigid body dynamics of a quadrotor UAV for generating an energy-efficient UAV communication trajectory. However, their work considers an obstacle-free environment and is not suitable for urban scenarios where the UAV needs to avoid infrastructure and trees, as shown in Figure 1. In our earlier work [17], a minimum-time trajectory optimization framework for a 6-DoF quadrotor UAV was developed using successive convexification techniques, demonstrat-ing the suitability of sequential convex programming (SCP) for solving highly nonlinear UAV optimal control problems involving full rigid-body dynamics. However, communication-aware mission constraints were not con-sidered in that formulation. In this work, we generate a collision-free, energy-optimal trajectory for a quadrotor UAV operating in an urban environment while relaying data to a ground station. Unlike conventional trajectory planning approaches that optimize only geometric path length or mission time, the proposed formulation simultaneously considers:  
+
+> •
+
+full rigid-body quadrotor dynamics,  
+
+> •
+
+cumulative communication throughput requirements,  
+
+> •
+
+realistic urban wireless channel models,  
+
+> •
+
+obstacle avoidance constraints, and  
+
+> •
+
+energy-efficient trajectory generation. Instead of using a point mass model, we consider the full rigid-body dynamics of the UAV. The trajectory generation problem is formulated as a free-time optimal control problem (OCP) to minimize the quadrotor’s en-ergy consumption. By “free-time,” we mean that the final time of the OCP is not predefined; rather, the mission duration itself is an optimization variable. The resulting nonconvex OCP is solved iteratively using sequential convex programming (SCP) [18]. The SCP framework enables computationally tractable generation of dynami-cally feasible and communication-aware trajectories while providing strong convergence characteristics for highly nonlinear constrained optimal control problems. The primary contributions of this work are summarized as follows:  
+
+> •
+
+Formulation of a communication-constrained energy-optimal UAV trajectory generation problem incor-porating full rigid-body dynamics, realistic urban communication models, and obstacle avoidance con-straints.  
+
+> •
+
+Development of an SCP-based solution methodology for solving the resulting nonconvex free-final-time optimal control problem.  
+
+> •
+
+Comprehensive numerical validation in both obstacle-free and urban environments demonstrating the abil-ity of the proposed framework to generate dynam-ically feasible and communication-aware trajectories under varying data throughput requirements. The remainder of this paper is organized as follows. Sec-tion II formulates the energy-optimal trajectory generation problem, considering UAV dynamics, communication con-straints, and obstacle avoidance. Section III presents the solution methodology based on successive convexification. Section V validates the approach through numerical simu-lations in various scenarios. Finally, Section VI concludes the paper and discusses future research directions. II. Problem Formulation This section presents the mathematical framework for the communication-constrained energy-optimal trajectory generation problem. The objective is to generate dy-namically feasible UAV trajectories that simultaneously minimize energy consumption, satisfy cumulative com-munication throughput requirements, and ensure safe navigation through obstacle-rich urban environments. Unlike conventional trajectory planning problems that primarily optimize geometric path length or mission time using simplified kinematic models, the present formulation incorporates:  
+
+> •
+
+full rigid-body quadrotor dynamics, 3XE    
+
+> YE
+> ZE
+> FEFBxB
+> yB
+> zB
+> F1F2
+> F3
+> F4
+> θφψ
+> mg
+> Fig. 2. A schematic diagram of a conventional quadrotor
+> •
+
+communication-aware mission constraints,  
+
+> •
+
+realistic urban wireless channel models,  
+
+> •
+
+obstacle avoidance requirements, and  
+
+> •
+
+free-final-time optimal control. The resulting problem is highly nonlinear and non-convex due to the coupled translational and rotational vehicle dynamics, nonlinear communication-throughput constraints, obstacle avoidance requirements, and free-final-time formulation. The proposed framework integrates these interacting components within a unified optimal control framework suitable for practical autonomous UAV operations in urban environments. A. Vehicle Model The dynamics of a quadrotor UAV, illustrated in Fig. 2, are governed by coupled nonlinear rigid-body equations of motion. Similar modeling approaches have been exten-sively investigated in earlier works involving quadrotor flight dynamics, variable-pitch UAV systems, and tailsitter aerial platforms [19]–[21]. The UAV position in the Earth-fixed frame FE is denoted by 
+
+r(t) = [ x(t), y (t), z (t)] ⊤,
+
+while its orientation is represented using Euler angles 
+
+η(t) = [ ϕ(t), θ (t), ψ (t)] ⊤,
+
+corresponding to roll, pitch, and yaw, respectively. The body-fixed frame FB is centered at the UAV center of mass, with its axes aligned with the principal inertia directions. The nonlinear equations of motion are given by [22] 
+
+˙r(t) = v(t),
+
+˙v(t) = −ge3 + 1
+
+m R(η(t)) F(t),
+
+˙η(t) = W(η(t)) ω(t),
+
+˙ω(t) = J−1 (τc(t) − ω(t) × Jω(t)) .
+
+(1) Here, v(t) denotes the translational velocity vector, g
+
+represents the gravitational acceleration, and m denotes the UAV mass. The matrix R(η(t)) represents the rotation matrix transforming vectors from the body-fixed frame 
+
+FB to the Earth-fixed frame FE. The vector F(t) denotes the total thrust generated by the four rotors, while 
+
+W(η(t)) maps body angular rates to Euler angle rates. Furthermore, J denotes the inertia matrix, e3 = [0 , 0, 1] ⊤
+
+is the unit vector along the vertical axis of the Earth-fixed frame, and τc(t) denotes the control torque vector. The thrust generated by the ith rotor is modeled as 
+
+Fi(t) = CT Ω2 
+
+> i
+
+(t),
+
+where CT denotes the aerodynamic thrust coefficient and 
+
+Ωi(t) represents the rotor angular speed. The control torques about each body axis are generated through differential thrust inputs and depend on the quadrotor geometry, where l denotes the arm length. The adopted rigid-body model captures the cou-pled translational and rotational dynamics of the UAV, including gyroscopic coupling effects and nonlinear attitude-motion interactions. Such a formulation provides a realistic and dynamically consistent framework for communication-aware trajectory optimization and enables generation of trajectories that remain directly imple-mentable on practical aerial platforms. B. Communication Channel Model As shown in Fig. 3, in urban environments, the commu-nication link between a UAV and a GS can be character-ized by both direct (line-of-sight) and indirect (reflected) paths. The probability of establishing a direct communi-cation link ( Pdir (t)) in this environment is modeled using a sigmoid function as [23]: 
+
+Pdir (t) = 11 + a1 exp( −a2[α(t) − a1]) 
+
+where, a1 and a2 are parameters that depend on the specific urban environment. The elevation angle α(t)
+
+between the UAV and GS is given by: 
+
+α(t) = 180 
+
+π sin −1
+
+( z(t) − zGS 
+
+∆r(t)
+
+)
+
+Here, z(t) and zGS are the altitudes of the UAV and the GS, respectively, while ∆r(t) := ∥r(t) − rGS ∥ denotes the Euclidean distance between them. The communication link quality is characterized by the channel coefficient 
+
+C(t) = √γ(t) ˜C(t). This coefficient depends on the large-scale channel power gain γ(t), and small-scale fading, represented by the random variable ˜C(t), with an expected squared magnitude of unity 
+
+(
+
+E
+
+[
+
+| ˜C(t)|2 = 1 
+
+]) 
+
+. Also, the channel power gain, γ(t), varies depending on the link type: 
+
+γ(t) = 
+
+{
+
+γ0∆r−β (t) Direct link 
+
+ζγ 0∆r−β (t) Indirect link where γ0 is the reference channel power at 1 meter distance, the path loss exponent β characterizes the rate at which signal strength decreases with distance, and ζ ∈ (0 , 1) represents additional attenuation due to reflections in the indirect path. Given that the probability of an indirect link is com-plementary to that of a direct link ( Pindir = 1 − Pdir ), we can express the expected channel power gain as: 4Indirect Link  
+
+> Direct Link
+> Fig. 3. Illustration of different types of communication links in an urban city
+
+E[|C (t)|2] = Pdir γ0∆r−β (t) + Pindir ζγ 0∆r−β (t)= Pdir γ0∆r−β (t) (2) where Pdir = ζ + (1 − ζ)Pdir (t) is the effective direct link probability. Then, the instantaneous achievable commu-nication rate between the UAV and ground station can be calculated using the Shannon-Hartley theorem [24]: 
+
+R(t) = w log 2
+
+(
+
+1 + Ptx |C (t)|2
+
+σ2κ0
+
+)
+
+(3) where, w denotes the bandwidth, Ptx is the transmission power, σ2 represents the noise power at the receiver, and 
+
+κ0 > 1 is the gap to capacity accounting for practical coding schemes. Finally, the accumulated communication data through-put Q(t) over time can be quantified as: 
+
+Q(t) = 
+
+∫ t
+
+> 0
+
+E[R(τ )] dτ ≤
+
+∫ t
+
+> 0
+
+w log 2
+
+(
+
+1 + Ptx E[|C (τ )|2]
+
+σ2κ0
+
+)
+
+dτ 
+
+=
+
+∫ t
+
+> 0
+
+w log 2
+
+(
+
+1 + bPdir (τ )∆rβ
+
+)
+
+dτ (4) where the inequality follows from Jensen’s inequality applied to the concave log 2(·) function, i.e. E[log 2(1 + 
+
+X)] ≤ log 2(1 + E[X]) , and b = Ptx γ0 
+
+> σ2κ0
+
+consolidates several system parameters into a single term. This upper bound provides a tractable expression for trajectory optimization while maintaining accuracy for typical urban scenarios. C. Optimal Control Problem Formulation The trajectory generation problem is formulated as a free-time optimal control problem to minimize the quadrotor’s total energy consumption over the mission time T , subject to dynamics, actuator limits, boundary conditions, communication throughput requirements, and obstacle avoidance constraints: 
+
+min  
+
+> u(t),T
+
+J(x(t), u(t), T ) = 
+
+∫ T
+
+> 0
+
+u(t)⊤u(t)dt (5a) s.t. ˙x = f (x(t), u(t)) , t ∈ [0 , T ] (5b) 
+
+0 ≤ u1(t) ≤ u1 max , t ∈ [0 , T ] (5c) 
+
+|ui(t)| ≤ ui max , i = 2 , 3, 4, t ∈ [0 , T ] (5d) 
+
+|ϕ(t)| ≤ ϕmax (5e) 
+
+|θ(t)| ≤ θmax (5f) 
+
+x(0) = xstart (5g) 
+
+x(T ) = xgoal (5h) 
+
+Q(T ) ≥ Q min (5i) 
+
+∥x(t) − xo,j , y (t) − yo,j ∥ ≥ ds,j , ∀j, t ∈ [0 , T ] (5j) The cost function, J, represents the energy expenditure, which is a function of the control inputs. The quadrotor dynamics are governed by the nonlinear system ˙x(t) = 
+
+f (x(t), u(t)) (5b), where x(t) := [ r⊤, v⊤, η⊤, ˙η⊤]⊤ ∈ R12 
+
+and u(t) := [ F, τ ⊤ 
+
+> c
+
+]⊤ ∈ R4 are the state and control vectors, respectively. Control constraints ensure that the vertical thrust remains non-negative and within the actu-ator limits 0 ≤ u1(t) ≤ u1,max (5c), while torque control inputs are bounded by |ui(t)| ≤ ui, max , i = 2 , 3, 4 (5d), to reflect physical limitations. State constraints include initial and terminal bound-ary conditions, ensuring that the quadrotor starts from 
+
+x(0) = xstart (5g) and reaches a predefined final state 
+
+x(T ) = xgoal (5h). Furthermore, roll and pitch angles are limited by |ϕ(t)| ≤ ϕmax and |θ(t)| ≤ θmax (5e)–(5f) to maintain stable flight conditions. A performance-related constraint ensures that the accumulated throughput Q(T ),computed as a function of state and control variables, meets or exceeds a minimum threshold Qmin (5i), en-suring successful mission performance. Additionally, ob-stacle avoidance constraints are incorporated to prevent collisions by enforcing a safe distance from obstacles throughout the flight (5j). III. Convex Subproblem Conversion The OCP (5) is inherently non-convex due to nonlin-ear quadrotor dynamics (5b), non-convex communication constraints (5i), and obstacle avoidance requirement (5j). The non-convex problems are typically difficult to solve efficiently and reliably. Moreover, the continuous time OCP can also be viewed as an infinite dimensional optimization problem over functional spaces. In most of the cases, the solution to such infinite dimensional optimization problems is neither available in closed form nor computationally tractable to compute in real time. Thereby, we attempt to approximate the non-convex OCP by iteratively solving a sequence of convex subproblems. Figure (4) presents an overview of the sequential convex programming (SCP) algorithm. The central component of this framework, shown as the ”Convexification” block, linearizes non-convexities and approximates the infinite-dimensional problem by discretizing it into a finite-5
+
+dimensional representation. The detailed structure of this framework is briefed in the subsequent subsections.  
+
+> Fig. 4. Flowchart of presented SCP framework
+
+A. Time scaling In the free-time optimal control problem, the final time T is an optimization variable rather than a fixed parameter. This variable time horizon presents numerical challenges for standard optimization solvers. To address this challenge, we employ a time-scaling transformation that converts the problem into a fixed-time formulation. We define a normalized time variable τ ∈ [0 , 1] that maps the original time interval [0 , T ] to a fixed normalized interval. The relationship between the original time t and the normalized time τ is given by t = T · τ . As t goes from 0 to T , τ goes from 0 to 1. This normalization allows for a consistent treatment of the problem regardless of the actual mission duration. The dynamics, boundary conditions, and cost function are then reformulated in terms of τ to reflect the normalized time scale. The time-scaling approach simplifies the optimization process, ensures consistent constraint enforcement, and enables the use of fixed-time optimization techniques. Hence, the dynamics converted to normalized time is expressed as, dx
+
+dτ = dx
+
+dt
+
+dt
+
+dτ = T · f (x, u) . (6) The boundary conditions transform directly as 
+
+gic (x(0)) = x(0) − xstart , gtc (x(1)) = x(1) − xgoal . (7) Similarly, the cost function (5a) in normalized time is given as 
+
+J(x(τ ), u(τ ), T ) = h(x(1) , T ) + 
+
+∫ 10
+
+Γ( x(τ ), u(τ ), T )dτ
+
+=
+
+∫ 10
+
+T · u(τ )⊤u(τ )dτ. (8) where the terminal cost h(x(1) , T ) ≡ 0 and the running cost Γ( x(τ ), u(τ ), T ) = T · u(τ )⊤u(τ ). Then, the OCP in the normalized time can be reformulated as, 
+
+min   
+
+> u(τ),T
+
+J(x(τ ), u(τ ), T ) (9a) s.t. ˙x = f (x(τ ), u(τ ), T ), τ ∈ [0 , 1] (9b) 
+
+u(τ ) ∈ U , x(τ ) ∈ X (9c) 
+
+x(0) = xstart , x(1) = xgoal (9d) 
+
+s(x(τ ), u(τ ), T ) ≤ 0 (9e) Here, f (x(τ ), u(τ ), T ) := T · f (x(τ ), u(τ )) , and U, X
+
+define the set containing the convex control and state con-straints earlier defined in (5c)–(5e). Also, the nonconvex constraints (5i)–(5j) in the original OCP (5), are defined in (9e). B. Initial Trajectory guess The successive convexification algorithm requires an initial reference trajectory to begin the iterative process. For simplified implementation, the initial guess trajectory is constructed by linearly interpolating between the two boundary states: 
+
+xg(τ ) = (1 − τ )xstart + τ xgoal , for τ ∈ [0 , 1] . (10) Similarly, the control input guess is initialized as 
+
+ug(τ ) = (1 − τ )ug 
+
+> 0
+
++ τ ug 
+
+> f
+
+, for τ ∈ [0 , 1] , (11) where ug 
+
+> 0
+
+and ug 
+
+> f
+
+are the initial and final guesses for the control inputs. Also, T g is considred as the initial guess for the mission time. This initialization strategy provides a dynamically infeasible but geometrically reasonable start-ing point that the algorithm can refine through successive iterations. While the algorithm demonstrates robust convergence properties from various initializations (detailed conver-gence analysis in Section IV), a well-chosen initial guess can significantly reduce the number of iterations required. Specifically, an accurate starting estimate can reduce the number of iterations required for convergence, enhance the optimality of the resulting trajectory, and improve the overall viability of the converged solution. C. Linearization The first step in constructing a convex sub-problem in-volves addressing the inherent non-convexities in the OCP (9). By replacing each non-convex term with its first-order approximation around the reference trajectory, the result-ing sub-problem is guaranteed to be convex. Compared to second-order approximations, first-order linearizations offer a computational advantage, requiring significantly less processing effort. Hence, the corresponding Jacobian matrix ( A(τ )) at each iteration is calculated as, 
+
+A(τ ) = ∇xf (xr (τ ), ur (τ ), T r )
+
+where (xr (τ ), ur (τ ), T r ) are the reference states, control inputs, and time at a particular iteration. The other Ja-cobians , B (τ ) = ∇uf , F (τ ) = ∇T f , C (τ ) = ∇xs, D (τ ) = 6
+
+∇us, G (τ ) = ∇T s can be similarly computed about the reference trajectories. The residues of nonlinear functions (f , s ) after linearization are calculated as 
+
+ϱ(τ ) := f (xr (τ ), ur (τ ), T r ) −Axr (τ )−Bur (τ )−F T r̂
+
+ϱ(τ ) := s (xr (τ ), ur (τ ), T r ) −Cxr (τ )−Dur (τ )−GT r
+
+However, linearization may introduce two fundamental challenges: artificial un-boundedness and artificial infea-sibility. Even when the initial (non-linear) constraints allow for a non-empty feasible set, two scenarios may arise in which the constraints become inconsistent after linearization:  
+
+> •
+
+The intersection of the linearized constraints may be empty.  
+
+> •
+
+The trust region [18] may be so small that it restricts the solution variables to a region outside the feasible set. Consequently, the intersection of the feasible area of the linearized constraints with the trust region may also be empty. To address this issue, we introduce slack variables often referred to as virtual controls ν(τ ) for dynamics constraints and virtual buffer zones νs(τ ) for nonconvex constraints. The modified problem can be expressed as: 
+
+min    
+
+> u(τ),T, ̂ν
+
+Jλ(x(τ ), u(τ ), T, ̂ ν), (12a) s.t. ˙x(τ ) = Ax(τ ) + Bu(τ ) + F T + ϱ(τ ) + ν(τ ), (12b) 
+
+u(τ ) ∈ U , x(τ ) ∈ X (12c) 
+
+x(0) = xstart , x(1) = xgoal (12d) 
+
+Cx(τ ) + Du(τ ) + GT +̂ ϱ(τ ) ≤ νs(τ ), (12e) 
+
+∥δx(τ )∥ + ∥δu(τ )∥ + ∥δT ∥ ≤ Υ (12f) where ̂ ν is a shorthand notation used to denote the collection of virtual controls (ν, ν s). These virtual controls are auxiliary variables that do not correspond to physical control inputs of the UAV system. Rather, they are synthetic inputs introduced solely to ensure numerical stability and feasibility during the optimization process. In the final converged solution, these virtual controls ̂ ν(t)
+
+must vanish (i.e., equal zero), indicating that the ob-tained trajectory satisfies all original constraints without requiring artificial relaxations. To prevent artificial un-boundedness, we impose trust region constraints (12f). The objective function (12a) incorporating penalties on the virtual variables with the original objective function from (9) is expressed as 
+
+Jλ(x, u, T, ̂ ν) = 
+
+∫ 10
+
+Γλ(x, u, T, ν, ν s) dτ, (13a) 
+
+Γλ(x, u, T, ν, ν s) =Γ( x, u, T ) + λP (ν, ν s), (13b) where P is a positive definite penalty function defined as: 
+
+P (y, z ) = ∥y∥1 + ∥z∥1 . (14) D. Discretization The optimal control problem (12), after linearizing, is convex but remains continuous in time. To make it numerically tractable, we discretize it by selecting N
+
+evenly spaced temporal nodes: 
+
+0 = τ1 < · · · < τ N = 1,
+
+∆τ := τk+1 − τk = 1 /(N − 1) ∀ k = 1 , . . . , N. 
+
+Zero-order hold (ZOH) is applied to the control inputs, keeping u = uk constant over each interval τ ∈ [τk, τ k+1 ].The dynamics relating xk to xk+1 is obtained through exact integration of the linearized system, 
+
+˙x(τ ) = A(τ )x(τ ) + B(τ )uk+F (τ )T + ϱ(τ ). + ν(τ ) (15) The solution for the above linear time varying system is given by: 
+
+x(τ ) =Φ( τ, τ k)x(τk)+
+
+∫ ττk
+
+Φ( τ, t )[ B(t)uk+F (t)T + ϱ(t) + ν(t)] dt, 
+
+where Φ( τ, τ k) is the state transition matrix [25] satisfying, 
+
+˙Φ( τ, τ k) = A(τ )Φ( τ, τ k), Φ( τk, τ k) = In. (16) By assigning τ = τk+1 , (15) forms a linear time-varying difference equation, which advances the discrete-time state 
+
+xk to the subsequent discrete-time state xk+1 ,
+
+xk+1 = Akxk + Bkuk + FkT + ϱk + νk, (17) where the matrices are given by 
+
+Ak = Φ( τk+1 , τ k),Bk = Ak
+
+∫ τk+1 
+
+> τk
+
+Φ( t, τ k)−1B(t)dt, 
+
+and Fk, ρ k, ν k can be computed as that of Bk. Then, the OCP after discretization is formulated as follows, 
+
+min  
+
+> U,T, ̂V
+
+Lλ(X, U, T, ̂ V), (18a) s.t. xk+1 = Akxk + Bkuk + FkT + ϱk + νk, (18b) 
+
+uk ∈ U , xk ∈ X (18c) 
+
+x1 = xstart , xN = xgoal (18d) 
+
+Ckxk + Dkuk + GkT +̂ ϱk ≤ νs,k , (18e) 
+
+∥δxk∥ + ∥δuk∥ + ∥δT ∥ ≤ Υ. (18f) where X, U,̂ V are defined as the super vectors containing the states ( xk), controls ( uk), and virtual variables ( ˆνk) of all the temporal nodes, and The discretized cost function is defined as, 
+
+Lλ(X, U, T, ̂ V) = trapz (Γ Nλ ), (19) where ΓNλ,k = Γ λ(xk, uk, T, ν k, ν s,k ) and trapz(.) is trape-zoidal numerical integration defined as, trapz (d) = ∆τ
+
+2 
+
+> N−1
+
+∑
+
+> k=1
+
+(dk + dk+1 ) . (20) 7
+
+E. Update Rule and Stopping Criterion The successive convexification algorithm requires mech-anisms to assess solution quality and determine conver-gence. At each iteration, we compare the actual improve-ment in the nonlinear cost function with the predicted improvement from the convex approximation. We define the nonlinear discretized cost function as ̂
+
+Jλ(X, U, T ) := trapz 
+
+(̂ 
+
+ΓNλ
+
+)
+
+,
+
+where ̂ ΓNλ,k := Γ λ
+
+(xk, uk, T, δ k, [s(τk, xk, uk, T )] +
+
+). Here 
+
+[a]+ := max {0, a } and δk is the actual dynamics defect due to linearization, defined as 
+
+δk := xk+1 − (Akxk + Bkuk + FkT + ϱk)
+
+where ̂ f is the discretized version of the nonlinear system dynamics (9b). The algorithm uses both linear as well as nonlinear augmented cost functions to compute the accuracy of convex approximation by a parameter ρ given as, 
+
+ρ =̂ Jλ(Xr , Ur , T r )−̂ Jλ(X⋆, U⋆, T ⋆)̂
+
+Jλ(Xr , Ur , T r )−L λ(X⋆, U⋆, T ∗,̂ V⋆)=⇒ ρ = Jr −Js
+
+Jr −L s , (21) where Jr , J s, Ls are the shorthand notations used to denote the respective expressions. This ratio ρ measures how well the linear approximation predicts the actual cost reduction. If ρ < 0, then Jr is less than Js i.e. the solution worsens the objective. Hence the solution is rejected and the trust region is reduced. If ρ is close to 1, then the linearized cost of the solution is close to the non-linearized cost of the solution. Thereby, accept the solution and possibly expand trust region. Thus, the solution of current iteration is passed as a reference trajectory to the next iteration. The stopping criterion’s main objective is to assess how different the new solution trajectory is from the reference trajectory at each iteration. Hence, by taking a sufficiently small value ϵ, we measure the gap between the reference cost function and the current cost. Therefore the terminating condition is verified by, 
+
+Jr − L s ≤ ϵ. (22) This criterion ensures that the linear approximation accurately represents the nonlinear problem in the neigh-borhood of the solution, indicating that further iterations will yield negligible improvement. The complete successive convexification procedure for solving the communication-constrained trajectory optimization problem is briefed in Algorithm 1. IV. Convergence Analysis In this section, we present the convergence analysis of the proposed algorithm (Algorithm 1) in discrete time setting. Therefore, first we reformulate the normalized non-convex OCP (9). To do that, we treat all discrete Algorithm 1 Communication Constrained Optimal Trajec-tory Require: Penaly weight λ > 0, tolerance ϵ > 0, Maximum number of iterations ”iter_max”, Number of temporal discretizations points N , update parameters 0 < ρ 0 <ρ1 < ρ 2 < 1, and α > 0. 
+
+> 1:
+
+Initialization: A guess UAV trajectory Xg , control input Ug , final time T g , and trust radius Υ0 
+
+> 2:
+
+Set Xr = Xg , Ur = Ug and T r = T g 
+
+> 3:
+
+while i ≤ iter_max and stopping criteria (22) not met do  
+
+> 4:
+
+Solve the convex optimal control subproblem (18): Obtain U⋆, T ⋆ and Update UAV trajectory X⋆ 
+
+> 5:
+
+Calculate ρ using (21)  
+
+> 6:
+
+if ρ < ρ 0 then Contract the trust region ( Υk ← Υk/α ), and go back to Step-3  
+
+> 7:
+
+else Update Xr = X⋆, Ur = U⋆, T r = T ⋆, and 
+
+Υk+1 =
+
+
+
+Υk/α, for ρ < ρ 1
+
+Υk, for ρ1 ≤ ρ < ρ 2
+
+αΥk, for ρ ≥ ρ2 
+
+> 8:
+
+end if  
+
+> 9:
+
+i ← i + 1  
+
+> 10:
+
+end while  
+
+> 11:
+
+Return X⋆, U⋆, T ⋆
+
+states ( X), controls ( U), and parameter ( T ) as inde-pendent variables. Hence, the reformulated non-convex discrete time problem is 
+
+min 
+
+> X,U,T
+
+̂ J(X, U, T ) = trapz 
+
+(̂ 
+
+ΓNλ
+
+)
+
+(23a) s.t. xk+1 =̂ f (xk, uk, T ), ∀k ∈ { 1, . . . , N } (23b) 
+
+uk ∈ U , ∀k ∈ { 1, . . . , N } (23c) 
+
+xk ∈ X , ∀k ∈ { 1, . . . , N } (23d) 
+
+x1 = xstart , xN = xgoal (23e) 
+
+s(xk, uk, T ) ≤ 0, ∀k ∈ { 1, . . . , N } (23f) where trapz(.) is numerical integration method defined in (20), ̂ ΓNλ is the running cost with discrete state and control variables, and ̂ f is the discretized version of the nonlinear system dynamics (9b). For simplicity, throughout the analysis, we denote our variable trio [X⊤, U⊤, T ]⊤ as a single variable Z and at the kth iteration Zk := [
+
+Xk⊤, Uk⊤, T k
+
+]⊤
+
+. Following this notations, the system dynamics (9b) and the nonconvex path constraints (9e) are represented as a set of algebraic equations gi(Z) = 0 
+
+and gj (Z) ≤ 0 respectively with i ∈ Ieq (set of equality constraint indices) and j ∈ INC (set of nonconvex inequal-ity constraint indices). Similarly, the convex state and control constraints are represented as hl(Z) ≤ 0, where 
+
+l ∈ IC (set of convex inequality constraint indices). Now, 8
+
+the discrete time non-convex OCP (23) is rewritten as, 
+
+min 
+
+> Z
+
+̂ J(Z) = trapz (̂ ΓNλ ) (24a) s.t. gi(Z) = 0 , i ∈ Ieq (24b) 
+
+gj (Z) ≤ 0 j ∈ INC (24c) 
+
+hl(Z) ≤ 0 l ∈ IC (24d) Rewriting the cost function ̂ J(Z) and the constraints 
+
+gi(Z) = 0 and gj (Z) ≤ 0 using the penalty function (P (.)) defined in (15), we get the OCP, ̂
+
+Jλ(Z) := ̂ J(Z) + λ ∑
+
+> i
+
+∥gi(Z)∥1 + λ ∑
+
+> j
+
+∥∥gj (Z)∥∥1 (25) Therefore, the reformulated penalized OCP we will be con-sidering throughout the convergence analysis is presented as 
+
+min 
+
+> Z
+
+̂ Jλ(Z) (26a) s.t. hl(Z) ≤ 0 (26b) A. Exact problem formulation: The penalty function P (.) can be considered as ”exact”, if there exists a finite value of parameter λ such that the OCP before penalizing (24), and after penalizing (26) are equivalent in the sense of optimality conditions. Hence, the solution of (26) would be the same as that of solving (24). Before proceeding with the analysis, we introduce the following preliminary results that will set the foundation for the convergence proof. Lemma 1. (Stationarity Conditions:) If Z is a local minima for the non-penalized OCP (24), then there exist the positive Lagrange multipliers μi, ξj , σl such that, 
+
+∇̂ J(Z) + ∑
+
+> i
+
+μi∇gi(Z) + ∑
+
+> j
+
+ξj ∇gj Z + ∑
+
+> l
+
+σl∇hl(Z) = 0 
+
+(27) Lemma 1 gives us the first order optimality condition for the OCP (24). Now, we will examine the first order optimality condition for OCP (26). The presence of ∥.∥1
+
+(1-norm) makes the penalized cost function ̂ Jλ non-smooth, hence not differentiable everywhere. However, it can be realized that the constraints gi(Z) and gj (Z)
+
+are continuously differentiable. Hence, ̂ Jλ is concluded to be Lipschitz continuous [26]. Thereby, the generalized directional derivative (GDD) of ̂ Jλ calculated at Z in any particular direction s is defined as. d̂ Jλ(Z, s) := lim sup 
+
+> Z→Z
+> ∆→0+
+
+̂
+
+Jλ(Z + ∆ s) −̂ Jλ(Z)∆ (28) 
+
+= max {v⊤s|v ∈ ∂̂ Jλ(Z)} (29) where ∂̂ Jλ(Z) is the subgradient. Lemma 2. (Necessary condition:) If Z is a local minima of OCP (26), then 0 ∈ G(Z), where G(Z) := {Z|0 ∈
+
+∂̂ Jλ(Z) + Y | Y = ∑ 
+
+> l∈IC
+
+σl∇hl(Z)} defines the set of all stationary points of OCP (26) In the other words, Lemma 2 implies that if Z solves OCP (26), then Z ∈ G.We also define a set of all feasible Lemma 3. (Exactness:) [26] Considering Z to be astationary point of OCP (24) with μi, ξ j , σ l as the positive Lagrange multipliers, and if the penalty function weight λ
+
+satisfies λ > |μi| ∪ | ξj | ∪ | σl| for all i ∈ Ieq , j ∈ INC , l ∈ IC,then Z is also a constrained stationary point for OCP (26), and this implies Z ∈ G(Z). Also, we can say that, if Z ∈ G(Z) is a feasible point for OCP (24), then it is a stationary point for OCP (24). Remark 1. Lemma 3 does not directly giveaway an implementable value of λ, it still has important theoretical importance. During implementations, we select a relatively large λ and keep it fixed for the whole process. From a practical point of view, an approximate range of 10 2 to 
+
+10 5 would work in most of the practical problems. If the problem is feasible, yet the algorithm is not converging the user may retry by increasing λ. Also, very high value of λ may lead higher number of iteration to converge. Remark 2. It can be noted that Lemma 3 guarantees that as long as we can find a stationary point for the penalty OCP (26) which is feasible to the original OCP (24), we reach stationarity of the original OCP (24) as well. B. Convergence of Algorithm-1 For simplicty in notations, we have already redefined the optimization variable trio at kth iteration (xk, uk, T )
+
+as a single variable Zk at the start of the Section-IV. Omitting the dependencies the virtual control the linearized penalized cost function at kth iteration as Lkλ
+
+can be rewritten as, 
+
+Lkλ(δXk, δ Uk, δT ) = trapz (Γ( Xk + δXk, Uk + δUk, T + δT )) + 
+
+> N−1
+
+∑
+
+> i=1
+
+λiP (̂ V)=⇒ L kλ(∆ Zk) = trapz (Γ( Zk + ∆ Zk)) + 
+
+> N−1
+
+∑
+
+> i=1
+
+λiP (̂ V)
+
+(30) where trapz (Γ) applies the trapezoidal integration rule (20) to the discretized running cost ̂ ΓNλ at all temporal nodes, and ̂ V = {νk, ν s,k }Nk=1 denotes the collection of all virtual control variables. Thereby, at the end of kth iteration, the actual change in the penalized cost function ( ∆̂ Jkλ ) of OCP (26) and the predicted change after linearization ( ∆Lkλ) are redefined by 
+
+∆̂ Jkλ := ̂ Jλ(Zk) −̂ Jλ(Zk + ∆ Zk)∆Lkλ := ̂ Jλ(Zk) − L kλ(∆ Zk)9
+
+Theorem 1. The predicted cost reductions (step 5 of Algorithm 1) ∆Lkλ ≥ 0 for all k where ∆Lkλ = 0 implies that Zk ∈ G(Z). Hence, Zk is a stationary point of the OCP (26). Proof: Denote ∆Z⋆ as the solution to the convex subproblem (18), and note that ∆Z = 0 is always a feasible solution to said problem. Hence we have 
+
+Lkλ(∆ Z⋆) ≤ L kλ(0) = ̂ Jλ(Zk).
+
+Therefore, ∆Lkλ =̂ Jλ(Zk) − L kλ(∆ Z⋆) ≥ 0, and ∆Lkλ = 0 
+
+holds if and only if ∆Z⋆ = 0 is the minimizer of (18). When ∆Lkλ = 0 , one can directly apply Lemma 2 to get 
+
+Zk ∈ G(Z).Theorem 2. Let Z be a feasible point that is not astationary point for OCP (26) (i.e. Z /∈ G(Z)). For any positive constant k ∈ (0 , 1) , there exist strictly positive values Υ and ε such that for all Z within the neighborhood 
+
+N (Z, ε ), and all Υ ∈ (0, Υ], optimal solution ∆Z⋆ of OCP (26) when solved at Z with trust region radius Υ satisfies, 
+
+ρ(Z, Υ) := ̂ Jλ(Z) −̂ Jλ(Z + ∆ Z⋆)̂
+
+Jλ(Z) − L λ(∆ Z⋆) ≥ k. (31) Proof: We begin by noting that, since Z is feasible yet not a stationary point, which means Z /∈ G(Z). The subgradient ∂̂ Jλ(Z) forms a closed convex set by virtue of being an intersection of half-spaces. Also, the set 
+
+Y | Y = ∑
+
+> l∈I(Z)
+
+σl∇hl(Z), for some σl ≥ 0
+
+ ≜ C(Z)
+
+(32) constitutes a closed convex cone as it represents a conic combination of the gradient vectors ∇hl(Z). Since the Minkowski sum preserves convexity, it follows that G(Z)
+
+is also a closed and convex set. Applying the separation theorem for convex sets to 
+
+G(Z), we can establish the existence of a unit vector s
+
+and a scalar κ > 0 such that for all vectors v ∈ G(Z),
+
+⟨v, s⟩ ≤ − κ < 0 (28) 
+
+=⇒ max {⟨ v, s⟩ | v ∈ ∂̂ Jλ(Z)} ≤ − κ. 
+
+(33) Consequently, we have 
+
+d̂ Jλ(Z, s) := lim sup 
+
+> Z→Z
+> Υ→0+
+
+̂
+
+Jλ(Z + Υ s) −̂ Jλ(Z)Υ ≤ − κ. 
+
+This relationship guarantees the existence of positive values Υ and ϵ such that for every feasible Z ∈ N (Z, ϵ )
+
+and 0 < Υ ≤ Υ,̂
+
+Jλ(Z + Υ s) −̂ Jλ(Z)Υ < − κ
+
+2 . (34) Another subset of D(Z) is C(Z) defined in (32), so (33) also holds for all ν ∈ C(Z). This necessarily implies, by (33), 
+
+⟨∇ hl(Z), s⟩ ≤ 0, l ∈ I(Z), (35) which essentially means s is a feasible direction of the active constraints at Z.When the OCP (18) is solved at Z with trust region radius Υ, obtaining an optimal solution ∆Z⋆. By a first-order Taylor expansion of ̂ Jλ around Z (using the GDD definition (28)), the actual change in ̂ Jλ is expressed as 
+
+∆̂ Jλ(Z, ∆Z⋆) = ̂ Jλ(Z) −̂ Jλ(Z + ∆ Z⋆)=̂ Jλ(Z) − L λ(∆ Z⋆) − o(∥∆Z⋆∥)= ∆ Lλ(∆ Z⋆) − o(∥Υ∥). (36) Accordingly, the ratio becomes 
+
+ρ(Z, Υ) = ∆̂ Jλ(Z, ∆Z⋆)∆Lλ(∆ Z⋆) = 1 − o(∥Υ∥)∆Lλ(∆ Z⋆) .
+
+Let ∆Z = Υ s. Since s is a feasible direction (as established by (35)), ∆Z constitutes a feasible solution to the OCP (18), while ∆Z⋆ represents the optimal solution. There-fore, we have 
+
+Lλ(∆ Z⋆) ≤ L λ(∆ Z) = ⇒ ∆Lλ(∆ Z⋆) ≥ ∆Lλ(∆ Z) (37) As Υ → 0 with, 0 < Υ ≤ Υ, we derive 
+
+∆̂ Jλ(Z, ∆Z) = ̂ Jλ(Z) −̂ Jλ(Z + ∆ Z) >
+
+( κ
+
+2
+
+)
+
+Υ.
+
+Substituting ∆Z⋆ for ∆Z in (36), 
+
+∆̂ Jλ(Z, ∆Z) = ∆ Lλ(∆ Z) − o(∥Υ∥) ≥
+
+( κ
+
+2
+
+)
+
+Υ.
+
+Combining this with (37), we get 
+
+∆Lλ(Z, ∆Z⋆) ≥ ∆Lλ(∆ Z) − o(∥Υ∥) >
+
+( κ
+
+2
+
+)
+
+Υ.
+
+This leads to ∆Lλ(Z, ∆Z⋆) > (κ/ 2)Υ + o(∥Υ∥), allowing us to express: 
+
+ρ(Z, Υ) = 1 − o(∥Υ∥)∆Lλ(∆ Z⋆) > 1 − o(∥Υ∥)(κ/ 2)Υ + o(∥Υ∥) .
+
+As Υ → 0, ρ(Z, Υ) → 1, which means that for any constant 
+
+k < 1, we can assert ρ(Z, Υ) ≥ k.Remark 3. An undesirable situation is one where steps are rejected indefinitely (i.e. by producing solutions that result in ρ(Z, Υ) < ρ 0). Theorem 2 provides an assurance that Algorithm-1 will not produce such behavior. By contracting Υk sufficiently, Theorem 2 guarantees that the ratio ρk will eventually exceed ρ0, and the algorithm will stop rejecting steps. Theorem 3. (Limit Point Guarantee:) When Algorithm-1 generates an infinite sequence {Zk}, this sequence is assured to possess limit points. Moreover, any such limit point, Z, is also a stationary point of the non-convex penalty OCP (26). Proof: The convexity and compactness of the feasible domain of (26) ensures the existence of at least one convergent subsequence {Zki } → Z, which is a guaranteed limit point [27] (the Bolzano-Weierstrass theorem). To establish that Z is stationary, we employ proof by contradiction. Let us assume Z is not a stationary point. From Theorem 2, there exist positive values Υ and ϵ such that 10 
+
+ρ(Z, Υ) ≥ ρ0 ∀ Z ∈ N (Z, ϵ ) and Υ ∈ (0 , Υ ] ,
+
+where ρ0 is chosen arbitrarily small. Without loss of generality, we can assume the entire subsequence {Zki } is within N (Z, ϵ ), yielding 
+
+ρ(Zki , Υ) ≥ ρ0 ∀ Υ ∈ (0 , Υ ] . (38) When the initial trust region parameter is below Υ, then (38) will be automatically satisfied. However, if it exceeds 
+
+Υ, then multiple reductions may be necessary through the rejection mechanism (step in line 6 of Algorithm-1) before satisfying this requirement. For each ki, we define ̂
+
+Υki as the final radius that needs to be reduced with ̂
+
+Υki > Υ. Additionally, let Υki represent the trust region radius after the final rejection step. Now, we have (18) obtained by linearizing the OCP (26) about Zki , subject to the constraint ∥Z − Zki ∥ ≤ Υki where Υki =̂ Υki /α > 
+
+Υ/α . Given that Υ cannot decrease beyond a minimum threshold Υlow , we have 
+
+Υki ≥ min {Υlow , Υ/α } ≜ δ > 0. (39) Also, the expression (38) translates to ̂
+
+Jλ(Zki ) −̂ Jλ(Zki+1 ) ≥ ρ0∆Lki . (40) From Theorem 1 ( ∆Lki ≥ 0), it is indicated that the penalized cost ̂ Jλ is monotonically decreasing. Next, to establish a lower bound for ∆Lki , consider 
+
+∆Z⋆ as the solution of the OCP (18) around Z with trust region radius δ/ 2 (satisfying ∥∆Z⋆∥ ≤ δ/ 2). Defining ̂ Z := 
+
+Z + ∆ Z⋆, we have 
+
+∥̂Z − Z∥ ≤ δ/ 2. (41) Since Z is ssumed non-stationary, from Theorem 1 we know that 
+
+∆Lkλ(∆ Z⋆) = ̂ Jλ(Z) − L kλ(∆ Z⋆) ≜ θ > 0.
+
+By continuity properties of ̂ Jλ and Lkλ, there exists an 
+
+i0 > 0 such that for all i ≥ i0̂
+
+Jλ(Zki ) − L ki (̂ Z − Zki ) > θ/ 2, and (42) 
+
+∥Zki − Z∥ < δ/ 2. (43) Combining our distance bounds (41), (43), and (39), for all i ≥ i0, we have 
+
+∥̂Z − Zki ∥ ≤ ∥ ̂ Z − Z∥ + ∥Zki − Z∥ < δ ≤ Υki , (44) Introducing ∆̂ Zki := ̂ Z − Zki , we see that that ∆̂ Zki
+
+represents a feasible solution for the convex subproblem (18) at point (Zki , Υki ) when i ≥ i0. If ∆Zki denotes the optimal solution to this subproblem, then Lki (∆ Zki ) ≤Lki (∆ ̂ Zki ), yielding 
+
+∆Lki (∆ Zki ) = ̂ Jλ(Zki ) − L ki (∆ Zki )
+
+≥̂ Jλ(Zki ) − L ki (∆ ̂ Zki )
+
+> θ/ 2. (45)        
+
+> TABLE I Quadrotor UAV Parameters Parameter Value Mass ( m)3 kg Arm length ( l)0.3 m Moment of inertia ( J)diag(0.04, 0.04, 0.08) kg ·m2
+> Maximum rotor speed ( ωmax )600 rad/s Maximum roll angle ( ϕmax )35 ◦
+> Maximum pitch angle ( θmax )35 ◦
+
+With (40) and (45), for all i ≥ i0:̂
+
+Jλ(Zki ) −̂ Jλ(Zki+1 ) ≥ ρ0θ/ 2. (46) However, since ki+1 ≤ k(i+1) , and the penalized cost never increases (refer (40)), we have ̂ Jλ(Zki+1 ) ≥̂ Jλ(Zk(i+1) ),which gives us 
+
+> ∞
+
+∑
+
+> i=1
+
+(̂ 
+
+Jλ(Zki ) −̂ Jλ(Zki+1 )
+
+)
+
+≤
+
+> ∞
+
+∑
+
+> i=1
+
+(̂ 
+
+Jλ(Zki ) −̂ Jλ(Zk(i+1) )
+
+)
+
+=̂ Jλ(Zk1 ) −̂ Jλ(Z) ≤ ∞ .
+
+This establishes that the series converges, necessitating: ̂
+
+Jλ(Zki ) −̂ Jλ(Zki+1 ) → 0.
+
+This directly contradicts our earlier inequality ̂ Jλ(Zki ) −̂
+
+Jλ(Zki+1 ) ≥ ρ0θ/ 2. Therefore, our contradiction proves that every limit point Z must be a stationary point of OCP (26) V. Numerical Simulation This section presents comprehensive numerical sim-ulations to validate the effectiveness of the proposed methodology. The simulations employ a quadrotor UAV model with physical parameters specified in Table I, while the communication channel parameters are detailed in Table II. The mission scenario requires the UAV to navigate from an initial position r0 = [0 , 0, 10] to a final destination rf = [500 , 500 , 100] (coordinates in meters) while maintaining reliable data relay communications with a ground station located at rGS = [200 , 400 , 0] . The numerical solution is obtained using a direct collocation method with 100 evenly distributed temporal nodes. The algorithm’s convergence parameters are set as follows: maximum iterations (iter_max) = 50, convergence tol-erance ϵ = 10 −4, and initial trust region radius η = 1 .To thoroughly evaluate the algorithm’s performance, two distinct simulation scenarios are investigated: first, the generation of an optimal trajectory in obstacle-free space, and second, optimal trajectory generation in an urban environment with multiple obstacles. A. Optimal UAV trajectory in obstacle-free space In the first simulation scenario, we evaluate the UAV’s trajectory optimization under different data relay require-ments without any obstacles. Figure 5 shows both top and 11           
+
+> TABLE II Communication Model Parameters Parameter Value Transmission power ( Ptx )5 W Path loss exponent ( β)2.3 Ground station location ( rGS )[200, 400, 0] m Atmospheric parameters ( a1,a2)10, 0.6 Reflection attenuation ( ζ)0.2 Channel bandwidth ( w)1 MHz Constant parameter (b)60
+
+isometric views of the generated trajectories. Three differ-ent data relay scenarios were simulated where the UAV needs to transfer 30MB (solid blue line), 50MB (dashed red line), and 70MB (dash-dotted purple line) data. The resulting mission completion times were 502s, 615s, and 825s for 30MB, 50MB, and 70MB data requirements, respectively. This progressive increase in mission dura-tion correlates directly with the increasing data transfer requirements, as evident from the increasingly deviating trajectories from the initial guess (straight line) path.  
+
+> (a) Top view
+> (b) Isometric view Fig. 5. Optimal UAV trajectories for different data relay require-ments (30MB, 50MB, 70MB) in an obstacle-free environment.
+
+The trajectories demonstrate how higher data require-ments lead to more pronounced deviations from the initial guess trajectory (dotted black line). This behavior is expected as the UAV needs to maintain closer proximity to the ground station for longer durations to satisfy the increased data transfer requirements while ensuring reliable communication links. B. Optimal UAV trajectory in an urban environment The second simulation scenario introduces two buildings represented as obstacles in the UAV’s path, positioned at coordinates [190,200,0] and [420,400,0]. The buildings are approximated by their cylindrical circumference with a safe distance constraint of ds = 40 m. Figure 6 presents the optimal trajectory for a 30MB data relay requirement, where the algorithm successfully generates a path (solid blue line) that deviates from the initial guess (dotted black line) to avoid the obstacles while ensuring the required data transfer. The mission time of 722s is notably longer than the obstacle-free case (502s) for the same 30MB data requirement, which is expected as the UAV takes a more deviated and longer path to avoid the obstacles.  
+
+> (a) Top view
+> (b) Isometric view Fig. 6. Optimal UAV trajectory with 30MB data relay requirement in urban environment with cylindrical obstacles.
+
+The presence of obstacles significantly influences the tra-jectory generation, requiring more complex path planning to satisfy multiple competing constraints. The optimal trajectory demonstrates the algorithm’s ability to balance these objectives effectively: maintaining safe distances from the buildings while ensuring the complete transfer of required data. The results validate the effectiveness of the proposed free-time OCP approach in generating optimal trajectories that satisfy multiple mission constraints in both simple and complex environments. VI. Conclusion This paper presents a comprehensive framework for gen-erating energy-efficient UAV trajectories while ensuring reliable data relay capabilities in urban environments. 12 
+
+The methodology addresses key challenges by formulat-ing a free-time optimal control problem that integrates full rigid-body quadrotor dynamics, realistic urban com-munication models, and obstacle-avoidance constraints. Sequential convex programming converts the inherently non-convex problem into tractable convex subproblems, enabling simultaneous handling of multiple mission re-quirements. The framework’s effectiveness is demonstrated through extensive numerical simulations in different scenarios, including obstacle-free and urban environments. Results indicate the algorithm’s capacity to adapt to varying data relay requirements, with mission times scaling from 502 seconds to 825 seconds as data demands increase from 30 MB to 70 MB in obstacle-free conditions. Urban obstacles necessitate more complex trajectories, as evidenced by an increased mission time of 722 seconds for a 30 MB data re-quirement, highlighting the algorithm’s ability to balance multiple mission objectives. The numerical tractability and ease of implementation make the framework well-suited for autonomous UAV operations in urban settings, where reliable communication and effective obstacle avoid-ance are critical. References 
+
+[1] R. Shakeri, M. A. Al-Garadi, A. Badawy, A. Mohamed, T. Khattab, A. K. Al-Ali, K. A. Harras, and M. Guizani, “Design challenges of multi-uav systems in cyber-physical appli-cations: A comprehensive survey and future directions,” IEEE Communications Surveys & Tutorials, vol. 21, no. 4, pp. 3340– 3385, 2019. [2] H. Shakhatreh, A. H. Sawalmeh, A. Al-Fuqaha, Z. Dou, E. Al-maita, I. Khalil, N. S. Othman, A. Khreishah, and M. Guizani, “Unmanned aerial vehicles (uavs): A survey on civil applications and key research challenges,” IEEE Access, vol. 7, pp. 48 572– 48 634, 2019. [3] M. Kothari and I. Postlethwaite, “A probabilistically robust path planning algorithm for uavs using rapidly-exploring ran-dom trees,” Journal of Intelligent and Robotic Systems, vol. 71, no. 2, pp. 231–253, 2013. [4] M. Kothari, I. Postlethwaite, and D.-W. Gu, “Uav path follow-ing in windy urban environments,” Journal of Intelligent and Robotic Systems, vol. 74, no. 3-4, pp. 1013–1028, 2014. [5] M. Kothari, P. Sujit, and I. Postlethwaite, “A distributed closed-loop probabilistic robust prioritized motion planning algorithm,” in IEEE Multi-conference on Systems and Control, 2013. [6] A. Sen, S. R. Sahoo, and M. Kothari, “Circumnavigation on multiple circles around a non-stationary target with desired angular spacing,” IEEE Transactions on Cybernetics, vol. 51, no. 1, pp. 222–232, 2019. [7] ——, “Distributed control for multi-circular formation around a non-stationary target,” IEEE Transactions on Automatic Control, 2022. [8] P. P. Pradhan, A. Sen, M. Kothari, and K. Rajawat, “Dis-tributed optimization under a weight-unbalanced digraph,” in 2023 9th International Conference on Automation, Robotics and Applications (ICARA). IEEE, 2023, pp. 379–384. [9] ——, “A decentralized optimal control law for multi-circular circumnavigation around a stationary target,” in AIAA SciTech Forum, 2024. [10] M. Samshad, P. P. Pradhan, K. Rajawat, M. Kothari, and C. Prachand, “Cnet: A reliable compact multi-uav communi-cation architecture for low bandwidth connectivity,” in AIAA SciTech Forum, 2025. [11] R. I. Bor-Yaliniz, A. El-Keyi, and H. Yanikomeroglu, “Efficient 3-d placement of an aerial base station in next generation cellular networks,” in 2016 IEEE International Conference on Communications (ICC), 2016, pp. 1–5. [12] P. Zhan, K. Yu, and A. L. Swindlehurst, “Wireless relay com-munications with unmanned aerial vehicles: Performance and optimization,” IEEE Transactions on Aerospace and Electronic Systems, vol. 47, no. 3, pp. 2068–2085, 2011. [13] Y. Zeng, J. Xu, and R. Zhang, “Energy minimization for wireless communication with rotary-wing uav,” IEEE Transactions on Wireless Communications, vol. 18, no. 4, pp. 2329–2345, 2019. [14] D. Xu, Y. Sun, D. W. K. Ng, and R. Schober, “Multiuser miso uav communications in uncertain environments with no-fly zones: Robust trajectory and resource allocation design,” IEEE Transactions on Communications, vol. 68, no. 5, pp. 3153–3172, 2020. [15] Y. Sun, D. Xu, D. W. K. Ng, L. Dai, and R. Schober, “Optimal 3d-trajectory design and resource allocation for solar-powered uav communication systems,” IEEE Transactions on Communications, vol. 67, no. 6, pp. 4281–4298, 2019. [16] B. Li, Q. Li, Y. Zeng, Y. Rong, and R. Zhang, “3d trajectory optimization for energy-efficient uav communication: A control design perspective,” IEEE Transactions on Wireless Communi-cations, vol. 21, no. 6, pp. 4579–4593, 2022. [17] H. Sandhu, P. Pradhan, K. Rajawat, and M. Kothari, “Minimum time trajectory optimization for a 6-dof quadrotor uav using successive convexification,” in AIAA SciTech Forum, 2024. [18] Y. Mao, D. Dueri, M. Szmuk, and B. Açıkmeşe, “Successive convexification of non-convex optimal control problems with state constraints,” IFAC-PapersOnLine, vol. 50, no. 1, pp. 4063– 4069, 2017, 20th IFAC World Congress. [19] A. K. Shastry, M. Kothari, and Abhishek, “Generalized flight dynamic model of quadrotor using hybrid blade element momen-tum theory,” Journal of Aircraft, vol. 55, no. 5, pp. 2162–2168, 2018. [20] M. T. Bhargavapuri, S. R. Sahoo, M. Kothari, and Abhishek, “Robust nonlinear control of a variable-pitch quadrotor with the flip maneuver,” Control Engineering Practice, vol. 87, pp. 26–42, 2019. [21] S. Swarnkar, H. Parwana, M. Kothari, and Abhishek, “Biplane-quadrotor tailsitter uav: Flight dynamics and control,” Journal of Guidance, Control, and Dynamics, 2018. [22] R. W. Beard and T. W. McLain, Small Unmanned Aircraft: Theory and Practice. USA: Princeton University Press, 2012. [23] A. Al-Hourani, S. Kandeepan, and S. Lardner, “Optimal lap al-titude for maximum coverage,” IEEE Wireless Communications Letters, vol. 3, no. 6, pp. 569–572, 2014. [24] E. Price and D. P. Woodruff, “Applications of the shannon-hartley theorem to data streams and sparse recovery,” in 2012 IEEE International Symposium on Information Theory Proceedings, 2012, pp. 2446–2450. [25] K. Ogata, Modern Control Engineering, 4th ed. USA: Prentice Hall PTR, 2001. [26] F. H. Clarke, Optimization and Nonsmooth Analysis. Philadel-phia, PA: SIAM Classics in Applied Mathematics, 1990. [27] W. Rudin, Principles of Mathematical Analysis, 3rd ed. McGraw-Hill, 1976.

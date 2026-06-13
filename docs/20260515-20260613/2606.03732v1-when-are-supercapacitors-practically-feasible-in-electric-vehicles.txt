@@ -1,0 +1,2106 @@
+Title: When are supercapacitors practically feasible in electric vehicles?
+
+URL Source: https://arxiv.org/pdf/2606.03732v1
+
+Published Time: Wed, 03 Jun 2026 01:35:01 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# When are supercapacitors practically feasible in electric vehicles? 
+
+Yue Wu a, Ziqing Xia a, Shaokun Li b, Heng Li a, Shengyu Tao c, Zhiwu Huang b,∗    
+
+> aSchool of Electronic Information, Central South University, Changsha, 410075, China
+> bSchool of Automation, Central South University, Changsha, 410083, China
+> cDepartment of Electrical Engineering, Chalmers University of Technology, Gothenburg, 41296, Sweden
+> ∗Corresponding author: Zhiwu Huang (hzw@csu.edu.cn)
+
+Abstract 
+
+While the hybrid energy storage system (HESS) can theoretically mitigate battery degradation in electric vehicles, its practical implementation remains highly limited. To delineate the specific scenarios and application boundaries where su-percapacitors remain feasible, this study proposes a multi-dimensional techno-economic feasibility evaluation framework. First, a cross-vehicle sizing method based on dynamic programming is established to quantify physical mass-volume pack-aging constraints and identify feasible supercapacitor candidates across di ff erent vehicle types. Building upon the optimal sizing parameters derived from the battery aging Pareto front, an expert-guided deep reinforcement learning energy man-agement strategy is integrated to yield near-optimal online performance, ensuring a fair life-cycle economic assessment. Finally, a comprehensive feasibility matrix is constructed to systematically evaluate mass, volume, battery lifespan, addi-tional supercapacitor costs, total cost of ownership, future energy storage prices, and the influence of emerging solid-state batteries. Results reveal that city buses remain the most promising vehicle type for HESS due to minimal additional costs and su ffi cient packaging space. Current mass-volume penalties and limited economic benefits hinder HESS applica-tion in passenger vehicles and heavy-duty trucks, respectively. This situation may only improve if supercapacitor prices drop significantly in the future. Beyond vehicle types, the HESS feasibility is governed by load-frequency characteris-tics. Furthermore, looking toward the 2030 + solid-state battery era, we highlight that integrating increasingly a ff ordable supercapacitors can provide substantial asset protection leverage. 
+
+Keywords: Hybrid energy storage system; Optimal sizing; Optimal energy management; Mass and Volume; Solid-state battery; Feasibility evaluation. 
+
+1. Introduction 
+
+1.1. Background and motivation 
+
+Battery degradation induced by high-frequency and high-amplitude dynamic loads remains a critical challenge in electric vehicles. The hybrid energy storage system (HESS) that couples a high-energy-density battery pack with a high-power-density supercapacitor (SC) pack has been widely recognized as a theoretically e ff ective solution [1]. By absorbing transient peak currents [2], the superca-pacitor e ff ectively protects the battery from severe electro-chemical stress, thereby extending its lifespan and improv-ing the overall vehicle economy [3]. Despite extensive studies demonstrating the theoretical benefits for the past decade [4], the commercial adoption of HESS in practical electric vehicles remains highly lim-ited, indicating that the theoretical lifespan extension does not automatically translate into engineering implementa-tion. The resistance to the practical application primarily originates from three aspects: (1) optimal SC sizing, (2) advanced onboard energy management strategy, and (3) overall techno-economic feasibility. 
+
+1.2. Literature review and research gap 
+
+In terms of sizing, existing research has focused on de-termining the most cost-favorable supercapacitor capaci-ties by balancing electrical parameters and initial invest-ment costs. To achieve this, dynamic programming (DP) [5] is adopted for the global optimal energy management of electric buses, enabling the traversal of di ff erent super-capacitor combinations to identify the optimal candidate on the Pareto frontier of HESS life cost. Genetic algo-rithm is employed [6] to determine the optimal HESS siz-ing by concurrently minimizing the system weight, manu-facturing cost, and battery capacity degradation. A univer-sal double-layer HESS sizing optimization method is pro-posed for diverse topological configurations [7]. Further-more, Wang et al. [8] simultaneously optimized the HESS sizing and energy management with the dual objectives of minimizing supercapacitor costs and battery degradation. Huang et al. [9] considered the mass and the resulting power load increase from additional supercapacitor packs, noting that the cost Pareto frontier is not monotonic. For other vehicle types, such as light commercial vehicles [10], HESS sizing can be coupled with thermal management to minimize life-cycle costs under extreme temperatures. For electric racing cars, a hierarchical sizing method that inte-
+
+> arXiv:2606.03732v1 [eess.SY] 2 Jun 2026 Figure 1: A multi-dimensional techno-economic evaluation for hybrid energy storage system in electric vehicles.
+
+grates lateral dynamics is proposed to minimize race time [11]. Beyond sizing, advanced onboard energy management strategies are critical for HESS to extend battery life or re-duce operation costs. The common objective is to yield results close to o ffl ine DP. A model predictive control (MPC)-based energy management strategy is proposed with a single tuning parameter balancing SC voltage regu-lation and battery current smoothing [12]. A vehicle-cloud energy management strategy is proposed [13], leveraging DP and MPC to optimize real-time power allocation for HESS in mining trucks. Multi-horizon MPC using longer velocity prediction (hundreds of seconds) can further ex-tend battery life and reduce operation cost [14] and even applied to integrated battery thermal and energy manage-ment [15]. Reinforcement learning [16], incentive deep reinforcement learning (DRL) [17], and DRL with genera-tive adversarial imitation learning [18] are also promising onboard energy management strategies for battery life op-timization in HESS. Recently, online updating for DRL-based energy management strategy [19] also enhances the continual improvement capability. Building upon sizing and energy management, various studies evaluated the techno-economic feasibility of HESS from the perspectives of experimental implementation and life-cycle cost analysis. To evaluate economic feasibility, a comprehensive sensitivity analysis across various vehi-cle, system, and component parameters is conducted [20] to quantify their impacts on the HESS life-cycle financial costs. An economic analysis of passenger vehicles with HESS under vehicle-following scenarios [21] shows that the battery degradation cost accounts for 2 /3 of the total operation cost. Veneri et al. [22] constructed a 1:1 scale experimental test bench to validate the physical implemen-tation of a HESS for urban commercial vehicles. A 30 kW experimental platform is built [23] to quantify the eco-nomic benefits of a semi-active HESS in reducing battery capacity fade costs under standard driving cycles. Song et al. [24] pointed out that in 2028, the feasibility of HESS may be compromised due to decreased battery price. Despite these e ff orts in sizing, onboard energy man-agement, and techno-economic analysis, it is still hard to answer the question: When are supercapacitors prac-tically feasible in electric vehicles? (1) existing siz-ing studies overlook the physical mass-volume packag-ing penalties and feasible serial-parallel configurations, i.e., energy management assessments under specific serial-parallel candidates are impracticable; (2) the design of energy management strategies and life-cycle economic analyses based on a single vehicle type are often one-sided, failing to account for the diverse spatial constraints and load capacity margins across di ff erent vehicle types; (3) feasibility evaluations of HESS lack a comprehensive quantification of mass, volume, battery lifespan, additional SC costs, total cost of ownership (TCO), future energy storage prices, and the influence of emerging solid-state batteries. 
+
+1.3. This study 
+
+The motivation, research gap, and the proposed multi-dimensional techno-economic evaluation for HESS fea-sibility of this study are provided in Fig. 1. Firstly, parameters of four representative electric vehicles, i.e., Sedan /SUV /Bus /Truck, are provided. Considering the 2voltage range, mass, and volume constraints of four dif-ferent battery packs, feasible supercapacitor serial-parallel number candidates are determined. Secondly, for each spe-cific feasible candidate, the supercapacitor pack mass and vehicle mass are updated. For di ff erent vehicles, dedi-cated standard driving cycles are selected for o ffl ine dy-namic programming-based power allocation optimization to minimize battery degradation and traction electricity costs. Thirdly, by analyzing the battery aging Pareto front and accounting for supercapacitor placement /initial cost, the optimal supercapacitor sizing for the four vehicles is selected. A state-of-the-art energy management strategy based on Twin Delayed Deep Deterministic Policy Gradi-ent (TD3) and behavioral cloning (BC) is implemented to quantify the online performance. Finally, the battery life extension, energy storage price, TCO, economy, mass ef-fect, placement (volume), and future solid-state battery era are comprehensively analyzed. The feasibility of HESS for di ff erent vehicle types is thoroughly concluded. The contributions of this study are listed below: (1) A cross-vehicle sizing method is established to explicitly quantify the physical mass-volume packaging penalties and determine the feasible SC candidates across di ff erent vehicle types. (2) An expert-guided artificial intelligence energy man-agement strategy is integrated to ensure a fair life-economy assessment for di ff erent vehicle types. (3) A comprehensive techno-economic feasibility ma-trix is constructed so that more general recommendations of HESS can be concluded. This study is organized as follows. In Section 2, pre-liminaries of HESS system models and detailed vehicle parameters are presented. The o ffl ine DP sizing and on-line DRL-BC energy management methods are proposed in Section 3. Section 4 provides the comprehensive fea-sibility analysis and HESS application recommendations. Followed by the conclusions in Section 5. 
+
+2. Preliminaries 
+
+The high-voltage battery pack is the only energy source of electric vehicles. Typically, the battery pack is con-nected to the traction motor through a DC /AC inverter; the motor is responsible for electrical-mechanical energy con-version. Between the motor and the wheels /di ff erentials, there is one single-speed reduction gearbox (another AMT for a truck) for increasing torque and reducing rotational speed, as shown in Fig. 2. To introduce the supercapacitor pack as the power bu ff er device, the most practical solution is the semi-active topol-ogy shown in Fig. 2. The supercapacitor pack has a rel-atively low voltage, which can be boosted to the battery pack voltage through a bidirectional DC /DC converter. 
+
+2.1. Electric vehicle model 
+
+The total wheel torque Tw of an electric vehicle can be derived as: 
+
+> Figure 2: Semi-active hybrid energy storage system topology for typical electric vehicle powertrain.
+
+Tw = (mg sin θ + mgC r cos θ + 12 ρA f Cdv2 + ma )rw, (1) where m and g represent the vehicle total mass and grav-ity (9.8m /s2). v and a denote the vehicle speed and ac-celeration. θ is the road slope angle (in ◦), which equals arctan(slope). Cr and Cd are the rolling resistance and aerodynamic drag coe ffi cients, respectively. ρ, A f , and rw
+
+denote the air density, vehicle equivalent front area, and wheel radius. The vehicle total mass includes the vehicle mass mveh 
+
+(with driver), load mass mload (e.g., passengers in the Bus and cargo in the Truck), and supercapacitor pack mass msc 
+
+(including packaging and management system): 
+
+m = mveh + mload + msc . (2) The relationships between the wheel torque /speed (Tw/v) and motor torque /rotational speed ( Tm/nm) are given as follows: 
+
+Tm = Tw
+
+i0i1
+
+, nm = 60 i0i1v
+
+2πrw
+
+, (3) where i0 is the reduction ratio of the gearbox, i1 is the re-duction ratio of AMT (if applicable). The power demand of the motor and on the DC side can then be determined by: 
+
+Pm =Tm · 2πnm
+
+60 · ηtag  
+
+> m
+
+(Tm, nm),
+
+Pd =Pm · ηtag  
+
+> dcac
+
+= Tm · 2πnm
+
+60 · ηtag  
+
+> m
+
+(Tm, nm) · ηtag 
+
+> dcac
+
+,
+
+(4) where tag = -1 for traction and 1 for regenerative braking. 
+
+ηdcac and ηm are the e ffi ciencies of the DC /AC inverter and motor, respectively. 
+
+2.2. HESS electrical model 
+
+The power demand on the DC side should be undertaken by the HESS, thus satisfy: 
+
+Pd =
+
+
+
+Pbat + Psc ηdcdc , Psc ≥ 0
+
+Pbat + Psc /η dcdc , Psc < 0 (5) where Pbat and Psc are the input /output power of the bat-tery and supercapacitor packs, respectively. ηdcdc is the effi ciency of the DC /DC converter. 3Pbat and Psc are controlled by the total supercapacitor power Psc ,total (including power losses on the internal re-sistances), which is also controlled through the DC /DC converter (duty cycle). The state-of-charge (SoC) of the battery pack SoC bat and supercapacitor pack SoC sc , and current Ibat /Isc can then be derived [15], which is not pro-vided in this study. Parameters of the LiFePO 4 battery, supercapacitor, and four di ff erent electric vehicles are provided in Table 1 and Table 2. The LiFePO 4 battery is considered the BYD Blade battery [25], and the supercapacitor is the Maxwell BACP3000 [26]. Vehicle parameters (especially battery configuration) are referenced from the BYD Qin (sedan), TangL (SUV), B10 (bus), and T31 (dump truck), and have undergone certain reasonable modifications. 
+
+Table 1: Parameters of the considered LiFePO 4 battery cell and Maxwell supercapacitor cell.                                                       
+
+> Parameter Symbol Unit Value Nominal voltage Vbat ,oc ,cell V3.2 Voltage range Vbat ,cell V[2.5, 3.6] SoC range SoC bat -[0, 1] Battery Nominal capacity Qbat ,cell Ah 150 /119 /105 Energy stored Ebat ,cell Wh 480 /380.8 /336 Internal resistance rbat ,cell mΩ∼8.2 Weight mbat ,cell kg 3/2.38 /2.1 Volume Vol bat ,cell m313.97 /11.09 /9.79 ×10 −4
+> Nominal voltage Vsc ,cell ,max V2.7 Voltage range Vsc ,cell V[1.35, 2.7] SoC range SoC sc -[0.5, 1] Supercapacitor Nominal capacitance Csc ,cell F3000 Energy stored Esc ,cell Wh 3.3 Internal resistance rsc ,cell mΩ∼0.15 Weight msc ,cell kg 0.475 Volume Vol sc ,cell m35.32 ×10 −4
+
+Note that the volumes of the LFP battery cell and supercapacitor cell in Table 1 are calculated from the length /width /height and diameter /height [25, 26]. The ca-pacity Qbat , nominal voltage Vbat ,oc , volume Vol bat , and mass mbat of the battery packs in Table 2 are calculated by: 
+
+
+
+Qbat = Qbat ,cell · Np,bat ,
+
+Vbat ,oc = Vbat ,oc ,cell · Ns,bat ,
+
+Rbat = Rbat ,cell · Ns,bat /Np,bat ,
+
+Vol bat = Ns,bat · Np,bat · Vol bat ,cell /kvol ,bat ,
+
+mbat = Ns,bat · Np,bat · mbat ,cell · km,bat ,
+
+(6) where Ns,bat and Np,bat are the serial and parallel numbers of the battery cell. Vol bat ,cell and mbat ,cell are the volume and mass of the battery cell. kvol ,bat and km,bat are the volume and mass coe ffi cients for battery packaging. kvol ,bat is 0.75, 
+
+km,bat is 1.17 /1.18 /1.35 /1.45 for Sedan /SUC /Bus /Truck. Similarly, for the supercapacitor pack, the maximum voltage, capacitance, volume, and mass can be derived by: 
+
+
+
+Vsc ,max = Vsc ,cell ,max · Ns,sc ,
+
+Csc = Csc ,cell · Np,sc /Ns,sc ,
+
+Vol sc = Ns,sc · Np,sc · Vol sc ,cell · kvol ,sc ,
+
+msc = Ns,sc · Np,sc · msc ,cell · km,sc ,
+
+(7) where Ns,sc and Np,sc are the serial and parallel numbers of the supercapacitor cell. In this study, the volume and mass coe ffi cients for su-percapacitor packaging, kvol ,sc and km,sc , are set to 1.25 and 1.15, respectively. Subscript cell indicates variables for the battery or supercapacitor cell; no subscript cell means bat-tery or supercapacitor pack. 
+
+2.3. Capacity loss model for the battery pack 
+
+A recognized battery aging model for LiFePO 4 battery [27] is adopted in this study: 
+
+Table 2: Parameters of the considered four di ff erent electric vehicles. 
+
+Module Parameter Symbol Unit Sedan SUV Bus Truck Vehicle weight without supercapacitor mveh kg 1800 2675 11800 20300 Additional load weight mload kg - - 2450 1 0/9000 /18000 2
+
+Rolling resistance coe ffi cient Cr - 0.01 0.01 0.007 0.02 3
+
+Aerodynamic drag coe ffi cient Cair - 0.26 0.262 0.44 0.5 Air density at 25 degrees ρ kg /m3 1.18 1.18 1.18 1.18 Vehicle Frontal area A m2 2.2 2.8 7.2 7.66 Wheel radius rw m 0.34 0.39 0.46 0.53 AMT reduction ratio i1 - - - - [3.5, 3, 2.5, 1.6, 1.238, 1] Gear reduction ratio i0 - 9.34 10.90 10.2 6.73 Road surface angle 4 θ ◦ 0 0 0 0 / variable Trunk /Cargo volume 5 Vol cargo m3 0.49 0.2-0.26(7 seats) 2.5-4.0 20 0.55-0.65(5 seats) Motor maximum torque 6 Tmax Nm 330 420 1960 3200 Motor Motor maximum speed nmax rpm 13122 17800 4000 3600 Vehicle maximum speed vmax kph 180 240 69 89 Battery pack capacity Qbat Ah 150 119 525 840 Battery pack nominal voltage Vbat ,oc V 377.6 844.8 576 768 Battery Battery pack configuration - - 118s 1p 264s 1p 180s 5p 240s 8p Battery pack volume 7 Vol bat m3 0.220 0.390 1.175 2.506 Battery pack mass 7 mbat kg 414.18 741.42 2551.50 5846.40  
+
+> 1
+
+35 passengers (half load) considered. 2 Cargo for the truck, varing from the driving cycles. 3 Gravel road surface.  
+
+> 4
+
+θ = arctan(slope), slope has a unit of %. For Sedan /SUV /Bus, a flat road is considered for normal urban /highway scenarios. Flat road and uphill /downhill scenarios are considered for the truck.  
+
+> 5
+
+trunk for the Sedan /SUV, with the rear seats upright. Variable for the bus based on rear- or bottom-mounted battery pack.  
+
+> 6
+
+multi motor (for high-performance SUV, bus, or truck) is not considered; the value is the maximum motor torque in total.  
+
+> 7
+
+including packaging and battery /thermal management system. 
+
+4Qloss = A · e−( Ea +B·Crate RT bat ) · Azh, (8) which has been experimentally validated and calibrated by Song et al. [5]. Its discrete form is listed below:               
+
+> ∆Qloss ,t= ∆ AhzA 1
+> ze−(Ea +B·Crate ,tzRT bat )Qz−1
+> z
+> loss ,t−1
+> =9.78 ×10 −4∆Ahe(−15162 +1516 Crate ,t
+> 0.849 RT bat ,t)Q−0.1779
+> loss ,t−1,
+> (9)
+
+where ∆Qloss ,t indicates the capacity loss at time instant t,
+
+R denotes the gas constant which equals 8.314J /(mol ·K). 
+
+Tbat ,k is the absolute battery temperature, 298K in this study (temperature is constant under short distance driv-ing [28]). Crate ,t represents the battery current rate (i.e., 
+
+|Ibat ,t|/Qbat ). ∆Ah is the A h-throughput. The above battery capacity loss model is for a battery cell, thus ∆Ah = |Ibat |Ts 
+
+> 3600
+
+[5], where Ts is the sampling time, 1s. In this study, the variable Ibat denotes the battery pack current (without subscript cell ). Thus, the battery capacity loss model for the battery pack should be calculated very carefully together with Eq. (6):              
+
+> ∆Qloss ,t=9.78 ×10 −4
+> |Ibat ,t|
+> Np,bat Ts
+> 3600 e(
+> −15162 +1516 |Ibat ,t|
+> Qbat
+> 0.849 RT bat ,t)Q−0.1779
+> loss ,t−1.(10)
+
+This model needs to be highlighted. For battery packs with a multiple-parallel configuration, such as the 5p /8p for the bus /truck in Table 2, directly using Eq. (9) can result in unreasonable rapid battery degradation (5x /8x), leading to higher operation costs afterward. Note that the model in Eq (10) is general for battery packs under the following assumptions: 
+
+(1) Thermal assumption : The battery pack is thermally uniform, i.e., each cell has the same temperature. 
+
+(2) Equilibrium assumption : The pack current can be allocated to each battery in parallel, on average. 
+
+3. O ffl ine supercapacitor sizing and online energy management strategy implementation 
+
+In this section, the detailed process for o ffl ine superca-pacitor sizing optimization is introduced. In particular, the determination of the feasible supercapacitor serial-parallel candidate is described in detail, considering pack voltage, mass, and volume constraints. The optimal energy man-agement using dynamic programming is provided. Finally, online energy management using DRL-BC is presented. 
+
+3.1. Supercapacitor serial candidates determination based on pack voltage 
+
+The DC-DC converter shown in Fig. 2 must be capable of boosting the supercapacitor pack voltage to match the LFP battery pack voltage, across the entire SoC ranges of both energy storage units, as depicted in Fig. 3. There-fore, the system must satisfy the following voltage bound-ary conditions: 
+
+
+
+Ns,sc Vsc ,cell ,min kDCDC ,max ≥ Vbat ,pack ,max 
+
+Ns,sc Vsc ,cell ,max kDCDC ,min ≤ Vbat ,pack ,min 
+
+(11)   
+
+> Figure 3: SC series number determination. 424.8 /950.4 /648 /864V are the maximum battery pack voltages of the Sedan /SUV /Bus /Truck, 295 /660 /450 /600V are the minimum battery pack voltages.
+
+where kDCDC ,max is the maximum voltage boost ratio of the DC-DC converter, set to 4, and kDCDC ,min is the minimum boost ratio, equal to 1. The first inequality ensures that even at the minimum supercapacitor pack voltage, the con-verter can boost it to the maximum battery pack voltage. The second inequality dictates that the maximum superca-pacitor pack voltage must not exceed the minimum battery pack voltage, which prevents uncontrolled power flow and ensures proper converter operation. Thus, the allowable range for the number of series-connected supercapacitors is derived as: 
+
+Vbat ,pack ,max 
+
+kDCDC ,max Vsc ,cell ,min 
+
+≤ Ns,sc ≤ Vbat ,pack ,min 
+
+kDCDC ,min Vsc ,cell ,max 
+
+. (12) Based on the vehicle configurations detailed in Table 2, the feasible number of series-connected supercapacitors for the Sedan, SUV, Bus, and Truck should fall within the ranges of [79, 109], [176, 244], [120, 166], and [160, 222], respectively. 
+
+3.2. Supercapacitor parallel candidates determination based on mass /volume 
+
+To determine the number of supercapacitor in parallel, the added mass and volume must be constrained. In this study, the additional supercapacitor pack mass cannot ex-ceed 30% of the battery pack mass to avoid a significant increase in load on electric vehicles. Meanwhile, the ad-ditional supercapacitor pack volume cannot exceed that of the battery pack, as there is not enough space to place it. Then, for each feasible supercapacitor serial candi-date Ns,sc ,i, there is a distinct maximum parallel number 
+
+Np,sc ,max that can be determined: 
+
+
+
+Np,sc ,max ,mass = floor( 0.3mbat  
+
+> Ns,sc ,imsc ,cell km,sc
+
+)
+
+Np,sc ,max ,vol = floor( Vol bat  
+
+> Ns,sc ,iVol sc ,cell kvol ,sc
+
+)
+
+Np,sc ,max = min( Np,sc ,max ,mass , Np,sc ,max ,vol )(13) where floor( ·) is the round down operation, Np,sc ,max ,mass 
+
+and Np,sc ,max ,vol are the maximum supercapacitor parallel 5number restricted by mass and volume, respectively. Other variables are provided in Eq. (6) - (7). Then, the fea-sible supercapacitor serial number should belong to [1, 
+
+Np,sc ,max ]. Note that once Ns,sc ,i is changed, Np,sc ,max must be recalculated. In this study, potential supercapacitor placement solu-tions are provided for the Sedan /SUV /Bus /Truck, as illus-trated in Fig. 4. The original battery pack is highlighted using light blue color in the perspective views, see Fig. 4 (a). Suppose a supercapacitor pack with the same vol-ume should be placed in the vehicle, potential solutions are provided in Fig. 4 (b). For the Sedan and SUV, the additional supercapacitor pack can be placed at the chas-sis (Solution 1) or in the trunk (Solution 2). The trade-o ff 
+
+is that the cabin would need to be raised, or trunk space would be reduced or even eliminated; see the trunk volume of Sedan /SUV in Table 1. For the Bus and Truck, there will be much more available space to place the supercapacitor pack, e.g., the roof of the Bus, the space between the cabin and the cargo hold of the Truck. All feasible supercapacitor serial /parallel candidates for the considered Sedan, SUV, Bus, and Truck are illustrated in Fig. 5; the heaviest candidate is marked in red. Com-pared with existing sizing studies [9], the selection of fea-sible candidates is more meticulous. The total number of candidates is reduced, and the time wasted on DP opti-mization for infeasible candidates is avoided.  
+
+> Figure 4: Perspective views of the (a) current commercial battery-only placement solution and the (b) potential battery-supercapacitor placement solutions.
+> Figure 5: (a) Volume and (b) Mass of feasible supercapacitor serial /parallel candidates for the Sedan, SUV, Bus, and Truck. The heaviest /biggest candidate is marked using red color.
+
+60
+
+2
+
+4
+
+6
+
+8
+
+10 
+
+12 
+
+0
+
+2
+
+4
+
+6
+
+8
+
+10 
+
+12 
+
+0 1000 2000 3000 0 1000 2000 3000 
+
+Initial SoC sc = 0.75 Initial SoC sc = 0.75 Initial SoC sc = 0.50 Initial SoC sc = 0.50 Initial SoC sc = 0.95 Initial SoC sc = 0.95 SC initial Cost SC initial Cost Initial SoC sc = 0.75 Initial SoC sc = 0.50 Initial SoC sc = 0.95 SC initial Cost 
+
+(a) Sedan under CLTC -P (b) SUV under CLTC -P (c) Bus under CHTC -B
+
+6.5 
+
+7.0 
+
+7.5 
+
+8.0 
+
+8.5 
+
+9.0 
+
+6.5 
+
+7.0 
+
+7.5 
+
+8.0 
+
+8.5 
+
+9.0 
+
+200 250 300 350 400 200 250 300 350 400 
+
+SC total number SC total number SC total number 
+
+> Battery capacity loss [%]
+
+0.8 
+
+1.2 
+
+1.6 
+
+2.0 
+
+2.4 
+
+2.8 
+
+0.8 
+
+1.2 
+
+1.6 
+
+2.0 
+
+2.4 
+
+2.8 
+
+200 600 1000 1400 200 600 1000 1400 
+
+> SC initial Cost [CNY]
+
+4.0 
+
+4.5 
+
+5.0 
+
+5.5 
+
+6.0 
+
+4.0 
+
+4.5 
+
+5.0 
+
+5.5 
+
+6.0 
+
+80 120 160 200 80 120 160 200 
+
+> Battery capacity loss [%]
+> SC initial Cost [CNY]
+> Battery capacity loss [%]
+> SC initial Cost [CNY]
+
+×10 -4 ×10 4 ×10 -4 ×10 4
+
+(d1) Truck under CHTC -D (d2) Truck under Uphill (d3) Truck under Downhill 
+
+SC total number SC total number SC total number 
+
+> Battery capacity loss [%]
+> SC initial Cost [CNY]
+> Battery capacity loss [%]
+> SC initial Cost [CNY]
+> Battery capacity loss [%]
+> SC initial Cost [CNY]
+
+×10 -4 ×10 5 ×10 -4 ×10 5 ×10 -4 ×10 5
+
+×10 -4 ×10 4
+
+0 1000 2000 3000 0 1000 2000 3000 0 1000 2000 3000 0 1000 2000 3000 
+
+4.0 
+
+4.5 
+
+5.0 
+
+5.5 
+
+6.0 
+
+6.5 
+
+4.0 
+
+4.5 
+
+5.0 
+
+5.5 
+
+6.0 
+
+6.5 
+
+7.5 
+
+8.0 
+
+8.5 
+
+9.0 
+
+9.5 
+
+10.0 
+
+10.5 
+
+7.5 
+
+8.0 
+
+8.5 
+
+9.0 
+
+9.5 
+
+10.0 
+
+10.5 
+
+4.0 
+
+4.5 
+
+5.0 
+
+5.5 
+
+6.0 
+
+6.5 
+
+4.0 
+
+4.5 
+
+5.0 
+
+5.5 
+
+6.0 
+
+6.5 
+
+0.6 
+
+0.8 
+
+1.0 
+
+1.2 
+
+1.4 
+
+1.6 
+
+1.8 
+
+2.0 
+
+0.6 
+
+0.8 
+
+1.0 
+
+1.2 
+
+1.4 
+
+1.6 
+
+1.8 
+
+2.0 
+
+1.0 
+
+1.5 
+
+2.0 
+
+2.5 
+
+3.0 
+
+3.5 
+
+1.0 
+
+1.5 
+
+2.0 
+
+2.5 
+
+3.0 
+
+3.5 
+
+0
+
+0.5 
+
+1.0 
+
+1.5 
+
+2.0 
+
+2.5 
+
+3.0 
+
+0
+
+0.5 
+
+1.0 
+
+1.5 
+
+2.0 
+
+2.5 
+
+3.0 
+
+244s 1p 
+
+20496CNY 
+
+244s 1p 
+
+20496CNY 
+
+166s 1p 
+
+13944CNY 
+
+166s 1p 
+
+13944CNY 
+
+109s 1p 
+
+9156CNY 
+
+109s 1p 
+
+9156CNY 
+
+optimal 
+
+zone 
+
+200s 5p 
+
+84000CNY 
+
+optimal 
+
+zone 
+
+200s 5p 
+
+84000CNY 
+
+optimal 
+
+zone 
+
+optimal 
+
+zone 
+
+optimal 
+
+zone 
+
+optimal 
+
+zone 
+
+0
+
+0.5 
+
+1.0 
+
+1.5 
+
+2.0 
+
+2.5 
+
+3.0 
+
+0
+
+0.5 
+
+1.0 
+
+1.5 
+
+2.0 
+
+2.5 
+
+3.0 
+
+0
+
+0.5 
+
+1.0 
+
+1.5 
+
+2.0 
+
+2.5 
+
+3.0 
+
+0
+
+0.5 
+
+1.0 
+
+1.5 
+
+2.0 
+
+2.5 
+
+3.0 Figure 6: Battery capacity loss and supercapacitor initial cost with di ff erent supercapacitor sizing candidates for (a) Sedan under CLTC-P, (b) SUV under CLTC-P, (c) Bus under CHTC-B, and (d) Truck under (d1) CHTC-D, (d2) Uphill cycle, and (d3) Downhill cycle. The supercapacitor total number is set as the x-axis without serial /parallel info. The interrupt parts of the rhombus are infeasible candidates. The optimal sizing results are highlighted. 
+
+3.3. Dynamic programming for global optimal energy management 
+
+DP is adopted for o ffl ine global-optimal energy manage-ment for each feasible supercapacitor serial /parallel candi-date for each vehicle type, aiming to determine the optimal sizing. The SoC sc state space is discretized into 100 intervals, and the control variable Psc ,total is discretized into 251 in-tervals. The final SoC sc is set to 0.75 to maintain a middle Time [s] 
+
+(d) Velocity/slope of Uphill/Downhill cycle for the Truck 
+
+> Velocity [km/h]
+
+Time [s] 
+
+(c) Velocity of CHTC -D (flat road) for the Truck 
+
+Time [s] 
+
+> Velocity [km/h]
+
+Time [s] 
+
+(a) Velocity of CLTC -P for the Sedan and SUV 
+
+0
+
+40 
+
+80 
+
+120 
+
+0
+
+40 
+
+80 
+
+120 
+
+0 200 400 600 800 1000 1200 1400 1600 1800 0 200 400 600 800 1000 1200 1400 1600 1800 
+
+0
+
+40 
+
+80 
+
+120 
+
+0
+
+40 
+
+80 
+
+120 
+
+0
+
+40 
+
+80 
+
+120 
+
+0
+
+40 
+
+80 
+
+120 
+
+0
+
+40 
+
+80 
+
+120 
+
+0
+
+40 
+
+80 
+
+120 
+
+0 200 400 600 800 1000 1200 1400 1600 1800 2000 2200 0 200 400 600 800 1000 1200 1400 1600 1800 2000 2200 
+
+-6
+
+-4
+
+-2
+
+0
+
+2
+
+4
+
+6
+
+-6
+
+-4
+
+-2
+
+0
+
+2
+
+4
+
+6
+
+> Velocity [km/h]
+
+0 200 400 600 800 1000 1200 0 200 400 600 800 1000 1200 
+
+(b) Velocity of CHTC -B for the Bus 
+
+0 200 400 600 800 1000 1200 0 200 400 600 800 1000 1200 
+
+> Velocity [km/h]
+> Slope [%]
+
+Uphill -(18t/0t) 
+
+unload/load 
+
+Downhill -(0t/18t) 
+
+Average cargo weight 9t 
+
+Figure 7: Four test velocity profiles for four di ff erent electric vehicles. Uphill cycle in (d) means 18t uphill and 0t downhill, Downhill cycle in (d) means 0t uphill and 18t downhill. 
+
+level for future acceleration /regenerative braking. The objective function of the DP energy management is as follows: 
+
+JDP =
+
+> kend
+
+X
+
+> k=1
+
+( Qbat Vbat ,oc price bat 
+
+1000 × ∆Qloss ,t
+
+0.2 + price ele (Pbat ,t + Psc ,t)1000 × 3600 )Ts,
+
+(14) 
+
+where ∆Qloss ,t is calculated from Eq. (10). price bat is the battery price, 108USD /kWh, i.e., 756CNY /kWh (ex-change rate of 7 in this study), according to the newest data from U.S. Department of Energy and BloombergNEF [29, 30]. price ele is the Chinese commercial electricity price, 0.6CNY /kWh. Note that for each candidate, the ve-hicle mass and load power are updated, and DP is executed once. Details of DP can be found in [5, 28]. 
+
+3.4. Optimal sizing 
+
+DP results for the four di ff erent electric vehicles on bat-tery capacity loss are provided in Fig. 6. Sedan and SUV are tested under the CLTC driving cycle; the Bus is tested under the CHTC-B driving cycle; and the Truck is tested under the CHTC-D, Uphill, and Downhill driving cycles. These dedicated driving cycles are shown in Fig. 7. For the Bus and Truck under CLTC-D, half loads of 2450kg and 9000kg are considered. Specifically, for the Truck, transportation tasks at mine shafts or mines are also con-sidered, i.e., Uphill and Downhill cycles [13, 31] shown in Fig. 7 (d). In Fig. 6 (a), it is clear that the 1p candidates and 2p candidates are separated. And the separated candidates can be smoothly connected by the infeasible ones. For an ini-tial SoC sc of 0.95, the more supercapacitor cells, the lower battery capacity loss due to enough stored energy. When the initial SoC sc is 0.75, the same as the final value, there is a minimum battery degradation point between 160 and 7180 cells, which means more supercapacitor cells can be a burden; the battery pack must output more energy to maintain SoC sc . For an initial SoC sc of 0.50, the mini-mum battery degradation point comes earlier. By consid-ering the three di ff erent initial SoC sc values, the optimal supercapacitor sizing is 109s 1p, marked in red. The cur-rent supercapacitor price is still high, 2000-6000USD /kWh from EIT InnoEnergy [32]. In this study, an average of 4000USD /kWh, i.e., 28000CNY /kWh, is adopted. Thus, the optimal supercapacitor pack will cost about 9156 CNY. Similarly, the SUV and Bus also have three separated but continuous battery capacity loss Pareto fronts, see Fig. 6 (b) and Fig. 6 (c). And the optimal sizing results are both selected as the maximum 1p, 244s 1p (20496CNY) and 166s 1p (13944CNY), respectively. Note that the SUV uses the latest kilovolt battery platform (about 950 V); the supercapacitor pack must also be high-voltage. Even when the initial SoC sc is above 0.75, it still results in a low bat-tery capacity loss. Also, the optimal sizing of the Bus is significantly cheaper than that of the SUV , since urban bus driving cycles involve frequent starts and stops and a relatively low top velocity. Regarding the Truck, it can be seen that there are three minimum battery degradation zones (at the 0.75 curves) for CHTC-D, Uphill, and Downhill cycles in Fig. 6 (d-f), from 500 to 1500 cells. For an initial SoC sc of 0.95, the battery capacity loss curves are all monotonically decreas-ing under the three driving cycles. For an initial SoC sc 
+
+of 0.5, the minimum battery degradation zones come ear-lier. Thus, the optimal sizing is selected as 200s 5p (84000CNY) to suit di ff erent driving cycles. Note that the battery capacity loss under Uphill is significantly higher than that under CHTC-D and Downhill, since the full-load uphill requires much more energy. From Fig. 6 (a-f), it can also be concluded that the op-timal battery capacity loss has nothing to do with the su-percapacitor serial-parallel configuration, i.e., as long as the cell total number is the same, di ff erent serial-parallel configurations will result in the same battery degradation (many rhombuses overlap). Thus, high-voltage configura-tion with less parallel number is recommended for lower line power loss. The optimal supercapacitor sizing re-sults for Sedan /SUV /Bus /Truck are summarized in Table 3, along with the corresponding physical parameters. 
+
+3.5. Online energy management using DRL-BC 
+
+To achieve practical energy management performance through optimal sizing, a state-of-the-art online method, TD3 initialized by BC, is adopted. The energy management strategy can be formulated as a discrete-time Markov decision process. At each time step 
+
+t, the agent observes the environment’s state st, selects an action at according to the current policy, and subsequently receives a scalar reward rt from the environment. The core elements, namely the state vector, action vector, and re-ward function, are unified and defined as follows:                                                                                                                          
+
+> Table 3: Summary of optimal supercapacitor sizing for di ff erent vehicles.
+> Vehicle Parameter Symbol Unit Value Max pack voltage Vsc ,max V294.3 Min pack voltage Vsc ,min V147.2 Configuration Ns,sc Np,sc -109s 1p Sedan Nominal capacitance Csc F27.52 Energy stored Esc kWh 0.3597 Pack mass msc kg 59.54 Pack volume Vol sc m30.072 Max pack voltage Vsc ,max V658.8 Min pack voltage Vsc ,min V329.4 Configuration Ns,sc Np,sc -244s 1p SUV Nominal capacitance Csc F12.30 Energy stored Esc kWh 0.8052 Pack mass msc kg 133.28 Pack volume Vol sc m30.162 Max pack voltage Vsc ,max V448.2 Min pack voltage Vsc ,min V224.1 Configuration Ns,sc Np,sc -166s 1p Bus Nominal capacitance Csc F18.07 Energy stored Esc kWh 0.5478 Pack mass msc kg 90.68 Pack volume Vol sc m30.110 Max pack voltage Vsc ,max V540.0 Min pack voltage Vsc ,min V270.0 Configuration Ns,sc Np,sc -200s 5p Truck Nominal capacitance Csc F75.00 Energy stored Esc kWh 3.3 Pack mass msc kg 546.25 Pack volume Vol sc m30.665
+> 
+> st=[Pd,SoC bat ,SoC sc ]T∈ S
+> at=Psc ,total ∈ A
+> rt=R(st,at)
+> =−[Qbat Vbat ,oc price bat
+> 1000 ×∆Qloss ,t
+> 0.2+price ele (Pbat ,t+Psc ,t)1000 ×3600 ]Ts
+> +penalty (15)
+
+where S and A denote the continuous state space and ac-tion space, respectively, and R(·) represents the reward function. penalty is negative that violates constraints such as SoC and final SoC sc .Note that the maximum and minimum values of action Psc ,total are di ff erent for Sedan /SUV /Bus /Truck considering the DC /DC converter size, which are set 
+
+±50kW /50kW /100kW /300kW, respectively. The whole algorithm is provided in Algorithm 1. To ac-celerate the pre-training process of the TD3 agent, namely, the energy management strategy. The expert dataset from DP is used to initialize the actor network. Then the ini-tialized actor network interacts with the vehicle and driv-ing cycle environment. See more details of the TD3-based energy management strategy [33], and BC used in energy management [34]. The global optimal energy management results from DP are shown in Fig. 8. It can be seen that the battery pack rarely charges under di ff erent vehicle types and driving cy-cles. The supercapacitor pack absorbs almost all power peaks. SoC sc varies from 0.5 to 1.0. Thanks to the known global load power, the final SoC sc can be strictly main-8Algorithm 1 TD3 energy management with BC 
+
+Require: DP expert dataset DDP , Actor network πϕ,Critic networks Qθ1 , Qθ2 , Target networks πϕ′ , Qθ′ 
+
+> 1
+
+, Qθ′
+
+> 2
+
+Require: Replay bu ff er B, batch size N, discount factor 
+
+γ, soft update rate τ
+
+Step 1: Behavioral Cloning Pre-training  
+
+> 1:
+
+for iteration k = 1 to KBC do  
+
+> 2:
+
+Sample mini-batch of expert transitions ( s, aDP )from DDP  
+
+> 3:
+
+Update Actor ϕ via gradient descent on MSE loss: 
+
+∇ϕ 1
+
+> N
+
+P || πϕ(s) − aDP || 2 
+
+> 4:
+
+end for Step 2: TD3 energy management fine-tuning  
+
+> 5:
+
+for episode e = 1 to E do  
+
+> 6:
+
+Reset EV environment and obtain initial state s 
+
+> 7:
+
+for time step t = 1 to T do  
+
+> 8:
+
+Execute action a = clip( πϕ(s) + ϵ, amin , amax ) in environment  
+
+> 9:
+
+Observe reward r, next state s′, and store (s, a, r, s′) in bu ff er B 
+
+> 10:
+
+if it is time to update then  
+
+> 11:
+
+Sample mini-batch ( s, a, r, s′) from B 
+
+> 12:
+
+Compute target: y = r +
+
+γ min i=1,2 Qθ′ 
+
+> i
+
+(s′, clip( πϕ′ (s′) + ϵ′, amin , amax ))  
+
+> 13:
+
+Update Critics θ1, θ 2 by minimizing loss: 
+
+> 1
+> N
+
+P(y − Qθi (s, a)) 2 
+
+> 14:
+
+if t mod d == 0 then  
+
+> 15:
+
+Update Actor ϕ via policy gradient: 
+
+∇ϕ 1
+
+> N
+
+P Qθ1 (s, π ϕ(s))  
+
+> 16:
+
+Soft update targets: ϕ′ ← τϕ + (1 − τ)ϕ′, and 
+
+θ′ 
+
+> i
+
+← τθ i + (1 − τ)θ′ 
+
+> i
+> 17:
+
+end if  
+
+> 18:
+
+end if  
+
+> 19:
+
+s ← s′ 
+
+> 20:
+
+end for  
+
+> 21:
+
+end for  
+
+> 22:
+
+return Trained Actor network πϕ
+
+tained at 0.75. Due to space limitations, the results for the Sedan and Truck Uphill categories are not included. Regarding online energy management using DRL-BC, the power allocation and SoC sc results are quite similar to those of DP, as shown in Fig. 9. The di ff erence is that the battery power still has unavoidable peaks, and the final SoC sc may be lower or higher, not exactly 0.75. We use DRL-BC partly to distinguish it from o ffl ine re-inforcement learning (TD3-BC), and partly to demonstrate that TD3 can be replaced by other online reinforcement learning algorithms. Note that many other advanced en-ergy management strategies can be used to evaluate online performance, such as safe reinforcement learning [35] and offl ine reinforcement learning [36]. The DRL-BC is just an example for yielding results as close to dynamic pro-gramming as possible. 
+
+4. Economy and feasibility analysis 
+
+This section includes two parts: (1) the overall economy analysis and comparison with battery-only electric vehi-cles; (2) comprehensive feasibility of the hybrid energy storage system considering battery life extension, energy storage price, total cost of ownership, economy, mass ef-fect, placement, and future solid-state battery era. 
+
+4.1. Economy analysis 
+
+To quantitatively evaluate the battery life extension brought by the HESS, Fig. 10 presents the battery capacity loss results of di ff erent vehicles. The battery-only vehicle, HESS with the proposed DRL-BC, and HESS with global optimum derived via DP are compared. Across all six test scenarios, the battery degradation tra-jectories of the DRL-BC meticulously track the theoretical lower bounds set by DP, indicating that the proposed online energy management strategy achieves near-optimal power allocation decisions in real time. Under highly intermittent driving cycles, such as CLTC-P for Sedan /SUV in Fig. 10 (a /b), CHTC-B for the Bus in Fig. 10 (c), and CHTC-D for the Truck in Fig. 10 (d1), the battery capacity loss of DRL-BC is significantly reduced compared to the battery-only case. For instance, the bat-tery capacity loss of the Bus is remarkably reduced from Power [kW]                                                                                                                    
+
+> -100
+> -50
+> 0
+> 50
+> 100
+> -100
+> -50
+> 0
+> 50
+> 100
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> SoC
+> 0500 1000 1500 0500 1000 1500
+> Time (s)
+> 0500 1000 1500
+> Time (s)
+> 0500 1000 1500 0500 1000 1500
+> Time (s)
+> 0500 1000 1500
+> Time (s)
+> -200
+> -100
+> 0
+> 100
+> 200
+> -200
+> -100
+> 0
+> 100
+> 200
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Time (s)
+> 0400 800 1200 0400 800 1200
+> Time (s)
+> 0400 800 1200
+> Time (s)
+> 0400 800 1200 0400 800 1200
+> Time (s)
+> 0400 800 1200
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Time (s)
+> 0500 1000 1500 2000 0500 1000 1500 2000
+> Time (s)
+> 0500 1000 1500 2000
+> Time (s)
+> 0500 1000 1500 2000 0500 1000 1500 2000
+> Time (s)
+> 0500 1000 1500 2000
+> Power [kW]
+> Power [kW]
+> Power [kW] SoC
+> SoC
+> SoC
+> (a1)
+> (a2)
+> (b1)
+> (b2)
+> (c1)
+> (c2)
+> (d1)
+> (d2)
+> -400
+> -200
+> 0
+> 200
+> 400
+> 600
+> 800
+> -400
+> -200
+> 0
+> 200
+> 400
+> 600
+> 800
+> -100
+> -50
+> 0
+> 50
+> 100
+> 150
+> -100
+> -50
+> 0
+> 50
+> 100
+> 150
+> Time (s)
+> 0400 800 1200 0400 800 1200
+> Time (s)
+> 0400 800 1200
+> Time (s)
+> 0400 800 1200 0400 800 1200
+> Time (s)
+> 0400 800 1200
+> Power [kW]
+> -100
+> -50
+> 0
+> 50
+> 100
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> SoC
+> 0500 1000 1500
+> Time (s)
+> 0500 1000 1500
+> Time (s)
+> -200
+> -100
+> 0
+> 100
+> 200
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Time (s)
+> 0400 800 1200
+> Time (s)
+> 0400 800 1200
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Time (s)
+> 0500 1000 1500 2000
+> Time (s)
+> 0500 1000 1500 2000
+> Power [kW]
+> Power [kW]
+> Power [kW] SoC
+> SoC
+> SoC
+> (a1)
+> (a2)
+> (b1)
+> (b2)
+> (c1)
+> (c2)
+> (d1)
+> (d2)
+> -400
+> -200
+> 0
+> 200
+> 400
+> 600
+> 800
+> -100
+> -50
+> 0
+> 50
+> 100
+> 150
+> Time (s)
+> 0400 800 1200
+> Time (s)
+> 0400 800 1200
+> SC SoC SC SoC Battery power Pbat Battery power Pbat SC power Psc SC power Psc Load power PdLoad power PdBattery SoC Battery SoC SC SoC Battery power Pbat SC power Psc Load power PdBattery SoC
+> Figure 8: Optimal DP load power allocation and battery /supercapacitor SoC for (a) SUV under CLTC-P, (b) Bus under CHTC-B, (c) Truck under CHTC-D, (d) Truck under Downhill cycle. Initial SC SoC equals 0.75.
+
+9SC SoC SC SoC Battery power Pbat Battery power Pbat SC power Psc SC power Psc Load power PdLoad power Pd Battery SoC Battery SoC 
+
+> Power [kW]
+
+-100 
+
+-50 
+
+0
+
+50 
+
+100 
+
+-100 
+
+-50 
+
+0
+
+50 
+
+100 
+
+0.5 
+
+0.6 
+
+0.7 
+
+0.8 
+
+0.9 
+
+1.0 
+
+0.5 
+
+0.6 
+
+0.7 
+
+0.8 
+
+0.9 
+
+1.0 
+
+> SoC
+
+0 500 1000 1500 0 500 1000 1500 
+
+Time [s] 
+
+0 500 1000 1500 0 500 1000 1500 
+
+Time [s] 
+
+-200 
+
+-100 
+
+0
+
+100 
+
+200 
+
+-200 
+
+-100 
+
+0
+
+100 
+
+200 
+
+0.4 
+
+0.6 
+
+0.8 
+
+1.0 
+
+0.4 
+
+0.6 
+
+0.8 
+
+1.0 
+
+Time [s] 
+
+0 400 800 1200 0 400 800 1200 
+
+Time [s] 
+
+0 400 800 1200 0 400 800 1200 
+
+0.5 
+
+0.6 
+
+0.7 
+
+0.8 
+
+0.9 
+
+1.0 
+
+0.5 
+
+0.6 
+
+0.7 
+
+0.8 
+
+0.9 
+
+1.0 
+
+0.5 
+
+0.6 
+
+0.7 
+
+0.8 
+
+0.9 
+
+1.0 
+
+0.5 
+
+0.6 
+
+0.7 
+
+0.8 
+
+0.9 
+
+1.0 
+
+Time [s] 
+
+0 500 1000 1500 2000 0 500 1000 1500 2000 
+
+Time [s] 
+
+0 500 1000 1500 2000 0 500 1000 1500 2000 
+
+> Power [kW]
+> Power [kW]
+> Power [kW] SoC
+> SoC
+> SoC
+
+(a1) 
+
+(a2) 
+
+(b1) 
+
+(b2) 
+
+(c1) 
+
+(c2) 
+
+(d1) 
+
+(d2) 
+
+-400 
+
+-200 
+
+0
+
+200 
+
+400 
+
+600 
+
+800 
+
+-400 
+
+-200 
+
+0
+
+200 
+
+400 
+
+600 
+
+800 
+
+-100 
+
+-50 
+
+0
+
+50 
+
+100 
+
+150 
+
+-100 
+
+-50 
+
+0
+
+50 
+
+100 
+
+150 
+
+Time [s] 
+
+0 400 800 1200 0 400 800 1200 
+
+Time [s] 
+
+0 400 800 1200 0 400 800 1200 Figure 9: Online DRL-BC load power allocation and battery /supercapacitor SoC for (a) SUV under CLTC-P, (b) Bus under CHTC-B, (c) Truck under CHTC-D, (d) Truck under Downhill cycle. Initial SC SoC equals 0.75. 
+
+5.76 × 10 −4% to 1 .78 × 10 −4% (68.7%), and the battery ca-pacity loss reduction for the Sedan, SUV, and Truck under CHTC-D are 37.5%, 47.6%, and 26.1%, respectively. This demonstrates that the supercapacitor pack e ff ectively ab-sorbs the high-frequency peak power associated with fre-quent acceleration and braking. Under continuous heavy-duty operations, the protective leverage of the HESS diminishes significantly. As depicted in Fig. 10 (d3), in the Truck Uphill cycle, the degradation trajectories of all three strategies nearly overlap, indicat-ing the limited energy capacity of the supercapacitor pack is rapidly depleted, forcing the battery pack to undertake (d2) Truck Downhill (d3) Truck Uphill 
+
+> Bat capacity loss [%]
+
+0 500 1000 1500 0 500 1000 1500 
+
+Time (s) 
+
+×10 -3
+
+×10 -4
+
+(a1) 
+
+(a2) 
+
+(b1) 
+
+(b2) 
+
+Time (s) 
+
+0 400 800 1200 0 400 800 1200 
+
+0
+
+0.5 
+
+1.0 
+
+1.5 
+
+2.0 
+
+0
+
+0.5 
+
+1.0 
+
+1.5 
+
+2.0 
+
+> Bat capacity loss [%]  Bat capacity loss [%]
+
+×10 -3
+
+> Bat capacity loss [%] Bat capacity loss [%] Bat capacity loss [%]
+
+0 500 1000 1500 0 500 1000 1500 
+
+Time (s) 
+
+0
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+1.0 
+
+1.2 
+
+0
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+1.0 
+
+1.2 ×10 -3
+
+0
+
+1.0 
+
+2.0 
+
+3.0 
+
+4.0 
+
+5.0 
+
+6.0 
+
+0
+
+1.0 
+
+2.0 
+
+3.0 
+
+4.0 
+
+5.0 
+
+6.0 ×10 -4
+
+Time (s) 
+
+0 400 800 1200 0 400 800 1200 
+
+0
+
+2.0 
+
+4.0 
+
+6.0 
+
+8.0 
+
+0
+
+2.0 
+
+4.0 
+
+6.0 
+
+8.0 ×10 -4
+
+0
+
+1.0 
+
+2.0 
+
+3.0 
+
+4.0 
+
+5.0 
+
+6.0 
+
+7.0 
+
+0
+
+1.0 
+
+2.0 
+
+3.0 
+
+4.0 
+
+5.0 
+
+6.0 
+
+7.0 
+
+0 500 1000 1500 2000 0 500 1000 1500 2000 0
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+1.0 
+
+0
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+1.0 
+
+0 500 1000 1500 2000 0 500 1000 1500 2000 
+
+Time (s) Time (s) 
+
+(c) Bus CHTC -B (d1) Truck CHTC -D
+
+(a) Sedan CLTC -P (b) SUV CLTC -P
+
+DRL -BC Batteryonly DP 
+
+> 5.37× 10 -4
+> 5.27× 10 -4
+> 6.29× 10 -4
+> 8.98× 10 -4
+> 8.90× 10 -4
+> 9.15× 10 -4
+> 1.78× 10 -4
+> 1.64× 10 -4
+> 5.76× 10 -4
+> 5.72× 10 -4
+> 5.27× 10 -4
+> 7.74× 10 -4
+> 5.40× 10 -4
+> 5.05× 10 -4
+> 1.030× 10 -3
+> 1.025× 10 -3
+> 8.09× 10 -4
+> 1.641× 10 -3
+
+Figure 10: Comparative battery capacity loss results of battery-only, DRL-BC, and DP for (a) Sedan under CLTC-P, (b) SUV under CLTC-P, (c) Bus under CHTC-B, (d) Truck under CHTC-D, (e) Truck under Downhill cycle, (f) Truck under Uphill cycle. Initial SC SoC equals 0.75. 
+
+the continuous high power load regardless of the energy management strategy applied. For the Truck Downhill cy-cle in Fig. 10 (d2), the battery life can be extended with the DRL-BC strategy by 14.6% due to full load energy feed-back. Following the battery capacity loss evaluation, Fig. 11 further illustrates operational cost (CNY /100km) across di ff erent vehicle scenarios. The total operational cost is decomposed into traction energy cost, battery degradation cost, and power loss cost. The calculation is based on Eq. (14) with a battery price of 756CNY /kWh and an electric-ity price of 0.6CNY /kWh. Sedan CLTC -P SUV CLTC -P Bus CHTC -B
+
+Truck CHTC -D Truck Downhill Truck Uphill 
+
+0
+
+50 
+
+100 
+
+150 
+
+200 
+
+0
+
+50 
+
+100 
+
+150 
+
+200    
+
+> Operation cost [CNY/100km]
+> 41.2
+> (+73.5%)
+> 23.8
+> (Ref) 28.3
+> (+18.98%)
+> 6.3
+> 33.5
+> 6.4
+> 16.5
+> 6.4
+> 20.9
+> 47.6
+> (+67.1%)
+> 28.5
+> (Ref) 29.8
+> (+4.61%)
+> 8.9
+> 37.3
+> 9.2
+> 18.3
+> 9.2
+> 19.5
+> 197.5
+> (+151.5%)
+> 78.5
+> (Ref) 82.6
+> (+5.25%)
+> 25.6
+> 166.5
+> 25.7
+> 47.3
+> 25.7
+> 51.6
+
+Energy Cost 
+
+Power Loss Cost 
+
+Degradation Cost 
+
+Energy Cost 
+
+Power Loss Cost 
+
+Degradation Cost 
+
+0
+
+100 
+
+200 
+
+300 
+
+400 
+
+500 
+
+600 
+
+0
+
+100 
+
+200 
+
+300 
+
+400 
+
+500 
+
+600    
+
+> 445.3
+> (+28.7%)
+> 346.1
+> (Ref) 365.2
+> (+5.55%)
+> 120.3
+> 313.1
+> 122.2
+> 213.3
+> 122.2
+> 231.5
+> 354.7
+> (+10.7%)
+> 320.3
+> (Ref) 323.8
+> (+1.09%)
+> 114.4
+> 236.5
+> 116.8
+> 198.2
+> 116.8
+> 201.7
+> 541.8
+> (+1.0%)
+> 536.5
+> (Ref) 539.2
+> (+0.50%)
+> 188.5
+> 343.9
+> 191.0
+> 334.7
+> 191.0
+> 337.5
+> Operation cost [CNY/100km]
+
+(a) 
+
+Energy Cost 
+
+Power Loss Cost 
+
+Degradation Cost 
+
+Energy Cost 
+
+Power Loss Cost 
+
+Degradation Cost 
+
+(b) 
+
+Batonly DP DRL Batonly DP DRL Batonly DP DRL Batonly DP DRL Batonly DP DRL Batonly DP DRL 
+
+Batonly DP DRL Batonly DP DRL Batonly DP DRL Batonly DP DRL Batonly DP DRL Batonly DP DRL 
+
+Figure 11: Economy analysis of battery-only, DRL-BC, and DP for (a) Sedan under CLTC-P, SUV under CLTC-P, Bus under CHTC-B and (b) Truck under CHTC-D, Truck under Downhill cycle, Truck under Uphill cycle. Initial SC SoC equals 0.75. Power loss cost can be calculated using subtraction. 
+
+10 The battery degradation cost dominates the total oper-ation cost across all vehicle types, whether with battery-only or HESS. Meanwhile, the traction energy cost in-crease due to additional supercapacitor mass is also quan-tified. By introducing the HESS, the proposed DRL-BC strategy demonstrates substantial economic feasibility, particularly under driving cycles with high-frequency fluc-tuations, see Fig. 11 (a). For the Bus under CHTC-B, the DRL-BC strategy sig-nificantly reduces the total operation cost from 197.5 to 82.6CNY /100km compared to the battery-only case, pri-marily driven by a reduction in degradation cost, from 166.5 to 51.6CNY /100km. For the Sedan and SUV, the to-tal operation costs are 28.3 and 29.8CNY /100km with the DRL-BC strategy, tracking closely with the DP results of 23.8 and 28.5CNY /100km, respectively. The near-optimal performance of the proposed energy management strategy has then been proved. However, for the Truck under the continuous heavy-duty Uphill cycle, the total operation cost decreases only slightly from 541.8 (battery-only) to 539.2CNY /100km (DRL-BC). The battery degradation cost remains high at 337.5CNY /100km, as the limited energy capacity of the supercapacitor pack is insu ffi cient for sustained discharge. While the operation cost comparisons validate the e ff ec-tiveness of the energy management strategy, commercial-izing HESS requires a comprehensive techno-economic assessment. The initial cost of the supercapacitor and the severe spatial placement penalties must be weighed against these cost savings, which necessitate the multi-dimensional feasibility framework discussed below. 
+
+4.2. Feasibility analysis of the hybrid energy storage sys-tem 
+
+To present a comprehensive techno-economic assess-ment, a five-dimensional feasibility framework is estab-lished. Five crucial dimensions are mapped into a normal-ized feasibility score ranging from 0 to 100, where 100 consistently represents the most favorable engineering or economic condition. The mapping boundary conditions are defined as follows: 
+
+(1) Battery Life Extension : A positive metric normal-ized from 0% (score 0) to 80% (score 100), reflecting the percentage of battery degradation reduction by the DRL-BC energy management strategy. 
+
+(2) TCO Reduction : A positive metric normalized from 0% (score 0) to 70% (score 100), denoting the overall op-eration cost savings over the entire vehicle lifespan. 
+
+(3) SC Cost E ffi ciency : An inverse metric mapping the SC /battery initial investment ratio, normalized from 40% (score 0) to 0% (score 100). A score approaching 100 indicates that the SC’s initial investment is economically negligible compared to the battery pack. 
+
+(4) Mass E ffi ciency : An inverse metric mapping the SC /battery mass ratio, ranging from 20% (score 0) to 0% (score 100). A score approaching 0 denotes negligible ad-ditional mass. 
+
+(5) Placement Feasibility : An inverse metric mapping the SC /battery volume ratio, normalized from 45% (score 0) to 0% (score 100). A score approaching 0 indicates se-vere spatial placement constraints. The energy storage prices for batteries and supercapac-itor from 2026 to 2030 + are listed in Table 4 and are sourced from authoritative organizations. These values can influence the TCO calculation.                   
+
+> Table 4: Energy storage prices from 2026 to 2030 +.
+> Price of (CNY /kWh) 2026 2030 2030 +(Solid state battery era) Li-ion battery 756 1560 2-Supercapacitor 328000 1400 1400 Solid state battery 4--3500
+> 1U.S. Department of Energy and BloombergNEF [29, 30].
+> 2Goldman Sachs [37]. 3EIT InnoEnergy [32].
+> 4Mordor Intelligence [38]
+
+Based on the above-defined criteria, Fig. 12 illustrates the feasibility results of HESS across 2026, 2030, and 2030 + technological eras. For the Truck, only CHTC-D results are presented. Currently, in 2026, Fig. 12 (a), the radar shapes are highly asymmetric. The Bus emerges as the only highly feasible candidate, exhibiting an excellent score across all 100          
+
+> 20
+> 40
+> 60
+> 80
+> 100
+> 20
+> 40
+> 60
+> 80
+> 100
+> 80
+> 60
+> 40
+> 20
+> 100
+> 80
+> 60
+> 40
+> 20
+> 100
+> 80
+> 60
+> 40
+> 20
+> 100
+> 80
+> 60
+> 40
+> 20
+> (a) 2026: Current Bat/SC Price (b) 2030: Bat/SC Price decrease (c) 2030+: Solid -State Battery
+> Battery Life
+> Extension
+> SC Cost
+> Efficiency
+> Mass
+> Efficiency
+> TCO
+> Reduction
+> Battery Life
+> Extension
+> SC Cost
+> Efficiency
+> Mass
+> Efficiency
+> TCO
+> Reduction
+> Battery Life
+> Extension
+> SC Cost
+> Efficiency
+> Mass
+> Efficiency
+> TCO
+> Reduction
+> Axes represent Normalized Feasibility Score (0 -100), where 100 denotes the most favorable condition
+> Placement
+> Feasibility
+> Placement
+> Feasibility
+> Placement
+> Feasibility
+> Sedan SUV Bus Truck (CHTC -D) Sedan SUV Bus Truck (CHTC -D)
+> Figure 12: Feasibility analysis of HESS for Sedan, SUV, Bus, and Truck in (a) 2026, (b) 2030, and (c) 2030 +(Solid state battery era). Five dimensions are compared: Battery life extension, TCO reduction, SC Cost e ffi ciency, Mass e ffi ciency, and Placement feasibility (HESS vs. battery only).
+
+11 (a) 2026: Current Bat/SC Price (b) 2030: Bat/SC Price decrease (c) 2030+: Solid -State Battery        
+
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> TCO reduction [%]
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> TCO reduction [%]
+> TCO reduction [%]
+> SC Initial Cost / Battery Asset Value [%]
+> 10 -1
+> 10 -110 1
+> 10 1
+> 10 0
+> 10 0
+> 10 -110 1
+> 10 0
+> SC Initial Cost / Battery Asset Value [%]
+> 10 -1
+> 10 -110 1
+> 10 1
+> 10 0
+> 10 0
+> 10 -110 1
+> 10 0
+> SC Initial Cost / Battery Asset Value [%]
+> 10 -1
+> 10 -110 1
+> 10 1
+> 10 0
+> 10 0
+> 10 -110 1
+> 10 0
+> Sedan
+> SUV
+> Bus
+> Truck (CHTC -D)
+> Truck (Downhill)
+> Truck (Uphill)
+> Feasibility
+> Threshold
+> Sedan
+> SUV
+> Bus
+> Truck (CHTC -D)
+> Truck (Downhill)
+> Truck (Uphill)
+> Feasibility
+> Threshold
+> Sedan
+> SUV
+> Bus
+> Truck (CHTC -D)
+> Truck (Downhill)
+> Truck (Uphill)
+> Feasibility
+> Threshold
+> Sedan
+> SUV
+> Bus
+> Truck (CHTC -D)
+> Truck (Downhill)
+> Truck (Uphill)
+> Feasibility
+> Threshold
+> Sedan
+> SUV
+> Bus
+> Truck (CHTC -D)
+> Truck (Downhill)
+> Truck (Uphill)
+> Feasibility
+> Threshold
+> Sedan
+> SUV
+> Bus
+> Truck (CHTC -D)
+> Truck (Downhill)
+> Truck (Uphill)
+> Feasibility
+> Threshold Figure 13: Techno-economic evolution and investment leverage shift of HESS across di ff erent vehicle types and scenarios in (a) 2026, (b) 2030, and (c) 2030 +(Solid state battery era). The bubble size is proportional to the total monetary value of the protected battery pack. The red dashed line indicates a conservative 15% commercial feasibility threshold to account for unmodeled hidden integration complexities and reliability risks.
+
+five dimensions. This is primarily due to the low speed and frequent start /stop features of the driving cycle, as well as the negligible optimal SC size. The Sedan and SUV su ff er from severe downgrades in both placement feasi-bility and SC cost e ffi ciency. This indicates that, despite theoretical battery-life and operation-cost savings, the sig-nificant volumetric penalty and high initial SC cost cur-rently prevent HESS from being adopted in passenger ve-hicles. The Heavy-duty Truck (CHTC-D) maintains ade-quate placement feasibility and mass e ffi ciency but is heav-ily constrained by moderate TCO reduction and SC cost effi ciency. Moving to 2030, see Fig. 12 (b). Due to a slight re-duction in battery price, the TCO reduction score also de-creases slightly. The SC price collapse triggers an expan-sion of all polygons toward the SC cost-e ffi ciency axis. However, these economic advantages expose the physical rigid bottlenecks: the mass e ffi ciency and placement fea-sibility remain unchanged. The Sedan and SUV are still firmly constrained by their packaging; installing an SC pack at the chassis or in the trunk is still virtually unac-ceptable. The di ff erence lies in the Truck (CHTC-D); even though the TCO reduction is not significant, the SC cost effi ciency makes the HESS feasible somehow. In the 2030 + solid-state battery era, we have the follow-ing assumptions: (1) the mass and volume energy density of the solid-state battery is twice that of the current LFP Li-ion battery; (2) the battery capacity loss model is the same as the current LFP Li-ion battery; (3) the battery cur-rent rate becomes 1 /2 through a rough estimation. Then, in Fig. 12 (c), the feasibility results undergo an overall shift. Due to the extremely high cost of solid-state batter-ies, the relative SC investment approaches zero, resulting in SC cost e ffi ciency approaching 100 across all vehicle types. However, since solid-state batteries inherently have twice the energy density, the C-rate experienced by the bat-tery is significantly reduced. Then, the relative battery-life extension e ff ect provided by the HESS decreases. To further evaluate the economic leverage of the HESS, Fig. 13 illustrates the relationship between the relative ini-tial SC /battery investment and the resulting TCO reduction across di ff erent eras. The maximum SC cost e ffi ciency in Fig. 12 is less than 40%. Considering the average vehicle service life of 12 to 15 years [39] and the simplified system dynamics, a 15% TCO reduction is set as a baseline feasi-bility threshold to account for real-world uncertainties. In 2026, Fig. 13 (a), the initial cost of the supercapaci-tor constitutes a notable fraction of the battery asset value, ranging from approximately 7% to nearly 30% depending on the vehicle type. The Bus demonstrates the highest eco-nomic return, achieving a TCO reduction of nearly 60%. Passenger vehicles (Sedan and SUV) also show TCO re-ductions exceeding 30%, well above the 15% threshold. However, heavy-duty applications under continuous load profiles, specifically Truck (Downhill) and Truck (Uphill), fall below the 15% feasibility threshold, indicating that the economic return does not justify the initial investment un-der current pricing. As energy storage prices decrease in 2030, Fig. 13 (b), a distinct left shift is observed across all data points. The SC initial cost /battery asset value ratio drops to ap-proximately 0 .5% to 2%, significantly reducing investment costs. While the relative positions of the vehicles on the y-axis remain stable, the TCO reductions for Truck (Down-hill) and Truck (Uphill) still remain below the 15% thresh-old. This indicates that reducing the initial cost alone is insu ffi cient to make HESS economically feasible for low-frequency, continuous-discharge scenarios. In the 2030 + solid-state battery era, shown in Fig. 13 (c), the bubbles enlarge, reflecting the increased economic value of the protected solid-state battery pack. Since the solid-state battery is expected to be considerably more ex-pensive, the relative SC investment ratio falls below 1%, indicating a high economic return (with a small investment to protect a high-value asset). Then, the TCO reduction for the Truck (CHTC-D) improves to over 20%, crossing the feasibility threshold entirely. Nevertheless, the Downhill and Uphill load scenarios remain marginal or infeasible. Fig. 13 demonstrates that while future cost reductions and battery technology advancements will improve the in-vestment leverage of HESS (shifting the data points to the left), the maximum achievable TCO reduction is still re-12 stricted by the physical load frequency profile of the spe-cific vehicle driving cycle. To synthesize the multidimensional results and de-lineate the application boundaries, Fig. 14 presents a techno-economic feasibility matrix mapped against load-frequency profiles. Scenarios with intermittent, high-frequency profiles (e.g., Sedan, SUV, Bus, and Truck un-der CHTC-D) demonstrate a clear upward transition into “Highly Recommended” by 2030 +. For these applica-tions, the supercapacitor cost reductions and the high asset value of future solid-state batteries successfully unlock the economic leverage of HESS. In contrast, scenarios with continuous, low-frequency demands (e.g., Truck under Uphill /Downhill cycles) remain restricted to “Marginally Feasible” or “Not Recommended”. The vertical progres-sion is constrained by the limited energy capacity of su-percapacitors, which cannot sustain prolonged power de-mands, regardless of future cost reductions. Continuous / Low Frequency Intermittent / High Frequency  
+
+> Techno -Economic Feasibility
+> Highly
+> Recommended
+> Marginally
+> Feasible
+> Truck
+> (Uphill)
+> Truck
+> (Downhill)
+> Truck
+> (CHTC -D)
+> Sedan & SUV
+> Bus
+> Load frequency profile Load frequency profile
+> Not Recommended
+> (Physics Limited)
+> 2026: Current Bat/SC Price 2026: Current Bat/SC Price
+> 2030: Bat/SC Price decrease 2030: Bat/SC Price decrease
+> 2030+: Solid -State Battery 2030+: Solid -State Battery
+> Figure 14: Mapping the techno-economic feasibility of HESS against physical load frequencies from 2026 to 2030 and 2030 +. The feasibility of HESS is inherently bounded by the load frequency profile rather than vehicle type.
+
+The study concludes that the commercial and engineer-ing feasibility of HESS is not solely determined by the ve-hicle category (e.g., passenger versus heavy-duty truck), but is also inherently constrained by its operating load-frequency profile. High-frequency transient loads make HESS feasible, whereas relatively continuous load profiles make it impractical. It can be concluded that, for passenger vehicles, the HESS is expected in the future, i.e., the supercapacitor pack can be an optional premium configuration. For city buses, HESS is definitely recommended. For heavy-duty trucks, HESS deployment is not recommended in mining operations like mine shafts or mines, whereas it is highly feasible for urban and port transportation. 
+
+5. Conclusion 
+
+This study establishes a multi-dimensional techno-economic evaluation framework to systematically assess the feasibility for HESS in electric vehicles. By integrat-ing cross-vehicle optimal sizing, mass-volume constraints, online energy management, and life-cycle feasibility ma-trices, the main conclusions are drawn as follows: The life-cycle economic benefits of supercapacitors are highly sensitive to physical mass-volume penalties. Cur-rently, city buses are the most promising vehicle type for HESS applications, capable of mitigating battery degrada-tion at very low additional cost. Conversely, standard pas-senger vehicles and heavy-duty trucks for urban /port sce-narios remain constrained by spatial or heavy-load penal-ties; their HESS adoption will become feasible given a sig-nificant future reduction in supercapacitor prices. Beyond vehicle types, the techno-economic feasibility of HESS is fundamentally governed by the frequency char-acteristics of the load power. Vehicles with highly tran-sient, high-frequency power demands maximize the ben-efits of HESS, whereas relatively continuous load profiles render HESS economically unjustifiable. The economic benefits of HESS will diminish as the price collapse and technological evolution of batteries un-fold. Looking toward the 2030 + era, extending battery lifespan and energy density will further compress the need for onboard supercapacitors. Nevertheless, the high initial costs of solid-state batteries significantly amplify the asset protection leverage of degradation mitigation. By protect-ing the high-value batteries, the HESS remains an interest-ing solution for future electric vehicles. Several future directions are still interesting: (1) Fu-ture studies could integrate thermal safety dynamics into the economic evaluation. Supercapacitors inherently re-duce peak currents, which contributes to reducing battery heat generation. This capability not only relieves the op-erational load on the vehicle thermal management system but also o ff ers specific functional advantages in sub-zero climates, where supercapacitors can mitigate cold-weather battery constraints, e.g., lithium plating and power fade. (2) Guided by the load-frequency dependence, future re-search could explore the applicability of HESS in extreme-duty and o ff -road sectors. Vehicles such as electric racing vehicles, heavy construction machinery, or tracked vehi-cles are characterized by highly transient, stochastic power demands resulting from rapid accelerations, variable oper-ational resistances, or skid-steering mechanisms. In these specialized applications, the frequent load fluctuations can amplify the asset protection leverage of supercapacitors, presenting a practical scenario for future HESS integration. 
+
+References 
+
+[1] R. Xiong, H. Chen, C. Wang, F. Sun, Towards a smarter hybrid energy storage system based on bat-tery and ultracapacitor-a critical review on topology and energy management, Journal of Cleaner Produc-tion 202 (2018) 1228–1240. 13 [2] Y. Wu, Z. Huang, H. Liao, B. Chen, X. Zhang, Y. Zhou, Y. Liu, H. Li, J. Peng, Adaptive power al-location using artificial potential field with compen-sator for hybrid energy storage systems in electric ve-hicles, Applied Energy 257 (2020) 113983. [3] Y. Wang, L. Wang, M. Li, Z. Chen, A review of key issues for control and management in battery and ultra-capacitor hybrid energy storage systems, eTransportation 4 (2020) 100064. [4] L. Zhang, X. Hu, Z. Wang, J. Ruan, C. Ma, Z. Song, D. G. Dorrell, M. G. Pecht, Hybrid electrochemical energy storage systems: An overview for smart grid and electrified vehicle applications, Renewable and Sustainable Energy Reviews 139 (2021) 110581. [5] Z. Song, H. Hofmann, J. Li, X. Han, M. Ouyang, Op-timization for a hybrid energy storage system in elec-tric vehicles using dynamic programing approach, Applied Energy 139 (2015) 151–162. [6] L. Zhang, X. Hu, Z. Wang, F. Sun, J. Deng, D. G. Dorrell, Multiobjective optimal sizing of hy-brid energy storage system for electric vehicles, IEEE Transactions on Vehicular Technology 67 (2) (2017) 1027–1035. [7] T. Nguyen-Minh, B.-H. Nguyen, T. Vo-Duy, M. C. Ta, J. P. F. Trovão, C. H. Antunes, A universal opti-mal sizing for hybrid energy storage system of elec-tric vehicles, Journal of Energy Storage 92 (2024) 112128. [8] L. Wang, M. Li, Y. Wang, Z. Chen, Energy man-agement strategy and optimal sizing for hybrid en-ergy storage systems using an evolutionary algo-rithm, IEEE Transactions on Intelligent Transporta-tion Systems 23 (9) (2021) 14283–14293. [9] J. Huang, Z. Huang, Y. Wu, Y. Liu, H. Li, F. Jiang, J. Peng, Sizing optimization research considering mass e ff ect of hybrid energy storage system in elec-tric vehicles, Journal of Energy Storage 48 (2022) 103892. [10] B. Pang, H. Zhu, Y. Tong, Z. Dong, Optimal design and control of battery-ultracapacitor hybrid energy storage system for bev operating at extreme tempera-tures, Journal of Energy Storage 101 (2024) 113963. [11] K. Guan, Z. Huang, T. Chang, Y. Wu, F. Li, H. Li, Hi-erarchical sizing optimization for electric racing cars with hybrid energy storage system, Journal of Energy Storage 140 (2025) 119041. [12] N.-D. Nguyen, C. Yoon, Y. I. Lee, A standalone en-ergy management system of battery /supercapacitor hybrid energy storage system for electric vehicles us-ing model predictive control, IEEE Transactions on Industrial Electronics 70 (5) (2022) 5104–5114. [13] Q. Tang, M. Hu, Y. Bian, Y. Wang, Z. Lei, X. Peng, K. Li, Optimal energy e ffi ciency control framework for distributed drive mining truck power system with hybrid energy storage: A vehicle-cloud integration approach, Applied Energy 374 (2024) 123989. [14] Y. Wu, Z. Huang, Y. Zheng, Y. Liu, H. Li, Y. Che, J. Peng, R. Teodorescu, Spatial–temporal data-driven full driving cycle prediction for optimal energy man-agement of battery /supercapacitor electric vehicles, Energy Conversion and Management 277 (2023) 116619. [15] Y. Wu, Z. Huang, D. Li, H. Li, J. Peng, J. M. Guer-rero, Z. Song, Integrated battery thermal and energy management for electric vehicles with hybrid energy storage system: A hierarchical approach, Energy Conversion and Management 317 (2024) 118853. [16] R. Xiong, J. Cao, Q. Yu, Reinforcement learning-based real-time power management for hybrid energy storage system in the plug-in hybrid electric vehicle, Applied energy 211 (2018) 538–548. [17] F. Li, Y. Gao, Y. Wu, Y. Xia, C. Wang, J. Hu, Z. Huang, Incentive learning-based energy manage-ment for hybrid energy storage system in electric vehicles, Energy Conversion and Management 293 (2023) 117480. [18] W. Liu, P. Yao, Y. Wu, L. Duan, H. Li, J. Peng, Imi-tation reinforcement learning energy management for electric vehicles with hybrid energy storage system, Applied Energy 378 (2025) 124832. [19] K. Guan, Z. Huang, Y. Gao, Y. Wu, F. Li, H. Li, To-wards adaptive deep reinforcement learning energy management for electric vehicles: An online updat-ing approach, Energy 325 (2025) 135996. [20] T. Zhu, R. G. Wills, R. Lot, X. Kong, X. Yan, Op-timal sizing and sensitivity analysis of a battery-supercapacitor energy storage system for electric ve-hicles, Energy 221 (2021) 119851. [21] Y. Wu, Z. Huang, H. Hofmann, Y. Liu, J. Huang, X. Hu, J. Peng, Z. Song, Hierarchical predictive con-trol for electric vehicles with hybrid energy stor-age system under vehicle-following scenarios, En-ergy 251 (2022) 123774. [22] O. Veneri, C. Capasso, S. Patalano, Experimental in-vestigation into the e ff ectiveness of a super-capacitor based hybrid energy storage system for urban com-mercial vehicles, Applied Energy 227 (2018) 312– 323. [23] Q. Zhang, G. Li, Experimental study on a semi-active battery-supercapacitor hybrid energy storage system for electric vehicle application, IEEE Transactions on Power Electronics 35 (1) (2019) 1014–1021. 14 [24] Z. Song, J. Li, J. Hou, H. Hofmann, M. Ouyang, J. Du, The battery-supercapacitor hybrid energy stor-age system in electric vehicle applications: A case study, Energy 154 (2018) 433–441. [25] BYD., Byd blade battery., https://www .byd .com/ eu/technology/byd-blade-battery (2025). [26] MAXWELL., Bacp3000 datasheet., https: //maxwell .com/wp-content/uploads/2024/ 07/3003279-EN .3_DS_2 .7V-3000F-Cell-BCAP3000-P270_20240704 .pdf (2024). [27] J. Wang, P. Liu, J. Hicks-Garner, E. Sherman, S. Soukiazian, M. Verbrugge, H. Tataria, J. Musser, P. Finamore, Cycle-life model for graphite-lifepo4 cells, Journal of Power Sources 196 (8) (2011) 3942– 3948. [28] Y. Wu, Z. Huang, D. Li, H. Li, J. Peng, D. Stroe, Z. Song, Optimal battery thermal management for electric vehicles with battery degradation minimiza-tion, Applied Energy 353 (2024) 122090. [29] D. U.S. Department of Energy, Storage innovations 2030, https://www .energy .gov/oe/storage-innovations-2030 (2025). [30] BloombergNEF, Lithium-ion battery pack prices fall to 108 usd per kilowatt-hour, despite ris-ing metal prices, https://about .bnef .com/ insights/clean-transport/lithium-ion-battery-pack-prices-fall-to-108-per-kilowatt-hour-despite-rising-metal-prices-bloombergnef/ (2025). [31] W. Yang, J. Yang, J. Liang, N. Zhang, Implementa-tion of velocity optimisation strategy based on pre-view road information to trade o ff transport time and fuel consumption for hybrid mining trucks, IET In-telligent Transport Systems 13 (1) (2019) 194–200. [32] E. InnoEnergy, Unlocking new possibilities through innovative energy storage: the role of ultracapacitors in the energy transition, 
+
+https://www .eit .europa .eu/sites/default/ files/eitinnoenergy-frostsullivan_ ultracapacitors_whitepaper_dec2020 .pdf 
+
+(2020). [33] Y. Zhang, C. Zhang, R. Fan, S. Huang, Y. Yang, Q. Xu, Twin delayed deep deterministic policy gradient-based deep reinforcement learning for en-ergy management of fuel cell vehicle integrating durability information of powertrain, Energy Conver-sion and Management 274 (2022) 116454. [34] J. Peng, T. Ren, Z. Chen, W. Chen, C. Wu, C. Ma, Effi cient training for energy management in fuel cell hybrid electric vehicles: An imitation learning-embedded deep reinforcement learning framework, Journal of Cleaner Production 447 (2024) 141360. [35] F. Li, M. Li, Y. Wu, H. Li, Y. Song, Z. Huang, Safe re-inforcement learning energy management for hybrid electric vehicles: A supervisory action assessment and correction approach, Journal of Cleaner Produc-tion 544 (2026) 147720. [36] Y. Wang, J. Wu, H. He, Z. Wei, F. Sun, Data-driven energy management for electric vehicles using offl ine reinforcement learning, Nature Communica-tions 16 (1) (2025) 2835. [37] G. Sachs, Electric vehicle battery prices are expected to fall almost 50% by 2026, 
+
+https://www .goldmansachs .com/insights/ articles/electric-vehicle-battery-prices-are-expected-to-fall-almost-50-percent-by-2025 (2024). [38] M. Intelligence, Ev solid-state battery market size and share analysis - growth trends and forecast (2025 - 2030), https: //www .mordorintelligence .com/industry-reports/ev-solid-state-battery-market 
+
+(2025). [39] A. Burnham, D. Gohlke, L. Rush, T. Stephens, Y. Zhou, M. A. Delucchi, A. Birky, C. Hunter, Z. Lin, S. Ou, et al., Comprehensive total cost of ownership quantification for vehicles with di ff erent size classes and powertrains, Tech. rep., Argonne National Labo-ratory (ANL) (2021). 15
