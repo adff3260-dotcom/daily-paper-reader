@@ -25,3 +25,74 @@ subscriptions:
     stage: A
     diff_threshold_pct: 15
   keyword_recall_mode: or
+  intent_profiles:
+    - tag: UAV
+      description: >-
+        查找关于混合动力无人机和混合电推垂直起降飞行器能量管理策略的综述论文和代表性研究。重点关注串联混合动力无人机、燃料电池/电池混合动力无人机、内燃机-发电机/电池混合动力无人机和混合电推垂直起降飞行器。总结主要的能量管理方法，包括基于规则控制、模糊逻辑控制、等效消耗最小化策略、自适应等效消耗最小化策略、动态规划、庞特里亚金极小值原理、模型预测控制和强化学习。优先考虑讨论系统建模、基于任务剖面的功率分配、电池荷电状态维持控制、降低油耗、发电机瞬态抑制、电池老化、实时实现以及实验或硬件验证的论文。识别当前局限性和潜在研究空白，以支持混合动力无人机能量管理的未来创新。
+      enabled: true
+      paper_sources:
+        - arxiv
+      keywords:
+        - keyword: UAV power management
+          keyword_cn: 无人机功率管理
+          query: UAV power management
+        - keyword: fuel cell battery UAV
+          keyword_cn: 燃料电池/电池无人机
+          query: fuel cell battery UAV
+        - keyword: hybrid-electric propulsion
+          keyword_cn: 混合电推进
+          query: hybrid-electric propulsion
+        - keyword: energy management strategy
+          keyword_cn: 能量管理策略
+          query: energy management strategy for hybrid electric unmanned aerial vehicles
+        - keyword: hybrid-powered UAV
+          keyword_cn: 混合动力无人机
+          query: >-
+            | English keyword            | 中文含义       | | -------------------------- | ---------- | | hybrid-powered
+            UAV         | 混合动力无人机    | | energy management strategy | 能量管理策略     | | hybrid-electric propulsion |
+            混合电推进      | | series hybrid UAV          | 串联混动无人机    | | fuel cell battery UAV      | 燃料电池/电池无人机 | | UAV
+            power management       | 无人机功率管理    |
+        - keyword: equivalent consumption minimization
+          keyword_cn: 等效消耗最小化策略
+          query: equivalent consumption minimization strategy for hybrid electric vehicles
+      intent_queries:
+        - query: >-
+            Which papers provide a clear taxonomy of rule based, fuzzy, ECMS, dynamic programming, PMP, MPC, and
+            reinforcement learning methods?
+          query_cn: ''
+          enabled: true
+          source: manual
+          note: ''
+        - query: >-
+            What are the unsolved problems in hybrid UAV energy management, such as SOC control, fuel consumption,
+            generator transients, and mission adaptation?
+          query_cn: ''
+          enabled: true
+          source: manual
+          note: ''
+        - query: What are the main categories of energy management strategies for hybrid powered UAVs?
+          query_cn: ''
+          enabled: true
+          source: manual
+          note: ''
+        - query: What are the current limitations and research gaps in hybrid UAV energy management?
+          query_cn: 混合动力无人机能量管理当前有哪些局限性和研究空白？
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-06-13T02:11:18.656Z'
+source_backends:
+  arxiv:
+    papers_table: arxiv_papers
+    use_vector_rpc: true
+    vector_rpc: match_arxiv_papers
+    vector_rpc_exact: match_arxiv_papers_exact
+    use_bm25_rpc: true
+    bm25_rpc: match_arxiv_papers_bm25
+    sync_table: arxiv_sync_status
+    sync_success_value: success
+    schema: public
+    kind: supabase
+    enabled: true
+    url: https://lyucdwgefyfbmaiopjbk.supabase.co
+    anon_key: sb_publishable_lX-oi64Uxyd7SIVv3_w2Uw_MTOojeKq
