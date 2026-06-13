@@ -1,0 +1,54 @@
+{
+  "label": "2026-06-13",
+  "date": "2026-06-13",
+  "generated_at": "2026-06-13T20:58:00",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202606/13/2606.06932v1-forecast-and-model-predictive-control-of-distributed-energy-resource-aggregators-for-net-demand-balancing",
+      "section": "quick",
+      "title_en": "Forecast and Model Predictive Control of Distributed Energy Resource Aggregators for Net-Demand Balancing",
+      "authors": "Obai Bahwal, Oliver Kosut, LalithaSankar",
+      "date": "2026-06-05",
+      "pdf": "https://arxiv.org/pdf/2606.06932v1",
+      "score": "7.0",
+      "evidence": "采用模型预测控制管理分布式能源资源，包含荷电状态约束，可迁移至无人机功率管理",
+      "tldr": "高比例可再生能源并网后净负荷波动加剧，传统调度面临挑战；分布式能源聚合器(DERA)汇聚分散资源，可充当虚拟电厂平衡供需。本文提出预测与滚动时域模型预测控制(MPC)相结合的方法，将DERA建模为带荷电状态与功率约束的虚拟电池，长期调度以最小充电偏离、爬坡和跟踪误差。利用CAISO净需求数据和五种典型DERA仿真表明，该方法能有效跟踪边际需求，且LSTM预测在特定时域略优于线性回归，揭示预测时域与MPC更新速率的权衡。研究为DERA的预测控制提供了设计依据，支撑虚拟电厂在不确定性下的实时优化运行。",
+      "tags": "query:uav",
+      "abstract_en": "With the rapid demand for energy, even the incorporation of bulk renewable energy sources is not entirely sufficient to meet demand besides adding supply uncertainty. Distributed Energy Resource Aggregators (DERAs) have the potential to address this uncertainty via aggregation and control of decentralized distributed energy sources, thereby acting like virtual power plants. We present a new approach that combines forecasting and model-predictive control to assign DERAs to follow net-demand patterns, while accounting for the dynamics of the aggregate energy sources and their capacity limits. Each DERA is represented as a flexible ``virtual battery\" with constraints on state-of-charge and power limits. The dispatch problem is set up as a long-term model predictive control task that aims to minimize differences from desired charge levels, output ramping, and net-load tracking errors. To keep operations efficient in real time, we implement a rolling-horizon MPC, which updates decisions regularly using the latest marginal-demand forecasts. For forecasting, we present two models: linear regression and long-short term memory (LSTM) neural network. Using high-resolution CAISO net-demand data and five typical DERA types, our simulations demonstrate how well our approach tracks marginal-demand; in particular, we highlight the tradeoffs between forecasting horizon times and MPC update rate as well as the dependence on the choice of the load forecasting model. Our results also indicate a slight edge for LSTM models over linear regression for desired time shifts and horizon choices.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/13/2606.12345v1-an-efficient-method-for-the-optimal-control-of-microgrids-under-uncertainties-using-local-reduction",
+      "section": "quick",
+      "title_en": "An Efficient Method for the Optimal Control of Microgrids Under Uncertainties using Local Reduction",
+      "authors": "Edoardo Scaccia, Eric C. Kerrigan, Anna Sadowska",
+      "date": "2026-06-10",
+      "pdf": "https://arxiv.org/pdf/2606.12345v1",
+      "score": "7.0",
+      "evidence": "微电网不确定条件下的最优容量配置与功率调度，直接适用于无人机混合系统能量管理",
+      "tldr": "微电网最优规模与调度问题面临负荷、光伏、电价和电池效率等多重不确定性，传统方法依赖混合整数规划近似求解。本文提出两种鲁棒优化建模形式：混合整数线性规划与平滑重构的连续非线性规划，并设计局部约简算法高效求解。10万样本蒙特卡洛模拟表明，两种形式解的平均可行率均超过90%，为不确定环境下微电网优化控制提供了精确高效的解决方案。",
+      "tags": "query:uav",
+      "abstract_en": "The problem of optimal sizing and power scheduling in microgrids subject to uncertainties is well known to the control community. Commonly, the optimal control problem is cast as a mixed-integer program to model the logical constraints arising in energy storage systems, and is then solved approximately using numerical methods such as the scenario approach. In this paper, we propose and compare two formulations of a robust microgrid sizing and power scheduling optimal control problem with logical constraints and uncertainties in the user's power demand, solar power generation, grid electricity prices and battery efficiencies. The first formulation uses binary variables and big-M constraints, leading to a mixed-integer linear program. The second formulation casts the problem as a continuous nonlinear program through an exact smooth reformulation of the logical constraints, consisting of additional modelling variables and non-convex constraints. We then propose a novel local reduction algorithm, extending an existing method, to solve both problems. The two formulations are compared by evaluating the solutions returned by local reduction using 100,000-sample Monte Carlo simulations and achieve promising results, with both averaging feasibility rates above 90%.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/13/2606.12000v1-physics-guided-residual-kalman-learning-for-state-of-charge-estimation-of-lithium-iron-phosphate-batteries",
+      "section": "quick",
+      "title_en": "Physics-guided residual Kalman learning for state-of-charge estimation of lithium iron phosphate batteries",
+      "authors": "Feng Guo, Luis D. Couto, Khiem Trad, Ru Hong, Guangdi Hu, Mohammadhosein Safari",
+      "date": "2026-06-10",
+      "pdf": "https://arxiv.org/pdf/2606.12000v1",
+      "score": "6.0",
+      "evidence": "电池SOC估计，对混合动力无人机能量管理和SOC维持至关重要",
+      "tldr": "针对磷酸铁锂电池因开路电压平台平坦、温度依赖性强及初始化偏移导致的荷电状态估计困难，本文提出物理引导残差卡尔曼学习框架，融合单粒子模型扩展卡尔曼滤波与门控循环单元残差学习器。在-10℃至50℃、最高20%初始偏差的多工况测试中，全局均方根误差仅1.19%，较纯物理滤波降低77%。研究证实电化学状态信息可有效引导残差补偿，提升递归估计精度，并展示跨工况鲁棒性，为电池管理应用奠定基础。",
+      "tags": "query:uav",
+      "abstract_en": "Accurate state of charge (SOC) estimation of lithium iron phosphate (LFP) batteries remains challenging because of their flat open-circuit-voltage (OCV)-SOC characteristics, temperature-dependent dynamics, and sensitivity to initialization errors. Here, we propose a physics-guided residual Kalman learning (PRKL) framework for electrochemical-model-based SOC estimation. PRKL combines a control-oriented single-particle-model-based extended Kalman filter (EKF), which provides recursive physical state propagation, with a gated recurrent unit (GRU) residual learner that compensates structured EKF errors using electrochemical states and measurement features. The framework is evaluated on a public graphite/LFP dataset covering three dynamic drive cycles, eight temperatures from -10 to 50 degrees C, and initialization offsets up to 20 percent. Using dynamic stress test (DST) and federal urban driving schedule (FUDS) cycles for training and the supplemental federal test procedure (US06) cycle for cross-profile testing within the same cell dataset, PRKL achieves a global average root mean square error (RMSE) of 1.19 percent, corresponding to a 77 percent reduction relative to the physics-only EKF. These results show that electrochemical state information can guide residual learning and improve recursive SOC estimation for LFP batteries. The present validation supports cross-profile robustness within the studied dataset and provides a basis for future cross-cell, ageing-aware, and embedded-platform validation.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

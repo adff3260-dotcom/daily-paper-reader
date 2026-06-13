@@ -1,0 +1,421 @@
+Title: Forecast and Model Predictive Control of Distributed Energy Resource Aggregators for Net-Demand Balancing
+
+URL Source: https://arxiv.org/pdf/2606.06932v1
+
+Published Time: Mon, 08 Jun 2026 00:30:22 GMT
+
+Number of Pages: 9
+
+Markdown Content:
+# Forecast and Model Predictive Control of Distributed Energy Resource Aggregators for Net-Demand Balancing 
+
+Obai Bahwal, Oliver Kosut, and Lalitha Sankar 
+
+Abstract —With the rapid demand for energy, even the in-corporation of bulk renewable energy sources is not entirely sufficient to meet demand besides adding supply uncertainty. Distributed Energy Resource Aggregators (DERAs) have the potential to address this uncertainty via aggregation and control of decentralized distributed energy sources, thereby acting like virtual power plants. We present a new approach that combines forecasting and model-predictive control to assign DERAs to follow net-demand patterns, while accounting for the dynam-ics of the aggregate energy sources and their capacity limits. Each DERA is represented as a flexible “virtual battery” with constraints on state-of-charge and power limits. The dispatch problem is set up as a long-term model predictive control task that aims to minimize differences from desired charge levels, output ramping, and net-load tracking errors. To keep operations efficient in real time, we implement a rolling-horizon MPC, which updates decisions regularly using the latest marginal-demand forecasts. For forecasting, we present two models: linear regression and long-short term memory (LSTM) neural network. Using high-resolution CAISO net-demand data and five typical DERA types, our simulations demonstrate how well our approach tracks marginal-demand; in particular, we highlight the tradeoffs between forecasting horizon times and MPC update rate as well as the dependence on the choice of the load forecasting model. Our results also indicate a slight edge for LSTM models over linear regression for desired time shifts and horizon choices. 
+
+I. I NTRODUCTION 
+
+Massive renewable generation introduces volatility and un-certainty in the grid, leading to sharp ramps and disturbances in net-demand (demand minus renewable generation). Tradi-tionally, these ramps and disturbances have been addressed using fossil fuel-based generators such as coal and natural gas, which are costly, inefficient, and not environment friendly. The grid operator can tackle these challenges by intelli-gently allocating distributed energy resources (DERs), such as solar photovoltaics, wind turbines complemented with battery storage, and flexible loads. We propose a methodology that leverages aggregate DER models to optimally allocate DERs to meet the ramps and disturbances in marginal-demand fore-casts (marginal-demand is net-demand minus bulk generation) using a model predictive control (MPC) framework . To this end, we model the dynamical behavior of each aggregated DER type as a battery with capacity constraints. The goal of the DER aggregator (DERA) is then to learn the optimal control policy over time to meet the demands of the grid. 
+
+O. Bahwal, O. Kosut, and L. Sankar are with the School of Electrical, Computer and Energy Engi neering, Arizona State University, Tempe, AZ 85281, USA (emails: obahwal@asu.edu, okosut@asu.edu, lsankar@asu.edu). 
+
+The grid operator and DERAs form the agents in our pro-posed approach. Aggregators are entities that engage with the consumers to aggregate DERs (e.g., EnergyHub, Enel X, and utility companies). The role of the grid operator (e.g., ERCOT and CAISO) is to coordinate DERAs and bulk generation to procure and dispatch the resources required to balance supply and demand. The formulation in this paper focuses on resource allocation across different DERAs. However, the precise way in which the control is designed at the individual device level to achieve tracking is beyond the scope of this paper (see [1] and the references therein for individual-level control). The control architectures presently used in the grid focus primarily on short-term optimization [2]. Traditionally, eco-nomic dispatch with the participation of large generation plants is performed as a static optimization problem [3]. However, the optimal dispatch of DERAs needs to account for the dynamics of these aggregations, thereby requiring an optimal control framework. However, for sufficient DERA control, we need to plan for the long term despite uncertainties in net-demand, thus, reliable long-term forecasting that accounts for short-term dynamics is essential. Moreover, even as the accuracy of forecast information becomes less reliable over long timescales, the challenge of jointly using both (more reliable) short-term and (less reliable) long-term forecasts to optimize real-time DER allocations while maintaining grid-level optimality appears to be unsolved. 
+
+Our Contributions We address the above mentioned chal-lenges by proposing a model predictive control (MPC) frame-work that captures the dynamics of the DERAs. For the MPC to design optimal control, it in turn requires real-time load forecasting. To this end, we first present multiple marginal-demand forecast models for different horizon times. These models rely on previous day marginal-demand and calendar indicators for prediction. To evaluate the importance of load forecasting, we consider two distinctly different models: (i) a simple linear regression (LR) model, and (ii) a more complex long short-term memory (LSTM) neural network (NN). We leverage our forecast model to introduce our key con-tribution: an MPC framework with constraints on the state of charge (SoC), aggregate capacity of each DER type, and a net power balance constraint across all agents. The objective of the MPC is to minimize the net cost of DER generation under the above mentioned constraints for a forecast time horizon and repeatedly over time shifts. The resulting optimal policy 
+
+> arXiv:2606.06932v1 [eess.SY] 5 Jun 2026
+
+allows for short-term optimization while taking into account relatively longer-term forecast. MPC approximates the solution to a long-run optimal control problem by solving a sequence of tractable, finite-horizon, and therefore finite dimensional optimization problems. We present extensive numerical results on both the forecast and MPC aspects. We first compare the performance of the two types of forecast models (LR and LSTM) we consider across different prediction horizon times. For both LR and LSTM-based forecasts, we compare the results of the MPC to identify the best predictor across both horizon lengths and time-shifts. Our simulations clearly highlight the importance of: (i) well-trained forecasting models, (ii) MPC horizon times, and (iii) frequency (time-shift) of MPC updates. Our extensive results show that this framework allows very close tracking of loads to minimize mismatch while actively meeting ramping, power, and state of charge constraints. 
+
+Related Research MPC has been used in specific grid con-texts; in fact, it has strong guarantees for transient operations and ensures constraint satisfaction, while also accounting for long-run optimality [4]. In [5] and [6], MPC is used at the distribution-level, in [5] with a focus on market profit, and in [6] with a focus on security and resilience. On the other hand, we focus on transmission-level marginal-demand balancing based on forecast and MPC integration. DER aggregation is considered in [7], [8] for distribution-level control, using convex inner approximation, and ancillary service reserves, while we rely on marginal-demand forecast aligned to MPC for optimal DER allocation at the grid-operator level. While all these approaches share in common with ours the goal of minimizing a chosen objective for real-time resource alloca-tion, our work is distinct by including (a) dynamic models for DER aggregations; (b) hard constraints on SoC, power balance, and battery capacity constraints; (c) integrating multi-horizon marginal-demand (load) forecasting; and (d) empirical evaluation over multiple time-shifts for the MPC optimization. We note that our approach does not focus on the downstream allocation aspects considered in [5], [6], [7], [8]. Finite-horizon convex optimization formulations for the control of DERAs are discussed in [9]: a centralized quadratic program is solved to generate different command signals for the different classes of DERs. In [10], the authors solve a non-linear AC optimal power flow (OPF) with the participa-tion of an aggregation of DERs, specifically thermostatically controlled loads; the problem is modeled as a Markov deci-sion process (MDP) and is reformulated as a finite-horizon convex program. Similar formulations are considered in [11], [12]. Related work also studies when battery-like aggregation preserves feasibility and optimality for heterogeneous DER schedules [13], and how uncertainty-aware aggregate feasible regions and equivalent operating costs can be constructed for large populations of DERs [14]. However, these finite-horizon formulations and aggregation models do not explicitly analyze forecast-coupled control loop in a multi-horizon and multi-time shift (update frequency) settings. Unlike traditional finite-horizon approaches that overlook real-time disruptions and the balance between forecast length and update frequency, we integrate forecast models across several timeframes with a rolling-horizon MPC under constraints, and analyze how the forecast horizon time τ and update interval ts affect tracking performance and outcomes. We note that our work in [15] (which has some overlap with this paper) formally introduces the MPC setup used here; however, it uses the true loads for learning the allocation policies. Such data is never available non-causally, and thus, one needs a reliable load forecasting model. One can therefore view this prior work as a simple blueprint. The novelty of this work relative to [15] is in extensive experimental results using CAISO load data to (i) design two distinctly different (in complexity and capabilities) load forecasting models and (ii) integrate their predictions into the MPC framework to learn the real-time resource allocation policy for the DERAs. 
+
+Notation 
+
+τ : control time horizon for an MPC iteration indexed by 
+
+t ∈ { t0, t 0 + 1 , . . . , t 0 + τ − 1}.
+
+t0: starting time for an MPC iteration. 
+
+ts: time shift for t0 between successive MPC iterations. 
+
+ℓ(t) : forecast of marginal-demand at time t.
+
+M : number of DERAs, indexed by i ∈ { 1, . . . , M }.
+
+xi(t) : SoC for DERA i (units: GWh). 
+
+pi(t) : power output of aggregator i (units: GW). 
+
+ui(t): is the ramping input, i.e., ui(t) := pi(t + 1) − pi(t)
+
+x(t): vector with the i-th entry xi(t). Similar notation for p(t)
+
+and u(t).
+
+ϵ(t) : tracking mismatch error of marginal-demand. 
+
+κX 
+
+> i
+
+: design parameter for DER ramping costs. 
+
+κU 
+
+> i
+
+: design parameter for DER state costs. 
+
+⋆ indicates an optimal solution, e.g. x⋆i (t) is the optimal state of the i-th aggregation at time t.Parenthesis are used for time indices, subscripts are used to enumerate resource aggregations, and superscripts are used to denote iterations of the optimization algorithm: e.g., xki (t)
+
+refers to the k-th iteration of the i-th aggregation’s SoC at time t.For ease of notation, time indices are dropped for signals to denote the entire trajectory when appropriate; e.g., pi
+
+denotes the power trajectory of the i-th aggregation, i.e., 
+
+{pi(t) : t ∈ { t0, . . . , t 0 + τ − 1}} . Throughout the paper, we use the terms demand and load interchangeably. II. P ROBLEM SETUP 
+
+We begin by describing the DERA model via aggregate DER dynamics, the forecasting methodology, control objec-tive, and set up the MPC optimization framework. We note that our dynamical model for DERAs as well as the MPC objective functions largely mimics the setup in [15]. 
+
+A. Generalized linear battery models 
+
+We adopt linear aggregate models for DER dynamics, an approach that is well established in prior work (see [16], [17], [18], [15]). Each DERA is represented by a generalized battery model with known power and state-of-charge (SoC) limits. For the i-th aggregation, i ∈ { 1, . . . , M }, the discrete-time dynamics and constraints are 
+
+xi(t + 1) = αixi(t) − βp i(t), (1a) 
+
+|xi(t)| ≤ Ci, (1b) 
+
+−η− 
+
+> i
+
+≤ pi(t) ≤ η+ 
+
+> i
+
+, (1c) with the following definitions for the i-th aggregation:  
+
+> •
+
+xi(t) ∈ R is the SoC, The nominal SoC is defined to be 0 (nominal refers the behavior of the DERA when the DERs are not participating in dispatch or regulation).  
+
+> •
+
+β denotes the sampling time constant.  
+
+> •
+
+αi ∈ [0 , 1] is a leakage parameter. For thermostatically controlled loads (e.g., air conditioners, water heaters), αi
+
+relates to the thermal time constant, which equals β/ (1 −
+
+αi). 
+
+> •
+
+pi(t) ∈ R is the power delivered at time t by the 
+
+i-th DERA, expressed as a deviation from a baseline. Hence pi(t) may be positive even for purely consuming devices (e.g., an air conditioner “supplies” power when it consumes less than baseline).  
+
+> •
+
+Ci is the SoC capacity limit.  
+
+> •
+
+η+ 
+
+> i
+
+and −η− 
+
+> i
+
+are the positive and negative power limits, respectively, where η+ 
+
+> i
+
+, η − 
+
+> i
+
+> 0.For a brief discussion on how the power and energy capacity limits are obtained for aggregations of grid-responsive loads, we refer the reader to our prior work in [15]. 
+
+B. Modeling Costs of Deviations 
+
+For DERA i, the penalty for deviating from nominal state is denoted ci(xi) : R → R+, and is chosen to be strongly convex and twice differentiable function. The resulting aggregate cost of state deviations is 
+
+cX(x) := 
+
+> M
+
+X
+
+> i=1
+
+ci(xi). (2) While our formulation above is general, for ease of analysis and tractability of the optimization, we choose ci(·) as the quadratic function 
+
+ci(xi) = 12 κX 
+
+> i
+
+x2 
+
+> i
+
+. (3) We next define the ramping variable for DERA i as 
+
+ui(t) := pi(t + 1) − pi(t), (4) and penalize rapid changes to discourage policies that lead to spiky power use. To this end, we introduce the total ramping cost as: 
+
+cU(u) := 
+
+> M
+
+X 
+
+> i=1 12
+
+κU 
+
+> i
+
+u2 
+
+> i
+
+, (5) where κU 
+
+> i
+
+≥ 0 are parameters that represents the cost of ramping DERAs up or down. Later in the paper, we introduce specific classes of DERs and present values for these constants based on prior empirical studies for such DERs. Resource allocation must satisfy a power-balance constraint, i.e., the total power from all aggregations should match the (baseline-normalized) marginal-demand up to a controllable mismatch. We introduce a slack variable ϵ(t) to capture this mismatch as: 
+
+ϵ(t) = ℓ(t) − ℓ − X
+
+> i
+
+pi(t), (6) where ℓ(t) is the marginal-demand forecast at time t and ℓ is a known baseline. We capture the cost of this mismatch via the penalty cϵ(ϵ), which we assume is strongly convex and twice differentiable. For the rest of the paper, we consider a quadratic penalty on the mismatch ϵ, i.e., 
+
+cϵ(ϵ(t)) = 12 κϵϵ(t)2 (7) where κϵ is a cost parameter. 
+
+C. Model Predictive Control 
+
+In theory, one can pose the allocation problem as an 
+
+infinite-horizon optimal control problem with running costs comprising the state, ramping, and mismatch penalties given by: 
+
+lim   
+
+> T→∞
+> T−1
+
+X
+
+> t=0
+
+[cX(x(t)) + cU(u(t)) + cϵ(ϵ(t))] . (8) The initial states xi(0) are assumed known. The problem is subject to the dynamics (1)–(4) and the balance constraint (6). While the optimization in (8) can lead to elegant theoretical solutions, it is not feasible in practice due to: (i) limited reliability of long-horizon time models/forecasts, and (ii) the presence of capacity constraints. MPC addresses these chal-lenges by optimizing over a short, look-ahead moving window while enforcing the same physical and operational limits [4]. To this end, we refine the finite-horizon MPC optimization framework, introduced in [15] for this setting 1 to obtain the following optimization detailed below. Let τ denote the prediction horizon time and ts ≤ τ the time shift between successive optimizations. For an iteration starting at time t0 ≥ 0 with state x(t0) ∈ RM , the finite-horizon problem is 
+
+minimize 
+
+x, p, u, ϵ  
+
+> t0+τ−1
+
+X
+
+> t=t0
+
+cX(x(t)) + cU(u(t)) + cϵ(ϵ(t))  (9a) 
+
+subject to ℓ(t) − ℓ − X
+
+> i
+
+pi(t) = ϵ(t), (9b) 
+
+xi(t + 1) = αixi(t) − βp i(t), (9c) 
+
+pi(t + 1) = pi(t) + ui(t), (9d) 
+
+−Ci ≤ xi(t) ≤ Ci, (9e) 
+
+−η− 
+
+> i
+
+≤ pi(t) ≤ η+ 
+
+> i
+
+(9f) 
+
+> 1Since we focused on a finite horizon setting, we removed the terminal penalty cost which was computed in [15] using the solution to the Riccati equation assuming infinite horizon optimization.
+
+Algorithm 1 Rolling Window MPC Operation 
+
+Require: β; τ ; ts ≤ τ ; ℓ; costs cX, cU, cϵ; x(t0) ∈ RM 
+
+> 1:
+
+while MPC ON do  
+
+> 2:
+
+accumulate previous loads at times {t − 24 h, ..., t 0}. 
+
+> 3:
+
+Forecast the horizon time τ 
+
+> 4:
+
+Optimize by solving (9)  
+
+> 5:
+
+Apply the first ts trajectories  
+
+> 6:
+
+Advance t0 ← t0 + ts
+
+III. D ESIGN IMPLEMENTATION 
+
+This section outlines the algorithmic approach used to realize the objective in (9a) subject to the aggregate DERA dynamics (1)–(4) and the balance constraint (6). The design integrates a moving-window marginal-demand forecast with a Model Predictive Control (MPC) formulation that repeatedly solves a finite-horizon convex program using the most recent forecast of marginal-demand with horizon time matching the MPC. 
+
+A. Forecast Implementation 
+
+To provide accurate marginal-demand forecasts aligned with MPC, we consider two types of learning models for forecast-ing. Specifically, we consider either a simple linear regression (LR) model or a long short-term memory (LSTM) model. For such each type (LR or LSTM), we construct multiple forecast models, each with a distinct look-ahead (horizon time) that match the MPC’s look-ahead window. That is, the forecast models predict the load at all times (in β increments) between the present and the end of the MPC horizon time. Every forecast uses a feature set built from the previous day’s marginal-demand up to the current time t = t0, the day of the week, the time of day, and a national-holiday binary indicator. At each MPC update time t = t0, we assemble a feature vector ϕ(t0) from these values. The forecasting model then predicts the marginal-demand for the future MPC-selected horizon time, denoted τ .
+
+LSTM: Similar to LSTM implementations in [19], [20], [21], and [22], our model utilizes a single channel input layer with the features described above, an encoder layer consisting of LSTM layer and fully-connected layer with rectified linear unit (ReLU), and a decoder layer that outputs the time-series prediction for τ time steps into the future in one shot. 
+
+LR: The input to our LR model is the same set of feature vectors as input to the LSTM. However, since LR can only predict a single point in the horizon time τ , we train a bank of LR models for each point from the first future sampling point until the end of the horizon time τ .
+
+B. Integration of Forecast and MPC Algorithm 
+
+Algorithm 1 shows the implementation of the rolling win-dow MPC incorporating the load forecast. At each MPC start time t0, a short-term forecast of marginal-demand is obtained over the horizon time τ based on the previous 24 hour marginal-demand data. Then using this forecast, the algorithm solves a finite-horizon problem (9) over [t0, t 0 + τ ].In this way, the forecast shapes the desired aggregate response. After solving (9), only the first ts control actions are applied. After time ts, the horizon is shifted forward by ts step, new measurements are incorporated, and the forecast is updated before solving the optimization problem again. IV. S IMULATIONS 
+
+The simulations detailed here include five classes of DERs, each corresponding to an aggregation of millions of DERs. The DER classes are as follows: air conditioners (ACs), electric water heaters (E-WHs), building HVACs (bldgs), refrigerators (RFGs), and electric vehicles (EVs) with 100 kWh lithium ion batteries. Table I provides details about the type and number of DERs as well as the model parameters for each aggregation. The number of DERs in each aggregation are extrapolated based on the population of California. We compute α values and the capacity limits for the different DERAs using data from the following papers: for ACs, E-WHs, and RFGs [23], for bldgs [17], and for EVs [18]. We use real historical net-demand data from CAISO from August 2021 until August 2024 for training of forecast models. Moreover, we verify the robustness of our forecast models by running all of our experiments for a year on the period between August 2nd , 2024 and August 3rd , 2025 to ensure that the data contains all seasonal changes and (ir)regular load patterns over weekdays, weekends, and holidays. The CAISO data set obtained has a sampling resolution β of 5 minutes, where 39 sample points are missing from the testing period. For those missing points, we interpolate the values by calculating the average spread between two known endpoints to conduct our simulations. To distinguish the true demand from the forecast demand, we introduce the notation ℓa(t) for the actual marginal-demand. (As in the MPC formulation, ℓ(t) represents the forecast demand.) This is defined is the difference between actual net-demand and the baseline ℓ. The baseline is obtained as a moving average over a period of one day based on the actual net-demand. 
+
+A. Forecast Models Validation 
+
+To evaluate the accuracy of our forecast models, we run our algorithm with a rolling window to forecast for the                                                                   
+
+> Par. Unit DER1 DER2 DER3 DER4 DER5 Type —ACs E-WHs bldgs RFGs EVs Nmillion 10 10 110 1
+> αi—0.98 0.99 0.97 0.96 0.99
+> CiGWh 852.3 550
+> η+
+> iGW 20 4103 23.6
+> η−
+> iGW 30 50 333.6
+> κX
+> i—12552
+> κU
+> i—1e9 1e9 1e9 1e9 1e9
+> κϵ—1e8 1e8 1e8 1e8 1e8
+> βs300 300 300 300 300
+
+TABLE I: Parameters for each class of DERA, corresponding to the discrete-time linear dynamical model in (1). TABLE II: Mean Squared Error Averaged over a Year 
+
+Actual vs DERA Model ts τ 30m 1h 2h 3h 6h 12h 24h LR 15m 0.6170 0.5671 0.5228 0.4895 0.4235 0.4082 0.4076 
+
+LR 30m — 0.9601 0.8769 0.7936 0.5992 0.5616 0.5605 
+
+LR 60m — — 1.1183 1.0285 0.8049 0.7552 0.7542 
+
+LR 90m — — 1.2538 1.1651 0.9398 0.8824 0.8814 
+
+LR 120m — — — 1.2775 1.0478 0.9818 0.9810 
+
+LR 150m — — — 1.3594 1.1298 1.0524 1.0515 
+
+LR 180m — — — — 1.1889 1.0944 1.0934 
+
+LSTM 15m 0.6521 0.6040 0.5988 0.5825 0.5359 0.5341 0.5314 
+
+LSTM 30m — 0.9180 0.8622 0.8056 0.6312 0.5946 0.6021 
+
+LSTM 60m — — 1.0701 1.0050 0.8076 0.7527 0.7691 
+
+LSTM 90m — — 1.1850 1.1195 0.9408 0.8727 0.9074 
+
+LSTM 120m — — — 1.1851 1.0175 0.9450 0.9802 
+
+LSTM 150m — — — 1.2565 1.0690 0.9974 1.0494 
+
+LSTM 180m — — — — 1.1520 1.0391 1.1152 
+
+Fig. 1: This is a plot of the Mean Absolute Error (MAE) (y-axis) for every choice of horizon time step (x-axis) between the prediction (of either LR or LSTM) model relative to the true load. This average is computed for the period between August 2nd , 2024 until August 
+
+3rd , 2025 with ts = 5 m and τ = {30 m, 2h 6h, 24 h}. For the LR model, only the 24 h trace is shown as it captures the predictions of every (point-wise) linear model whereas for the LSTM, we learn different models for different prediction horizon times. 
+
+testing period. For each predictive model, we compute the absolute difference between forecast and actual marginal-demand for each point in {t0, t 0 + ts, ..., τ }, and for each 
+
+τ ∈ { 30 m, 2h, 6h, 24 h}. The forecast points are updated every 
+
+ts = 5 m and the Mean Absolute Error (MAE) for each point in the horizon times is calculated. Figure 1 show the mismatch plots for ts = 5 m and τ = {30 m, 2h, 6h, 24 h}.We observe from Fig. 1 that the MAE plots that LSTM and LR exhibit similar behavior in that with increasing horizon time τ , the error increases. This is expected as predicting the near future where loads are more correlated temporally should be more accurate. We note that that it suffices to consider a single LR trace for 24 h as it only forecasts one future time point at a time; in other words, the LR model can be viewed 00:00 06:00 12:00 18:00 00:00 Mar 03, 2025 -10 -5 0510 15 
+
+> GW
+
+(a) LR test with τ = 24 h and ts = 15 m. 00:00 06:00 12:00 18:00 00:00 Mar 03, 2025 -15 -10 -5 0510 15  
+
+> GW
+
+(b) LSTM test with τ = 24 h and ts = 15 m. 00:00 06:00 12:00 18:00 00:00 Mar 03, 2025 -15 -10 -5 0510 15 
+
+> GW
+
+(c) LR test with τ = 24 h and ts = 180 m. 00:00 06:00 12:00 18:00 00:00 Mar 03, 2025 -15 -10 -5 0510 15  
+
+> GW
+
+(d) LSTM test with τ = 24 h and ts = 180 m. 
+
+Fig. 2: DERA tracking comparison of best performing ts settings showing actual marginal-demand, DERA Allocation, and forecasted marginal-demand against worse performing settings for the simulation period between March 2nd , 2025 until March 
+
+3rd , 2025. as a bank of LR forecasters that predict a single point on the horizon time using the same features. Our results in Fig. 1 suggest that the LSTM models demon-strate consistently better performance for short horizon times such as those shown in the figure, i.e., 30 mins, as well as for 2 and 6 hours. For a horizon time of 24 hours, the models appear to be more comparable. We conjecture that an LSTM with more layers would perform better than LR for this 24-hour time-shift. We chose to train all of our LSTM models using the same NN structure for consistency and comparability, even though long-term forecasting, generally, require different model design compared to short-term forecasting. 
+
+B. MPC Results 
+
+In Figs. 2a and 2b, we plot the following over a 24 hour period for Mar. 3, 2025 with τ = 24 h and ts = 15 m: (a) actual marginal-demand, (b) DERAs Allocation, (c) forecasted marginal-demand. We note that this choice of τ = 24 h and 
+
+ts = 15 m, leads to strong performance by both LR and LSTM models. In contrast, Figures 2c and 2d show the same comparison (for the same day) for τ = 24 h and ts = 180 mwhich clearly displays the degraded performance with longer 
+
+ts.In Figs 3a, 3b, and 3c we show the cumulative power supplied by the DERs along with actual marginal-demand, the individual DER power trajectories, and the SoC trajectories, Nov 23 Nov 24 Nov 25 Nov 26 Nov 27 Nov 28 Nov 29 Nov 30 2024 -15 -10 -5 0510 GW (a) Cumulative DERA trajectory versus actual marginal-demand Nov 23 Nov 24 Nov 25 Nov 26 Nov 27 Nov 28 Nov 29 Nov 30 2024 -4 -2 02AC E-WH Bldg Fridge EV 
+
+(b) Individual DER power Trajectories Nov 23 Nov 24 Nov 25 Nov 26 Nov 27 Nov 28 Nov 29 Nov 30 2024 -10 -5 0510 15 AC E-WH Bldg Fridge EV 
+
+(c) Individual SoC Trajectories 
+
+Fig. 3: Illustration of regulation-type services capabilities of DERAs for the period between 23 rd of Nov. 2024 and 29 th of Nov. 2024 using LR forecasts with τ = 24 h and ts = 15 m. respectively. Figure 3 is plotted the week of Thanksgiving 2024 between 23 rd of Nov. 2024 and 29 th of Nov. 2024 to span over weekdays, weekends, and holidays. The results are obtained using LR model with τ = 24 h and ts = 15 m. We aim to demonstrate with these plots the ability to provide regulation-type services utilizing DERAs in the presence of fluctuating power trajectories where we see the DERs charge during times of low marginal-demand (i.e., they consume more energy with respect to nominal), so that they can supply energy (consume less than nominal) when the marginal-demand ramps up. In Table II, we evaluate the efficacy of the DER aggregations that result from the optimal MPC policy using either an LR or LSTM forecast model. The metric we use is the mean squared error (MSE) between the DERAs allocation and the actual marginal-demand. Since the time shift τ cannot be larger than the horizon time, the table captures values for different time-shifts (rows of table) with increasing horizon times (columns) starting from that time shift. Each plot in Figure 4 shows the total value of the objective function in (9a), when computed using the true loads, i.e., instead of marginal-demand forecast ℓ(t) in (6), we use the actual marginal-demand ℓa(t). This objective is calculated by summing all objective costs: cX, cU, cϵ. Thus, the total objective captures not only how well the DERA output matches the load, but it also accounts for state-of-charge and ramping costs. These plots evaluate the objective function with the actual marginal-demand, rather than the forecast as is used in the MPC itself, in order to evaluate the quality of the DERA control once it has been dispatched in the real system. In particular, Figs. 4a, 4b, 4c, and 4d show the optimization objective in (9a) over the entire 365-day testing period, i.e., 
+
+T = 365 , between August 2nd , 2024 and August 3rd , 2025, for time-shifts of ts = 15 , 30 , 90 , 180 mins, respectively. 30m 1h 2h 3h 6h 12h 24h Horizon Time (hours) 0.5 11.5 2Objective Value 10 13 Total Objective for a Year, Time Shift:15m 
+
+> LR LSTM
+
+(a) Comparison of objective with ts = 15 m30m 1h 2h 3h 6h 12h 24h Horizon Time (hours) 0.5 11.5 2Objective Value 10 13 Total Objective for a Year, Time Shift:30m  
+
+> LR LSTM
+
+(b) Comparison of objective with ts = 30 m30m 1h 2h 3h 6h 12h 24h Horizon Time (hours) 0.5 11.5 2Objective Value 10 13 Total Objective for a Year, Time Shift:90m 
+
+> LR LSTM
+
+(c) Comparison of objective with ts = 90 m30m 1h 2h 3h 6h 12h 24h Horizon Time (hours) 0.5 11.5 2Objective Value 10 13 Total Objective for a Year, Time Shift:180m  
+
+> LR LSTM
+
+(d) Comparison of objective with ts = 180 m
+
+Fig. 4: Objective over the period between August 2nd , 2024 and August 3rd , 2025, for LR and LSTM compared to having the mismatch cost, cϵ, calculated with reference to actual marginal-demand 
+
+C. Observations 
+
+We collate our results into two key observations as detailed below. (i) As seen in both Table II and Figure 4, the overall performance of the proposed MPC has better performance with decreased time-shift ts and increased horizon time τ .We see these effects in Table II and Figure 4 as a lower MSE between actual marginal-demand and aggregator response and a lower objective value for smaller time-shifts, respectively. Both these effects are expected for MPC, which will work better when executed more often (shorter time-shifts), or with longer-term forecasts (longer horizon times) to plan with. These observations hold even though, in the case of the LSTM forecast model, the forecast of a particular time in the future is slightly worse when the horizon time is longer, as seen in Fig. 1. (ii) The overall performance of the MPC is better with the LR forecast than that with LSTM forecast for shorter ts, while LSTM performs better at longer ts. This pattern is breached for τ = 24 h and that is likely due to the increased error for the LSTM forecaster, as seen in subsection IV-A, at the longest horizon time, which in turns affects the MPC planning for DERA allocation. The general phenomenon that the MPC with LR performs better at short time-shifts — even though the LR forecast is less accurate than the LSTM over short time intervals — seems to result from the fact that with a short time-shift, the MPC has a greater ability to continuously update its plan, and so the accuracy of the forecast models, where their accuracy are relatively similar, does not matter as much as, perhaps, other characteristics of the forecast. These characteristics may include smoothness or the sign of the mismatch between forecast and actual marginal-demand. In particular, compared to the LSTM forecast, the direction of the error of the LR forecast more frequently matches the direction of the mismatch in the MPC. V. C ONCLUSIONS AND FUTURE WORK 
+
+We have shown the efficacy of MPC-based control design for the optimal allocation of DERAs to meet marginal-demand. Our MPC approach has two distinct advantages: (i) it uses more accurate marginal-demand forecasts available in the short-term for resource allocation, and (ii) it ensures constraint satisfaction, while still accounting for long-run optimality. Complex forecasting models like LSTM are especially ef-fective for predicting over longer time-shifts, as shown by their strong performance under those settings. In contrast, simpler LR models are better suited to shorter time-shifts. For system operators, depending on the application, a tradeoff between LSTM and LR involves balancing the need for long-term planning against the benefits of short-term accuracy. LSTM is preferable when longer time-shifts (less frequent updates) forecasts are needed, while LR offers a lightweight solution, when shorter time-shifts (more frequent updates) are needed, that excels at closely tracking short-term marginal-demand changes without demanding significant computational resources. Future problems include integrating a more compre-hensive MPC problem by adding network limitations, market objectives, individual device level control of DERAs, and other grid considerations. REFERENCES [1] J. Mathias, A. Buˇ si´ c, and S. Meyn, “Load-level control design for demand dispatch with heterogeneous flexible loads,” IEEE Trans. on Control Systems Technology , vol. 31, no. 4, pp. 1830–1843, 2023. [2] F. D¨ orfler, S. Bolognani, J. W. Simpson-Porco, and S. Grammatico, “Distributed control and optimization for autonomous power grids,” in 
+
+18th European Control Conf. (ECC) . IEEE, 2019, pp. 2436–2453. [3] A. J. Wood, B. F. Wollenberg, and G. B. Shebl´ e, Power Generation, Operation, and Control , 3rd ed. New York: John Wiley & Sons, 2013. [Online]. Available: 978-0-471-79055-6 [4] J. B. Rawlings, D. Q. Mayne, and M. Diehl, Model predictive control: theory, computation, and design . Nob Hill Publishing Madison, WI, 2017. [5] A. T. Eseye, B. Knueven, D. Vaidhynathan, and J. King, “Scalable predictive control and optimization for grid integration of large-scale distributed energy resources,” in 2022 IEEE Power & Energy Society General Meeting (PESGM) , 2022, pp. 01–05. [6] K. Utkarsh, F. Ding, X. Jin, M. Blonsky, H. Padullaparti, and S. P. Balamurugan, “A network-aware distributed energy resource aggregation framework for flexible, cost-optimal, and resilient operation,” IEEE Transactions on Smart Grid , vol. 13, no. 2, pp. 1213–1224, 2022. [7] N. Nazir and M. Almassalkhi, “Grid-aware aggregation and realtime disaggregation of distributed energy resources in radial networks,” IEEE Transactions on Power Systems , vol. 37, no. 3, pp. 1706–1717, 2022. [8] Y. Shen, W. Wu, Q. Wang, Y. Li, S. Li, and W. Teng, “Hierarchical coordinated automatic generation control involving distributed energy resources: An aggregation approach,” IEEE Transactions on Smart Grid ,vol. 16, no. 2, pp. 1379–1391, 2025. [9] L. A. D. Espinosa and M. Almassalkhi, “A packetized energy manage-ment macromodel with quality of service guarantees for demand-side resources,” IEEE Trans. Power Systems , vol. 35, no. 5, pp. 3660–3670, 2020. [10] E. Benenati, M. Colombino, and E. Dall’Anese, “A tractable formulation for multi-period linearized optimal power flow in presence of thermo-statically controlled loads,” in Proc. of the Conf. on Dec. and Control .IEEE, 2019, pp. 4189–4194. [11] N. Cammardella, J. Mathias, M. Kiener, A. Buˇ si´ c, and S. Meyn, “Balancing California’s grid without batteries,” in Proc. of the Conf. on Dec. and Control , Dec 2018, pp. 7314–7321. [12] J. Mathias, S. Meyn, H. Ballouz, and M. Ansari, “Distributed control architecture for optimal allocation of grid-responsive load aggregations,” in 13th Conf. on Innovative Smart Grid Technologies . IEEE, 2022. [13] R. R. Appino, V. Hagenmeyer, and T. Faulwasser, “Towards optimality preserving aggregation for scheduling distributed energy resources,” 
+
+IEEE Transactions on Control of Network Systems , vol. 8, no. 3, pp. 1477–1488, 2021. [14] Z. Yi, Y. Xu, W. Gu, L. Yang, and H. Sun, “Aggregate operation model for numerous small-capacity distributed energy resources considering uncertainty,” IEEE Transactions on Smart Grid , vol. 12, no. 5, pp. 4208– 4224, 2021. [15] J. Mathias, R. Anguluri, O. Kosut, and L. Sankar, “Model predictive control for joint ramping and regulation-type service from distributed energy resource aggregations,” in IEEE Power and Energy Society General Meeting — on arXiv: https://arxiv.org/abs/2405.02813 , 2024. [16] H. Hao, B. M. Sanandaji, K. Poolla, and T. L. Vincent, “Aggregate flexibility of thermostatically controlled loads,” IEEE Trans. on Power Systems , vol. 30, no. 1, pp. 189–198, Jan 2015. [17] J. T. Hughes, A. D. Dom´ ınguez-Garc´ ıa, and K. Poolla, “Identification of virtual battery models for flexible loads,” IEEE Trans. Power Systems ,vol. 31, no. 6, pp. 4660–4669, 2016. [18] Z. Ma, D. S. Callaway, and I. A. Hiskens, “Decentralized charging control of large populations of plug-in electric vehicles,” IEEE Trans. on Control Systems Technology , vol. 21, no. 1, pp. 67–78, 2011. [19] W. Kong, Z. Y. Dong, Y. Jia, D. J. Hill, Y. Xu, and Y. Zhang, “Short-term residential load forecasting based on lstm recurrent neural network,” 
+
+IEEE Transactions on Smart Grid , vol. 10, no. 1, pp. 841–851, 2019. [20] D. L. Marino, K. Amarasinghe, and M. Manic, “Building energy load forecasting using deep neural networks,” in IECON 2016 - 42nd Annual Conference of the IEEE Industrial Electronics Society , 2016, pp. 7046– 7051. [21] H. Shi, M. Xu, and R. Li, “Deep learning for household load fore-casting—a novel pooling deep rnn,” IEEE Transactions on Smart Grid ,vol. 9, no. 5, pp. 5271–5280, 2018. [22] S. Ryu, J. Noh, and H. Kim, “Deep neural network based demand side short term load forecasting,” in 2016 IEEE International Conference on Smart Grid Communications (SmartGridComm) , 2016, pp. 308–313. [23] J. L. Mathieu, M. E. Dyson, and D. S. Callaway, “Resource and revenue potential of California residential load participation in ancillary services,” Energy Policy , vol. 80, no. 0, pp. 76 – 87, 2015. [Online]. Available: http://www.sciencedirect.com/science/article/ pii/S0301421515000427

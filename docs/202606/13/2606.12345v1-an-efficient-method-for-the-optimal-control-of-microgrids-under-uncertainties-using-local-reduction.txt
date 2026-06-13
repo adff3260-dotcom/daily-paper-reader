@@ -1,0 +1,600 @@
+Title: An Efficient Method for the Optimal Control of Microgrids Under Uncertainties using Local Reduction
+
+URL Source: https://arxiv.org/pdf/2606.12345v1
+
+Published Time: Thu, 11 Jun 2026 01:27:36 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# An Efficient Method for the Optimal Control of Microgrids Under Uncertainties using Local Reduction ⋆
+
+Edoardo Scaccia ∗ Eric C. Kerrigan ∗,∗∗ Anna Sadowska ∗∗∗ ∗ Department of Electrical and Electronic Engineering, Imperial College London, SW7 2AZ London, UK (e-mail: e.scaccia24@imperial.ac.uk).  
+
+> ∗∗
+
+Department of Aeronautics, Imperial College London, SW7 2AZ London, UK (e-mail: e.kerrigan@imperial.ac.uk).  
+
+> ∗∗∗
+
+SLB Cambridge Research, CB3 0EL Cambridge, UK (e-mail: asadowska@slb.com) 
+
+Abstract: The problem of optimal sizing and power scheduling in microgrids subject to uncertainties is well known to the control community. Commonly, the optimal control problem is cast as a mixed-integer program to model the logical constraints arising in energy storage systems, and is then solved approximately using numerical methods such as the scenario approach. In this paper, we propose and compare two formulations of a robust microgrid sizing and power scheduling optimal control problem with logical constraints and uncertainties in the user’s power demand, solar power generation, grid electricity prices and battery efficiencies. The first formulation uses binary variables and big-M constraints, leading to a mixed-integer linear program. The second formulation casts the problem as a continuous nonlinear program through an exact smooth reformulation of the logical constraints, consisting of additional modelling variables and non-convex constraints. We then propose a novel local reduction algorithm, extending an existing method, to solve both problems. The two formulations are compared by evaluating the solutions returned by local reduction using 100 ,000-sample Monte Carlo simulations and achieve promising results, with both averaging feasibility rates above 90%. 
+
+Keywords: Energy management systems, Energy storage systems, Energy communities. 1. INTRODUCTION The continuous increase in the world’s population con-tributes to the rise in global energy consumption. The operation of residential and commercial buildings accounts for 30% of global final energy consumption (Delmastro et al., 2023). The global electricity demand is growing at an annual average rate of 3.4% (International Energy Agency, 2024a), and in order to cope with this hunger for electrical energy, the world’s energy production is shifting towards renewable generation. This is expected to grow by 2.7 times by 2030, reaching 17,000 TWh (International En-ergy Agency, 2024b). The main difficulty with renewable power is its uncertain and intermittent nature, making it challenging to generate renewable power on-demand. This issue brings the need for energy storage systems to store the excess generated energy for later deployment, which requires automatic control strategies. Microgrids are localised electricity networks that use ad-vanced control algorithms to generate, store and deploy electrical energy to meet the varying demand of end users while minimizing operational costs. A microgrid is comprised of: Energy Storage Systems (ESS), Renewable Energy Sources (RES) (e.g. wind and solar farms), non-renewable energy sources (e.g. dispatchable generators)  
+
+> ⋆This work was jointly funded by EPSRC and SLB.
+
+and users (e.g. residential buildings, factories, offices, etc.). A schematic of a general microgrid is presented in Figure 1. Microgrids are able to operate in a grid-connected or “islanded” mode. The connection to the grid allows the system to trade power with the electricity market. On the other hand, when operating in islanded mode, microgrids are solely reliant on renewable and non-renewable energy sources to meet the users’ demand. The optimal control of a microgrid is a challenging prob-lem given the numerous uncertainties: renewable power generation, users’ power demand, grid’s electricity prices, system parameters and output readings from sensors, sys-tem failure (e.g. outages, generators/wind turbines fail-ures, etc.), ESS capacity degradation and maintenance schedules. Thus, an input sequence computed as the so-lution of the optimal control problem must be robust to every uncertainty realisation. This paper proposes a more efficient alternative to the scenario approach (Campi et al., 2021) for solving this robust optimal control problem. 2. STATE OF THE ART The problem of robust optimal control of microgrids is bro-ken down into three main areas of focus: System Modelling ,
+
+Uncertainty Modelling and Optimization Techniques . Most microgrid optimal control formulations devote substan-tial modelling effort to the ESS, whose charge/discharge 
+
+> arXiv:2606.12345v1 [math.OC] 10 Jun 2026
+
+Fig. 1. A general microgrid with multiple end users. complementarity is commonly represented using binary variables and mixed-integer programming (Mousavizadeh et al., 2018). RES, users’ power demand and electricity prices are the main sources of uncertainty addressed in the literature, and are modelled employing three main approaches: min-max formulations (Zhang et al., 2013), robust adaptable or “multi-stage” formulations (Wang et al., 2014) and probabilistic formulations (Mousavizadeh et al., 2018). In min-max and robust adaptable problems, a robust optimal solution can be obtained by minimiz-ing the worst-case scenario. However, in robust adaptable formulations, decision variables are split into first-stage (uncertainty-independent) and recourse decisions (Ben-Tal et al., 2009). Lastly, in probabilistic formulations, uncer-tainties are modelled as random variables with associated probability density functions (PDFs). The most common PDFs employed in microgrid optimal control problems are the Gaussian/Normal, Weibull and Beta distributions. Probabilistic optimal control problems can minimize the expected value of the objective and can be characterised by chance constraints (Nemirovski and Shapiro, 2006). The most widely-used approach to solve linear and convex-concave quadratic min-max optimal control problems, is to use strong duality to substitute the dual of the inner max problem in the outer problem, resulting in standard min problems (Nocedal and Wright, 2006). Min-max and probabilistic problems can also be approximately solved resorting to tractable approximations (Nemirovski and Shapiro, 2006). One common route is offered by the 
+
+scenario approach and Monte Carlo method (Yaghoubi et al., 2025). Even though this approach imposes no restrictions on the distribution, a large number of samples are needed to obtain an accurate solution (Nemirovski and Shapiro, 2006). Lastly, linear robust adaptable two-stage problems are commonly solved by the “Column-and-Constraint Generation” method (Zeng and Zhao, 2013), which requires strong assumptions on the uncertainty set. 3. CONTRIBUTIONS This paper considers a robust optimal sizing and schedul-ing problem for a grid-connected microgrid under uncer-tainty. The main contributions are fourfold. First, two for-mulations are proposed to encode the logical constraints on both battery and grid controls: an MILP formulation using binary variables and big-M constraints, and a continu-ous nonlinear programming (NLP) formulation using an Table 1. Microgrid Parameters                                                               
+
+> Parameter Description Value & Units
+> SoC 0Initial State of Charge [0 .2,1]
+> SoC min Minimum State of Charge 0.20
+> SoC max Maximum State of Charge 1.00
+> PG, max Maximum Grid Power - kW
+> gGrid Power Factor [0 .2,1]
+> PESS, max Maximum ESS Power 90.0 kW
+> EESS ESS Base Capacity 326.0 kWh
+> cESS ESS Cost 200.00 £/kWh ¯PPV PV Rated Capacity 90.84 kW
+> cPV PV Cost 1500.00 £/kW ˜Cbuy, UB ˜Cbuy Upper Bound (Vector) £/kWh ˜Cbuy, LB ˜Cbuy Lower Bound (Vector) £/kWh ˜Csell, UB ˜Csell Upper Bound (Vector) £/kWh ˜Csell, LB ˜Csell Lower Bound (Vector) £/kWh ˜PL, UB ˜PLUpper Bound (Vector) kW ˜PL, LB ˜PLLower Bound (Vector) kW ˜PR, UB ˜PRUpper Bound (Vector) kW ˜PR, LB ˜PRLower Bound (Vector) kW ˜ηC,UB ˜ηCUpper Bound (Vector) -˜ηC,LB ˜ηCLower Bound (Vector) -˜ηD,UB ˜ηDUpper Bound (Vector) -˜ηD,LB ˜ηDLower Bound (Vector) -
+
+exact smooth reformulation with auxiliary variables and non-convex constraints. Second, uncertainty is included directly in the ESS dynamics through the efficiencies, in addition to demand, solar power generation and electricity price uncertainty. Third, an extension of local reduction is used to correctly handle existence constraints via a logical reformulation of the lower-level maximization problem, leading to a nested local reduction scheme. Finally, the framework jointly optimizes the system size together with the robust battery scheduling decisions. 4. PROBLEM FORMULATION A simplified microgrid model (Figure 2), consisting of a single grid-connected user, ESS and RES, is considered. This formulation remains valid for more general models. The main model assumptions are introduced below, and the model parameters used in the numerical study are pre-sented in Table 1. Subsequently, the robust optimal control problem is formulated with the microgrid dynamics. 
+
+4.1 Model Assumptions and Parameters 
+
+(1) RES consists only of solar photovoltaic (PV). (2) User’s power demand ˜PL, PV power generation ˜PR,grid purchase price ˜Cbuy , grid sale price ˜Csell , ESS charging and discharging efficiencies ˜ ηC and ˜ ηD are uncertain. (3) ESS dynamics are linear. (4) ESS cannot charge and discharge simultaneously. (5) User cannot buy and sell grid power simultaneously. (6) Power losses, apart from ESS efficiency, are negligible. (7) Line constraints are neglected. (8) Model parameters and data are taken from Vink et al. (2019) and modified when necessary. (9) ESS charging and discharging powers share the same limits. (10) Grid import and export powers share the same limits. Simplified Microgrid Model 
+
+> RES ESS
+> Power Grid
+> Loads
+> Power flow
+
+Fig. 2. A schematic of a simplified microgrid with a single end user, ESS and RES. 
+
+4.2 Microgrid Dynamics 
+
+The physics governing the simplified microgrid model is described by an ordinary differential equation (ODE) for the ESS energy level E and by an algebraic equation 
+
+dE dt = Pc(t) · ˜ηC(t) − Pd(t) · 1˜ηD(t) , (1) 
+
+P + 
+
+> G
+
+(t) − P − 
+
+> G
+
+(t) − Pc(t) + Pd(t) − ˜PL(t) + s · ˜PR(t) = 0 ,
+
+(2) where the grid power is split into its positive and negative components and the decision variable s is a multiplicative factor applied to the base RES power to model additional solar panels. These differential-algebraic equations are complemented with the additional inequalities 
+
+SoC min · b · EESS ≤ E(t) ≤ SoC max · b · EESS , (3) 0 ≤ Pc(t) ≤ b · PESS, max , (4) 0 ≤ Pd(t) ≤ b · PESS, max , (5) 0 ≤ P + 
+
+> G
+
+(t) ≤ g · PG, max , (6) 0 ≤ P − 
+
+> G
+
+(t) ≤ g · PG, max . (7) The decision variable b represents a multiplicative factor applied to the ESS capacity and maximum powers to model additional battery packs. The parameter g models the fraction of the allowable grid power that can be traded, where the base grid-power limit is set equal to the peak power demand over the considered horizon. Constraints derived from assumptions 4 and 5 are modelled using 
+
+IF Pc(t) > 0
+
+THEN Pd(t) ≤ 0, (8) 
+
+IF P + 
+
+> G
+
+(t) > 0
+
+THEN P − 
+
+> G
+
+(t) ≤ 0. (9) The above discontinuous and non-smooth logical con-straints need to be converted into equivalent continuous and smooth forms in order to be encoded into an opti-mization problem. Mixed-integer and non-convex smooth formulations are proposed. The former employs the big-M approach to reformulate (8) and (9) into 0 ≤ Pc(t) ≤ Mcx1(t)0 ≤ Pd(t) ≤ Md(1 − x1(t)) , (10) and 0 ≤ P + 
+
+> G
+
+(t) ≤ M + 
+
+> g
+
+x2(t)0 ≤ P − 
+
+> G
+
+(t) ≤ M − 
+
+> g
+
+(1 − x2(t)) . (11) Here, x1(t) and x2(t) are binary variables and Mc, Md,
+
+M + 
+
+> g
+
+and M − 
+
+> g
+
+are the big-M values. Since Pc(t) and Pd(t)have the same upper limit, Mc = Md = bmax · PESS, max ,where bmax is the maximum number of batteries allowed. Similarly, P + 
+
+> G
+
+(t) and P − 
+
+> G
+
+(t) share the same upper limit, thus, M + 
+
+> g
+
+= M − 
+
+> g
+
+= g · PG, max . Note that while the constraints in (11) replace (6) and (7), this is not the case for (10) as (4) and (5) are needed to avoid a bilinear big-M formulation due to b being a decision variable and not a parameter as g. This formulation is referred to as the mixed-integer linear program (MILP) formulation. The equivalent smooth formulation is derived according to Wehbeh and Kerrigan (2026) and results in 
+
+λ1(t) · Pc(t) + (1 − λ1(t)) · Pd(t) ≤ 0
+
+λ2(t) · P + 
+
+> G
+
+(t) + (1 − λ2(t)) · P − 
+
+> G
+
+(t) ≤ 0 (12) where 0 ≤ λ1(t), λ 2(t) ≤ 1. This formulation, referred to as NLP, requires constraints (4)–(7) to be retained. 
+
+4.3 Robust Optimal Control Problem 
+
+The ODE with expressions (2), (3)–(7) and (10)–(12) are now discretized. A one-day scheduling window going from 
+
+t0 = 00 : 00 to tf = 24 : 00 with 15-minute intervals ∆ t
+
+is considered. The discretized grid is constituted by every discrete point of the window except the last one, such that 
+
+tn = t0 + n∆t where n ∈ { 0, . . . , N = 95 }. Following this discretization, a variable evaluated at tn is denoted with the subscript n. A piecewise-constant parametrization is chosen for the disturbances and for the input trajectory, resulting in an open-loop control sequence. A piecewise-affine parametrization is chosen for the state trajectory. The ODE (1) is discretized according to the Forward Euler Method , resulting in an exact discretization. The integral of the Lagrange term, the cost function of the optimal control problem, is discretized using the Left Riemann Sum as a quadrature method. The objective is to minimize the initial investment and operational cost: 
+
+b · cESS · EESS + s · cPV · ¯PPV + 
+
+> N−1
+
+X
+
+> n=0
+
+( ˜Cbuy,n · P + 
+
+> G,n
+
+− ˜Csell,n · P −
+
+> G,n
+
+) · ∆t. (13) Before stating the robust optimal control problem that we intend to solve, some notation is defined following Wehbeh and Kerrigan (2024). The vectors of physical states and uncertainties are defined as zp,n := [ En]⊤ and 
+
+wn := [ ˜PL,n ˜PR,n ˜Cbuy,n ˜Csell,n ˜ηC,n ˜ηD,n ]⊤ respectively. The vectors of modelling variables zm,n consist of two vectors zg,n := 
+
+h
+
+P + 
+
+> G,n
+
+P −
+
+> G,n
+
+i⊤
+
+and zl,n , representing the vector of grid variables and logic variables respectively. To differentiate the latter between the MILP and the NLP for-mulation, zMILP  
+
+> l,n
+
+:= [ x1,n x2,n ]⊤ and zNLP  
+
+> l,n
+
+:= [ λ1,n λ2,n ]⊤
+
+are defined. Lastly, the vector of control variables is defined as θn := [ Pc,n Pd,n ]⊤. The vectors resulting from stacking the above over the entire horizon are denoted by zp, θ,
+
+zg , zl and w, where θ also contains the variables b and s.Their sizes are defined by nzp , nθ , nw, nzg and nzl . The controls and uncertainties belong to the sets Θ ⊆ Rnθ and 
+
+W ⊆ Rnw respectively. The vector zg belongs to the set 
+
+Z ⊆ Rnzg . The vectors zMILP  
+
+> l
+
+and zNLP  
+
+> l
+
+belong to the sets 
+
+X ⊆ { 0, 1}nzl and Λ := {λ ∈ Rnzl : 0 ≤ λ ≤ 1}. Lastly, the set Zp(θ, w ) defines the admissible state trajectories as a function of the disturbances and can be derived by discretising the ODE with the initial condition E0 = SoC 0·
+
+b · EESS and the constraint (3). The uncertainty set is chosen as the polyhedron 
+
+W := 
+
+
+
+w wLB,n ≤ wn ≤ wU B,n 
+
+∀n ∈ { 0, . . . , N − 1}
+
+
+
+(14) where wLB and wU B can be found in Table 1. Note that any compact uncertainty set can be chosen, as the method presented remains valid. Moreover, the vector-valued functions defining the logic constraints in MILP and NLP form, and the objective are given by ¯gNLP (θ, z g , z NLP  
+
+> l
+
+) := 
+
+ λ1,n θn, 1 + (1 − λ1,n )θn, 2
+
+λ2,n zg,n, 1 + (1 − λ2,n )zg,n, 2
+
+N −1
+
+> n=0
+
+,
+
+(15) ¯gMILP (θ, z g , z MILP  
+
+> l
+
+) := 
+
+
+
+θn, 1 − Mcx1,n 
+
+θn, 2 − Md(1 − x1,n )
+
+zg,n, 1 − M + 
+
+> g
+
+x2,n 
+
+zg,n, 2 − M − 
+
+> g
+
+(1 − x2,n )
+
+ 
+
+> N−1
+> n=0
+
+,
+
+(16) ¯f (θ, w, z g ) := b · cESS · EESS + s · cPV · ¯PPV + 
+
+> N−1
+
+X
+
+> n=0
+
+(wn, 3zg,n, 1 − wn, 4zg,n, 2) · ∆t. (17) Noticing that −g · PG, max ≤ zg,n, 1 − zg,n, 2 ≤ g · PG, max ,their difference is substituted using (2), and the function ¯gBAL (θ, w ) := 
+
+ θn, 2 − θn, 1 + wn, 1 − sw n, 2 − gP G, max 
+
+−θn, 2 + θn, 1 − wn, 1 + sw n, 2 − gP G, max 
+
+N −1
+
+> n=0
+
+(18) is defined. Lastly, to simplify the notation, the function ¯g(θ, w, z g , z il , γ ) := 
+
+
+
+¯gi(θ, z g , z il )¯gBAL (θ, w )¯f (θ, w, z g ) − γ
+
+ (19) is introduced, where i ∈ { NLP , MILP } and where γ ∈ Γ ⊆
+
+R is an upper bound variable on the cost and the set Γ can be chosen to be a bounded interval and thus a compact set. The robust optimal control problem is formulated as a min-max existence-constrained problem in epigraph form, min  
+
+> θ∈Θ,γ ∈Γ
+
+γ (20a) s.t. ∀w ∈ W , ∀zp ∈ Z p(θ, w ) : 
+
+∃(zg , z il ) ∈ Z × L : ¯ g(θ, w, z g , z il , γ ) ≤ 0, (20b) where L := Λ if i = NLP and L := X if i = MILP. Problem (20) is an existence-constrained semi-infinite pro-gram (ECSIP) that can be reformulated into a standard semi-infinite program, satisfying all the assumptions in Blankenship and Falk (1976), by following the method presented in Wehbeh and Kerrigan (2024) and converting the existence quantifier into a min operator. However, this transformation cannot be achieved directly as ¯ g is a vector-valued function of dimension n¯g . In order to convert (20b) into a scalar constraint, the maximum over all elements of ¯g needs to be less than or equal to zero. After this, the 
+
+∃ quantifier can be replaced by a min over the existential variable and Problem (20) is equivalent to min  
+
+> θ∈Θ,γ ∈Γ
+
+γ (21a) s.t. ∀w ∈ W , ∀zp ∈ Z p(θ, w ) : min   
+
+> (zg,z il)∈Z× L
+
+max 
+
+> j=1 ,...,n ¯g
+
+¯gj (θ, w, z g , z il , γ ) ≤ 0 (21b) 5. THE LOCAL REDUCTION ALGORITHM The local reduction algorithm, first presented in Blanken-ship and Falk (1976), consists of solving a sequence of minimization and maximization problems in order to iter-atively build a finite uncertainty set that approximates the original uncountable set. Problem (20) is discretized using a finite number of scenarios wp ∈ Wp where p ∈ { 1, . . . , k 1}
+
+and is then solved, obtaining the solution ( θ, γ )∗ 
+
+> k1
+
+. A new violating scenario is found by maximizing (21b) over w
+
+and zp at the current solution ( θ, γ )∗ 
+
+> k1
+
+, solving max  
+
+> w∈W ,z p∈Z p(θ∗,w )
+
+min   
+
+> (zg,z il)∈Z× L
+
+max 
+
+> j=1 ,...,n ¯g
+
+¯gj (θ∗, w, z g , z il , γ ∗).
+
+(22) Converting the above into its epigraph form and replacing the min with the ∀ quantifier, the problem results in max  
+
+> w∈W ,z p∈Z p(θ∗,w ),σ ∈Σ
+
+σ (23a) s.t. ∀(zg , z il ) ∈ Z × L :
+
+σ ≤ max 
+
+> j=1 ,...,n ¯g
+
+¯gj (θ∗, w, z g , z il , γ ∗), (23b) where σ ∈ Σ is a lower bound variable on the cost and the set Σ can be chosen as a compact interval in a similar fashion as per Γ. Note that (23b) encodes a disjunction as at least one element of ¯ g must be greater than or equal to 
+
+σ. Hence, employing the technique presented by Wehbeh and Kerrigan (2026), this disjunction is formulated as max  
+
+> w∈W ,z p∈Z p(θ∗,w ),σ ∈Σ
+
+σ (24a) s.t. ∀(zg , z il ) ∈ Z × L :
+
+∃y ∈ Y :
+
+> n¯g
+
+X
+
+> j=1
+
+yj · (σ − ¯gj (θ∗, w, z g , z il , γ ∗)) ≤ 0(24b) where Y := 
+
+n
+
+y ∈ Rn¯g 
+
+> ≥0
+
+: Pn¯g 
+
+> j=1
+
+yj = 1 
+
+o
+
+. Alternatively, (23b) can be reformulated by enforcing y ∈ { 0, 1}n¯g and by employing the big-M formulation 
+
+∃y ∈ Y : σ ≤ ¯gj (θ∗, w, z g , z il , γ ∗) + Mj (1 − yj ) ∀j, (25) where, for each added scenario ( zg , z il ), the values Mj
+
+are computed from max σ∈Σ,w ∈W (σ − ¯gj (θ∗, w, z g , z il , γ ∗)). Thus, (24) is a nested ECSIP that can be solved again by means of the local reduction algorithm. The problem is discretized using a finite number of scenarios ( zg , z il )q ∈ Zq
+
+where q ∈ { 1, . . . , k 2} and it is then solved, obtaining the solution ( w, z p, σ )∗ 
+
+> k2
+
+. Similarly, a violating scenario at the current solution is found by maximizing (24b) over zg and 
+
+zil , obtaining the problem max   
+
+> (zg,z il)∈Z× L
+
+min 
+
+> y∈Y
+> n¯g
+
+X
+
+> j=1
+
+yj · (σ − ¯gj (θ∗, w ∗, z g , z il , γ ∗)) . (26) Finally, converting (26) into its epigraph form, the min can be replaced by a ∀ quantifier over y. Since the set Y is a simplex, this is equivalent to enforcing the new epigraph variable to be less than or equal to all the elements of the function ¯ g, leading to the problem max    
+
+> (zg,z il)∈Z× L, ¯σ∈¯Σ
+
+¯σ (27a) s.t. ∀j ∈ { 1, . . . , n ¯g } :¯σ − (σ∗ − ¯gj (θ∗, w ∗, z g , z il , γ ∗)) ≤ 0, (27b) where ¯ σ ∈ ¯Σ is a lower bound variable on the cost and the set ¯Σ can be chosen as a compact interval as done previously. For each local reduction loop, once the new violating scenario is found, it is added to the master problem which is then solved again. This procedure is repeated until either no more violating scenarios are found or a maximum number of scenarios are added to the master problem. The complete routine to solve Problem (20) is presented in Algorithm 1. The choice between the MILP and NLP formulations of the logical constraints changes the type of problems solved in Algorithm 1. When employing the former and (25) instead of (24b), a sequence of finite MILPs is solved in the local reduction routine. Assuming that the MILPs are solved to global optimality and that the local reduction terminates in a finite number of steps, the algorithm returns the global robust optimal solution. However, when employing the latter, Algorithm 1 solves a sequence of non-convex NLPs, thus local robust solutions are obtained. 
+
+Algorithm 1: Nested Local Reduction Algorithm 
+
+Input : Maximum iterations: k1,max and k2,max .Violation tolerances: tol 1 and tol 2.Initial uncertainty scenario guess w1.
+
+Output: Optimal solution ( θ, γ )∗ 
+
+> k1
+
+and the final set of scenarios Wk1 . 
+
+> 1
+
+Initialize scenario sets: W0 = ∅ and Z0 = ∅. 
+
+> 2
+
+Set k1 ← 1.  
+
+> 3
+
+Initial uncertainty scenario set Wk1 := {w1}. 
+
+> 4
+
+repeat  
+
+> 5
+
+Upper Level Local Reduction Loop  
+
+> 6
+
+Step 1. Solve (20) and obtain ( θ, γ )∗ 
+
+> k1
+
+. 
+
+> 7
+
+Step 2. Compute initial scenario ( zg , z il )1. 
+
+> 8
+
+Set k2 ← 1.  
+
+> 9
+
+Initial uncertainty set Zk2 := (zg , z il )1 . 
+
+> 10
+
+repeat  
+
+> 11
+
+Lower Level Local Reduction Loop  
+
+> 12
+
+Step 3. Solve (24) using ( θ, γ )∗ 
+
+> k1
+
+and obtain ( w, z p, σ )∗ 
+
+> k2
+
+. 
+
+> 13
+
+Step 4. Solve (27) using ( θ, γ )∗ 
+
+> k1
+
+, ( w, σ )∗ 
+
+> k2
+
+. 
+
+> 14
+
+if ¯σ∗ 
+
+> k2
+
+> tol 2 then  
+
+> 15
+
+Add new scenario: 
+
+Zk2+1 ← Zk2 ∪ { (zg , z il )∗ 
+
+> k2
+
+}. 
+
+> 16
+
+Set k2 ← k2 + 1.  
+
+> 17
+
+end  
+
+> 18
+
+until |Zk2 | = |Zk2−1| or k2 = k2,max  
+
+> 19
+
+if σ∗ 
+
+> k2
+
+> tol 1 then  
+
+> 20
+
+Add new scenario: Wk1+1 ← Wk1 ∪ { w∗ 
+
+> k2
+
+}. 
+
+> 21
+
+Set k1 ← k1 + 1.  
+
+> 22
+
+end  
+
+> 23
+
+until |Wk1 | = |Wk1−1| or k1 = k1,max  
+
+> 24
+
+Return ( θ, γ )∗ 
+
+> k1
+
+and Wk1 .6. RESULTS The numerical performance of Algorithm 1 is evaluated on Problem (20) under both the MILP and NLP formulations. The local reduction algorithm is implemented in the Julia 
+
+programming language using the JuMP package and the 
+
+Ipopt and Gurobi solvers. The implementation and data used to generate the numerical results are publicly avail-able on GitHub. 1 The experiments are run on a Microsoft Surface Studio 2 laptop with a 13th Gen Intel ® Core ™ i7 and 16 GB of RAM. The algorithm parameters are set as k1,max = 10, k2,max = 10, tol 1 = tol 2 = 10 −6, and Problem (24) in Step 3 is randomly initialised 5 times when solving the NLP formulation. The local reduction algorithm always converges before the last iteration when solving the MILP formulation, whereas it reaches the max-imum number of scenarios for the NLP formulation. For each of the NLP and MILP formulations, the grid power cap factor g and the initial state of charge SoC 0 are varied independently over the range 20%–100%, resulting in 25 parameter combinations. The quality of the solutions is then assessed via Monte Carlo simulations with 100,000 uniformly randomly generated scenarios, and the statistics are presented in Table 2. A scenario is deemed infeasible if it violates the SoC bounds, grid power bounds, or logic constraints. Violations of the cost constraint are excluded from the feasibility count because they do not represent physical system infeasibilities; instead, they indicate that the computed upper bound γ does not fully capture the realised worst-case cost. Both formulations achieve a similar feasibility score, but the MILP formulation is substantially faster than the NLP formulation. However, the NLP formulation leads to lower average constraint violations, with 0.099% of total constraints violated compared with 0.56%. When inspect-ing the constraint violations type breakdown, the most violated constraints are the cost and grid bounds for the MILP and NLP formulations respectively. Moreover, the MILP does not return any SoC bounds violations com-pared to the NLP formulation that reports an average of 12.45%. The NLP formulation results in a higher average 
+
+γ∗, which explains the lack of cost violations and the lower maximum constraint violation of 1.54 that corresponds to a grid bound violation. The maximum violation resulting from the MILP formulation corresponds to a cost viola-tion. Lastly, given that the MILPs in the local reduction algorithm are solved to global optimality, and thus no con-straint violations are expected from the optimal solution, these violations might be attributed to tolerance values. Figure 3 shows the optimal sizing decisions. The colour of the top half of each cell denotes the optimal number of battery packs b∗, while the bottom half reports the optimal number of PV units s∗; black cells indicate parameter combinations for which no feasible solution was returned. In the MILP formulation, the optimal decision variables b∗
+
+and s∗ are integers, whereas in the NLP formulation they are continuous and are then mapped to integers by taking their ceiling values. The MILP formulation yields feasible solutions over a larger portion of the parameter grid,  
+
+> 1https://github.com/EdoScaccia/Local-Reduction-Algorithm -for-Optimal-Control-of-Microgrids
+
+Fig. 3. Optimal battery and PV sizing decisions as a function of the grid cap and initial SoC .Table 2. Monte Carlo simulations statistics of the MILP and NLP local reduction solutions.                          
+
+> MILP NLP Average Runtime (s) 38.34 1410.15 Maximum Runtime (s) 282.244 2438.50 Average Feasible Scenarios (%) 90.91 90.65 Average Constraints Violated (%) 0.56 0.099 Average Violated SoC Bounds (%) 0.0 12.45 Average Violated Logic (%) 0.0 0.0 Average Violated Grid Bounds (%) 8.96 62.54 Average Violated Cost (%) 72.86 0.0 Average Maximum Violation (-) 336.83 1.54 Average γ∗·10 −6(£)2.09 2.64
+
+whereas the NLP formulation results in more infeasible cases. A notable difference is observed in the upper left part of the grid. The NLP formulation returns a more balanced number of battery packs and PV units compared to the MILP formulation, where the number of batteries is much higher compared to the number of PV units. The difference in computational speed can be attributed to the structure of the optimization problems and the solvers used. In the MILP formulation, Gurobi, a state-of-the-art solver, solves linear problems. By contrast, the non-convex bilinear NLPs are solved using a general-purpose interior point solver. Significant speed-ups may be achievable through the development of a specialized solver tailored to the structure of Problem (24). 7. CONCLUSIONS This paper applied local reduction and an exact smooth reformulation of logical constraints to a robust microgrid sizing and scheduling problem. It is the first time that a microgrid optimal control problem under uncertainty is formulated as an NLP with embedded logic and solved via local reduction. The results show that both the proposed MILP and NLP formulations achieve average physical feasibility rates above 90% in 100 ,000-sample Monte Carlo simulations. The method required at most 10 generated scenarios, whereas full enumeration of the box uncertainty set would require 2 6N = 2 570 extreme scenarios. Assuming linear scaling, a deterministic equivalent with 100 ,000 scenarios would require roughly four orders of magnitude more memory and runtime than the corresponding 10-scenario formulation. This illustrates the advantage of generating only relevant scenarios using local reduction. Looking ahead, several avenues for future research emerge. First, the robustness issue of the MILP solutions needs to be addressed. Then, a natural extension of the presented work is to solve the same problem over longer horizons and to introduce a nonlinear battery model. Moreover, SoC 0
+
+could be optimized, with a terminal cost penalizing de-viations from a final reference. Lastly, developing special-ized interior point solvers exploiting the resulting bilinear structure could improve the efficiency of the NLP formu-lation. These extensions would enable a more meaningful comparison between the NLP and MILP formulations. REFERENCES Ben-Tal, A., El Ghaoui, L., and Nemirovski, A. (2009). 
+
+Robust Optimization . Princeton University Press. Blankenship, J.W. and Falk, J.E. (1976). Infinitely con-strained optimization problems. Journal of Optimiza-tion Theory and Applications , 19(2), 261–281. Campi, M.C., Car` e, A., and Garatti, S. (2021). The scenario approach: A tool at the service of data-driven decision making. Annual Reviews in Control , 52, 1–17. Delmastro, C., Chen, O., d’Agrain, F., Bienassis, T.D., Ca-marasa, C., Marois, J.B.L., and Petrichenko, K. (2023). Buildings – tracking report. International Energy Agency (2024a). Electricity 2024: Analysis and forecast to 2026. International Energy Agency (2024b). Renewables 2024. Mousavizadeh, S., Haghifam, M.R., and Shariatkhah, M.H. (2018). A linear two-stage method for resiliency analysis in distribution systems considering renewable energy and demand response resources. Applied Energy ,211, 443–460. Nemirovski, A. and Shapiro, A. (2006). Convex approxi-mations of chance constrained programs. SIAM Journal on Optimization , 17(4), 969–996. Nocedal, J. and Wright, S.J. (2006). Numerical Optimiza-tion . Springer Series in Operations Research and Finan-cial Engineering. Springer, New York, NY, 2 edition. Vink, K., Ankyu, E., and Koyama, M. (2019). Multiyear microgrid data from a research building in Tsukuba, Japan. Scientific Data , 6(1), 190020. Wang, Z., Chen, B., Wang, J., Kim, J., and Begovic, M.M. (2014). Robust Optimization Based Optimal DG Placement in Microgrids. IEEE Transactions on Smart Grid , 5(5), 2173–2182. Wehbeh, J. and Kerrigan, E.C. (2024). Semi-Infinite Programs for Robust Control and Optimization: Effi-cient Solutions and Extensions to Existence Constraints. ArXiv:2404.05635 [math]. Wehbeh, J. and Kerrigan, E.C. (2026). Exact Con-tinuous Reformulations of Logic Constraints in Non-linear Optimization and Optimal Control Problems. ArXiv:2601.03906 [eess]. Yaghoubi, E., Yaghoubi, E., Jahromi, M.Z., Maghami, M.R., Pa¸ sao˘ glu, A., and Chamorro, H.R. (2025). A novel data-driven NLMPC strategy for techno-economic mi-crogrid management with battery energy storage under uncertainty. Scientific Reports , 15(1), 28096. Zeng, B. and Zhao, L. (2013). Solving two-stage robust optimization problems using a column-and-constraint generation method. Operations Research Letters , 41(5), 457–461. Zhang, Y., Gatsis, N., and Giannakis, G.B. (2013). Ro-bust Energy Management for Microgrids With High-Penetration Renewables. IEEE Transactions on Sus-tainable Energy , 4(4), 944–953.

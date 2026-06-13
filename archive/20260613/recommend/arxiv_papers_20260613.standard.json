@@ -1,0 +1,131 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-13T20:55:55.180255+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 3,
+    "quick_skim_target": 11,
+    "quick_selected": 3
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2606.06932v1",
+      "source": "arxiv",
+      "title": "Forecast and Model Predictive Control of Distributed Energy Resource Aggregators for Net-Demand Balancing",
+      "abstract": "With the rapid demand for energy, even the incorporation of bulk renewable energy sources is not entirely sufficient to meet demand besides adding supply uncertainty. Distributed Energy Resource Aggregators (DERAs) have the potential to address this uncertainty via aggregation and control of decentralized distributed energy sources, thereby acting like virtual power plants. We present a new approach that combines forecasting and model-predictive control to assign DERAs to follow net-demand patterns, while accounting for the dynamics of the aggregate energy sources and their capacity limits. Each DERA is represented as a flexible ``virtual battery\" with constraints on state-of-charge and power limits. The dispatch problem is set up as a long-term model predictive control task that aims to minimize differences from desired charge levels, output ramping, and net-load tracking errors. To keep operations efficient in real time, we implement a rolling-horizon MPC, which updates decisions regularly using the latest marginal-demand forecasts. For forecasting, we present two models: linear regression and long-short term memory (LSTM) neural network. Using high-resolution CAISO net-demand data and five typical DERA types, our simulations demonstrate how well our approach tracks marginal-demand; in particular, we highlight the tradeoffs between forecasting horizon times and MPC update rate as well as the dependence on the choice of the load forecasting model. Our results also indicate a slight edge for LSTM models over linear regression for desired time shifts and horizon choices.",
+      "authors": [
+        "Obai Bahwal",
+        "Oliver Kosut",
+        "LalithaSankar"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-06-05T05:51:17+00:00",
+      "link": "https://arxiv.org/pdf/2606.06932v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Uses model predictive control to manage distributed energy resources with state-of-charge constraints, transferable to UAV power management",
+      "llm_evidence_cn": "采用模型预测控制管理分布式能源资源，包含荷电状态约束，可迁移至无人机功率管理",
+      "llm_evidence": "采用模型预测控制管理分布式能源资源，包含荷电状态约束，可迁移至无人机功率管理",
+      "canonical_evidence": "采用模型预测控制管理分布式能源资源，包含荷电状态约束，可迁移至无人机功率管理",
+      "llm_tldr_en": "Combines forecasting and MPC to control distributed energy aggregators as virtual batteries with SOC and power limits for net-demand balancing, offering a transferable framework for energy management under uncertainty.",
+      "llm_tldr_cn": "针对可再生能源渗透率增加带来的供需不确定性，本文提出一种预测与模型预测控制相结合的方法，将分布式能源资源聚合体视为灵活的虚拟电池，通过管理其荷电状态与功率限制来跟踪净需求。仿真结果表明该方法能在不确定条件下有效平衡需求。尽管面向电网场景，其基于约束的功率分配与SOC管理思路为无人机混合动力系统的实时能量管理提供了可借鉴的框架。",
+      "llm_tldr": "针对可再生能源渗透率增加带来的供需不确定性，本文提出一种预测与模型预测控制相结合的方法，将分布式能源资源聚合体视为灵活的虚拟电池，通过管理其荷电状态与功率限制来跟踪净需求。仿真结果表明该方法能在不确定条件下有效平衡需求。尽管面向电网场景，其基于约束的功率分配与SOC管理思路为无人机混合动力系统的实时能量管理提供了可借鉴的框架。",
+      "llm_tags": [
+        "query:uav:composite"
+      ],
+      "matched_query_tag": "query:uav:composite",
+      "matched_query_text": "Papers central to 查找关于混合动力无人机和混合电推垂直起降飞行器能量管理策略的综述论文和代表性研究。重点关注串联混合动力无人机、燃料电池/电池混合动力无人机、内燃机-发电机/电池混合动力无人机和混合电推垂直起降飞行器。总结主要的能量管理方法，包括基于规则控制、模糊逻辑控制、等效消耗最小化策略、自适应等效消耗最小化策略、动态规划、庞特里亚金极小值原理、模型预测控制和强化学习。优先考虑讨论系统建模、基于任务剖面的功率分配、电池荷电状态维持控制、降低油耗、发电机瞬态抑制、电池老化、实时实现以及实验或硬件验证的论文。识别当前局限性和潜在研究空白，以支持混合动力无人机能量管理的未来创新。, especially work that connects or combines: UAV power management; fuel cell battery UAV; hybrid-electric propulsion; energy management strategy for hybrid electric unmanned aerial vehicles; | English keyword            | 中文含义       | | -------------------------- | ---------- | | hybrid-powered UAV         | 混合动力无人机    | | energy management strategy | 能量管理策略     | | hybrid-electric propulsion | 混合电推进      | | series hybrid UAV          | 串联混动无人机    | | fuel cell battery UAV      | 燃料电池/电池无人机 | | UAV power management       | 无人机功率管理    |; equivalent consumption minimization strategy for hybrid electric vehicles; Which papers provide a clear taxonomy of rule based, fuzzy, ECMS, dynamic programming, PMP, MPC, and reinforcement learning methods?; What are the unsolved problems in hybrid UAV energy management, such as SOC control, fuel consumption, generator transients, and mission adaptation?; What are the main categories of energy management strategies for hybrid powered UAVs?; What are the current limitations and research gaps in hybrid UAV energy management?.",
+      "matched_requirement_id": "req-composite-uav",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.12000v1",
+      "source": "arxiv",
+      "title": "Physics-guided residual Kalman learning for state-of-charge estimation of lithium iron phosphate batteries",
+      "abstract": "Accurate state of charge (SOC) estimation of lithium iron phosphate (LFP) batteries remains challenging because of their flat open-circuit-voltage (OCV)-SOC characteristics, temperature-dependent dynamics, and sensitivity to initialization errors. Here, we propose a physics-guided residual Kalman learning (PRKL) framework for electrochemical-model-based SOC estimation. PRKL combines a control-oriented single-particle-model-based extended Kalman filter (EKF), which provides recursive physical state propagation, with a gated recurrent unit (GRU) residual learner that compensates structured EKF errors using electrochemical states and measurement features. The framework is evaluated on a public graphite/LFP dataset covering three dynamic drive cycles, eight temperatures from -10 to 50 degrees C, and initialization offsets up to 20 percent. Using dynamic stress test (DST) and federal urban driving schedule (FUDS) cycles for training and the supplemental federal test procedure (US06) cycle for cross-profile testing within the same cell dataset, PRKL achieves a global average root mean square error (RMSE) of 1.19 percent, corresponding to a 77 percent reduction relative to the physics-only EKF. These results show that electrochemical state information can guide residual learning and improve recursive SOC estimation for LFP batteries. The present validation supports cross-profile robustness within the studied dataset and provides a basis for future cross-cell, ageing-aware, and embedded-platform validation.",
+      "authors": [
+        "Feng Guo",
+        "Luis D. Couto",
+        "Khiem Trad",
+        "Ru Hong",
+        "Guangdi Hu",
+        "Mohammadhosein Safari"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-06-10T12:25:52+00:00",
+      "link": "https://arxiv.org/pdf/2606.12000v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "SOC estimation for batteries, critical for hybrid UAV energy management and SOC control",
+      "llm_evidence_cn": "电池SOC估计，对混合动力无人机能量管理和SOC维持至关重要",
+      "llm_evidence": "电池SOC估计，对混合动力无人机能量管理和SOC维持至关重要",
+      "canonical_evidence": "电池SOC估计，对混合动力无人机能量管理和SOC维持至关重要",
+      "llm_tldr_en": "This paper proposes a physics-guided residual Kalman learning framework for accurate SOC estimation of LFP batteries, combining an extended Kalman filter with a GRU residual learner to compensate errors, evaluated on a public dataset showing superior accuracy. While not UAV-specific, the method is directly applicable to SOC monitoring in hybrid UAV battery management.",
+      "llm_tldr_cn": "该论文针对磷酸铁锂电池因平坦OCV-SOC特性导致的荷电状态估计难题，提出一种物理引导的残差卡尔曼学习框架。方法将基于单粒子模型的扩展卡尔曼滤波器与门控循环单元残差补偿网络结合，利用电化学状态和测量特征修正结构化误差，在公开数据集上实现高精度估计。尽管未明确针对无人机，但该SOC估计方法可直接用于混合动力无人机电池管理，有助于解决能量管理中的SOC维持控制问题。",
+      "llm_tldr": "该论文针对磷酸铁锂电池因平坦OCV-SOC特性导致的荷电状态估计难题，提出一种物理引导的残差卡尔曼学习框架。方法将基于单粒子模型的扩展卡尔曼滤波器与门控循环单元残差补偿网络结合，利用电化学状态和测量特征修正结构化误差，在公开数据集上实现高精度估计。尽管未明确针对无人机，但该SOC估计方法可直接用于混合动力无人机电池管理，有助于解决能量管理中的SOC维持控制问题。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "What are the unsolved problems in hybrid UAV energy management, such as SOC control, fuel consumption, generator transients, and mission adaptation?",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.12345v1",
+      "source": "arxiv",
+      "title": "An Efficient Method for the Optimal Control of Microgrids Under Uncertainties using Local Reduction",
+      "abstract": "The problem of optimal sizing and power scheduling in microgrids subject to uncertainties is well known to the control community. Commonly, the optimal control problem is cast as a mixed-integer program to model the logical constraints arising in energy storage systems, and is then solved approximately using numerical methods such as the scenario approach. In this paper, we propose and compare two formulations of a robust microgrid sizing and power scheduling optimal control problem with logical constraints and uncertainties in the user's power demand, solar power generation, grid electricity prices and battery efficiencies. The first formulation uses binary variables and big-M constraints, leading to a mixed-integer linear program. The second formulation casts the problem as a continuous nonlinear program through an exact smooth reformulation of the logical constraints, consisting of additional modelling variables and non-convex constraints. We then propose a novel local reduction algorithm, extending an existing method, to solve both problems. The two formulations are compared by evaluating the solutions returned by local reduction using 100,000-sample Monte Carlo simulations and achieve promising results, with both averaging feasibility rates above 90%.",
+      "authors": [
+        "Edoardo Scaccia",
+        "Eric C. Kerrigan",
+        "Anna Sadowska"
+      ],
+      "primary_category": "math.OC",
+      "categories": [
+        "math.OC"
+      ],
+      "published": "2026-06-10T17:17:10+00:00",
+      "link": "https://arxiv.org/pdf/2606.12345v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Microgrid optimal sizing and power scheduling under uncertainty, directly applicable to UAV hybrid system energy management",
+      "llm_evidence_cn": "微电网不确定条件下的最优容量配置与功率调度，直接适用于无人机混合系统能量管理",
+      "llm_evidence": "微电网不确定条件下的最优容量配置与功率调度，直接适用于无人机混合系统能量管理",
+      "canonical_evidence": "微电网不确定条件下的最优容量配置与功率调度，直接适用于无人机混合系统能量管理",
+      "llm_tldr_en": "Proposes robust microgrid optimal sizing and scheduling formulations with mixed-integer and nonconvex approaches, enhanced by a local reduction technique for efficiency, relevant to UAV hybrid energy management under uncertainty.",
+      "llm_tldr_cn": "本文解决微电网在负载、太阳能和电价不确定条件下的最优规模与电力调度问题。针对传统混合整数规划计算负担重的问题，作者提出两种鲁棒优化公式，并引入局部降维策略以加速求解。实验表明该方法在大幅减少计算时间的同时保持了优化质量。尽管研究目标为微电网，但其处理储能约束、不确定性和离散决策的方法可直接为混合动力无人机能量管理中的电池SOC控制、发电机调度和实时优化提供技术借鉴。",
+      "llm_tldr": "本文解决微电网在负载、太阳能和电价不确定条件下的最优规模与电力调度问题。针对传统混合整数规划计算负担重的问题，作者提出两种鲁棒优化公式，并引入局部降维策略以加速求解。实验表明该方法在大幅减少计算时间的同时保持了优化质量。尽管研究目标为微电网，但其处理储能约束、不确定性和离散决策的方法可直接为混合动力无人机能量管理中的电池SOC控制、发电机调度和实时优化提供技术借鉴。",
+      "llm_tags": [
+        "query:uav:composite"
+      ],
+      "matched_query_tag": "query:uav:composite",
+      "matched_query_text": "Papers central to 查找关于混合动力无人机和混合电推垂直起降飞行器能量管理策略的综述论文和代表性研究。重点关注串联混合动力无人机、燃料电池/电池混合动力无人机、内燃机-发电机/电池混合动力无人机和混合电推垂直起降飞行器。总结主要的能量管理方法，包括基于规则控制、模糊逻辑控制、等效消耗最小化策略、自适应等效消耗最小化策略、动态规划、庞特里亚金极小值原理、模型预测控制和强化学习。优先考虑讨论系统建模、基于任务剖面的功率分配、电池荷电状态维持控制、降低油耗、发电机瞬态抑制、电池老化、实时实现以及实验或硬件验证的论文。识别当前局限性和潜在研究空白，以支持混合动力无人机能量管理的未来创新。, especially work that connects or combines: UAV power management; fuel cell battery UAV; hybrid-electric propulsion; energy management strategy for hybrid electric unmanned aerial vehicles; | English keyword            | 中文含义       | | -------------------------- | ---------- | | hybrid-powered UAV         | 混合动力无人机    | | energy management strategy | 能量管理策略     | | hybrid-electric propulsion | 混合电推进      | | series hybrid UAV          | 串联混动无人机    | | fuel cell battery UAV      | 燃料电池/电池无人机 | | UAV power management       | 无人机功率管理    |; equivalent consumption minimization strategy for hybrid electric vehicles; Which papers provide a clear taxonomy of rule based, fuzzy, ECMS, dynamic programming, PMP, MPC, and reinforcement learning methods?; What are the unsolved problems in hybrid UAV energy management, such as SOC control, fuel consumption, generator transients, and mission adaptation?; What are the main categories of energy management strategies for hybrid powered UAVs?; What are the current limitations and research gaps in hybrid UAV energy management?.",
+      "matched_requirement_id": "req-composite-uav",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

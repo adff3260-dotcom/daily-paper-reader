@@ -6,32 +6,32 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-05-15 ~ 2026-06-13
-- 运行时间：2026-06-13 05:39:07 UTC
+- 最新运行日期：2026-06-13
+- 运行时间：2026-06-13 20:57:52 UTC
 - 运行状态：成功
 - 本次总论文数：3
 - 精读区：0
 - 速读区：3
 
 ### 今日简报（AI）
-今日速读三篇论文，覆盖无人机节能轨迹、超级电容车用可行性和多智能体能量感知调度。  
-最值得关注的是利用风场优化固定翼滑翔效率，以及定量分析超级电容器在电动车中何时真正实用。  
-建议对无人机能效或车用储能感兴趣的读者跟进这两篇7分论文的具体方法与判据。
-- 详情：[/20260515-20260613/README](/20260515-20260613/README)
+今日速览三篇能源系统前沿研究，聚焦分布式资源与储能优化控制。
+分布式能源聚合预测控制与微电网鲁棒最优方法均获7分，强调应对不确定性的高效策略。
+建议关注物理引导的电池状态评估新思路，或将提升家庭储能与电动出行可靠性。
+- 详情：[/202606/13/README](/202606/13/README)
 
 ### 精读区论文标签
 - 本次无精读推荐。
 
 ### 速读区论文标签
-1. [Wind-Aware Optimal Trajectory Planning for Efficient Gliding of Fixed-Wing Aerial Systems](/20260515-20260613/2605.15619v1-wind-aware-optimal-trajectory-planning-for-efficient-gliding-of-fixed-wing-aerial-systems)  
+1. [Forecast and Model Predictive Control of Distributed Energy Resource Aggregators for Net-Demand Balancing](/202606/13/2606.06932v1-forecast-and-model-predictive-control-of-distributed-energy-resource-aggregators-for-net-demand-balancing)  
    标签：评分：7.0/10、query:uav
-   evidence：通过风感知最优轨迹规划实现固定翼无人机滑翔的精确能量管理
-2. [When are supercapacitors practically feasible in electric vehicles?](/20260515-20260613/2606.03732v1-when-are-supercapacitors-practically-feasible-in-electric-vehicles)  
+   evidence：采用模型预测控制管理分布式能源资源，包含荷电状态约束，可迁移至无人机功率管理
+2. [An Efficient Method for the Optimal Control of Microgrids Under Uncertainties using Local Reduction](/202606/13/2606.12345v1-an-efficient-method-for-the-optimal-control-of-microgrids-under-uncertainties-using-local-reduction)  
    标签：评分：7.0/10、query:uav
-   evidence：采用动态规划与深度强化学习进行混合储能系统能量管理
-3. [Scaling up Energy-Aware Multi-Agent Reinforcement Learning for Mission-Oriented Drone Networks with Individual Reward](/20260515-20260613/2605.24992v1-scaling-up-energy-aware-multi-agent-reinforcement-learning-for-mission-oriented-drone-networks-with-individual-reward)  
+   evidence：微电网不确定条件下的最优容量配置与功率调度，直接适用于无人机混合系统能量管理
+3. [Physics-guided residual Kalman learning for state-of-charge estimation of lithium iron phosphate batteries](/202606/13/2606.12000v1-physics-guided-residual-kalman-learning-for-state-of-charge-estimation-of-lithium-iron-phosphate-batteries)  
    标签：评分：6.0/10、query:uav
-   evidence：提出能源感知多智能体强化学习用于无人机任务执行，涉及无人机功率管理和能量管理策略。
+   evidence：电池SOC估计，对混合动力无人机能量管理和SOC维持至关重要
 
 
 <div class="dpr-home-promo-card">
