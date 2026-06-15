@@ -1,0 +1,24 @@
+{
+  "label": "2026-06-15",
+  "date": "2026-06-15",
+  "generated_at": "2026-06-15T22:30:10",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202606/15/2606.14478v1-optimization-models-and-steady-state-minimum-fuel-operating-strategies-for-hydrogen-based-hybrid-electric-aerospace-propulsion-systems",
+      "section": "deep",
+      "title_en": "Optimization Models and Steady-State Minimum-Fuel Operating Strategies for Hydrogen-based Hybrid Electric Aerospace Propulsion Systems",
+      "authors": "Uto Perra, Faezeh Pak, Evangelia Pontika, Sahil Bhapkar, Daniel Ewald, Dario Buzzola, Theo Hofman, Frank Willems, Mauro Salazar",
+      "date": "2026-06-12",
+      "pdf": "https://arxiv.org/pdf/2606.14478v1",
+      "score": "9.0",
+      "evidence": "氢基混合电推进系统含固体氧化物燃料电池的最小燃料优化策略",
+      "tldr": "氢基混合电推进系统因气动-热力-电多通道强耦合，最小燃料运行难以确定。本文提出基于代理模型的优化框架，将飞行任务下的最优控制转化为静态非线性规划，高效求解稳态策略。在Beechcraft 1900D任务上，添加旁通阀可降低油耗约19%；而电池在稳态下仅微增油耗（未来能量密度下<1%），当前电池重量效益有限。该框架为氢电推进系统设计提供了精确量化工具。",
+      "tags": "query:uav",
+      "abstract_en": "This paper presents an optimization framework for the operation of hydrogen-based hybrid electric aerospace propulsion systems consisting of a hydrogen gas turbine and an electric motor powered by a solid oxide fuel cell, connected to the gas turbine via multiple gas channels and heat exchangers. Our framework computes the minimum-fuel optimal operating strategies over a flight mission accounting for the complex propulsion system with strong thermodynamic and mechanical coupling between components. First, we identify surrogate optimization models of the components employing high-fidelity model simulations. Second, we frame the minimum-fuel optimal control problem over a given flight mission and parse it into a static nonlinear optimization problem that can be efficiently solved with off-the-shelf nonlinear programming algorithms. Finally, we apply our optimization framework to a typical flight mission of an advanced, commuter aircraft (Beechcraft 1900D market segment), considering a parallel propulsion system architecture with four different configurations that share a common baseline but differ in the inclusion of an additional battery and by-pass valves around the two heat exchangers. The resulting optimal trajectories are validated against high-fidelity simulation results, demonstrating the accuracy of our framework. Results show that adding by-pass valves around the air and hydrogen heat exchangers can reduce fuel consumption by 19.11 % without the battery, and by 19.56% with the battery. We show that adding a battery yields a slight increase in fuel consumption (below 1%) for future projected energy densities under steady-state conditions. Conversely, when considering state-of-the art energy densities, the additional battery weight outweighs the benefits, limiting its potential applicability to only assisting transients, which are not considered in the present work.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

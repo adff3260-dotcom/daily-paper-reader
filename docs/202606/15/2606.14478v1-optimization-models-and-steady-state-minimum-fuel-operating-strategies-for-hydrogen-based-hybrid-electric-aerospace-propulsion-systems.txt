@@ -1,0 +1,961 @@
+Title: Optimization Models and Steady-State Minimum-Fuel Operating Strategies for Hydrogen-based Hybrid Electric Aerospace Propulsion Systems
+
+URL Source: https://arxiv.org/pdf/2606.14478v1
+
+Published Time: Mon, 15 Jun 2026 00:58:32 GMT
+
+Number of Pages: 19
+
+Markdown Content:
+Uto Perra et al. ,Optimization Models and Steady-State Minimum-Fuel Operating Strategies for Hydrogen-based Hybrid Electric Aerospace Propulsion Systems, uploaded to ArXiv June 15, 2026 
+
+# Highlights 
+
+Optimization Models and Steady-State Minimum-Fuel Operating Strategies for Hydrogen-based Hybrid Elec-tric Aerospace Propulsion Systems 
+
+Uto Perra, Faezeh Pak, Evangelia Pontika, Sahil Bhapkar, Daniel Ewald, Dario Buzzola, Theo Hofman, Frank Willems, Mauro Salazar 
+
+• This paper presents optimization models and minimum-fuel optimal operating strategies for hydrogen-based hybrid electric aero engines under steady-state conditions. 
+
+• Four di ff erent propulsion system configurations that share a common baseline are analyzed and compared in terms of operating strategies and to-tal fuel consumption over a given flight mission. 
+
+• The resulting optimal trajectories are validated against high-fidelity model simulations, showing high model accuracy in the most frequent operat-ing windows, while achieving the optimal solution in approximately 3 second. 
+
+• A case study on a typical commuter aircaft flight mission shows the benefit of using heat exchanger by-pass valves, yielding a fuel consumption reduc-tion by more than 19 %, whereas the inclusion of a battery provides no additional fuel savings due to the associated mass penalty. 
+
+> arXiv:2606.14478v1 [eess.SY] 12 Jun 2026
+
+# Optimization Models and Steady-State Minimum-Fuel Operating Strategies for Hydrogen-based Hybrid Electric Aerospace Propulsion Systems 
+
+Uto Perra a, ∗, Faezeh Pak a, Evangelia Pontika b, Sahil Bhapkar c, Daniel Ewald d, Dario Buzzola e, Theo Hofman a,Frank Willems a, Mauro Salazar a
+
+> aDepartment of Mechanical Engineering, Eindhoven University of Technology, Groene Loper 3, 5612 AE, Eindhoven, The Netherlands
+> bCranfield University, College Road, MK43 0AL, Cranfield, United Kingdom
+> cDLR-Institut für Elektrifizierte Luftfahrtantriebe, Lieberoser Straße 13a, 03046, Cottbus, Germany
+> dKarlsruhe Institute of Technology, Adenauerring 20b, 76131, Karlsruhe, Germany
+> eUniversità degli Studi di Genova, Via Montallegro, 1, 16145, Genova, Italy
+
+Abstract 
+
+This paper presents an optimization framework for the operation of hydrogen-based hybrid electric aerospace propul-sion systems consisting of a hydrogen gas turbine and an electric motor powered by a solid oxide fuel cell, which is in turn connected to the gas turbine via multiple gas channels and heat exchangers. Our framework computes the minimum-fuel optimal operating strategies over a flight mission accounting for the complex propulsion system with strong thermodynamic and mechanical coupling between components. Specifically, we first identify surrogate opti-mization models of the components employing high-fidelity model simulations. Second, we frame the minimum-fuel optimal control problem over a given flight mission and parse it into a static nonlinear optimization problem that can be e ffi ciently solved with o ff -the-shelf nonlinear programming algorithms. Finally, we showcase the potential of our optimization framework by applying it to a typical flight mission of an advanced, commuter aircraft (Beechcraft 1900D market segment), considering a parallel propulsion system architecture with four di ff erent configurations that share a common baseline but di ff er in the inclusion of an additional battery and by-pass valves around the two heat exchangers. We validate the resulting optimal trajectories against high-fidelity simulation results, demonstrating the accuracy of our framework. Our results on the use case show that adding by-pass valves around the air and hydrogen heat exchangers can reduce fuel consumption by 19.11 % for the case without the battery, and by 19.56% when the battery is integrated. At the same time, we show that adding a battery yields a slight increase in fuel consumption (below 1%) for future projected energy densities under steady-state operating conditions. Conversely, when con-sidering state-of-the art energy densities, the additional battery weight outweighs the benefits, limiting its potential applicability to only assisting transients, which are not considered in the present work. 
+
+Keywords: Aero engines, gas turbines, solid oxide fuel cells, surrogate modeling, optimization, energy management. 
+
+1. Introduction 
+
+The continuous growth of the aerospace sector, to-gether with increasing travel demand, is leading to a significant rise in carbon-related emissions, which are expected to grow even further in the coming years. As reported in [1], aviation accounted for approximately 2.5 % of global CO 2 emissions in 2023, and 47 % of the toal aviation CO 2 emissions between 1940 and 2019 occurred since 2000. To mitigate this issue, researchers   
+
+> ∗Corresponding author.
+> Email address: u.perra@tue.nl (Uto Perra)
+
+have investigated di ff erent solutions. One promising approach to eliminate carbon-related operational emis-sions while having a high e ffi ciency is using hydrogen fuel in combination with tightly-coupled hybrid systems composed of a gas turbine (GT) engine and solid oxide fuel cell (SOFC) stacks where the SOFC both becomes part of the gas turbine cycle (thermodynamic coupling) and provides electrical power (mechanical coupling), as shown by [2] and [3]. However, to fully exploit the po-tential of such a hybrid configuration and to balance the penalty of increased weight, the system must be operated as e ffi ciently as possible. Therefore, the hy-brid system requires fuel-optimal operating strategies, Figure 1: Simplified scheme of the examined hybrid propulsion system. The solid oxide fuel cell (SOFC) stack is tightly integrated with a gas turbine (GT). A bleed valve with opening fbleed regulates the air flow at the outlet of the high-pressure compressor (HPC) directed to the SOFC (light blue line), which is preheated via a heat exchanger (HEX1). The hot o ff -gas from the SOFC (red lines) from each side then undergoes heat transfer through the heat exchangers before being sent to the combustion chamber (CC). Two by-pass valves, each per heat exchanger, with openings fHEX1 
+
+and fHEX2 , are included to the baseline architecture improve the temperature control. The hot gases then expand in the high-pressure turbine (HPT), which drives the high-pressure compressor and the low-pressure compressor (LPC). Variable stator vanes for both the low pressure compressor 
+
+αVSV ,LPC and high pressure compressor αVSV ,HPC are included to prevent instabilities, extending the stable operating envelope. Finally, the gases expand in the free turbine (FT), which then drives the propeller. The purple variables correspond to the control variables, while the green lines correspond to the hydrogen flows. The grey lines correspond to the configuration integrating a battery, where the battery power Pb denotes the power supplied to or extracted from the battery and serves as an additional control variable. 
+
+which in turn necessitate accurate models. Neverthe-less, the complexity of the system and the tight cou-pling between its components a ff ect the operation of the propulsion system and represent a significant challenge. To this end, we aim to frame a constrained minimum-fuel optimization problem, subject to components be-havior, operational requirements, and safety constraints, while capturing the strong thermodynamic and mechan-ical coupling between the di ff erent subsystems. To ac-curately represent the behavior of the hybrid system, high-fidelity SOFC models [4, 5] or the use of gas tur-bine components maps [6, 7] are often employed. How-ever, solving the optimization problem using compu-tationally expensive, often iterative, high-fidelity mod-els makes it intractable. Moreover, components maps for gas turbines are typically proprietary and confiden-tial, which limits their direct use. A potential approach is the use of accurate yet tractable reduced-order sur-rogate models. In this paper, we present steady-state minimum-fuel operating strategies for hydrogen-based hybrid electric aero engines, employing reduced-order surrogate models of the individual components, captur-ing the thermodynamic couplings between them, pro-viding a balance between accuracy and computational 2cost, and we compare the performance to that of the same propulsion system integrated with a battery. 
+
+Related literature : This paper relates to two main research streams: 1) energy management of hybrid propulsion systems, and 2) modeling and optimization of hybrid GT /SOFC systems. In the first stream, the authors of [8], [9], and [10] presented models and algo-rithms to compute minimum-fuel energy management strategies for ground hybrid electric powertrains over given driving cycles. Another modeling approach was proposed in [11], which investigated the energy man-agement strategy using a neural-network-based surro-gate model for a range-extended vehicle. Although dif-ferent modeling and optimization approaches have been explored, these studies focus on ground vehicles and are not directly applicable to either aerospace propulsion systems or hybrid systems combining gas turbine and fuel cells. However, the growing interest in sustainable aviation has motivated the application of optimal energy management strategies to the aerospace domain. In this context, [12], [13], [14], and [15] presented optimal en-ergy management strategies for hybrid-electric aircraft employing convex optimization, model predictive con-trol, and the Pontryagin minimum principle. Similarly, [16] investigated the optimal energy management for a fuel-cell hybrid-electric aircraft based on dynamic pro-gramming. In [17] the authors investigated the mission-level optimization of tri-source hybrid electric aircraft, combining a gas-turbine engine, hydrogen fuel-cell sys-tems, and batteries enabling power allocation in each flight segment over a given flight mission. Their results showed a 31.5 % total fuel reduction for a 300 nmi mis-sion compared to the reference aircraft. However, de-spite the integration of batteries, which play a relevant role during transient operations, these studies focus on hybrid-electric propulsion systems that do not include tightly thermodynamically coupled components, such as gas turbines and solid oxide fuel cells, which are the core of the present work. The second stream addresses the modeling and opti-mization of hybrid GT /SOFC systems. In this stream, [18] performed a multi-objective optimization of the overall output power and system effi ciency of an SOFC /GT heat and power system, comparing the per-formance of two heuristic algorithms: genetic algorithm and particle swarm optimization. In [19] the optimal combination of key decision variables is investigated, including air and fuel flow rates, cell voltage, and air in-let temperature, to maximize the design-point e ffi ciency of a GT /SOFC system using a genetic algorithm. In [20] the authors proposed a surrogate-based robust op-timal design approach for a hybrid GT /SOFC system aiming to achieve high e ffi ciency with low performance variability under fuel composition variations. However, these studies focus on finding the optimal design of the hybrid system and do not study the optimal oper-ation over a flight mission. In [21] the authors stud-ied the design optimization of a hybrid GT /SOFC sys-tem, focusing on key design parameters, and applied to a long-endurance unmanned aerial vehicles. To man-age the power demand across di ff erent flight phases, they adopted a fuzzy-logic-based energy management strategy. In contrast, the present work employs an optimization-based approach to derive the minimum-fuel optimal strategies. Kameswaran et al. [22] pro-posed a dynamic optimization framework to determine optimal control policies for hybrid fuel cell-gas turbine power systems. Although their approach employs de-tailed dynamic models, it does not consider the recircu-lation of gases from the SOFC to the GT, which is a cru-cial part of the present work. Moreover, their study does not compare the optimal control strategies with those obtained for the baseline system including a battery or heat exchangers by-pass valves, where the latter are cru-cial for temperature control. In conclusion, to the best of the authors’ knowledge, no previous studies have investigated and compared the steady-state minimum-fuel operation of hydrogen-based hybrid electric GT-SOFC aerospace propulsion systems with that of the same system integrating: (i) a battery only, (ii) heat exchangers by-pass valves only, and (iii) both a battery and heat exchangers by-pass valves, while capturing the strong thermodynamic cou-plings among components through surrogate models. 
+
+Statement of contributions : In order to address this research gap, this paper presents component surro-gate models and minimum-fuel optimization strategies for hydrogen-based hybrid-electric aerospace propul-sion systems for the four di ff erent configurations, cap-turing the tight thermodynamic couplings between the components. First, we carry out a design of experiments and we identify surrogate models of the gas turbine and SOFC, along with models of the heat exchangers and the battery pack. Second, we frame a minimum-fuel optimization problem for the four di ff erent propulsion systems by leveraging and coupling the identified mod-els, together with safety and operational constraints at component level and system integration level. Third, we solve the problems, and we validate our approach by comparing the optimization results with those obtained from the high-fidelity models that we used to derive the surrogate models. Finally, we compare the four propul-sion configurations in terms of performance and total fuel consumption. 3Figure 2: Simplified scheme representing the GT interfaces as a func-tion of the operating flight altitude h and Mach number M. A fraction of the total mass flow rate leaving the high-pressure compressor, de-termined by the bleed fraction fbleed , is directed to the SOFC. This portion of the mass flow is referred to as ˙ ma,FC , and leaves the HPC at temperature THPC ,out and pressure pHPC ,out . In return, the GT receives from the SOFC the outlet air flow ˙ ma,FC ,out at temperature Tcat ,HEX ,out ,together with the unutilized hydrogen ˙ mH2,FC ,out and the steam ˙ mH2O     
+
+> at a temperature Tan ,HEX ,out .Additionally, an extra hydrogen flow ˙mH2,GT is injected from the storage tank at temperature Ttank . As a result, the GT is providing a mechanical power PGT .
+
+Organization : The remainder of this paper is orga-nized as follows: Section 2 presents the components’ surrogate models and the minimum-fuel optimization problems for the two propulsion configurations, which include the identified models, operational requirements, and safety constraints. In Section 3 we present and val-idate the results against high-fidelity models, demon-strating the accuracy of our approach. Moreover, we compare the total fuel consumption of the four propul-sion configurations, highlighting the impact of using a battery and by-pass valves. Finally, in Section 4, we draw the conclusions and provide an outlook for future research. 
+
+2. Methodology 
+
+In this section, we first identify the individual compo-nent surrogate models of the hybrid propulsion system shown in Fig. 1, as function of the control inputs, de-noted by the purple variables, and the interfaces with the rest of the system. The surrogate models are con-structed using a quadratic structure, which strikes a bal-ance between accuracy and computational tractability, while capturing the main nonlinear interactions among variables and remaining compatible with e ffi cient non-linear programming solvers. Second, we construct the minimum-fuel optimization problems for the four con-figurations employing these models together with safety 0 20 40 60 80 100 120 140        
+
+> Time [min]
+> 00.5 11.5 22.5
+> h [ft]
+> #10 4
+> 00.2 0.4 0.6 0.8 1
+> M [-]
+> TO 0 ft TO 1500 ft ToC CRZ FID 23000 ft FID 1500 ft
+> Figure 3: Simplified scheme representing the flight altitude hand Mach number Mas a function of time. The dots denote the oper-ating points considered: Take-o ff at 0 ft (TO 0 ft) and 1500 ft (TO 1500 ft), top of climb (ToC), cruise (CRZ), flight idle at 23000 ft (FID 23000 ft) and at 1500 ft (FID 1500 ft).
+
+and operational constraints. The considered hybrid propulsion system is com-posed of a gas turbine, a solid oxide fuel cell stack, two heat exchangers that preheat the SOFC inlet air and fuel flows (HEX1 and HEX2), and an electric system with converter, inverter, and motor (EM). The SOFC is tightly coupled to the GT, which provides hot and pressurized air. This air flow is controlled by a bleed valve with opening fbleed and further heated in a heat exchanger HEX1 that recovers thermal energy from the SOFC cathode exhaust gases. Similarly, the fuel flow entering the SOFC is heated in a second heat exchanger HEX2 using the thermal energy contained in the SOFC anode exhaust gases. To allow better temperature con-trol, by-pass valves with openings fHEX1 and fHEX2 are included alongside the air and hydrogen heat exchang-ers, respectively. To enhance overall system e ffi ciency, the anode and cathode exhaust gases are directed to the combustion chamber of the GT to exploit the unutilized hydrogen and the enthalpy of the gases, after passing through the heat exchangers. 
+
+2.1. Objective 
+
+To construct the minimum-fuel optimization prob-lem, we first define the objective of our problem. The main objective in this problem is the minimization of the total hydrogen consumed by the propulsion system over a set of given flight operating conditions (Fig. 3), which can be expressed as: min 
+
+Z tfin 
+
+> 0
+
+˙mH2,tot (t)d t, (1) 4where ˙ mH2,tot is equal to the sum of the fuel injected in the SOFC and the fuel injected within the GT ˙mH2,tot (t) = ˙mH2,FC (t) + ˙mH2,GT (t), (2) and tfin is the final time instant. To simplify the notation, the time dependence is omitted hereafter. 
+
+2.2. Gas Turbine 
+
+In this section, we present the gas turbine models and outline the procedure used to derive them. The goal of the GT surrogate models is to analytically but still accu-rately represent the behavior of the gas turbine as func-tion of the power delivered, its control variables, and its interfaces with the rest of the propulsion system, as shown in Fig. 2. 
+
+Design of Experiments and Surrogate Modeling For-mulation : To construct the surrogate models, we first perform high-fidelity gas turbine simulations within the identification space using Turbomatch 1, an in-house gas turbine performance simulation code developed at Cranfield University [25, 26], following a predefined Latin Hypercube sampling plan that includes variation of the power requirements, gas turbine control variables and interfaces with the SOFC at the operating condi-tions given by the mission requirements (Table 5).First, we fix the design point of the gas turbine at take-o ff 
+
+with Turbine Entry Temperature ( TET ) at 1300 K, Over-all Pressure Ratio (OPR) at 10, and Nozzle Pressure Ra-tio at 1.14, and the interfaces with the SOFC correspond to the design point of the SOFC with cell voltage UFC 
+
+= 0.6 V, fuel utilization fFU = 0.2, air utilization fAU =
+
+0.1, and a power split between the electric motor and GT at 20 %. Subsequently, we perform the o ff -design performance simulations with variation of input param-eters according to the Latin Hypercube input datasets and we used the results to identify the models param-eters through least-squares error optimization. Specif-ically, we aim to minimize the mean squared error be-tween the predicted values and the full simulation re-sults for six operating conditions: 1. take-o ff at 0 ft, 2. end of take-o ff at 1500 ft, 3. top of climb, 4. cruise, 5. beginning of descent (flight idle) at 23000 ft, and 6. end of descent (flight idle) at 1500 ft, as shown in Fig. 3. The identification space is bounded by ˙mH2,GT ,tot ∈ h ˙mmin H2,GT ,tot , ˙mmax H2,GT ,tot 
+
+i , (3) 
+
+> 1Turbomatch is a component-based simulation tool which per-forms thermodynamic calculations and resolves the enthalpy balance, mass balance and power balance using well-established gas turbine performance methods available in literature and textbooks [23, 24] that do not need to be iterated in this paper. 0.015 0.02 0.025
+
+_mH2;GT ;total [kg/s] 00.05 0.1 
+
+_mH2O;FC ;out [kg/s]            
+
+> 0500 1000
+> PGT  [kW]
+> 400 500 600 700 800 900
+> Model Data
+> Figure 4: Comparison between the GT power PGT reduced-order model and the high-fidelity results as a function of the total hydro-gen mass flow ˙ mH2,GT and the outlet SOFC steam flow ˙ mH2O,FC ,out for constant αVSV ,LPC ,αVSV ,HPC ,Tmix ,fbleed ,Tcat ,HEX ,out , and SOFC air utilization factor fAU .
+
+αVSV ,LPC ∈ hαmin VSV ,LPC , α max VSV ,LPC 
+
+i , (4) 
+
+αVSV ,HPC ∈ hαmin VSV ,HPC , α max VSV ,HPC 
+
+i , (5) ˙mH2O,FC ,out ∈ h ˙mmin H2O,FC ,out , ˙mmax H2O,FC ,out 
+
+i , (6) 
+
+Tmix ∈ hT min mix , T max mix 
+
+i , (7) 
+
+fbleed ∈ h f min bleed , f max bleed 
+
+i , (8) ˙ma,FC ,out ∈ h ˙mmin a,FC ,out , ˙mmax a,FC ,out 
+
+i , (9) 
+
+Tcat ,HEX ,out ∈ hT min cat ,HEX ,out , T max cat ,HEX ,out 
+
+i , (10) where αVSV ,LPC and αVSV ,HPC denote the LPC and HPC variable stator vanes angle, respectively. ˙mH2,GT ,tot de-notes the total fuel flow entering the combustion cham-ber, that is, the sum of the supplied hydrogen flow ˙mH2,GT and the SOFC outlet hydrogen flow ˙ mH2,FC ,out ,therefore it is equal to ˙mH2,GT ,tot = ˙mH2,GT + ˙mH2,FC ,out . (11) ˙ma,FC ,out indicates the mass flow rate of oxygen-depleted air at the SOFC outlet, which, after undergoing heat transfer in HEX1, reaches the temperature Tcat ,HEX ,out 
+
+and is then routed back to the gas turbine. Tmix repre-sents the weighted average temperature of the mixture of hydrogen and steam entering the GT. This tempera-ture results from the mixing of two streams: the hydro-gen supplied from the tank, ˙ mH2,GT , at temperature Ttank ,and the anode o ff -gases exiting the SOFC, composed of 5hydrogen ˙ mH2,FC ,out and steam ˙ mH2O,FC ,out , at tempera-ture Tan ,HEX ,out . Therefore, the mixture temperature is given by 
+
+Tmix =
+
+P ˙min · cp,in (Tin ) · Tin 
+
+˙mmix · cp,mix (Tmix ) , (12) where the term P ˙min · cp,in (Tin ) · Tin is equal to 
+
+X
+
+˙min · cp,in (Tin ) · Tin = ˙mH2 ,GT · Ttank · cp,H2 (Ttank ) +
+
+ ˙mH2 ,FC ,out · cp,H2 (Tan ,HEX ,out ) +
+
+˙mH2 O,FC ,out · cp,H2 O(Tan ,HEX ,out ) · Tan ,HEX ,out ,
+
+(13) 
+
+where cp,H2 and cp,H2O denote the temperature-dependent mean specific heat capacity of hydrogen and steam, respectively, and the product ˙ mmix · cp,mix (Tmix ) is equal to 
+
+˙mmix · cp,mix (Tmix ) = ˙mH2,GT · cp,H2 (Tmix ) +
+
+˙mH2,FC ,out · cp,H2 (Tmix ) + ˙mH2O,FC ,out · cp,H2O(Tmix ). (14) 
+
+The selected sampling plan is a Latin Hypercube Sam-pling scheme, which ensures that samples are evenly distributed across the input space. The outputs of in-terest are 
+
+yGT =  PGT , ˙ma,FC , THPC ,out ,
+
+pHPC ,out , zLPC , zHPC , TET , N1
+
+⊤, (15) where ˙ ma,FC denotes the air flow from the high-pressure compressor entering the SOFC; THPC ,out the high-pressure compressor outlet temperature; pHPC ,out the high-pressure compressor outlet pressure; zLPC the low-pressure surge margin indicator; zHPC the high-pressure compressor surge margin indicator; TET the turbine en-try temperature; and N1 the normalized spool speed. As the gas turbine exhibits nonlinear behavior that can be approximated by quadratic models, following the ap-proach proposed by [27] and [28], we express the out-puts for all i = 1, . . . , Ny,GT as 
+
+yGT ,i = x⊤ 
+
+> GT
+
+QGT ,i xGT + q⊤ 
+
+> GT ,i
+
+xGT + q0,GT ,i, (16) where Ny,GT represents the number of outputs, QGT ,i,
+
+qGT ,i, and q0,GT ,i are the variables including the fitting coe ffi cients subject to identification, and xGT is the vec-tor containing models inputs, defined as 
+
+xGT =  ˙mH2,GT ,tot , α VSV ,LPC , α VSV ,HPC , ˙mH2O,FC ,out ,
+
+Tmix , fbleed , ˙ma,FC ,out , Tcat ,HEX ,out 
+
+⊤.
+
+(17) 
+
+Table 1: NRMSE of the GT surrogate models                                                       
+
+> Variable NRMSE
+> TO 0 ft TO 1500 ft ToC CRZ FID 23000 ft FID 1500 ft
+> PGT 0.87 % 0.59 % 0.59 % 0.60 % 0.90 % 0.87 % ˙ma,FC 0.90 % 0.42 % 0.44 % 0.43 % 0.44 % 0.39 %
+> THPC ,out 0.29 % 0.32 % 0.36 % 0.33 % 0.30 % 0.18 %
+> pHPC ,out 0.93 % 0.68 % 0.76 % 0.76 % 0.80 % 0.57 %
+> zLPC 1.67 % 1.54 % 1.59 % 1.63 % 1.54 % 0.99 %
+> zHPC 1.46 % 1.33 % 1.67 % 1.60 % 1.57 % 1.80 %
+> TET 0.55 % 0.44 % 0.47 % 0.46 % 0.39 % 0.19 %
+> N10.58 % 0.50 % 0.57 % 0.55 % 0.52 % 0.29 %
+
+To identify the coe ffi cient terms QGT ,i, qGT ,i, and q0,GT ,i,we solve for all i = 1, . . . , Ny,GT the least-squares error optimization problem min   
+
+> QGT ,i,qGT ,i,q0,GT ,i
+
+yGT ,i − yGT ,validated ,i 2, (18) where yGT ,validated ,i denote the outputs coming from high-fidelity simulations. To improve overall modeling ac-curacy and capture high nonlinearities across the dif-ferent operating conditions, we identify the models co-effi cients for the six di ff erent operating conditions de-scribed above, namely take-o ff at zero altitude (TO 0 ft), at 1500 ft (TO 1500 ft), top of climb (ToC), cruise (CRZ), flight idle at 23000 ft (FID 23000 ft), and at 1500ft (FID 1500 ft). We frame the problem (18) as a semi-definite program using the parser YALMIP [29] and solve it using the solver MOSEK [30]. The nor-malized root mean square error (NRMSE) values of the models for the di ff erent operating conditions are re-ported in Table 1. The NRMSE values are normalized with respect to the corresponding maximum value of the identification dataset. Fig. 4 shows the comparison between the total gas turbine fuel flow reduced-order model and the high-fidelity samples. To ensure struc-tural integrity of the rotating parts and that the high-pressure turbine blade temperature remains below a safe margin from the melting point of nickel superalloys, we limit the turbine entry temperature TET and the spool speed N1 to a maximum value, thus 
+
+TET ≤ TET ,max , (19) 
+
+N1 ≤ N1,max . (20) Similarly, to prevent surge of the compressors, we limit the surge margin indicators to ensure a safe distance from the surge line, therefore 
+
+zLPC ≤ zLPC ,max , (21) 
+
+zHPC ≤ zHPC ,max . (22) 6Figure 5: Simplified scheme of the air heat exchanger HEX1. 
+
+2.3. Heat Exchangers 
+
+In modeling the heat exchangers, we assume that they transfer all the heat from the hot stream to the cold stream; therefore we assume to have adiabatic heat ex-changers. 
+
+2.3.1. HEX1 For the air heat exchanger (Fig. 5), which increases the temperature of the inlet SOFC air flow ˙ ma,FC , the energy balance can be expressed as ˙ma,HEX · ccold p,a (T ) ·  T fHEX1  
+
+> a,cold ,out
+
+− THPC ,out 
+
+ =
+
+˙ma,FC ,out · chot p,a (T ) ·  TFC ,out − Tcat ,HEX ,out 
+
+, (23) where ccold p,a (T ) denotes the temperature-dependent mean specific heat capacity of air on the cold side, while 
+
+chot p,a (T ) refers to the temperature-dependent mean spe-cific heat capacity of the oxygen-depleted air on the hot side. THPC ,out and TFC ,out indicate the inlet air tempera-ture on the cold side and the inlet oxygen-depleted air temperature on the hot side, respectively. T fHEX1  
+
+> a,cold ,out
+
+and 
+
+Tcat ,HEX ,out represent the outlet air temperature on the cold side and the outlet oxygen-depleted air tempera-ture on the hot side, respectively. ˙ ma,HEX denotes the air mass flow on the cold side that enters the HEX1, and it is equal to ˙ma,HEX = ˙ma,FC · (1 − fHEX1 ). (24) The resulting SOFC inlet temperature is a weighted av-erage of the by-pass flow and the flow that enters the HEX, and can be expressed as 
+
+Ta,FC ,in =
+
+fHEX1 · cp,a(T ) · THPC ,out +
+
+(1 − fHEX1 ) · cp,a(T ) · T fHEX1 
+
+> a,cold ,out
+
+cp,a(T ) , (25) in which fHEX1 denotes the percentage of ˙ ma,FC that by-passes the air HEX. 
+
+Design of Experiments and Surrogate Modeling For-mulation : To construct the HEX1 surrogate model, we first perform high-fidelity evaluations within the iden-tification space using an high-fidelity model [31, 32], following a predefined sampling plan. To perform these evaluations, we first fix the design point of the heat exchanger, specifically selecting the take-o ff phase. Subsequently, we perform high-fidelity evaluations and identify the models parameters through least-squares er-ror optimization, where we aim to minimize the mean squared error between the predicted values and the high-fidelity ones. The identification space is bounded by ˙ma,HEX ∈ h ˙mmin a,HEX , ˙mmax a,HEX 
+
+i , (26) ˙ma,FC ,out ∈ h ˙mmin a,FC ,out , ˙mmax a,FC ,out 
+
+i , (27) 
+
+pHPC ,out ∈ hpmin HPC ,out , pmax HPC ,out 
+
+i , (28) 
+
+THPC ,out ∈ hT min HPC ,out , T max HPC ,out 
+
+i , (29) 
+
+TFC ,out ∈ hT min FC ,out , T max FC ,out 
+
+i . (30) The selected sampling plan is a Latin Hypercube Sam-pling scheme. We model the e ff ectiveness of the air heat exchanger εa, defined as the ratio of the actual heat transfer to the maximum possible heat transfer, as a function of the inlet mass flow rates, temperatures, and the pressure on the cold side as 
+
+εa = x⊤ 
+
+> a
+
+Qa xa + q⊤ 
+
+> a
+
+xa + q0,a, (31) where Qa, qa, and q0,a are the variables including the fitting coe ffi cients identified through least-squares error optimization solving min   
+
+> Qa,qa,q0,a
+
+εa − εa,validated 2. (32) The term xa denotes the vector containing the air heat exchanger inputs, defined as 
+
+xa =  ˙ma,HEX , ˙ma,FC ,out , pHPC ,out ,
+
+THPC ,out , TFC ,out 
+
+⊤. (33) The NRMSE of the e ff ectiveness εa surrogate model, normalized by the maximum value of the training dataset, is 0.21638 %. The heat transfer rate ˙Qa trans-ferred by the air heat exchanger, which is set equal to the enthalpy stream change, can be expressed as ˙Qa = εa · ˙Qa,max = ∆ ˙Ha, (34) where ∆ ˙Ha is given by (23), and ˙ Qa,max denotes the max-imum possible heat trasfer rate and it is defined as ˙Qa,max = Ca,min · (TFC ,out − THPC ,out ), (35) 7in which the term Ca,min denotes the minimum heat ca-pacity rate between the hot and cold streams. To model the pressure loss along the path connecting the HPC out-let and the SOFC cathodic inlet, we model the outlet pressure on the cold side of the air heat exchanger as a function of the inlet conditions, therefore 
+
+pa,FC ,in = x⊤ 
+
+> p,a
+
+Qp,a xp,a + q⊤ 
+
+> p,a
+
+xp,a + q0,p,a, (36) where the terms Qp,a, qp,a, and q0,p,a are identified via a least-squares formulation, minimizing the error be-tween predicted values and corresponding high-fidelity off -design model outputs [33], and xp,a denotes the vec-tor 
+
+xp,a =  ˙ma,HEX , ˙ma,FC ,out , pHPC ,out ,
+
+pa,FC ,out , THPC ,out , TFC ,out 
+
+⊤. (37) The NRMSE of the outlet pressure on the cold side 
+
+pa,FC ,in surrogate model, normalized by the maximum value of the training dataset, is 0.060 %. 
+
+2.3.2. HEX2 Similarly, for the H 2 heat exchanger (Fig. 6), which preheats the inlet SOFC fuel flow ˙ mH2,FC , the energy balance can be expressed as ˙mH2,HEX · ccold p,H2 (T ) · T fHEX2  
+
+> H2,cold ,out
+
+− Ttank 
+
+ =
+
+ ˙mH2,FC ,out · chot p,H2 (T ) +
+
+˙mH2O · chot p,H2O(T ) · TFC ,out − Tan ,HEX ,out 
+
+,
+
+(38) where ccold p,H2 (T ) and chot p,H2 (T ) denote the mean specific heat capacity of hydrogen on the cold and hot sides, re-spectively, and ccold p,H2O(T ) and chot p,H2O(T ) denote the mean specific heat capacity of steam on the cold and hot sides, respectively, and where ˙ mH2,HEX denotes the portion of SOFC inlet hydrogen flow ˙ mH2,FC that enters the heat exchanger HEX2, and it is equal to ˙mH2,HEX = ˙mH2,FC · (1 − fHEX2 ). (39) 
+
+Ttank and TFC ,out denote the inlet H 2 temperature on the cold side and the inlet anode o ff -gases temperature on the hot side, respectively. T fHEX2  
+
+> H2,cold ,out
+
+and Tan ,HEX ,out de-note the outlet H 2 temperature on the cold side and the outlet anode o ff -gases temperature on the hot side, re-spectively. The resulting SOFC inlet temperature is a weighted average of the by-pass flow and the flow that enters the HEX, and can be expressed as 
+
+TH2,FC ,in =
+
+fHEX2 · cp,H2 (T ) · Ttank +
+
+(1 − fHEX2 ) · cp,H2 (T ) · T fHEX2 
+
+> H2,cold ,out
+
+cp,H2 (T ) (40) 
+
+> Figure 6: Simplified scheme of the fuel heat exchanger HEX2.
+
+in which the fraction fHEX2 denotes percentage of ˙ mH2,FC 
+
+that by-passes the H 2 HEX. 
+
+Design of Experiments and Surrogate Modeling For-mulation : To construct the HEX2 surrogate model, we first perform high-fidelity evaluations within the iden-tification space using an high-fidelity model, follow-ing a predefined sampling scheme. To perform these evaluations, we first fix the design point of the heat exchanger, specifically for the take-o ff phase. Subse-quently, we perform high-fidelity evaluations and iden-tify the models parameters via least-squares minimiza-tion. The identification space is bounded by ˙mH2,HEX ∈ h ˙mmin H2,HEX , ˙mmax H2,HEX 
+
+i , (41) ˙mH2,FC ,out ∈ h ˙mmin H2,FC ,out , ˙mmax H2,FC ,out 
+
+i , (42) ˙mH2O,FC ,out ∈ h ˙mmin H2O,FC ,out , ˙mmax H2O,FC ,out 
+
+i , (43) 
+
+ptank ∈ hpmin tank , pmax tank 
+
+i , (44) 
+
+TFC ,out ∈ hT min FC ,out , T max FC ,out 
+
+i . (45) The selected sampling plan is a Latin Hypercube Sam-pling scheme. We model the e ff ectiveness of the H 2
+
+HEX as a function of the inlet mass flows, temperatures, and the pressure on the cold side as 
+
+εH2 = x⊤ 
+
+> H2
+
+QH2 xH2 + q⊤ 
+
+> H2
+
+xH2 + q0,H2 , (46) where QH2 , qH2 , and q0,H2 are identified through least-squares error optimization solving min     
+
+> QH2,qH2,q0,H2
+
+εH2 − εH2,validated 2. (47) The term xH2 denotes the vector containing the H 2 heat exchanger inputs, defined as 
+
+xH2 =  ˙mH2,HEX , ˙mH2,FC ,out , ˙mH2O,FC ,out ,
+
+ptank , TFC ,out 
+
+⊤. (48) 8The NRMSE of the e ff ectiveness εH2 surrogate model, normalized by the maximum value of the training dataset, is 0.967 %. The heat transfer rate ˙QH2 trans-ferred by the H 2 heat exchanger, which is set equal to the enthalpy stream change, can be expressed as ˙QH2 = εH2 · ˙QH2,max = ∆ ˙HH2 , (49) where ∆ ˙HH2 is given by (38), and ˙QH2,max denotes the maximum possible heat trasfer rate and it is defined as ˙QH2,max = CH2,min · (TFC ,out − Ttank ). (50) The term CH2,min denotes the minimum heat capacity rate between the hot and cold streams. Similarly to (36), we model the outlet pressure on the cold side of the H 2 heat exchanger as a function of the inlet condi-tions, therefore 
+
+pH2,FC ,in = x⊤ 
+
+> p,H2
+
+Qp,H2 xp,H2 + q⊤ 
+
+> p,H2
+
+xp,H2 + q0,p,H2 , (51) where the terms Qp,H2 , qp,H2 , and q0,p,H2 are identified via a least-squares formulation, minimizing the error be-tween predicted values and corresponding high-fidelity off -design model outputs, and where denotes the vector 
+
+xH2 =  ˙mH2,HEX , ˙mH2,FC ,out , ˙mH2O,FC ,out ,
+
+ptank , pH2,FC ,out , Ttank , TFC ,out 
+
+⊤. (52) The NRMSE of the outlet pressure on the cold side 
+
+pH2,FC ,in surrogate model, normalized by the maximum value of the training dataset, is 0.086 %. We assume, for simplicity, to have the same pressure and tempera-ture on the anode and cathode side, therefore 
+
+pH2,FC ,in = pa,FC ,in = pFC ,in . (53) and 
+
+TH2,FC ,in = Ta,FC ,in = TFC ,in . (54) Furthermore, as the cell geometry is not known, the pressure drop across the stack cannot be estimated re-liably and, therefore, it is neglected. Consequently, 
+
+pH2,FC ,out = pa,FC ,out = pFC ,in . (55) 
+
+2.4. Solid Oxide Fuel Cell 
+
+In this section, we present the models of the SOFC component and their identification. Based on the block diagram in Fig. 8, we first evaluate high-fidelity sam-ples, from which we construct the surrogate reduced-order models. 
+
+Design of Experiments and Surrogate Modeling For-mulation : To construct the SOFC surrogate models, we 0.01 0.015 0.02 0.025 
+
+_mH2;FC [kg/s] 
+
+1.8 22.2 2.4 _ma;FC [kg/s] 
+
+0200 400 600 
+
+> Pel  [kW]
+> 280 290 300 310 320 330 340
+> Model Data
+
+Figure 7: Comparison between the SOFC electrical power reduced-order model and the high-fidelity samples as function of the inlet hy-drogen flow ˙ mH2,FC and the inlet air flow ˙ ma,FC for constant inlet tem-perature TFC ,in , inlet pressure pFC ,in , and voltage UFC .
+
+Figure 8: Simplified scheme representing the SOFC interfaces. The SOFC receives from the GT an air flow ˙ ma,FC at temperature TFC ,in 
+
+and pressure pFC ,in . An hydrogen flow ˙ mH2,FC is injected from the storage tank and reaches the SOFC inlet at temperature TFC ,in and pressure pFC ,in . Additionally, a voltage UFC is applied to the SOFC. As a result, the SOFC produces an electrical power Pel . The exhaust gases, ˙ mH2,FC ,out , ˙ mH2O,FC ,out , and ˙ ma,FC ,out , leave the SOFC at tem-perature TFC ,out .
+
+perform high-fidelity evaluations within the identifica-tion space using a 1D SOFC performance model, devel-oped based on the work of [34] and [35], which has been validated under atmospheric operating conditions. The parameters of the reduced-order models are then identi-fied through least-squares error optimization, where we aim to minimize the mean squared error between the predicted values and the high-fidelity ones. The identifi-cation space for the high-fidelity evaluations is bounded by 
+
+pFC ,in ∈ hpmin FC ,in , pmax FC ,in 
+
+i , (56) 
+
+TFC ,in ∈ hT min FC ,in , T max FC ,in 
+
+i , (57) 
+
+UFC ∈ hUmin FC , Umax FC 
+
+i , (58) ˙mH2,FC ∈ h ˙mmin H2,FC , ˙mmax H2,FC 
+
+i , (59) ˙ma,FC ∈ h ˙mmin a,FC , ˙mmax a,FC 
+
+i . (60) 9Table 2: NRMSE of the SOFC surrogate models 
+
+Variable NRMSE 
+
+Pel 1.94 % 
+
+TFC ,out 0.67 % ˙mH2,FC ,out 0.042 % ˙ma,FC ,out 0.036 % The selected sampling plan is a Latin Hypercube Sam-pling scheme. The outputs of interest are 
+
+yFC =  Pel , TFC ,out , ˙mH2,FC ,out , ˙ma,FC ,out 
+
+⊤, (61) where Pel denotes the total electrical power produced by the SOFC, and it is equal to 
+
+Pel = Pdensity ,cell · Aact · Ncells , (62) where Pdensity ,cell denotes the single cell area-specific power density, Aact the active area, and Ncells the total number of cells. TFC ,out denotes the temperature of the SOFC o ff -gases, ˙ mH2,FC ,out denotes the unutilized hydro-gen flow coming out from the SOFC, and ˙ ma,FC ,out de-notes the oxygen-depleted air. Similarly to (16), we ex-press for all i = 1, . . . , Ny,FC the outputs of interest as 
+
+yFC ,i = x⊤ 
+
+> FC
+
+QFC ,i xFC + q⊤ 
+
+> FC ,i
+
+xFC + q0,FC ,i, (63) where Ny,FC is the total number of outputs, QFC ,i, qFC ,i,and q0,FC ,i are the variables including the fitting coe ffi -cients to be identified, and xFC is the vector containing models inputs, defined as 
+
+xFC =  pFC ,in , TFC ,in , UFC , ˙mH2,FC , ˙ma,FC 
+
+⊤. (64) To identify the coe ffi cient terms QFC ,i, qFC ,i, and q0,FC ,i,we frame for all i = 1, . . . , Ny,FC the least-squares error optimization problem min   
+
+> QFC ,i,qFC ,i,q0,FC ,i
+
+yFC ,i − yFC ,validated ,i 2, (65) in which where yFC ,validated ,i denote the outputs coming from high-fidelity simulations, as a semi-definite pro-gram using the parser YALMIP and solve it using the solver MOSEK. The NRMSE values with respect to the maximum value of the SOFC surrogate models are re-ported in Table 2. Fig. 7 shows the comparison between the electrical power reduced-order model and the high-fidelity samples for constant inlet temperature TFC ,in ,inlet pressure pFC ,in , and voltage UFC , confirming the good agreement between the model predictions and the validated data. Based on the validated reduced-order model, we can calculate key operating quantities of the SOFC, such as the outlet steam ˙ mH2O,FC ,out and both the air and fuel utilization factors. In particular, we obtain the outlet steam ˙ mH2O,FC ,out as ˙mH2O,FC ,out =  ˙mH2,FC − ˙mH2,FC ,out 
+
+ · MH2O
+
+MH2
+
+, (66) where MH2O and MH2 denote the molar weight of the steam and hydrogen, respectively, ˙ mH2O,FC denotes the inlet steam flow entering the SOFC, while the second term on the right-hand side accounts for the steam pro-duced inside the cell by the electrochemical reaction. In addition, the fuel utilization factor fFU is given by 
+
+fFU = ˙mH2,FC − ˙mH2,FC ,out 
+
+˙mH2,FC 
+
+, (67) and represents the ratio of the total hydrogen consumed and the hydrogen supplied, while the air utilization fac-tor is given by 
+
+fAU = ˙ma,FC − ˙ma,FC ,out 
+
+˙mO2,FC 
+
+, (68) and represents the ratio of the total oxygen consumed and the oxygen supplied. To prevent damage and main-tain safe operation, we limit the fuel utilization factor and the temperature di ff erence across the SOFC, de-noted by ∆T, to a maximum value, therefore 
+
+fFU ≤ fFU ,max , (69) 
+
+TFC ,out − TFC ,in ≤ ∆Tmax . (70) 
+
+2.5. Battery 
+
+In this section, we derive a model for the battery pack. We model the battery output power Pb as 
+
+Pb = Pi − R · P2i
+
+U2oc 
+
+, (71) where Pi denotes the internal battery power, R denotes the battery pack resistance, and Uoc denotes the open-circuit voltage. The battery state of energy Eb changes as function of Pi as ddt Eb = −Pi. (72) We bound the battery state of energy with the minimum and the maximum state-of-charge limits ξmin b and ξmax b
+
+as 
+
+Eb ∈ hξmin b , ξ max b
+
+i · Eb,max , (73) 10 where Eb,max is the total battery energy capacity, and 
+
+ξmin b , and ξmax b denote the minimum and maximum state-of-charge levels, respectively. We assume that the bat-tery is fully charged at the beginning of the flight cycle, and therefore 
+
+Eb(0) = ξmax b · Eb,max . (74) To model the additional weight of the batteries, one per propulsion system, with a certain battery specific energy density eb, we assume to have a steady, con-stant speed cruise flight, modeling the aircraft as a point mass. Therefore, the lift L equals the weight W, and the required propulsive power can be expressed as product between the drag force and the speed as 
+
+Preq ,prop = 12 · ρ · S · CD · v2
+
+!
+
+· v, (75) where ρ denotes the air density, S the wing surface area, 
+
+CD the drag coe ffi cient, and v the speed. The drag co-effi cient CD can be expressed using the parabolic drag polar model 
+
+CD = CD0 + k · C2L, (76) in which CD0 denotes the parasitic drag coe ffi cient, and 
+
+k the induced drag factor, and by substituting the lift coe ffi cient CL
+
+CL = 2 · W
+
+ρ · S · v2 (77) in (76), the required propulsive power becomes equal to 
+
+Preq ,prop = 12 · ρ · S · CD0 · v3 + 2 · k
+
+ρ · S · v · W2. (78) Since only the induced-drag term depends on the air-craft weight, the increase in required propulsive power due to the battery mass can be approximated by expand-ing the weight-dependent term in (78) around the nom-inal aircraft weight W0. Under these conditions, the in-crease of the required propulsive power due to the addi-tional batteries weight can be expressed as 
+
+Preq ,prop ,b = Preq ,prop · 1 + λ · ∆W2b + 2 · W0 · ∆Wb
+
+ , (79) 
+
+where Preq ,prop ,b denotes the required propulsive power corresponding to the case with the battery, Preq ,prop is the reference requested power without the battery, W0 is the initial weight of the aircraft, and ∆Wb denotes the addi-tional weight from the two batteries. The coe ffi cient λ
+
+accounts for aerodynamic characteristics, flight altitude, wing area, cruise speed, and the initial aircraft weight. For the considered aircraft, λ is assumed equal to 1.08 
+
+× 10 −10 N−2. Although derived under steady cruise con-ditions, we assume that the same power scaling law ap-plies to the remaining mission phases. 
+
+2.6. Minimum-fuel Optimization Problem 
+
+Summarizing the objective function, the component models, and the constraints derived in the previous sec-tions, we can formulate the minimum-fuel optimization problems for hydrogen-based hybrid SOFC-GT aero en-gines with and without the battery pack, for the cases with and without heat exchangers by-pass valves. The optimization is framed as a multi-point steady-state problem, in which each operating point in Fig. 3 is treated as an independent steady-state point. The total fuel consumption over the mission is approximated by a weighted sum of the fuel consumption at each operating point, where the weights correspond to the duration of each flight phase. We state the minimum-fuel optimiza-tion problem for the case without the battery as: 
+
+Problem 1 (GT-SOFC Minimum-fuel Optimization Problem) .
+
+min 
+
+> u
+
+Z tfin 
+
+> 0
+
+˙mH2,tot (t)d t,
+
+s.t. Preq ,prop (t) = PGT (t) + PEM (t),
+
+PEM (t) = (Pel (t) − Paux (t)) · ηel ,
+
+(2) − (17) , (19) − (31) ,
+
+(33) − (46) , (48) − (64) ,
+
+(66) − (70) ,
+
+where u denotes the inputs vector 
+
+u =  ˙mH2,GT (t), ˙mH2,FC (t), UFC (t), α VSV ,LPC (t),αVSV ,HPC (t), fbleed (t), fHEX1 (t), fHEX2 (t) , (80) 
+
+PEM denotes the mechanical power produced by the electric motor, Paux the auxiliary electrical power demand, and ηel the overall electrical effi ciency, accounting for the e ffi ciencies of cables, converter, inverter, and the electric machine. In contrast, for the configuration including the battery, a discrete-time dynamic coupling is introduced through the battery state of energy. Therefore, we frame the minimum-fuel optimization problem for the hydrogen-based GT-SOFC hybrid propulsion system integrating a battery as a multi-point optimization problem with discrete-time dynamics as: 11 Problem 2 (GT-SOFC-Battery Minimum-fuel Opti-mization Problem) .
+
+min 
+
+> ub
+
+Z tfin 
+
+> 0
+
+˙mH2,tot (t)d t,
+
+s.t. Preq ,prop ,b(t) = PGT (t) + PEM (t),
+
+PEM (t) = (Pel (t) − Paux (t) + Pb(t)) · ηel ,
+
+(2) − (17) , (19) − (31) ,
+
+(33) − (46) , (48) − (64) ,
+
+(66) − (79) ,
+
+where ub denotes the inputs vector 
+
+ub =  ˙mH2,GT (t), ˙mH2,FC (t), UFC (t), α VSV ,LPC (t), Pb(t)
+
+αVSV ,HPC (t), fbleed (t), fHEX1 (t), fHEX2 (t) .
+
+(81) 
+
+2.7. Discussion 
+
+A few comments are in order. First, we neglect the additional weight of pipes and valves associated with the by-pass valves configurations. Second, we assume that the pressure drop between the high-pressure com-pressor (HPC) outlet and the combustion chamber inlet is set to be the same as that along the path connecting the HPC outlet, passing through the SOFC, and returning to the combustion chamber. Third, we assume that the fuel system can adjust the pressure of the fuel entering the HEX2 ptank to match the pressure on the cathode side, as stated in (53). Fourth, we assume that all cells in the stack operate under the same conditions and deliver uni-form performance in line with [36]. Finally, we assume to have adiabatic conditions along the paths connecting the SOFC and the gas turbine; therefore, any heat ex-change with the ambient environment is neglected. 
+
+3. Optimization Results 
+
+In this section, we validate our approach against high-fidelity simulations results and present the trajectories obtained by solving both Problem 1 and Problem 2. Fur-thermore, we analyze and compare the optimal operat-ing strategies and total fuel consumption of the refer-ence system with those of the same configurations inte-grating heat exchangers by-pass valves. Table 3 and Ta-ble 4 show the GT parameters and the thermodynamic and SOFC parameters, respectively, used in our anal-ysis. Table 5 shows mission dependent parameters, in which ˙ maux denotes the auxiliary engine bleed, while 
+
+∆TISA the temperature deviation compared to the Inter-national Standard Atmosphere (ISA). Table 6 shows the battery parameters. We optimize the operation of the four propulsion configurations over a given power pro-file. We parse the two problems with CasADi [37], for the cases with and without by-pass valves, and solve them with the nonlinear solver IPOPT [38]. For each of the optimization problems, the parsing takes less than 2 seconds, while the solving takes less than 3 seconds, on a system with a 12th Gen Intel Core i7 processor and 16 GB RAM. 
+
+> Table 3: GT parameters
+
+Parameter Value Unit 
+
+TET ,max 1500 [K] 
+
+N1,max 1 [-] 
+
+zLPC ,max 0.98 [-] 
+
+zLPC ,max 0.98 [-] 
+
+> Table 4: SOFC, electrical, and thermodynamic parameters
+
+Parameter Value Unit 
+
+Ncells 1048 [-] 
+
+Aact 103.43 [cm 2]
+
+fFU ,max 0.6 [-] 
+
+∆Tmax 200 [K] 
+
+ηel 0.92 [-] 
+
+Ttank 300 [K]                                         
+
+> Table 5: Mission-dependent parameters
+> Condition M[-] ˙maux [kg /s] ∆TISA [K] Preq ,prop [kW] Paux [kW] TO 0 ft 0.168 001390 25 TO 1500 ft 0.218 0.13 01390 25 ToC 0.33 0.13 10 580 22.5 CRZ 0.4 0.13 0560 22.5 FID 23000 ft 0.468 0.13 0295 22.5 FID 1500 ft 0.310 0.13 0295 22.5
+
+3.1. Validation 
+
+In order to validate our models, we feed the optimiza-tion results obtained from Problem 1 and Problem 2 in the high-fidelity models of GT, HEX1 and HEX2, and SOFC. Fig. 9 and Fig. 10 show that the GT re-sults exhibit a relative error below 8%, except for the high-pressure compressor surge margin indicator zHPC 
+
+during the FID 1500 ft condition for the baseline con-figuration integrating the battery, for which the relative error reaches approximately 10.5%. Similarly, Fig. 11 shows the e ff ectiveness and outlet pressure results for the HEX1 and HEX2. In this case, the relative error remains below 7%. Fig. 12 shows that for all the four propulsion configurations, we obtain a relative error be-low 8% comparing the SOFC results against the high-fidelity outcomes. Despite covering a wide operating 12 Table 6: Battery parameters 
+
+Parameter Value Unit 
+
+Uoc 324 [V] 
+
+R 33.75 [m Ω]
+
+ξmin b 0.2 [-] 
+
+ξmax b 0.9 [-] 
+
+Eb,max 25.92 [kWh] 
+
+eb 0.4 [kWh /kg] 0 2 4
+
+_ma;FC ;validated [kg/s] 
+
+024
+
+> _ma;FC ;predicted  [kg/s]
+
+0 500 1000 1500 
+
+PGT ;validated [kW] 
+
+0500 1000 1500 
+
+> PGT ;predicted  [kW]
+
+0 10 20 
+
+pHPC ;validated [atm] 
+
+010 20 
+
+> pHPC ;predicted  [atm]
+
+0 500 1000 
+
+THPC ;validated [K] 
+
+0500 1000           
+
+> THPC ;predicted  [K]
+> fHEX f1;2g2[0 ;1]
+> fHEX f1;2g= 0 Battery fHEX f1;2g2[0 ;1] Battery fHEX f1;2g= 0
+
+Figure 9: Comparison between the GT optimization results, against high-fidelity outcomes for the GT-SOFC propulsion system with and without the battery, for the cases with and without heat exchangers by-pass valves. The black line indicates the perfect alignment between the optimization results and the high-fidelity outcomes, while the grey shaded area indicates ± 10.5% error region. 0 0.5 1
+
+zLPC ;validated [-] 
+
+00.5 1
+
+> zLPC ;predicted  [-]
+
+0 0.5 1
+
+zHPC ;validated [-] 
+
+00.5 1
+
+> zHPC ;predicted  [-]
+
+0 1000 2000 
+
+TET ;validated [K] 
+
+01000 2000 
+
+> TET ;predicted  [K]
+
+0 0.5 1
+
+N1;validated [-] 
+
+00.5 1          
+
+> N1;predicted  [-]
+> fHEX f1;2g2[0 ;1]
+> fHEX f1;2g= 0 Battery fHEX f1;2g2[0 ;1] Battery fHEX f1;2g= 0
+
+Figure 10: Comparison between the GT optimization results, against high-fidelity outcomes for the GT-SOFC propulsion system with and without the battery, for the cases with and without heat exchangers by-pass valves. The black line indicates the perfect alignment between the optimization results and the high-fidelity outcomes, while the grey shaded area indicates ± 10.5% error region. 0 0.5 1
+
+"a;validated [-] 
+
+00.5 1
+
+> "a;predicted  [-]
+
+0 0.5 1
+
+"H2;validated [-] 
+
+00.5 1          
+
+> "H2;predicted  [-]
+> fHEX f1;2g2[0 ;1]
+> fHEX f1;2g= 0 Battery fHEX f1;2g2[0 ;1] Battery fHEX f1;2g= 0
+
+0 5 10 
+
+pa;FC ;in ;validated [atm] 
+
+0510 
+
+> pa;FC ;in ;predicted  [atm]
+
+0 5 10 
+
+pH2;FC ;in ;validated [atm] 
+
+0510 
+
+> pH2;FC ;in ;predicted  [atm]
+
+Figure 11: Comparison between the optimized values and the high-fidelity results for the air and fuel heat exchanger e ff ectivenesses, εa
+
+and εH2 , and the SOFC cathode and anode inlet pressures, pa,FC ,in 
+
+and pH2,FC ,in , for the GT-SOFC propulsion system with and without the battery, for the cases with and without heat exchangers by-pass valves. The black line indicates the perfect alignment between the optimization results and the high-fidelity outcomes, while the grey shaded area indicates ± 7% error region. 
+
+range and depending on several independent variables, the proposed models achieve good agreement with the high-fidelity simulation results, with a relative error of all variables below 10.5%. 
+
+3.2. Numerical results 
+
+After solving Problem 1 for the cases with and with-out the heat exchangers by-pass valves, we obtain a to-tal fuel consumption of 115 .78 kg and 93 .66 kg, respec-tively, leading to an approximate 19.11% fuel reduction over the same flight mission in favor of the configura-tion integrating two by-pass valves, one per heat ex-changer, as shown in the middle subplot of Fig. 13a. This improvement is explained by the enhanced tem-perature control enabled by the heat exchangers by-pass valves. We observe that the SOFC inlet temperature, which is limited to a maximum value for safety rea-sons, represents a limit for the SOFC o ff -gases out-let temperature. When by-pass valves are available, part of the flow can by-pass the corresponding HEX, as shown in the upper subplot of Fig. 14, allowing the SOFC to operate at higher temperatures while still re-specting the inlet temperature limit. Operating at higher temperatures reduces the electrochemical losses and in-creases the SOFC power for the same operating voltage. In addition, as shown in Fig. 15, the overall o ff -gases mass flow composed of steam and residual hydrogen in-creases, together with the outlet H 2 HEX temperature, 13 0 200 400                      
+
+> Pel ;validated [kW]
+> 0200 400
+> Pel ;predicted  [kW]
+> 0500 1000 1500
+> TFC ;out ;validated [K]
+> 0500 1000 1500
+> TFC ;out ;predicted  [K]
+> 00.02 0.04
+> _mH2;FC ;out ;validated [kg/s]
+> 00.02 0.04
+> _mH2;FC ;out ;predicted  [kg/s]
+> 012
+> _ma;FC ;out ;validated [kg/s]
+> 012
+> _ma;FC ;out ;predicted  [kg/s]
+> fHEX f1;2g2[0 ;1]
+> fHEX f1;2g= 0 Battery fHEX f1;2g2[0 ;1] Battery fHEX f1;2g= 0
+
+Figure 12: Comparison of SOFC optimization results, against high-fidelity outcomes for the GT-SOFC propulsion system with and with-out the battery, for the cases with and without heat exchangers by-pass valves. The black line indicates the perfect alignment between the optimization results and the high-fidelity outcomes, while the grey shaded area ± 8% error region. 
+
+leading to an higher enthalpy flow injected within the combustion chamber of the GT and to an enhanced sys-tem e ffi ciency. Similarly, after solving Problem 2 for the cases with and without by-pass valves, we obtain an approximate 19.56% total fuel reduction over the same flight mission in favor of the configuration including heat exchangers by-pass valves, as shown in the bottom subplot of Fig. 13b and as reported in Table 7. For the same reason explained above, the introduction of two by-pass valves allows to have a better temperature con-trol, exploiting the SOFC more and having an enhanced heat recuperation. Moreover, we observe that although the required propulsive power Preq ,prop increases due to the additional weight of the battery, the total fuel con-sumption increases only by about 1.03% compared to the system not integrating the battery for the case with-out by-pass valves, while it increases by about 0.48% for the case with the valves. This outcome is justified by the fact that, intuitively, the battery discharges, con-tributing to meet the required power demand, as shown on Fig. 16, therefore reducing the power that must be delivered by the GT and SOFC, for both the cases with and without by-pass valves. Furthermore, we observe that the by-pass valves not only modify the thermo-dynamic couplings, but also increase battery discharge during the initial flight phases, which are the the most demanding in terms of power. At the same time, they re-duce the excess power generated by the SOFC and the GT during descent, thereby limiting battery recharge. However, the battery energy density has a relevant im-pact on the total fuel consumption, due to the additional weight given by the battery. Fig. 17 shows how the op-timal total fuel consumption changes as function of dif-ferent battery capacities Eb,max and energy densities eb,accounting for the additional corresponding weight, for both propulsion systems (with and without the by-pass valves). We observe that integrating a small battery with current state-of-the-art technology ( eb ranging between 0.15 and 0 .25 kWh /kg [39]) yields a slight increase in total fuel consumption compared to the system without a battery, for both the cases with and without by-pass valves. Conversely, the additional mass of larger bat-teries remains a limiting factor for their e ff ective ap-plication, leading to a significant fuel consumption in-crease. The thermodynamic integration, which is even 
+
+Table 7: Comparison of the total fuel consumption of the baseline GT-SOFC propulsion system with that of the the same system integrating: (i) a battery only, (ii) heat exchangers by-pass valves only, and (iii) both a battery and heat exchangers by-pass valves. 
+
+Fuel consumption [kg] 
+
+fHEX {1,2} = 0 fHEX {1,2} ∈ [0 , 1] ∆ fHEX {1,2}
+
+GT-SOFC 115.78 93.66 - 19.11% GT-SOFC-Battery 116.99 94.11 - 19.56% 
+
+∆battery + 1.03% + 0.48% 
+
+Table 8: Comparison of the optimal total fuel consumption of the baseline GT-SOFC propulsion system with by-pass valves and the same system operated at constant degree of hybridization. 
+
+Fuel consumption [kg] 
+
+Minimum-fuel Constant DoH ∆minimum −fuel 
+
+GT-SOFC 93.66 112.76 - 16.94% 
+
+more pronounced using the two heat exchangers by-pass valves, leads to a significant reduction in fuel consump-tion compared to the reference GT-powered propulsion system operated over the same mission, whose optimal fuel consumption is approximately 129 .55 kg. Further-more, in Table 8 we compare the minimum-fuel opera-tion of the baseline architecture with by-pass valves to a constant degree of hybridization strategy, a simple and practically implementable benchmark strategy, where the ratio between the power produced by the SOFC and the total requested propulsive power is maintained con-stant throughout the mission. The constant degree of hybridization is set to the maximum feasible value that satisfies all constraints throughout the mission. The re-sults show that the minimum-fuel strategy achieves a 16.94% reduction in total fuel consumption compared to the constant DoH case, highlighting the impact of the operating strategy on fuel consumption. However, the constant DoH strategy leads to a more stable thermal 14 0 20 40 60 80 100 120 0500 1000 1500 
+
+> P [kW]
+
+Preq ;prop 
+
+PGT 
+
+Pel 
+
+0 20 40 60 80 100 120 
+
+t [min] 
+
+00.01 0.02 0.03 
+
+> _mH2 [kg/s]
+
+_mH2;GT 
+
+_mH2;FC 
+
+_mH2;tot (a) Comparison of GT and SOFC power and fuel flows for the GT-SOFC propul-sion system with and without the heat exchangers by-pass valves. 0 20 40 60 80 100 120 0500 1000 1500 
+
+> P [kW]
+
+Preq ;prop ;b
+
+PGT 
+
+Pel 
+
+Pb
+
+0 20 40 60 80 100 120 
+
+t [min] 
+
+00.01 0.02 0.03 
+
+> _mH2 [kg/s]
+
+_mH2;GT 
+
+_mH2;FC 
+
+_mH2;tot 
+
+(b) Comparison of GT, SOFC, and battery power and fuel flows for the GT-SOFC propulsion system integrating a battery with and without the heat exchangers by-pass valves. 
+
+Figure 13: Comparison of power and fuel flows for: (a) the GT-SOFC propulsion system with and without the heat exchangers by-pass valves and (b) GT-SOFC propulsion system integrating a battery with and without the heat exchangers by-pass valves. Continuous lines refer to the system without by-pass valves, whereas dashed lines refer to the system with the the by-pass valves. 
+
+behaviour of the stack, with reduced variations of ∆T
+
+across it, thereby limiting thermal stresses. 0 20 40 60 80 100 120 00.5 1
+
+> fHEX  [-]
+
+fHEX1 fHEX2 
+
+0 20 40 60 80 100 120 1000 1500 
+
+> TFC ;out  [K]
+
+0 20 40 60 80 100 120 
+
+t [min] 
+
+200 400 600 
+
+> Pel  [kW]
+
+Figure 14: Heat exchangers by-pass valves opening and comparison of SOFC o ff -gases outlet temperature TFC ,out and electrical power Pel 
+
+for the GT-SOFC propulsion system with and without heat exchang-ers by-pass valves. Dashed lines correspond to the configuration with bypass valves, while solid lines indicate the configuration without by-pass valves. 0 20 40 60 80 100 120 
+
+t [min] 
+
+400 600 800 
+
+> Tan ;HEX ;out  [K]
+
+0 20 40 60 80 100 120 00.02 0.04 0.06 0.08 
+
+> _mFC ;out  [kg/s]
+
+_mH2O _mH2;FC ;out 
+
+Figure 15: Comparison of SOFC o ff -gases hydrogen and steam con-tent, and H 2 HEX hot side outlet temperature Tan ,HEX ,out for the GT-SOFC propulsion system with and without heat exchangers by-pass valves. Dashed lines correspond to the configuration with bypass valves, while solid lines indicate the configuration without bypass valves. 
+
+15 0 20 40 60 80 100 120 
+
+t [min]             
+
+> 00.2 0.4 0.6 0.8 1
+> 9b [-] Figure 16: Comparison of battery state-of-charge ξbfor the GT-SOFC-Battery propulsion system with and without HEX by-pass valves. The black dashed line corresponds to the configuration with bypass valves, while the solid line indicates the configuration without bypass valves. The red dashed lines denote the minimum and maxi-mum state-of-charge levels. 050 100 150 200 250
+> Eb;max [kWh]
+> 90 100 110 120 130 140 150 160
+> Total fuel consumed [kg]
+> eb= 0.2 kWh/kg
+> eb= 0.3 kWh/kg
+> eb= 0.4 kWh/kg
+> Figure 17: Comparison of optimal total fuel consumption for di ff er-ent battery sizes and energy densities. Dashed lines correspond to the configuration with bypass valves, while solid lines indicate the con-figuration without bypass valves.
+
+4. Conclusions 
+
+In this paper, we proposed reduced-order surro-gate models for components to compute and com-pare minimum-fuel optimal operating strategies for hydrogen-based hybrid-electric aerospace propulsion systems under steady-state conditions. In particular, we analyzed the reference configuration and compared it with three modified configurations integrating: (i) a battery, (ii) two heat exchangers by-pass valves, and (iii) both the battery and by-pass valves. Our results show that employing the two heat exchangers by-pass valves leads to a significant fuel reduction—19.11% and 19.56% for the configurations with and without the bat-tery, respectively—as it allows to exploit the solid-oxide fuel cell more, which is more e ffi cient than the gas tur-bine. Moreover, the comparison with a constant degree of hybridization strategy highlights a trade-o ff between fuel e ffi ciency (reduction of 16.94% in fuel consump-tion) and a more conservative SOFC operating regime, associated with more stable thermal conditions across the stack. Additionally, although the use of a small ad-vanced battery leads to a slight fuel consumption in-crease under steady-state conditions compared to the corresponding reference configuration, it is expected to have a significant advantage during transient operations, which are not captured in the present work. Overall, the proposed models and framework can aid design ex-perts in selecting promising configurations and design points, such that the propulsion system operates e ffi -ciently throughout the entire flight mission, while strik-ing a balance between accuracy and computational cost. This takes us to the future research in this field: First, the proposed operating strategies could be integrated into real-time control schemes. Second, the GT and SOFC should also match during transient operations, as the dynamic behavior of the two components is very di ff erent. Finally, the proposed framework can be ex-tended to study and minimize NO x emissions. 
+
+Acknowledgment 
+
+We thank Dr. I. New and Dr. O. Borsboom for proof-reading this paper. 
+
+Declaration of generative AI 
+
+The authors used ChatGPT to improve the clarity and structure of selected parts of the manuscript, including the abstract, conclusions, and optimization results sec-tions. 
+
+Author Contributions Uto Perra: Conceptualization, Data Curation, Formal Analysis, Investigation, Methodology, Software, Writ-ing – original draft, Writing – review and editing. 
+
+Faezeh Pak: Conceptualization, Data Curation, Inves-tigation, Software, Writing – original draft, Writing – 16 review and editing. Evangelia Pontika: Data Cura-tion, Formal Analysis, Investigation, Validation, Writ-ing – review and editing. Sahil Bhapkar: Data Cu-ration, Investigation, Validation, Writing – review and editing. Daniel Ewald: Data Curation, Software, Writ-ing – review and editing. Dario Buzzola: Data Cu-ration, Software, Writing – review and editing. Theo Hofman: Writing – review and editing, Supervision. 
+
+Frank Willems: Writing – review and editing, Super-vision. Mauro Salazar: Writing – review and editing, Funding acquisition, Supervision. 
+
+Funding 
+
+Funded by the European Union under grant number 101138488 and by the UK Research and Innovation (UKRI) funding guarantee under the project reference 10106893. Views and opinions expressed are however those of the author(s) only and do not necessarily re-flect those of the European Union. Neither the European Union nor the granting authority can be held responsible for them. 
+
+References 
+
+[1] EASA, European aviation enviromental report 2025 (2025). [2] D. San Benito Pastor, E. Pontika, S. de Graaf, D. Ewald, A. Weber, S. Kazula, M. L. Ferrari, P. Laskaridis, Hydrogen-powered integrated power and propulsion system (IPPS) ar-chitecture for sustainable aviation: Leveraging synergies be-tween gas turbine and solid oxide fuel cells, in: Proceed-ings of Towards Sustainable Aviation Summit (TSAS), 2025. doi: 10.60711 /TSAS25.20250220.7778288272160048. [3] T. M. Mashamba, J. Wen, , C. Spataru, , Y. Weng, X. Lv, Charac-teristic investigation of a novel aircraft SOFC /GT hybrid system under varying operational parameters, Applied Sciences (2024). doi: 10.3390 /app14083504. [4] M. Andersson, J. Yuan, B. Sundén, Sofc modeling consider-ing electrochemical reactions at the active three phase bound-aries, International Journal of Heat and Mass Transfer (2012). doi: 10.1016 /j.ijheatmasstransfer.2011.10.032. [5] H. Najafi Maharluie, M. Rahmani, Mathematical modeling of solid oxide fuel cell performance with indirect internal reform-ing and thermal interaction analysis, Energy Conversion and Management (2024). doi: 10.1016 /j.enconman.2024.118842. [6] E. Tsoutsanis, N. Meskin, M. Benammar, K. Khorasani, A com-ponent map tuning method for performance prediction and di-agnostics of gas turbine compressors, Applied Energy (2014). doi: 10.1016 /j.apenergy.2014.08.115. [7] G. Alberto Misté, E. Benini, Turbojet engine performance tun-ing with a new map adaptation concept, Journal of Engineering for Gas Turbines and Power (2014). doi: 10.1115 /1.4026548. [8] A. Brahma, Y. Guezennec, G. Rizzoni, Optimal energy manage-ment in series hybrid electric vehicles, in: Proc. of the American Control Conference, 2000. [9] O. Sundström, L. Guzzella, P. Soltic, Optimal hybridization in two parallel hybrid electric vehicles using dynamic program-ming, in: IFAC World Congress, Vol. 41, IFAC, 2008, pp. 4642– 4647. [10] N. Robuschi, M. Salazar, N. Viscera, F. Braghin, C. H. Onder, Minimum-fuel energy management of a hybrid electric vehicle via iterative linear programming, IEEE Transactions on Vehicu-lar Technology (2020). doi: 10.1109 /TVT.2020.3030088. [11] E. Türker, E. Bulut, A. Kahraman, M. Çakıcı, F. Öztürk, Estima-tion of energy management strategy using neural-network-based surrogate model for range extended vehicle, Applied Sciences (2022). doi: 10.3390 /app122412935. [12] M. Do ff -Sotta, M. Cannon, M. Bacic, Optimal energy manage-ment for hybrid electric aircraft, IFAC-Papers Online (2020). doi: 10.1016 /j.ifacol.2020.12.1672. [13] Y. Xie, S. He, A. Savvaris, A. Tsourdos, D. Zhang, A. Xie, Con-vexification in energy optimization of a hybrid electric propul-sion system for aerial vehicles, Aerospace Science and Technol-ogy (2022). doi: 10.1016 /j.ast.2022.107509. [14] J. Zhang, I. Roumeliotis, A. Zolotas, Nonlinear model predictive control-based optimal energy management for hybrid electric aircraft considering aerodynamics-propulsion coupling e ff ects, IEEE Transactions on Transportation Electrification (2022). doi: 10.1109 /TTE.2021.3137260. [15] A. Misley, M. D’Arpino, P. Ramesh, M. Canova, A real-time energy management strategy for hybrid electric aircraft propul-sion systems, AIAA /IEEE Electric Aircraft Technologies Sym-posium (2021). doi: 10.23919 /EATS52162.2021.9704831. [16] U. Ferrulli, M. Tipaldi, P. Massenio, D. Naso, En-ergy management system of a fuel-cell hybrid-electric air-craft based on dynamic programming, Int. Conf. on In-formation Technology and Electrical Engineering (2024). doi: 10.1109 /ICITEE62483.2024.10808922. [17] G. Grazioso, A. De Marco, P. Della Vecchia, M. Di Stasio, V. Trifari, F. Nicolosi, A simulation-based mission optimization approach for regional transport hybrid-electric aircraft, Applied Energy (2025). doi: 10.1016 /j.apenergy.2025.126869. [18] S. Safari, T. Hajilounezhad, M. Aliehyaei, Multi-objective op-timization of solid oxide fuel cell /gas turbine combined heat and power system: A comparison between particle swarm and genetic algorithms, Int. Jounal of Energy Research (2020). doi: 10.1002 /er.5610. [19] B. Fredriksson Möller, J. Arriagada, M. Assadi, I. Potts, Opti-misation of an SOFC /GT system with CO2-capture, Journal of Power Sources (2004). doi: 10.1016 /j.jpowsour.2003.11.090. [20] P. Finocchi, V. Zaccaria, M. L. Ferrari, D. Tucker, Optimization under uncertainties of a biogas-fueled SOFC-GT hybrid sys-tem, in: Proc. ASME Turbo Expo, 2022. doi: 10.1115 /GT2022-81785. [21] Z. Chen, F. Liang, J. Mao, Z. Wang, X. Jiang, Optimization design of sofc-gt hybrid power system for aviation application, Energies (2024). doi: 10.3390 /en17153681. [22] S. Kameswaran, L. T. Biegler, S. T. Junker, H. Ghezel-Ayagh, Optimal off -line trajectory planning of hybrid fuel cell /gas turbine power plants, AlChE journal (2007). doi: 10.1002 /aic.11089. [23] P. P. Walsh, P. Fletcher, Gas Turbine Performance, 2nd Edition, John Wiley & Sons, 2004. doi: 10.1002 /9780470774533. [24] J. Kurzke, I. Halliwell, Propulsion and Power, Springer Interna-tional Publishing, 2018. doi: 10.1007 /978-3-319-75979-1. [25] T. Nikolaidis, A. Pellegrini, H. I. H. Saravanamuttoo, I. Aslanidou, A. Kalfas, P. Pilidis, O ff -design performance com-parison between single and two-shaft engines: Part 1 – fixed geometry, Tech. rep., RAND Corporation, Santa Monica, CA, 
+
+http://asmedigitalcollection.asme.org/GT/procee dings-pdf/GT2020/84195/V008T17A003/6616361/v008 t17a003-gt2020-14500.pdf (2020). [26] J. Janikovic, Gas turbine transient performance modeling for en-gine flight path cycle analysis, Ph.D. thesis, Cranfield Univer-
+
+17 sity, https://dspace.lib.cranfield.ac.uk/bitstream /handle/1826/7894/Jan_Janikovic_Thesis_2010.pdf 
+
+(2010). [27] O. Borsboom, C. A. Fahdzyana, T. Hofman, M. Salazar, A con-vex optimization framework for minimum lap time design and control of electric race cars, IEEE Transactions on Vehicular Technology 70 (9) (2021) 8478–8489. [28] A. Locatello, M. Konda, O. Borsboom, T. Hofman, M. Salazar, Time-optimal control of electric race cars under thermal con-straints, in: European Control Conference, 2021. [29] J. Löfberg, YALMIP : A toolbox for modeling and optimization in MATLAB, in: IEEE Int. Symp. on Computer Aided Control Systems Design, 2004. [30] M. ApS, MOSEK optimization software, Available at https: //mosek.com/ (2017). [31] S. Bhapkar, S. Kazula, Development of a predictive model for the preliminary design of heat exchangers in electric aviation, in: Proceedings of the Deutscher Luft- und Raumfahrtkongress (DLRK), 2024. doi: 10.25967 /610378. [32] S. Bhapkar, C. Sain, S. Kazula, Design of heat exchang-ers with cooling fins in fuel cell-powered electric air-craft: Genetic optimization approach with cfd validation, in: 2025 IEEE /AIAA Transportation Electrification Conference and Electric Aircraft Technologies Symposium (ITEC +EATS), 2025. doi: 10.1109 /ITEC63604.2025.11098145. [33] L. Mantelli, M. L. Ferrari, L. Magistri, Off -design performance analysis of a turbocharged solid oxide fuel cell system, Applied Thermal Engineering (2021). doi: 10.1016 /j.applthermaleng.2020.116134. [34] A. Leonide, Y. Apel, E. Ivers-Ti ff ee, Sofc modeling and param-eter identification by means of impedance spectroscopy, ECS Transactions (2009). doi: 10.1149 /1.3247567. [35] D. Klotz, J. P. Schmidt, A. Weber, E. Ivers-Ti ff ée, Performance model for large area solid oxide fuel cells, Journal of Power Sources (2014). doi: 10.1016 /j.jpowsour.2014.02.028. [36] H. Sapra, J. Stam, J. Reurings, L. van Biert, W. van Sluijs, P. de Vos, K. Visser, P. V. Aravind, H. Hopman, Integration of solid oxide fuel cell and internal combustion engine for maritime applications, Applied Energy (2021). doi: 10.1016 /j.apenergy.2020.115854. [37] J. A. E. Andersson, J. Gillis, G. Horn, J. B. Rawlings, M. Diehl, Casadi – a software framework for nonlinear optimization and optimal control, Mathematical Programming Computation 11 (1) (2019) 1–36. [38] A. Wachter, L. T. Biegler, On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear pro-gramming, Mathematical Programming 106 (1) (2006) 25–57. [39] T. Pattanayak, D. Mavris, Battery technology for sustainable aviation: a review of current trends and future prospects, Ap-plied Energy (2025). doi: 10.1016 /j.apenergy.2025.126356. 
+
+18
