@@ -1,0 +1,39 @@
+{
+  "label": "2026-06-16",
+  "date": "2026-06-16",
+  "generated_at": "2026-06-16T23:04:15",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202606/16/2606.15845v1-an-optimal-power-management-policy-for-hydrogen-based-hybrid-aero-engines",
+      "section": "deep",
+      "title_en": "An Optimal Power Management Policy for Hydrogen-based Hybrid Aero Engines",
+      "authors": "Faezeh Pak, Uto Perra, Frank Willems, Theo Hofman, Mauro Salazar",
+      "date": "2026-06-14",
+      "pdf": "https://arxiv.org/pdf/2606.15845v1",
+      "score": "9.0",
+      "evidence": "氢基混合航空发动机的最优功率管理策略，结合燃气轮机和固体氧化物燃料电池",
+      "tldr": "氢基混合航空发动机由燃气轮机和固体氧化物燃料电池（SOFC）构成，其功率管理需在部件耦合与温度限制下优化油耗。本文建立推进系统二次准稳态模型，将最小燃油问题表述为功率分配优化，利用KKT条件及模型凸单调性导出飞行各阶段全局最优稳态解闭式。高保真仿真显示功率分配误差<1.5%、油耗误差<0.7%，最优策略即SOFC温度上限内请求最大功率的启发式律。为轻量化车载功率管理提供理论基础。",
+      "tags": "query:uav",
+      "abstract_en": "This paper presents a power management policy for a hydrogen-based hybrid aero engine combining a gas turbine and a solid oxide fuel cell (SOFC). Specifically, we first identify a quadratic quasi-steady-state model of the propulsion system and formulate the minimum-fuel optimal control problem as a function of the power split between gas turbine and SOFC that captures the interconnections between the components and accounts for their operational limits. Second, leveraging the Karush-Kuhn-Tucker optimality conditions and partial convexity and monotonicity model properties, we compute the globally optimal steady-state power split for the different phases of the flight in closed form. Finally, we verify this power management policy with a high-fidelity integrated static model %simulator across different flight phases, revealing in less than 1.5 % normalized root mean square error in power allocation and less than 0.7 % in predicted fuel consumption. Our results show that the optimal power management policy can be translated into a heuristic control law requesting the highest SOFC power that does not exceed its maximum operating temperature, ultimately paving the way for minimal-effort on-board implementations.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/16/2606.16051v1-hidden-degradation-costs-in-energy-cost-only-hems-optimisation-study-on-battery-and-pv-sensitivity",
+      "section": "quick",
+      "title_en": "Hidden Degradation Costs in Energy-Cost-Only HEMS Optimisation: Study on Battery and PV Sensitivity",
+      "authors": "Dawood Butt, Nandor Verba",
+      "date": "2026-06-14",
+      "pdf": "https://arxiv.org/pdf/2606.16051v1",
+      "score": "6.0",
+      "evidence": "家庭能源管理系统优化中隐藏的电池衰减成本，采用模型预测控制方法",
+      "tldr": "家庭能源管理优化常忽略电池退化，导致实际运行成本被严重低估。本文针对英国住宅案例，采用混合整数线性规划模型预测控制，对三种电池与三种光伏容量进行灵敏度分析，事后利用雨流计数和应力模型估算退化损失。结果显示，每种电池下退化成本恒定，且最高可达能源节省成本的1060%，表明纯经济调度会大幅低估总花费。该发现为退化感知控制提供了量化依据，推动家庭储能系统的实际部署。",
+      "tags": "query:uav",
+      "abstract_en": "Residential battery energy storage systems (BESS) are increasingly deployed alongside photovoltaic (PV) generation to reduce household energy costs under volatile time-of-use (TOU) tariffs. Model predictive control (MPC) is a widely adopted optimisation strategy for home energy management systems (HEMS), typically formulated to minimise net energy cost, subject to physical and operational constraints. However, battery degradation is rarely embedded in the optimisation objective, meaning its cost is unquantified and aggressive; high-cycle-count strategies could incur significant losses once deployed to physical systems. This paper presents a receding-horizon mixed-integer linear programming (MILP) baseline for a UK residential HEMS, using demand data from the REFIT dataset. A 3 by 3 sensitivity study is conducted across three battery sizes and three PV array sizes, with post-hoc degradation cost estimated using the Naumann stress model and rainflow cycle counting. Results show that degradation remains constant for each battery size and can exceed energy cost savings by up to 1,060 %. These results demonstrate that energy-cost-only optimisation systematically underestimates the true system cost, motivating a degradation-aware control formulation.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,93 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-16T23:01:25.249658+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 1,
+    "deep_cap": 6,
+    "deep_selected": 1,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2606.15845v1",
+      "source": "arxiv",
+      "title": "An Optimal Power Management Policy for Hydrogen-based Hybrid Aero Engines",
+      "abstract": "This paper presents a power management policy for a hydrogen-based hybrid aero engine combining a gas turbine and a solid oxide fuel cell (SOFC). Specifically, we first identify a quadratic quasi-steady-state model of the propulsion system and formulate the minimum-fuel optimal control problem as a function of the power split between gas turbine and SOFC that captures the interconnections between the components and accounts for their operational limits. Second, leveraging the Karush-Kuhn-Tucker optimality conditions and partial convexity and monotonicity model properties, we compute the globally optimal steady-state power split for the different phases of the flight in closed form. Finally, we verify this power management policy with a high-fidelity integrated static model %simulator across different flight phases, revealing in less than 1.5 % normalized root mean square error in power allocation and less than 0.7 % in predicted fuel consumption. Our results show that the optimal power management policy can be translated into a heuristic control law requesting the highest SOFC power that does not exceed its maximum operating temperature, ultimately paving the way for minimal-effort on-board implementations.",
+      "authors": [
+        "Faezeh Pak",
+        "Uto Perra",
+        "Frank Willems",
+        "Theo Hofman",
+        "Mauro Salazar"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-06-14T15:00:08+00:00",
+      "link": "https://arxiv.org/pdf/2606.15845v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "optimal power management policy for hydrogen-based hybrid aero engine combining gas turbine and solid oxide fuel cell",
+      "llm_evidence_cn": "氢基混合航空发动机的最优功率管理策略，结合燃气轮机和固体氧化物燃料电池",
+      "llm_evidence": "氢基混合航空发动机的最优功率管理策略，结合燃气轮机和固体氧化物燃料电池",
+      "canonical_evidence": "氢基混合航空发动机的最优功率管理策略，结合燃气轮机和固体氧化物燃料电池",
+      "llm_tldr_en": "Presents a closed-form optimal power management policy for a hydrogen hybrid aero engine with gas turbine and SOFC, minimizing fuel consumption across flight phases, verified in high-fidelity simulation.",
+      "llm_tldr_cn": "本文针对氢基混合航空发动机，提出了一种燃气轮机与固体氧化物燃料电池之间的最优功率管理策略。通过建立二次准稳态模型，利用KKT条件推导出飞行各阶段全局最优功率分配的闭式解，并以高保真仿真验证。该策略为混合动力推进系统的燃油效率优化提供了理论基础，对无人机能量管理具有重要参考价值。",
+      "llm_tldr": "本文针对氢基混合航空发动机，提出了一种燃气轮机与固体氧化物燃料电池之间的最优功率管理策略。通过建立二次准稳态模型，利用KKT条件推导出飞行各阶段全局最优功率分配的闭式解，并以高保真仿真验证。该策略为混合动力推进系统的燃油效率优化提供了理论基础，对无人机能量管理具有重要参考价值。",
+      "llm_tags": [
+        "query:uav:composite"
+      ],
+      "matched_query_tag": "query:uav:composite",
+      "matched_query_text": "Papers central to 查找关于混合动力无人机和混合电推垂直起降飞行器能量管理策略的综述论文和代表性研究。重点关注串联混合动力无人机、燃料电池/电池混合动力无人机、内燃机-发电机/电池混合动力无人机和混合电推垂直起降飞行器。总结主要的能量管理方法，包括基于规则控制、模糊逻辑控制、等效消耗最小化策略、自适应等效消耗最小化策略、动态规划、庞特里亚金极小值原理、模型预测控制和强化学习。优先考虑讨论系统建模、基于任务剖面的功率分配、电池荷电状态维持控制、降低油耗、发电机瞬态抑制、电池老化、实时实现以及实验或硬件验证的论文。识别当前局限性和潜在研究空白，以支持混合动力无人机能量管理的未来创新。, especially work that connects or combines: UAV power management; fuel cell battery UAV; hybrid-electric propulsion; energy management strategy for hybrid electric unmanned aerial vehicles; | English keyword            | 中文含义       | | -------------------------- | ---------- | | hybrid-powered UAV         | 混合动力无人机    | | energy management strategy | 能量管理策略     | | hybrid-electric propulsion | 混合电推进      | | series hybrid UAV          | 串联混动无人机    | | fuel cell battery UAV      | 燃料电池/电池无人机 | | UAV power management       | 无人机功率管理    |; equivalent consumption minimization strategy for hybrid electric vehicles; Which papers provide a clear taxonomy of rule based, fuzzy, ECMS, dynamic programming, PMP, MPC, and reinforcement learning methods?; What are the unsolved problems in hybrid UAV energy management, such as SOC control, fuel consumption, generator transients, and mission adaptation?; What are the main categories of energy management strategies for hybrid powered UAVs?; What are the current limitations and research gaps in hybrid UAV energy management?.",
+      "matched_requirement_id": "req-composite-uav",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.16051v1",
+      "source": "arxiv",
+      "title": "Hidden Degradation Costs in Energy-Cost-Only HEMS Optimisation: Study on Battery and PV Sensitivity",
+      "abstract": "Residential battery energy storage systems (BESS) are increasingly deployed alongside photovoltaic (PV) generation to reduce household energy costs under volatile time-of-use (TOU) tariffs. Model predictive control (MPC) is a widely adopted optimisation strategy for home energy management systems (HEMS), typically formulated to minimise net energy cost, subject to physical and operational constraints. However, battery degradation is rarely embedded in the optimisation objective, meaning its cost is unquantified and aggressive; high-cycle-count strategies could incur significant losses once deployed to physical systems. This paper presents a receding-horizon mixed-integer linear programming (MILP) baseline for a UK residential HEMS, using demand data from the REFIT dataset. A 3 by 3 sensitivity study is conducted across three battery sizes and three PV array sizes, with post-hoc degradation cost estimated using the Naumann stress model and rainflow cycle counting. Results show that degradation remains constant for each battery size and can exceed energy cost savings by up to 1,060 %. These results demonstrate that energy-cost-only optimisation systematically underestimates the true system cost, motivating a degradation-aware control formulation.",
+      "authors": [
+        "Dawood Butt",
+        "Nandor Verba"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI",
+        "cs.LG"
+      ],
+      "published": "2026-06-14T22:52:32+00:00",
+      "link": "https://arxiv.org/pdf/2606.16051v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Battery degradation cost hidden in energy-cost-only HEMS optimization, MPC approach",
+      "llm_evidence_cn": "家庭能源管理系统优化中隐藏的电池衰减成本，采用模型预测控制方法",
+      "llm_evidence": "家庭能源管理系统优化中隐藏的电池衰减成本，采用模型预测控制方法",
+      "canonical_evidence": "家庭能源管理系统优化中隐藏的电池衰减成本，采用模型预测控制方法",
+      "llm_tldr_en": "Investigates hidden battery degradation costs in home energy management MPC optimization, showing that ignoring degradation leads to underestimated lifecycle costs.",
+      "llm_tldr_cn": "本研究针对家庭能源管理系统中基于模型预测控制的成本优化，揭示了忽略电池衰减成本所导致的隐性损失。通过建立包含衰减成本的混合整数线性规划基准，并与仅考虑能量成本的策略对比，证明了忽略衰减会低估全生命周期成本。该方法可迁移至无人机混合动力系统的电池老化考虑中。",
+      "llm_tldr": "本研究针对家庭能源管理系统中基于模型预测控制的成本优化，揭示了忽略电池衰减成本所导致的隐性损失。通过建立包含衰减成本的混合整数线性规划基准，并与仅考虑能量成本的策略对比，证明了忽略衰减会低估全生命周期成本。该方法可迁移至无人机混合动力系统的电池老化考虑中。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "What are the unsolved problems in hybrid UAV energy management, such as SOC control, fuel consumption, generator transients, and mission adaptation?",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

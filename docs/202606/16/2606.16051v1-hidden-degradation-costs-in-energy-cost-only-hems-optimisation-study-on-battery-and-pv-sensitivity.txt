@@ -1,0 +1,477 @@
+Title: 2606.16051v1.pdf
+
+URL Source: https://arxiv.org/pdf/2606.16051v1
+
+Published Time: Tue, 16 Jun 2026 01:29:21 GMT
+
+Number of Pages: 5
+
+Markdown Content:
+1
+
+# Hidden Degradation Costs in Energy -Cost -Only HEMS 
+
+# Optimisation: Study on Battery and PV Sensitivity 
+
+Dawood A Butt 1, Nandor Verba *1 
+
+> 1
+
+WMG , The University of Warwick, Coventry, United Kingdom 
+
+*Corresponding author: nandor.verba@warwick.ac.uk 
+
+ABSTRACT 
+
+Residential battery energy storage systems (BESS) are increasingly deployed alongside photovoltaic 
+
+(PV) generation to reduce household energy costs under volatile time -of -use (TOU) tariRs. Model 
+
+predictive control (MPC) is a widely adopted optimisation strategy for home energy management 
+
+system s (HEMS), typically formulated to minimise net energy cost, subject to physical and operational 
+
+constraints. However, battery degradation is rarely embedded in the optimisation objective, meaning 
+
+its cost is unquantified and ag gressive; high -cycle -count strategies could incur significant losses once 
+
+deployed to physical systems . This paper presents a receding -horizon mixed -integer linear 
+
+programming (MILP) baseline for a UK residential HEMS , using demand data from the REFIT dataset. 
+
+A 3 by 3 sensitivity stud y is conducted across three battery sizes and three PV array sizes, with post -
+
+hoc degradation cost estimated using the Naumann stress model and rainflow cycle counting. Results 
+
+show that degradation remains constant for each battery size and can exceed energy cost savings by 
+
+up to 1, 060 %. These results demonstrate that energy -cost -only optimisation systematically 
+
+underestimates the true system cost, motivating a degradation -aware control formulation. 
+
+Keywords: HEMS, Battery degradation, Mixed integer linear programming, Time -of -use tariR 
+
+1. INTRODUCTION AND RELATED WORK 
+
+UK household energy costs have risen significantly in recent years , driven by highly volatile wholesale 
+
+electricity prices. TariRs like Octopus Agile illustrate this, launching with an initial cap of 35p/kWh, 
+
+subsequen tly raised to 100p/kWh in October 2022 [1] . As such , intelligent residential energy control 
+
+strategies capable of reducing cost and grid dependence are attracting growing research interest. As 
+
+PV and BESS installation costs are decreasing, adoption of these technologies is increasing. However, 
+
+where battery degradation is considered, it is typically modelled as a simple cycle limit or a capacity 
+
+constraint rather than a physically grounded economic cost embedded in the optimisation objective. 
+
+This paper quantifie s the hidden degradation cost impose d by energy -cost -only MILP optimisation 
+
+across a 3 -by -3 battery and PV sizing sensitivity study , using UK residential demand data and TOU 
+
+tariRs, demonstrating that naïve optimisation objectives underestimate the true system cost. 
+
+MPC is widely used in HEMS research due to its ability to coordinate PV, BESS and flexible loads under 
+
+explicit constraints [2] . The optimisation horizon is typically 24 hours (96 × 15 -minute steps) with a 
+
+rolling re -optimisation. Recent work has started to incorporate battery degradation, though this is 
+
+typically a simple constraint , such as a daily cycle limit [3] rather than a physically grounded cost. 
+
+Battery degradation modelling approaches in the literature include physics -based, empirical, and data -
+
+driven methods. For this study, semi -empirical models are adopted due to compatibility with available 
+
+household operational data, which lacks cell -level measurements by physics -based approaches. The 
+
+DoD (depth of discharge) dependent cubic stress model [4] is validated on over two years of PV -BESS 
+
+data. This is operationalised into a per -cycle degradation cost framework as a function of DoD and 
+
+average SOC (state of charge) [5] . Finally, rainflow cycle counting [6] is used to extract cycles from the 
+
+SOC profile for cost estimation. While recent work has begun embedding cycle constraints to limit 
+
+degradation [3] , the magnitude of hidden degradation cost under unconstrained energy -cost -only 
+
+optimisation has not been quantified in a UK residential context with real TOU tariR data. 2
+
+2. METHODOLOGY 
+
+The HEMS system is equipped with PV generation, BESS, and grid connection , and t he MILP is 
+
+formulated using CVXPY and solved with Gurobi 13.0 [7] . Household demand is sourced from the REFIT 
+
+dataset [8], a UK residential load dataset which contains smart meter measurements from 20 
+
+households in Loughborough collect at 8 -second resolution between 2013 and 2015. House 5 is used 
+
+for this study. PV data is historical PVGIS data [9] , and the import and export tariRs are Octopus Agile 
+
+Region C tariR data [1], [10] , and coincide with the location of the house. Household demand and PV GIS 
+
+irradiance data were shifted forward six years to align with the Octopus Agile Outgoing export tariR, 
+
+which started in April 2019, yielding a study period of September 2019 to July 2021. 29 February 2020 
+
+was excluded as no corresponding REFIT observation exists under the six -year oRset. All data was 
+
+resampled to 15 -minute resolution, equating to 62,184 timesteps in total. Missing demand values 
+
+(5,767 timesteps) were forward -filled, consistent with prior use of this dataset .
+
+The objective function minimises net energy cost (1) over the study period , where 𝑃 ! 
+
+> "#$
+
+and 𝑃 ! 
+
+> %&$
+
+are 
+
+the grid import and export power (kW), 𝜆 ! 
+
+> "#$
+
+and 𝜆 ! 
+
+> %&$
+
+are the corresponding Agile tariR prices (£/kWh), 
+
+and ∆𝑡 is the timestep duration (0.25 hours ). 
+
+𝑚𝑖𝑛 )(𝑃 !
+
+> "#$
+> !
+
+𝜆 ! 
+
+> "#$
+
+− 𝑃 !
+
+> %&$
+
+𝜆 !
+
+> %&$
+
+) × ∆𝑡 (1)
+
+The power balance constraint (2) ensures demand is met at every timestep, where 𝑃 !
+
+> '()*
+
+, 𝑃 !
+
+> *"+
+
+, 𝑃 !
+
+> ,-
+
+, and 
+
+𝑃 ! 
+
+> ./
+
+denote household demand, battery charge, discharge, and PV generation (kW) respectively. The 
+
+BESS may be charged from PV generation or grid import, and the MILP selects the optimal combination 
+
+at each timestep. 
+
+𝑃 ! 
+
+> '()*
+
+= 𝑃 ! 
+
+> "#$
+
+− 𝑃 ! 
+
+> %&$
+
++ 𝑃 ! 
+
+> *"+
+
+− 𝑃 ! 
+
+> ,-
+
++ 𝑃 ! 
+
+> ./
+
+(2)
+
+The SOC dynamics are defined in (3) , where 𝑆𝑂𝐶 ! 𝜖 [0.20 , 0.80 ], 𝜂 ,- = 𝜂 *"+ = 0.95 [11] , and 𝐸 #)& is the 
+
+usable battery capacity (kWh) .
+
+𝑆𝑂𝐶 !01 = 𝑆𝑂𝐶 ! + 𝜂 ,-𝑃 !
+
+> ,-
+
+𝛥𝑡 
+
+𝐸 #)& 
+
+− 𝑃 !
+
+> *"+
+
+𝛥𝑡 
+
+𝜂 *"+ 𝐸 #)& 
+
+(3)
+
+Charge and discharge power are bounded by the inverter limit 𝑃 #)& in ( 4).
+
+0 ≤ 𝑃 ! 
+
+> ,-
+
+≤ 𝑃 #)& ; 0 ≤ 𝑃 ! 
+
+> *"+
+
+≤ 𝑃 #)& (4)
+
+Grid constraints (5) and ( 6) enforce mutual exclusivity of import and export via a binary variable 
+
+𝑧 ! 𝜖 {0, 1} and 𝑃 23"* ,#)& = 18 .4𝑘𝑊 (80A residential fuse) and 𝑃 %&$ ,#)& = 3.68 𝑘𝑊 (G98 single -phase). 
+
+𝑃 ! 
+
+> "#$
+
+≤ 𝑃 23"* ,#)& × 𝑧 ! (5)
+
+𝑃 ! 
+
+> %&$
+
+≤ 𝑃 %&$ ,#)& × (1 − 𝑧 !) (6)
+
+PV power is calculated in ( 7), where 𝐺 ! is solar irradiance (W/m 2) from [9] , A is the panel area (m 2), 
+
+and eRiciency, 𝜂 ./ = 0.16 [11] .
+
+𝑃 ! 
+
+> ./
+
+= 𝐺 ! × 𝐴 × 𝜂 ./ (7)
+
+A 3 -by -3 sensitivity study across 𝐸 #)& 𝜖 {5.0, 14 .4, 28 .8} 𝑘𝑊 ℎ and 𝐴 𝜖 {16 , 28 , 40 } 𝑚 5 is conducted .
+
+Battery sizes were selected to cover the commercially available range of UK residential LiFePO 4
+
+systems: entry -level (5 kWh), mid -range (14.4 kWh), and oversized (2 × 14.4 kWh) configurations. PV 
+
+areas represent small, medium, and large UK residential installations. 3
+
+Following simulation, degradation cost is estimated post -hoc. Rainflow cycle counting [6] is applied to 
+
+the SOC profile to extract individual cycles, each characterised by its depth of discharge (DoD k). The 
+
+fraction of battery life consumed per cycle, 𝑓 6, is defined by equation ( 8), where 𝛿 = 4.0253 , 𝑐 = 1.0923 
+
+are empirically fitted stress coeRicients from LiFePO 4/graphite ageing data [4] , and 𝑁 7(# = 5600 is the 
+
+nominal cycle life [12]. The total degradation cost over the study period, 𝐶 *%2 , is given in (9), where 
+
+𝐶 8)!! = £500 /𝑘𝑊 ℎ [13] . PV module and inverter losses are not modelled in this study 
+
+𝑓 6 = 𝛿 × 𝐷𝑂𝐷 6
+
+> ,
+
+𝑁 7(# 
+
+(8)
+
+𝐶 *%2 = ) 𝑓 6 × 𝐸 #)& × 𝐶 8)!! 
+
+> 6
+
+(9)
+
+3. RESULTS & DISCUSSION 
+
+Over the study period , the household incurs a total import cost of £1,392.74 under the Agile tariR with 
+
+no PV or BESS installed . Table 1 presents the full 3 -by -3 sensitivity study results. Integrating PV and 
+
+BESS reduces net energy cost across all configurations. Stored energy can be discharged during high -
+
+price periods or exported to the grid, enabling price arbitrage under the Agile TOU tariR. In the most 
+
+favourable configuration (28.8 kWh, 40 m² PV), the system generates net export revenue of £476.07, 
+
+compared to the £1,392. 74 baseline import cost. However , energy cost alone does not reflect the true 
+
+cost of system operations.   
+
+> Table 1:Energy cost, degradation cost and true total cost across the 3x3 sensitivity study.
+
+Configuration Energy Cost (£) Deg. Cost (£) True Cost (£) 
+
+No system 1,392.74 - 1,392.74 
+
+5kWh, 16m 2 601.79 60.45 662.24 
+
+5kWh, 28m 2 330.78 60.55 391.33 
+
+5kWh, 40m 2 106.19 60.65 166.84 
+
+14.4kWh, 16m 2 285.32 125.74 411.06 
+
+14.4kWh, 28m 2 13.72 125.36 139.08 
+
+14.4kWh, 40m 2 -230.94 125.99 -104.9 5
+
+28.8kWh, 16m 2 19.11 202.69 221.80 
+
+28.8kWh, 28m 2 -239.09 197. 58 -41.51 
+
+28.8kWh, 40m 2 -476.07 200.09 -275. 98 
+
+The post -hoc degradation analysis reveals a high hidden cost that the MILP objective does not account 
+
+for. A key observation is that degradation cost remains constant with battery size, regardless of PV 
+
+array size. This is because the MPC dispatch strategy cycles the battery similarly as it optimises energy 
+
+cost only without any degradation penalty. This behaviour is most impactful in configurations where 
+
+energy import cost is low due to high PV generation or export revenue. In the 14.4 kWh 28 m 2
+
+configurat ion, the energy cost is only £13.72, but the hidden degradation cost is £ 125 .36 , accounting 
+
+for 914 % of the energy cost. This behaviour is similar for the 28.8 kWh 16 m 2 configuration. In both 
+
+cases, a naïve energy -cost -only controller would report near grid neutrality, whereas the true system 
+
+cost substantially exceeds this. Three configurations achieve a negative true total cost : 14.4 kWh/40 
+
+m², 28.8 kWh/28 m², and 28.8 kWh/40 m² , where export revenue is suRicient to oRset both energy and 
+
+degradation co sts. 
+
+These results demonstrate that energy -only optimi sation systematically underestimates true system 
+
+costs by ignoring degradation, which becomes the dominant expense in specific configurations. Driven 4
+
+by export -linked arbitrage under the Agile TOU tariR , aggressive cycling can result in degradation cost 
+
+of up to 1,060 % of energy cost , exposing the financial risks of treating batteries as "costless" buRers. 
+
+The "invisibility" of these costs within the current MILP objective directly motivates the transition 
+
+toward a more robust, degradation -aware control formulation. 
+
+4. CONCLUSION 
+
+This study quantifies the hidden degradation cost imposed by energy -cost -only MILP optimisation in a 
+
+UK residential HEMS using real household demand data and time -of -use tariRs. The results 
+
+demonstrate that degradation cost is driven primarily by battery size, rather than PV configuration, 
+
+remains approximately constant regardless of PV array size . Degradation becomes the dominant term 
+
+in configurations where high PV penetration drives energy cost toward zero and reaches up to 1, 060 %
+
+of the apparent energ y cost in the 28.8 kWh 16 m 2 scenario. 
+
+A key limitation of the MILP formulation is that perfect foresight is assumed over the 24 -hour receding 
+
+horizon, a condition that does not hold true in practice due to uncertainty in demand, irradiance and 
+
+tariR prices. Furthermore, the computational cost of MILP scales poorly when a degradation penalty is 
+
+introduced into the objective function, as the resulting non -linear cost terms cannot be directly handled 
+
+by a linear solver without approximation. 
+
+From a system sizing perspective, these results highlight the importance of matching BESS capacity to 
+
+both consumption and generation profiles. An undersized battery relative to PV generation undergoes 
+
+more aggressive cycling, accelerating degradation, whe reas an oversized battery relative to available 
+
+generation incurs capital and degradation costs without proportionate energy benefit. Formal co -
+
+optimisation of BESS and PV capacity to balance degradation against energy and export revenue 
+
+requires further investigation. 
+
+These findings reveal that standard HEMS controllers view batteries as costless buRers, neglecting the 
+
+expense of cycling. Unlike MILP, a reinforcement learning agent can potentially navigate the complex, 
+
+non -linear relationship between SOC, DoD, and cost without requiring perfect foresight or a convex 
+
+objective by learning degradation -aware behaviour directly from interaction with the environment. 
+
+REFERENCES                                     
+
+> [1] Octopus Energy, “Agile Octopus —Flexible half -hourly electricity tari?.” Accessed: Mar. 30, 2026. [Online].
+> Available: https://octopus.energy/smart/agile/
+> [2] B. Liang, W. Liu, L. Sun, Z. He, and B. Hou, “Economic MPC -Based Smart Home Scheduling With
+> Comprehensive Load Types, Real -Time Tari?s, and Intermittent DERs,” IEEE Access, vol. 8, pp. 194373 –194383,
+> 2020, doi: 10.1109/ACCESS.2020.3033275.
+> [3] T. Dias de Lima, P. Faria, and Z. Vale, “Optimizing home energy management systems: A mixed integer linear
+> programming model considering battery cycle degradation,” Energy Build., vol. 329, p. 115251, Feb. 2025, doi:
+> 10.1016/J.ENBUILD.2024.115251.
+> [4] M. Naumann, F. Spingler, and A. Jossen, “Analysis and modeling of cycle aging of a commercial
+> LiFePO4/graphite cell,” J. Power Sources, vol. 451, p. 227666, Mar. 2020, doi:
+> 10.1016/J.JPOWSOUR.2019.227666.
+> [5] B. Xu, A. Oudalov, A. Ulbig, G. Andersson, and D. S. Kirschen, “Modeling of Lithium -Ion Battery Degradation
+> for Cell Life Assessment,” IEEE Trans. Smart Grid, vol. 9, no. 2, pp. 1131 –1140, 2018, doi:
+> 10.1109/TSG.2016.2578950.
+> [6] R. Nebuloni et al., “A MILP Battery Degradation Logarithmic Model With Real -Time Cycle Counting
+> Calculation,” IEEE Trans. Ind. Appl., vol. 61, no. 6, pp. 8297 –8306, 2025, doi: 10.1109/TIA.2025.3571359.
+> [7] L. Gurobi Optimization, “Gurobi Optimiser Reference Manual.” Available: https://www.gurobi.com
+> [8] D. Murray, L. Stankovic, and V. Stankovic, “An electrical load measurements dataset of United Kingdom
+> households from a two -year longitudinal study,” Sci. Data, vol. 4, Jan. 2017, doi: 10.1038/SDATA.2016.122.
+
+5
+
+[9] T. Huld, R. Müller, and A. Gambardella, “A new solar radiation database for estimating PV performance in 
+
+Europe and Africa,” Solar Energy, vol. 86, no. 6, pp. 1803 –1815, Jun. 2012, doi: 10.1016/J.SOLENER.2012.03.006. 
+
+[10] Octopus Energy, “Outgoing Octopus Agile — Half -hourly wholesale -linked electricity export tari?.” 
+
+Accessed: Apr. 06, 2026. [Online]. Available: https://octopus.energy/smart/outgoing/ 
+
+[11] K. Garifi, K. Baker, D. Christensen, and B. Touri, “Stochastic Home Energy Management Systems with Varying 
+
+Controllable Resources,” IEEE Power and Energy Society General Meeting, vol. 2019 -August, Aug. 2019, doi: 
+
+10.1109/PESGM40551.2019.8973708. 
+
+[1 2] R. Dufo -López, T. Cortés -Arcos, J. S. Artal -Sevil, and J. L. Bernal -Agustín, “Comparison of Lead -Acid and Li -
+
+Ion Batteries Lifetime Prediction Models in Stand -Alone Photovoltaic Systems,” Applied Sciences, vol. 11, no. 3, 
+
+p. 1099, Jan. 2021, doi: 10.3390/A PP11031099. 
+
+[1 3] K. Uddin, R. Gough, J. Radcli?e, J. Marco, and P. Jennings, “Techno -economic analysis of the viability of 
+
+residential photovoltaic systems using lithium -ion batteries for energy storage in the United Kingdom,” Appl. 
+
+Energy, vol. 206, pp. 12 –21, Nov. 2017, doi: 10.1016/J.APENERGY.2017.08.170.
