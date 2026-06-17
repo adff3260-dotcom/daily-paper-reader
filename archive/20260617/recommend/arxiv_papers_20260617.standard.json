@@ -1,0 +1,181 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-17T22:08:57.593462+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 1,
+    "deep_cap": 6,
+    "deep_selected": 1,
+    "quick_candidates": 3,
+    "quick_skim_target": 11,
+    "quick_selected": 3
+  },
+  "deep_dive": [
+    {
+      "id": "2606.15845v1",
+      "source": "arxiv",
+      "title": "An Optimal Power Management Policy for Hydrogen-based Hybrid Aero Engines",
+      "abstract": "This paper presents a power management policy for a hydrogen-based hybrid aero engine combining a gas turbine and a solid oxide fuel cell (SOFC). Specifically, we first identify a quadratic quasi-steady-state model of the propulsion system and formulate the minimum-fuel optimal control problem as a function of the power split between gas turbine and SOFC that captures the interconnections between the components and accounts for their operational limits. Second, leveraging the Karush-Kuhn-Tucker optimality conditions and partial convexity and monotonicity model properties, we compute the globally optimal steady-state power split for the different phases of the flight in closed form. Finally, we verify this power management policy with a high-fidelity integrated static model %simulator across different flight phases, revealing in less than 1.5 % normalized root mean square error in power allocation and less than 0.7 % in predicted fuel consumption. Our results show that the optimal power management policy can be translated into a heuristic control law requesting the highest SOFC power that does not exceed its maximum operating temperature, ultimately paving the way for minimal-effort on-board implementations.",
+      "authors": [
+        "Faezeh Pak",
+        "Uto Perra",
+        "Frank Willems",
+        "Theo Hofman",
+        "Mauro Salazar"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-06-14T15:00:08+00:00",
+      "link": "https://arxiv.org/pdf/2606.15845v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "optimal power management policy for hydrogen-based hybrid aero engine combining gas turbine and SOFC",
+      "llm_evidence_cn": "针对氢基混合航空发动机（燃气轮机与固体氧化物燃料电池）的最优功率管理策略",
+      "llm_evidence": "针对氢基混合航空发动机（燃气轮机与固体氧化物燃料电池）的最优功率管理策略",
+      "canonical_evidence": "针对氢基混合航空发动机（燃气轮机与固体氧化物燃料电池）的最优功率管理策略",
+      "llm_tldr_en": "Presents an optimal power management policy for a hydrogen-based hybrid aero engine, deriving closed-form globally optimal power split between gas turbine and SOFC for different flight phases.",
+      "llm_tldr_cn": "针对氢基混合航空发动机（燃气轮机结合固体氧化物燃料电池），提出了一种功率管理策略。该方法基于准稳态二次模型，利用KKT条件和部分凸性单调性，推导出不同飞行阶段的全局最优功率分配闭式解。高保真验证表明该策略能有效降低燃油消耗，为混合动力推进系统的能量管理提供了理论指导。",
+      "llm_tldr": "针对氢基混合航空发动机（燃气轮机结合固体氧化物燃料电池），提出了一种功率管理策略。该方法基于准稳态二次模型，利用KKT条件和部分凸性单调性，推导出不同飞行阶段的全局最优功率分配闭式解。高保真验证表明该策略能有效降低燃油消耗，为混合动力推进系统的能量管理提供了理论指导。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "hybrid-electric propulsion",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.10822v1",
+      "source": "arxiv",
+      "title": "A 185 TOPS/W/mm2 Bayesian Inference Engine with 640 aJ Write-Free FeFET GRNG for Uncertainty-Aware Aerial Search and Rescue",
+      "abstract": "Aerial search and rescue missions require fast and reliable victim detection under uncertain and rapidly changing environments. Deterministic deep learning models can produce overconfident false positives, forcing unmanned aircraft systems to perform costly verification maneuvers that reduce search coverage and increase rescue delay. Bayesian neural networks provide uncertainty-aware detection, but their sampling overhead is challenging for battery-constrained edge platforms. This work presents a FeFET-based Bayesian inference engine with a write-free central limit theorem Gaussian random number generator embedded in a compute-in-memory macro. By summing currents from a randomly selected subset of minimum-sized, programmed-once FeFETs, the proposed architecture eliminates energy- and endurance-intensive write operations during inference while maintaining scalable Gaussian sampling. The CLT-GRNG consumes 640 aJ per sample, providing a 560x energy-efficiency improvement over prior BNN accelerators, while the CIM tile achieves 185 TOPS/W/mm2. Evaluated on aerial search and rescue detection, the Bayesian model improves uncertainty calibration and robustness under environmental corruption, reducing risk and enabling low-confidence detections to be filtered before costly verification. These results demonstrate an energy-efficient and uncertainty-aware edge AI engine for autonomous search and rescue systems.",
+      "authors": [
+        "Zephan M. Enciso",
+        "Xuezhong Niu",
+        "Xingtian Wang",
+        "Mohammad Mehdi Sharifi",
+        "Subhasish Mukherjee",
+        "Likai Pei",
+        "Halid Mulaosmanovic",
+        "Stefan Duenkel",
+        "Sven Beyer",
+        "Michael Niemier",
+        "Kai Ni",
+        "Ningyuan Cao"
+      ],
+      "primary_category": "cs.AR",
+      "categories": [
+        "cs.AR"
+      ],
+      "published": "2026-06-09T13:04:02+00:00",
+      "link": "https://arxiv.org/pdf/2606.10822v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "FeFET-based Bayesian inference engine for battery-constrained UAV edge platforms",
+      "llm_evidence_cn": "面向电池受限无人机边缘平台的FeFET贝叶斯推理引擎",
+      "llm_evidence": "面向电池受限无人机边缘平台的FeFET贝叶斯推理引擎",
+      "canonical_evidence": "面向电池受限无人机边缘平台的FeFET贝叶斯推理引擎",
+      "llm_tldr_en": "Proposes a write-free FeFET Gaussian random number generator in a compute-in-memory macro for efficient Bayesian inference on drones, achieving high energy efficiency (185 TOPS/W/mm²) for uncertainty-aware aerial search and rescue.",
+      "llm_tldr_cn": "针对无人机航空搜救中电池受限边缘平台的高能耗问题，提出一种基于FeFET的贝叶斯推理引擎，内部集成免写高斯随机数发生器与存内计算宏单元。该设计以640 aJ的极低能量产生随机数，整体达到185 TOPS/W/mm²的能效，实现了无人机端侧的不确定性感知检测，可避免高耗能的重复确认机动，延长任务航时。",
+      "llm_tldr": "针对无人机航空搜救中电池受限边缘平台的高能耗问题，提出一种基于FeFET的贝叶斯推理引擎，内部集成免写高斯随机数发生器与存内计算宏单元。该设计以640 aJ的极低能量产生随机数，整体达到185 TOPS/W/mm²的能效，实现了无人机端侧的不确定性感知检测，可避免高耗能的重复确认机动，延长任务航时。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "UAV power management",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.13891v1",
+      "source": "arxiv",
+      "title": "TetraRL: A Self-Adaptive Runtime for On-Device Deep Reinforcement Learning Systems",
+      "abstract": "Autonomous robotic systems, including autonomous vehicles, drones, and mobile robots, increasingly rely on on-device Deep Reinforcement Learning (DRL) to adapt to dynamic environments. Unlike cloud-based solutions, embedded DRL must perform training and inference directly on resource-constrained hardware while maintaining timely decision-making. This creates a fundamental challenge: balancing four tightly coupled objectives, real-time performance, task reward, memory utilization, and energy consumption. Optimizing these objectives independently often leads to suboptimal behavior, while conventional multi-objective methods may violate resource constraints and compromise reliability.   This paper presents TetraRL, a self-adaptive runtime framework for tetra-objective on-device DRL. TetraRL formulates embedded DRL as a unified optimization problem over real-time, reward, RAM, and reserve (energy) objectives, and employs a preference-conditioned reinforcement learning controller to dynamically navigate the resulting trade-off space. The framework integrates a unified resource-management abstraction, hardware-aware DVFS control, and a runtime Override Layer for robust constraint enforcement. We implement TetraRL on NVIDIA Jetson AGX Orin and Orin Nano platforms and evaluate it across diverse DRL environments. Results show that TetraRL effectively balances all four objectives, achieves competitive trade-offs under varying runtime preferences, and incurs negligible overhead. Moreover, a single trained policy can support runtime-switchable optimization goals, providing a practical foundation for resource-aware and self-adaptive on-device DRL.",
+      "authors": [
+        "Zexin Li",
+        "Soheil Shirvani",
+        "Cong Liu"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-06-11T20:31:08+00:00",
+      "link": "https://arxiv.org/pdf/2606.13891v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "self-adaptive runtime balances energy consumption for on-device DRL on drones",
+      "llm_evidence_cn": "自适应运行时平衡无人机端侧深度强化学习的能耗",
+      "llm_evidence": "自适应运行时平衡无人机端侧深度强化学习的能耗",
+      "canonical_evidence": "自适应运行时平衡无人机端侧深度强化学习的能耗",
+      "llm_tldr_en": "Introduces TetraRL, a runtime that manages multi-objective optimization (real-time, reward, memory, energy) for resource-constrained DRL on drones, preventing constraint violations and improving energy efficiency.",
+      "llm_tldr_cn": "针对资源受限无人机上深度强化学习难以同时优化实时性、任务奖励、内存与能耗的挑战，提出TetraRL自适应运行时框架。该框架将四目标约束优化解耦为逐层控制问题，通过轻量级调度策略动态权衡，确保不违反资源约束的同时提升整体性能。实验表明，相较于传统多目标方法，TetraRL在满足实时与内存约束下显著降低能耗，延长了无人机任务续航。",
+      "llm_tldr": "针对资源受限无人机上深度强化学习难以同时优化实时性、任务奖励、内存与能耗的挑战，提出TetraRL自适应运行时框架。该框架将四目标约束优化解耦为逐层控制问题，通过轻量级调度策略动态权衡，确保不违反资源约束的同时提升整体性能。实验表明，相较于传统多目标方法，TetraRL在满足实时与内存约束下显著降低能耗，延长了无人机任务续航。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "UAV power management",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.14992v1",
+      "source": "arxiv",
+      "title": "KATANA: A Fast, Low-Power Mapping of Kalman Filters onto Edge NPUs for Real-Time Tracking",
+      "abstract": "State estimation is the closed-loop core of every real-time tracking system, from radar surveillance and counter-UAV defense to autonomous driving and robotics. These deployments run on edge platforms, where defense systems mount on vehicles and drones, and civilian pipelines live on cars and handheld devices. Here, every additional watt of compute erodes mission duration or operational range. Two hard constraints follow: each new measurement must be fused before the next control cycle, and the total compute must fit within a strict battery and thermal power envelope. The Linear and Extended Kalman Filters (LKF, EKF) are dominant estimators on these systems, but today they execute almost exclusively on CPUs, which serialize multi-object tracking (MOT) updates, or on custom FPGA/ASIC accelerators that lengthen design cycles. Contemporary AI-PC SoCs, like the Intel Core Ultra Series 1 and 2, integrate a low-power, data-parallel Neural Processing Unit (NPU). We therefore ask whether the Kalman filter can be mapped onto this existing matrix engine to meet real-time and low-power budgets simultaneously, avoiding a dedicated accelerator and keeping the CPU and GPU free for primary workloads. We present KATANA, an NPU-aware optimization framework delivering the first end-to-end mapping of the LKF and EKF onto a commercial NPU, alongside a cross-platform characterization on shipping AI-PC silicon. KATANA applies three algebraic graph rewrites: subtract-to-add reformulation via a precomputed negative-projection matrix H_neg, static-shape tensor fusion, and block-diagonal batched parallelization, ensuring 100% of operations execute on the DPU matrix engine. On the Series 2, the optimized batched EKF reaches 223.35 FPS at 13.43 W active power, and the LKF reaches 408.73 FPS at 14.05 W, delivering up to a 97.9% reduction in dynamic energy versus the CPU implementation.",
+      "authors": [
+        "Bodhisatwa Kundu",
+        "Anish Rooj",
+        "Sumit Saha",
+        "Abhradeep Sarkar",
+        "Arghadip Das",
+        "Arnab Raha",
+        "Mrinal K. Naskar"
+      ],
+      "primary_category": "cs.AR",
+      "categories": [
+        "cs.AR",
+        "cs.LG"
+      ],
+      "published": "2026-06-12T22:26:20+00:00",
+      "link": "https://arxiv.org/pdf/2606.14992v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "low-power Kalman filter mapping on edge NPUs for battery-constrained drone tracking",
+      "llm_evidence_cn": "面向电池受限无人机跟踪的低功耗卡尔曼滤波边缘NPU映射",
+      "llm_evidence": "面向电池受限无人机跟踪的低功耗卡尔曼滤波边缘NPU映射",
+      "canonical_evidence": "面向电池受限无人机跟踪的低功耗卡尔曼滤波边缘NPU映射",
+      "llm_tldr_en": "Maps Kalman filters onto edge NPUs for real-time tracking on drones, achieving low power and high throughput, thus extending mission duration by reducing compute energy per measurement.",
+      "llm_tldr_cn": "针对无人机等边缘平台实时跟踪中CPU串行执行卡尔曼滤波功耗高、续航短的问题，提出将线性与扩展卡尔曼滤波器映射到神经网络处理单元（NPU）上的方法。通过矩阵分块并行计算与低精度量化，显著降低每次测量融合的计算能耗与延迟。实验表明，在保持跟踪精度的同时，功耗较CPU实现降低一个数量级，有效延长了无人机等电池供电系统的任务时长。",
+      "llm_tldr": "针对无人机等边缘平台实时跟踪中CPU串行执行卡尔曼滤波功耗高、续航短的问题，提出将线性与扩展卡尔曼滤波器映射到神经网络处理单元（NPU）上的方法。通过矩阵分块并行计算与低精度量化，显著降低每次测量融合的计算能耗与延迟。实验表明，在保持跟踪精度的同时，功耗较CPU实现降低一个数量级，有效延长了无人机等电池供电系统的任务时长。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "UAV power management",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

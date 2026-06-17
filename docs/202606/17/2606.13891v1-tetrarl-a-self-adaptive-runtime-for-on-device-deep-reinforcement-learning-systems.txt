@@ -1,0 +1,918 @@
+Title: TetraRL: A Self-Adaptive Runtime for On-Device Deep Reinforcement Learning Systems
+
+URL Source: https://arxiv.org/pdf/2606.13891v1
+
+Published Time: Mon, 15 Jun 2026 00:13:23 GMT
+
+Number of Pages: 37
+
+Markdown Content:
+# TETRA RL: A Self-Adaptive Runtime for On-Device Deep Reinforcement Learning Systems 
+
+Zexin Li 1, Soheil Shirvani 1, and Cong Liu 11University of California, Riverside 
+
+{zli536, sshir009, congl}@ucr.edu 
+
+Abstract 
+
+Autonomous robotic systems, such as autonomous vehicles, drones, and mobile robots, increasingly require on-device Deep Reinforcement Learning (DRL) to continuously adapt to dynamic environments. Unlike cloud-based learning, embedded DRL must perform training and inference directly on resource-constrained hardware while maintaining timely decision-making. This requirement exposes a fundamen-tal challenge: on-device DRL must simultaneously balance four tightly coupled objectives: real-time performance, task reward, memory utilization, and energy consumption. Optimizing these objectives independently often leads to suboptimal system behavior, while naïve multi-objective optimization can violate resource constraints and degrade reliability. This paper presents T ETRA RL 1, a holistic runtime framework for self-adaptive tetra-objective on-device DRL. T ETRA RL formulates embedded DRL as a unified optimization problem over real-time, re-ward, RAM, and reserve (energy) objectives, and employs a preference-conditioned reinforcement learn-ing controller to dynamically navigate the resulting trade-off space. The framework further integrates a unified resource-management abstraction, hardware-aware DVFS control, and a runtime Override Layer for enforcing resource constraints. We implement and evaluate T ETRA RL across diverse DRL envi-ronments and embedded platforms, including NVIDIA Jetson AGX Orin and Orin Nano. Experimental results demonstrate that T ETRA RL consistently auto-balances the four objectives, achieving competitive trade-offs across them while maintaining negligible runtime overhead. Furthermore, T ETRA RL enables runtime-switchable optimization goals through a single trained policy, providing a practical foundation for self-adaptive and resource-aware on-device DRL. 
+
+Keywords: On-device reinforcement learning, multi-objective reinforcement learning, autonomous embed-ded systems, dynamic voltage and frequency scaling, NVIDIA Jetson. 
+
+# 1 Introduction 
+
+Deep Reinforcement Learning (DRL) has emerged as a powerful paradigm for enabling autonomous deci-sion making in complex and dynamic environments [1, 2]. Recent advances have accelerated the deployment of DRL on resource-constrained edge platforms, including autonomous robots, drones, and assisted-driving systems [3–5]. Unlike cloud-centric learning pipelines, these systems increasingly require on-device adapta-tion, where the agent continuously learns and retrains directly on embedded hardware while simultaneously performing runtime inference. Such capability is critical in real-world deployments where environmental conditions evolve rapidly, and communication with cloud infrastructure may be unavailable, unreliable, or prohibitively expensive. 
+
+> 1
+
+The name T ETRA RL derives from the Greek prefix “tetra-”, meaning “four”, reflecting the four optimization objectives in the R4 principle: real-time, reward, RAM, and reserve. 
+
+1
+
+> arXiv:2606.13891v1 [eess.SY] 11 Jun 2026
+
+preference 
+
+## Reserve 
+
+> (energy budget)
+
+## Real-time 
+
+> (latency)
+
+## Reward 
+
+> (task performance)
+
+## RAM 
+
+> (memory utilization)
+
+Figure 1: Optimization challenges of on-device DRL. Embedded DRL systems must jointly balance four frequently conflicting objectives: R1 real-time performance (latency / timeliness), R2 reward, R3 memory utilization, and R4 energy consumption. Improving one objective often degrades another, creating a complex four-dimensional optimization space. For example, autonomous mobile delivery robots operating in unfamiliar environments must continu-ously adapt to changing terrain, obstacles, and mission objectives [3, 5]. Similarly, autonomous vehicles must retrain their decision-making policies to accommodate evolving traffic patterns, weather conditions, and sensor characteristics [4]. In both cases, the DRL agent must learn from newly collected experiences while maintaining timely decision-making and respecting the strict resource limitations of embedded plat-forms. These examples highlight the growing need for efficient on-device DRL training that can simultane-ously satisfy real-time constraints, maintain algorithmic performance, and operate within limited hardware resources. However, conducting on-device DRL training remains challenging. As illustrated in Figure 1, embedded DRL systems must simultaneously optimize four tightly coupled and often conflicting objectives: • Real-time performance ( R1): robotic control loops require predictable and low execution latency. • Reward ( R2): the learning algorithm must maintain high task performance and adaptation quality. • Memory utilization ( R3): DRL training competes for limited unified CPU/GPU memory with percep-tion, planning, and operating-system services. • Energy consumption ( R4): battery-powered embedded platforms must operate under strict power and thermal budgets. These objectives are inherently interconnected. Increasing training batch size may improve hardware utilization but can increase latency and memory pressure. Enlarging replay buffers may improve learning quality but consumes additional memory resources. Raising processor frequencies through Dynamic Voltage and Frequency Scaling (DVFS) can reduce execution time but increases energy consumption and thermal 2stress. Conversely, aggressive energy-saving configurations may prolong training and degrade responsive-ness. Optimizing any single objective independently, therefore often results in suboptimal system behavior, while naively optimizing multiple objectives may violate hard resource constraints or even trigger system failures. Existing approaches each cover only a slice of this four-objective space, and the missing slices are not optional. R 3 [6] controls latency and memory through adaptive batch-size and replay-buffer management but ignores energy, so its configurations can silently drain a battery-powered platform that must also respect an energy-reserve budget. DuoJoule [7] co-optimizes latency and energy through DVFS but does not bound the unified CPU/GPU memory that on-device training shares with perception and planning, so its configurations can trigger out-of-memory aborts on memory-constrained boards such as the Orin Nano. Crucially, both treat reward as fixed : they tune system knobs around an unchanged training schedule and never reason about the latency-reward or energy-reward trade-off, even though on-device training can spend or save large amounts of compute by adapting how long and how hard it trains. From the algorithm side, mainstream DRL methods [8–12] optimize reward alone and expose no interface for latency, memory, or energy at all. The gap is therefore not a missing feature but a missing joint formulation: no existing framework manages real-time performance, reward quality, memory utilization, and energy consumption together, nor lets a deployed agent re-weight these objectives at runtime as battery, deadline, and memory pressure change. To address this challenge, we introduce T ETRA RL, a self-adaptive runtime framework for on-device deep reinforcement learning. We formulate embedded DRL as a four-dimensional optimization problem over real-time , reward , RAM (memory), and reserve (energy) objectives, collectively referred to as the R4
+
+principle. Rather than treating resource constraints as fixed design-time assumptions, T ETRA RL learns a preference-conditioned policy that continuously adapts system behavior according to runtime optimiza-tion goals. By embedding user preferences directly into the policy state space, a single trained policy can dynamically auto-balance the four objectives and switch between operating points without retraining. The design of T ETRA RL consists of four key components. First, a preference-conditioned controller jointly reasons about the trade-offs among the four objectives. Second, a unified resource-primitive abstrac-tion enables consistent management of both off-policy and on-policy DRL algorithms. Third, a hardware-aware DVFS management layer exposes power-performance trade-offs as controllable actions. Finally, an Override Layer enforces resource constraints at runtime and prevents excessive violations that may occur un-der purely learning-based optimization. Together, these components enable T ETRA RL to achieve adaptive multi-objective optimization while preserving practical deployability on embedded systems. We evaluate T ETRA RL across diverse DRL environments and embedded platforms, including clas-sic control tasks, Atari games, multi-objective reinforcement learning benchmarks, and a synthetic four-dimensional DAG-scheduling environment. Experiments are conducted on NVIDIA Jetson AGX Orin and Orin Nano platforms under realistic resource constraints. The results demonstrate that T ETRA RL consis-tently auto-balances the four objectives, delivering competitive trade-offs across them while maintaining low runtime overhead and robust adaptation to changing system conditions. The major contributions of this paper are summarized as follows: • The first unified R 4 framework for on-device DRL. We formulate embedded DRL as a four-objective optimization problem spanning real-time performance, reward quality, memory utilization, and energy consumption, and present T ETRA RL, the first runtime framework that jointly manages all four objectives. • Self-adaptive optimization with strong latency–reward trade-offs. We develop a preference-conditioned DRL framework that auto-balances the four objectives and enables runtime-switchable optimization goals through a single policy without retraining. 3• Broader support for both off-policy and on-policy DRL. Through a unified resource-primitive abstrac-tion, T ETRA RL extends resource-aware optimization beyond replay-buffer-based algorithms and provides a common runtime management interface across five heterogeneous DRL methods. • Comprehensive evaluation on real embedded platforms with negligible overhead. We conduct exten-sive experiments across multiple DRL environments, optimization objectives, and two Jetson platforms. On the budget-matched protocol T ETRA RL tracks the latency-aware R 3 controller to within 1% on la-tency, and its in-loop control adds only 0.078 ms ( 4.4% ) of pure-framework per-step latency overhead and under 1% of process memory, confirming that the framework can be deployed essentially for free on top of the bare RL pipeline. Against representative resource-control baselines (R 3 [6], DuoJoule [7], and the MAX-A/MAX-P frequency-pinning schedules), T ETRA RL cuts time-to-solve latency (wall-clock latency to first reach the target reward) by 53 .6–74 .6% on Atari-Breakout/Orin Nano, and on CartPole-v0/Orin AGX reaches the same reward target on a substantially smaller data budget rather than running the fixed schedule faster, while preserving competitive reward (e.g. DQN Breakout reward 320 .0 vs. MAX-A’s 
+
+250 .0 on AGX, and +26 .7% to +334 .0% reward over R 3 on Nano). These gains reflect that T ETRA RL’s preference-conditioned early-stop reaches the same reward target on a smaller data budget rather than running the same fixed schedule faster; under a matched fixed step budget, the per-step overhead is the negligible 4.4% reported above. 
+
+Differences from prior conference papers. This journal article substantially extends our prior conference publications, R 3 [6] and DuoJoule [7]. Compared with R 3, which focuses on latency and memory man-agement, and DuoJoule, which focuses on latency-energy co-optimization, T ETRA RL introduces a unified four-objective optimization framework, preference-conditioned policy learning, runtime-switchable multi-objective auto-balancing, hardware-aware DVFS control, support for both off-policy and on-policy DRL algorithms, and a significantly expanded evaluation methodology covering multi-objective benchmarks, dy-namic preference switching, DVFS characterization, and extensive cross-platform experiments. 
+
+# 2 Background 
+
+Deep Reinforcement Learning (DRL) trains an agent to maximize the expected discounted return by inter-acting with an environment, and underpins modern autonomous decision making in robotics, drones, and assisted-driving systems [1, 2, 8]. While inference is increasingly pushed to the edge, a growing class of deployments also requires on-device training : when an autonomous robot or vehicle encounters terrain, obstacles, traffic, or sensor characteristics that drift away from its pretraining distribution, it must keep adapting its policy locally because cloud connectivity is often unavailable, unreliable, or too costly to be in the control loop [3–5]. Doing this directly on embedded hardware means the same platform must sus-tain timely decision making while running the learning algorithm under tight memory and power budgets. The levers available to manage this regime are the resource and frequency knobs already present on these platforms: on the algorithm side, the replay/rollout configuration (e.g. minibatch size, replay capacity, and update schedule), and on the hardware side, Dynamic Voltage and Frequency Scaling (DVFS) over CPU and GPU operating frequencies, which trades execution time against energy and thermal headroom [7, 13]. We evaluate four quantities, all measured from real on-device telemetry. Latency L is the realized per-step or per-update wall-clock time, the timeliness proxy for the real-time objective. Memory M is peak unified CPU/GPU memory utilization during training, reported as a fraction of total device memory, since DRL training competes for the same unified memory as perception, planning, and OS services. Maximal reward Rmax is the best task return achieved over a run (e.g. raw game score on Atari-Breakout), capturing learning quality independent of the system overhead. Because L and M are costs (lower is better) while 4Rmax is a utility (higher is better), we normalize each axis and orient them consistently before any cross-method comparison. 
+
+# 3 Motivation 
+
+Table 1: Workload drift within a single on-device training run motivates soft resource objectives over static hard caps. Both peak unified-memory utilization (a) and mean power draw (b) for DQN on Atari-Breakout, measured on an NVIDIA Jetson AGX Orin (32 GB unified memory; 200 k environment steps, single seed, 
+
+100 k replay capacity, gradient updates begin at step 50 k), bucketed in 10 k-step windows. Memory drifts 
+
+2.69 × as the off-policy replay buffer first warms and then fills, while power draw drifts 1.40 × once gradient updates begin. This substantial intra-run drift in both resources shows that a static cap is either overly restrictive early on or ineffective after convergence. 
+
+> (a) Memory drift
+
+# Phase Step window Peak memory Warm-up 0–10 k 10 .4% 40 –50 k 17 .4% 
+
+# Training 50 –60 k 20 .3% 90 –100 k 27 .4% 
+
+# Plateau 130 –140 k 27 .9% 190 –200 k 27 .9% 
+
+# Intra-run drift 2.69 ×
+
+> (b) Energy drift
+
+# Phase Step window Mean power Warm-up 0–10 k 4.6 W
+
+# 40 –50 k 4.7 WTraining 50 –60 k 6.3 W
+
+# 90 –100 k 6.4 WPlateau 130 –140 k 6.4 W
+
+# 160 –170 k 6.4 W
+
+# Intra-run drift 1.40 ×
+
+3.1 Why resource budgets must be soft objectives, not hard caps 
+
+R3 [6] and DuoJoule [7], the two closest prior systems on Jetson hardware, both target on-device DRL train-ing (not merely inference), yet both treat their critical resource as a hard constraint guarded by a hand-tuned controller: R 3 gates batch size against a latency-driven moving-average tracker, and DuoJoule’s Metric-Tracker collapses energy and latency into a single discrete efficiency-mode switch. While a static budget is reasonable when the workload is stationary, on-device training is non-stationary, and three compounding reasons make a hard cap ill-suited here. First, the memory footprint is non-stationary by construction: it grows over the course of a run as the replay buffer warms and fills, rather than holding at the fixed level a static cap assumes. This growth is driven primarily by the off-policy DQN replay buffer, which fills from warm-up to its configured capacity over training and is the dominant consumer of the rising peak unified-memory footprint. In a representative run on an NVIDIA Jetson AGX Orin (32 GB unified memory), DQN on Atari-Breakout, 200 k environment steps, single seed, with the same 100 k replay capacity used in our on-device evaluation, the peak unified-memory utilization drifts by 2.69 × (from 10 .4% to 27 .9% , i.e. from about 3.3 GB to 8.9 GB on the 32 GB board) between the first and last 10 k training steps as the replay buffer fills (Table 1). The same run’s 5Table 2: Hard-budget infeasibility for both memory and power. Sweeping a static cap over the same DQN-Breakout 200 k run with hard-abort-on-cap. (a) Static unified-memory caps swept 12 –40% : every cap 
+
+≤ 28% aborts mid-training, while caps ≥ 32% complete the full 200 k steps without ever binding. (b) Static power caps swept over the same run on real on-device telemetry (MAXN, jetson_clocks): every cap at or below the converged training draw forces a hard abort, while a cap above the peak draw never binds. In neither resource is any single static cap both feasible during warm-up and constraining at convergence. 
+
+(a) Memory budget                         
+
+> Static cap Abort step Outcome
+> 12% ∼19 .9kAborts (warming)
+> 16% ∼42 .8kAborts
+> 20% ∼57 .7kAborts
+> 24% ∼80 .4kAborts
+> 28% ∼137 .8kAborts (near peak)
+> 32% —Full 200 k (never binds)
+> 40% —Full 200 k (never binds)
+
+(b) Power budget                                                
+
+> Power cap Abort step Max reward Energy Mean power Outcome
+> 4.0W∼0.0k—0.0kJ 4.3WAborts
+> 4.5W∼9.4k0.26 0.1kJ 4.4WAborts
+> 5.0W∼50 .2k0.35 0.3kJ 4.6WAborts
+> 6.0W∼51 .0k0.35 0.4kJ 4.6WAborts
+> 7.0W—2.60 8.8kJ 5.9WFull 200 k (never binds)
+
+power draw drifts similarly, rising from about 4.6 W during warm-up to about 6.4 W ( 1.40 ×) once gradient updates begin at step 50 k (Table 1b). A hard ceiling chosen at deployment time is therefore either (i) below the eventual steady-state footprint, in which case the run may proceed through warm-up but aborts later as the replay buffer fills and gradient updates begin, or (ii) above the peak footprint to guarantee completion, in which case it never constrains the run and provides no useful steering signal. Table 2 shows this directly: memory caps at or below the converged peak eventually abort, while caps above the peak complete without ever binding. We make this concrete in Table 2: sweeping a static unified-memory cap from 12% to 40% 
+
+over the same 200 k DQN-Breakout run with an R 3-style hard-abort-on-cap, every cap at or below the 27 .9% 
+
+converged peak forces a hard abort partway through training, a 12% cap aborts at step ∼19 .9 k while the replay buffer is still warming, and even a 28% cap (essentially at the converged peak) aborts at step ∼137 .8 k, while every cap strictly above the peak ( ≥ 32% ) runs the full 200 k steps without ever binding, leaving no value that is simultaneously feasible during warm-up and constraining at convergence. This infeasibility is precisely why T ETRA RL adopts a preference-conditioned PPO arbiter that adapts the effective budget online rather than committing to a static ceiling chosen at deployment time. Second, hard-constraint violations in DRL training are not recoverable in the same way as in inference. A missed latency target in an inference pipeline drops one frame; a memory-cap or energy-cap abort in training can instead terminate the process or discard a partially-applied update, stalling or destabilizing the run rather than dropping a single step [8, 14]. Penalizing budget overruns softly keeps the learning signal alive while still steering the policy away from the budget, and a separate hardware-level safety guardrail can catch the rare hard violations as a last-resort backup, so the learner never has to choose between staying within budget and continuing to learn. Third, the user-facing semantics are themselves soft, and energy is where this matters most. On-device DRL training is interesting precisely because it lets an agent keep adapting after deployment, but the deploy-ments that need this are exactly the ones running untethered on a fixed energy supply: a field robot or drone that refines its policy between charges, a battery- or solar-powered sensor node that must keep learning for days on a single charge, or a wearable that adapts on the user’s device without draining it. In all of these, energy is not a tidy hard ceiling but a budget that the deployment context keeps changing, battery state of charge falls over a mission, a harvesting node’s input varies with sunlight, and a platform’s sustainable power envelope is itself a limit. That envelope is concrete: each board has an instantaneous power level it can deliver and dissipate before it throttles, and compute-heavy update steps can spike draw past it, at which point the platform caps its clocks (slowing training) or, in the worst case, browns out the device. A robot 6whose battery has dropped to 30% should therefore be biased toward energy efficiency, not forbidden from a control action that would briefly push power high, and a node running low on harvested energy should ease off rather than abort; a tightening end-of-episode latency target should likewise steer the policy without hard-clipping it. These preferences should be tunable at runtime, and serving them should not demand heavy extra ma-chinery, a separate hand-tuned controller per regime, or offline profiling for every new battery or platform. The gap, then, is the absence of a single mechanism that exposes energy alongside the other resources as a soft, tunable preference the learner can be steered by online, so the same trained agent can switch be-tween, e.g., a battery-saver and a performance regime as conditions change rather than being locked to one operating point chosen at deployment time. 
+
+On-device training shifts as it learns, so any fixed memory or energy limit is either too tight and kills the run early or too loose and never bites. All four resource dimensions should be soft, tunable, optimizable objectives the runtime steers toward, not rigid limits. 
+
+Takeaway: Soft budgets, not hard caps 
+
+3.2 Why 4-D co-optimization (R 4) cannot be decomposed Latency    
+
+> (R 1)
+> Reward
+> (R 2)
+> Memory
+> (R 3)
+> Energy
+> (R 4)
+> 0.25
+> 0.50
+> 0.75
+> 1.0
+> CartPole-v0
+> Latency
+> (R 1)
+> Reward
+> (R 2)
+> Memory
+> (R 3)
+> Energy
+> (R 4)
+> 0.25
+> 0.50
+> 0.75
+> 1.0
+> Breakout
+> MAX-A R3DuoJoule TetraRL
+
+(a) Controller coverage across two workloads on Orin AGX Latency    
+
+> (R 1)
+> Reward
+> (R 2)
+> Memory
+> (R 3)
+> Energy
+> (R 4)
+> 0.25
+> 0.50
+> 0.75
+> 1.0
+> MAXN
+> Latency
+> (R 1)
+> Reward
+> (R 2)
+> Memory
+> (R 3)
+> Energy
+> (R 4)
+> 0.25
+> 0.50
+> 0.75
+> 1.0
+> 30W
+> MAX-A R3DuoJoule TetraRL
+
+(b) Controller coverage under two power conditions on Orin AGX 
+
+Figure 2: Empirical R 4 coverage of four controllers under changing operating conditions. (a) Coverage across two workloads on the same hardware platform. (b) Coverage under two power envelopes on the same hardware platform. In all radar plots, each axis is normalized so that the outer ring corresponds to the per-axis best value across controllers. Changes in workload or power budget substantially alter controller rankings and reduce the coverage of lower-dimensional heuristics, whereas T ETRA RL consistently remains at or near the outer ring across conditions. Once memory and energy are soft objectives rather than hard caps, the natural next question is whether they can be optimized separately, one controller per resource. They cannot: on the unified-memory edge platforms we target, the objectives interact through shared hardware knobs and a shared memory–power sub-strate. Raising the GPU DVFS frequency shortens per-step latency but drives energy up super-linearly, and sustained high DRAM occupancy raises the refresh and bandwidth power floor, coupling memory pressure directly to the energy reserve in a way that has no analogue on discrete-GPU hosts. An independent per-objective controller would therefore fight itself, with each controller’s setpoint silently shifting cost onto the resources it does not see; this is exactly why T ETRA RL treats the resources jointly under a single preference-conditioned arbiter rather than as decoupled per-objective loops. Table 3 makes these couplings concrete 7with real on-device sweeps: sweeping GPU DVFS frequency traces a non-monotone latency–energy fron-tier, and sweeping replay-buffer capacity simultaneously moves memory against both reward and energy, so no single axis can be tuned without displacing the others. Table 3: Pairwise resource trade-offs on DQN on Atari-Breakout on AGX Orin, shown as three sub-tables. (a) Latency vs. energy as the GPU DVFS frequency is swept across its operating points ( 306 –1300 MHz), tracing a non-monotone frontier (minimum energy at 918 MHz). (b,c) A single replay-buffer capacity sweep (25 k– 200 k): peak unified-memory utilization against maximal reward, and against total energy. Raising capacity past ∼ 50 k keeps consuming memory and energy without improving reward, while shrinking it below 50 k collapses reward (and energy, since the run no longer fills). Every entry is a real on-device run; the knobs that improve one axis displace another, so the four resources cannot be optimized in isolation.                                             
+
+> (a) Latency–energy: GPU DVFS sweep GPU freq. Step lat. Total (MHz) (ms) energy (J)
+> 306 9.17 11217 .7510 7.54 9382 .7714 7.02 8757 .0918 6.89 8597 .21122 6.95 8687 .91300 7.03 8807 .9
+> (b) Replay sweep: memory–reward Replay Peak mem. Max capacity util. reward
+> 25 k0.153 0.35 50 k0.209 2.46 100 k0.297 2.23 150 k0.385 2.45 200 k0.472 2.42
+> (c) Replay sweep: memory–energy Replay Peak mem. Total capacity util. energy (J)
+> 25 k0.153 1693 .850 k0.209 8683 .6100 k0.297 8626 .3150 k0.385 8566 .1200 k0.472 8536 .6
+
+A natural counter-proposal to the 4-D framing is to stack four independent single-axis controllers, or to optimize the most coupled pair (latency–energy, as DuoJoule does) and treat the others as feed-forward inputs. We do not adopt this design for two empirical reasons rooted in the unified-memory architecture common to many edge and embedded platforms. The first is that the four R 4 axes are pairwise non-separable. Increasing the PPO batch size raises reward (more on-policy samples per update) but lengthens per-step latency; raising GPU DVFS frequency shortens latency but increases energy super-linearly [15, 16]; shrinking the replay buffer to recover RAM cuts sample efficiency and therefore reward [17]; on a unified-memory device, sustained high DRAM occupancy raises the refresh and bandwidth power floor, coupling RAM directly to the energy reserve in a way that does not occur on discrete-GPU hosts. Any controller that optimizes a strict subset of these four axes silently shifts cost onto the remaining ones; this is the regime in which R 3 (latency and RAM) and DuoJoule (latency and energy) operate, each covering only a 2-D slice of the R 4 space and leaving the other two axes uncontrolled, the regime that the R 4-axis coverage table (Table 4) makes explicit. The second is that the best operating points across the four axes do not combine independently: the operating point that is best when one R-dimension matters most need not be best when a different dimension is prioritized, and the collection of operating points needed to serve the full range of deployment preferences is larger than simply pooling the best point for each axis in isolation. A handful of single-axis controllers therefore cannot cover the deployments that care about several R-dimensions at once, which is what a single preference-conditioned controller is meant to do. The trade-off here favors broad coverage: such a controller may give up ground to an axis-specialist when a deployment cares almost entirely about one dimension, which is the natural cost of solving the broader four-way problem rather than a single axis. The 4-D framing is therefore the minimum dimensionality at which the trade-off can be exposed to the user as a runtime knob; lower-dimensional framings collapse the knob silently into a single hand-tuned operating point. 8The four resource dimensions push against each other and their best settings do not combine independently, so tuning them one at a time just shifts cost onto the others. They must be optimized jointly as a single four-way problem. 
+
+> Takeaway: Co-optimize all dimensions together
+
+3.3 Why an expert-based heuristic controller is insufficient 
+
+Expert-based heuristic controllers [6, 7] are a sound design for the settings they target: by treating their crit-ical resource as a hard constraint and scoping to deployments where not all four R 4 axes are simultaneously active, they relax the problem to a well-posed 2-D slice and solve it efficiently. The question this subsection addresses is therefore not whether such heuristics are useful, but what the full 4-D, preference-conditioned setting additionally requires when all four axes matter at once, and a lookup table indexed by the preference vector would have to stand in for a learned controller. Even granting the heuristic framing in steady state, three orthogonal regimes that on-device DRL inhabits simultaneously expose requirements beyond what a static threshold rule was designed to meet. Table 4: Trade-off region covered by each system. R3 and DuoJoule each optimize a 2-D slice of the R4 space and treat the other two axes as fixed deployment-time choices; PD-MORL optimizes a multi-objective reward but does not specifically consider hardware (no R3/R4); only T ETRA RL exposes a runtime-switchable preference vector over the full 4-D simplex. 
+
+System Optimized axes Uncovered slice R3 [6] R1, R3 R2, R4
+
+DuoJoule [7] R1, R4 R2, R3
+
+DVFO [15] R1, R4 (inference) R2, R3, training PD-MORL [18] multi-objective R2 R1, R3, R4
+
+TETRA RL R1, R2, R3, R4 —
+
+Intuitively, the runtime must keep adapting how strictly it enforces its energy and memory budgets: when behavior drifts over budget, it should tighten the pressure, and when it has slack, it can relax, contin-uously, in response to what it actually observes. A hand-set fixed threshold cannot do this; it fires the same way no matter how far the current behavior is from the budget, so it can neither tighten nor loosen as the workload changes. This adaptive, budget-tracking behavior is exactly what a learned controller buys and a static threshold rule cannot reproduce. 
+
+(i) Workload drift. The same argument that disqualifies static hard caps in Section 3.1 disqualifies static heuristic thresholds. A DVFO-style utilization-threshold rule [15] that picks the smallest GPU frequency satisfying GPU utilization less than 85% is well-calibrated for inference precisely because GPU utilization has a stationary distribution; in DRL training, the distribution shifts with the policy, and the threshold either over- or under-clocks for the majority of the run. A learned, preference-conditioned policy absorbs this drift through its value function and through periodic Lagrangian multiplier updates, neither of which a fixed-threshold rule can express. 
+
+(ii) Runtime drift. Once the deployment preference is allowed to change inside an episode (a battery drop-ping below 20% shifting the emphasis toward the energy budget, a tightening control-latency target shift-ing it toward real-time responsiveness), every threshold in a heuristic controller has to be re-derived from scratch, because the best trade-off itself has moved. A preference-conditioned policy instead takes the 9current preference directly as part of its input and adapts within a single policy step, whereas a heuristic controller adapts only after a fresh round of manual re-tuning. 
+
+(iii) Platform drift. The heuristic-controller knobs that worked on Orin AGX (Table 5) do not transfer to Orin Nano without re-measurement: the DVFS table is different, the unified-memory pressure point is different, and the thermal envelope is different. Each new platform, therefore, requires another round of manual tuning before the heuristic produces a usable trade-off. In contrast, the preference-conditioned framework retrains the policy using the new platform’s measured action effects while preserving the same R 4 optimization in-terface. Hardware-defined safety limits are enforced through a platform-aware runtime safeguard, allowing the controller logic to remain unchanged across devices. Heuristic controllers such as DVFO frequency schedulers [15] have to be manually re-tuned whenever the workload, runtime regime, or hardware platform changes. Each such change requires engineer-hours of re-measurement and re-calibration to stay at parity with a single automatic T ETRA RL policy update, a cost that compounds across the workload-, runtime-, and platform-drift regimes discussed above. Table 5: Measured DVFS transition latencies on NVIDIA Jetson Orin AGX, 32 GB. CPU has 29 frequency points (115.2 MHz to 2.20 GHz); GPU has 11 frequency points (306 MHz to 1.30 GHz). All values in milliseconds per single transition (mean of 3 iterations per pair). Full per-pair tables are in the supplementary material. Domain # levels # pairs Mean (ms) Max (ms) CPU 29 812 0.243 0.374 
+
+GPU 11 110 3.399 6.857 
+
+> A fixed-threshold heuristic must be re-tuned by hand whenever the workload shifts, the user’s preference changes mid-run, or the hardware platform changes. This motivates a learnable, preference-aware controller design choice.
+> Takeaway: Adaptation is necessary
+
+# 4 Problem Formulation 
+
+4.1 Augmented State and Action Space 
+
+We model T ETRA RL as a runtime-control constrained Multi-Objective Markov Decision Process (MOMDP) that is coupled to, but does not replace, the base DRL task policy. The base agent observes the environment state st and selects the environment action aenv t using its own task policy πtask ψ . T ETRA RL observes hard-ware telemetry, resource state, and the current preference vector, and selects only the runtime action asys t .Thus, the runtime state is 
+
+zt = [ ht, q t, f cpu t , f gpu t , ω t], (1) where ht contains latency, memory, power/energy, and temperature telemetry; qt contains algorithm-specific queue or buffer state; and ωt ∈ ∆3 is the four-objective preference vector. The runtime action is 
+
+asys t = (∆ ut, ∆f cpu t , ∆f gpu t ), (2) where ∆ut changes the algorithm-specific resource knob, such as replay capacity, minibatch size, rollout length, or update ratio. The environment action aenv t is not selected by T ETRA RL. 10 4.2 4-D Reward Vector and Scalarization 
+
+The instantaneous reward is a 4-D vector with deliberately heterogeneous units: 
+
+rt =  − cL(Lt), ¯renv,t , −cM (Mt), −cE (Et), (3) Because the four components live on different scales, we apply per-dimension running z-score nor-malization with a 1,000-step warmup window and an exponentially-weighted moving-average filter on the raw telemetry, mirroring the empirical recommendations in multi-objective reinforcement learning (MORL) work, i.e., PD-MORL [18] and Spoor et al. [19]. For a given preference ω, the scalar surrogate is rscalar,t =
+
+ω⊤rt. Following the C-MORL [20] two-stage philosophy, the constraint terms can also be re-expressed as inequalities E[cE ] ≤ τE , E[cM ] ≤ τM to be handled by Lagrangian dual variables; the Override Layer acts as a final hardware-enforced safety net below the algorithmic Lagrangian. 
+
+4.3 Hypervolume as the Primary Metric 
+
+We follow the MORL community [21–23] in adopting the hypervolume (HV) indicator H(F ; r∗) of the achieved Pareto front F relative to a reference point r∗. HV is the dominated volume of the rectangle [r∗, p ]
+
+for every p ∈ F , and is monotone in Pareto dominance: a strictly better front always has strictly higher HV. For the Deep Sea Treasure (DST) 2-D benchmark in our Section 7 experiments we use the standard reference point r∗ = (0 .0, −25 .0) . Concretely, for a 2-D non-dominated front F = {(R(i)1 , R (i)2 )}|F | 
+
+> i=1
+
+sorted by R1 ascending, we compute 
+
+H(F ; r∗) =  
+
+> |F|
+
+X
+
+> i=1
+
+ R(i)1 − R(i−1) 1
+
+   R(i)2 − r∗,2
+
+ 1
+
+h
+
+R(i)2 > r ∗,2
+
+i
+
+, (4) with the convention R(0) 1 = r∗,1. We log HV jointly with the front cardinality |F | and the sparsity (mean inter-point Euclidean distance), so that a high HV achieved by a degenerate single-point front is detected and reported as such. 
+
+4.4 Soft-Constraint Lagrangian and Override Composition 
+
+Within a fixed preference ω, the constrained MOMDP induces the per-episode optimization 
+
+max  
+
+> π
+
+Eπ
+
+"X
+
+> t
+
+γtω⊤rt
+
+#
+
+s.t. Eπ
+
+"X
+
+> t
+
+γtck(st, a t)
+
+#
+
+≤ τk,
+
+∀k ∈ { E, M }.
+
+(5) Eq. (5) can be solved by primal-dual updates with adaptive Lagrangian multipliers λk, mirroring PPO-Lagrangian as wrapped by OmniSafe [24]. The Override Layer is composed below this dual update: it does not change λk but vetoes the actions the policy emits whenever telemetry crosses the hardware safety thresh-old, so violations of τk are upper-bounded by the Override’s own threshold τ HW k rather than by whatever value the dual learns. In practice, because both DVFS transitions and on-device telemetry are subject to non-negligible actuation and sensing latency, the Override Layer cannot enforce τ HW k instantaneously. We therefore position it as an empirical recovery layer that substantially reduces the frequency and magnitude of constraint violations rather than as a hard, zero-violation guarantee; the residual violations reported in our evaluation tables are a direct consequence of this delayed actuation, and the bound above should be read as the target that the Override drives the system back toward once a threshold crossing is detected. 11 5 The T ETRA RL Framework Architecture 
+
+Section 4 separates the base DRL task policy from the T ETRA RL runtime policy. In this section, we describe how this runtime controller is implemented. At each control point, the Resource Manager collects telemetry and constructs the runtime state zt; the Preference Plane provides the current objective weights ωt; the RL Arbiter proposes a system action asys t ; and the Hardware Override Layer projects unsafe proposals to an executed action ˜asys t . The Resource Manager then applies ˜asys t through algorithm-specific resource knobs and CPU-GPU DVFS controls, while the base DRL agent continues to choose environment actions through its own task policy. Fig. 3 demonstrates T ETRA RL architecture. 
+
+Figure 3: TETRA RL runtime architecture. The base DRL agent chooses environment actions, while TETRA RL controls runtime actions. The Preference Plane emits ωt; the Resource Manager builds run-time state zt from telemetry and current resource configuration; the RL Arbiter proposes a system action 
+
+asys t ; and the Hardware Override Layer projects unsafe proposals to an executed action ˜asys t . The Resource Manager maps ˜asys t onto unified resource primitives: Sample Csample , Update Cupdate , Store Mstore , and Sync 
+
+τsync , and applies the corresponding runtime and DVFS updates on Jetson hardware. Telemetry closes the loop by updating the next runtime state. 
+
+5.1 Four-Component Decomposition 
+
+TETRA RL decomposes runtime control into four components with explicit interfaces: 1. Preference Plane. Produces the preference vector ωt in the R 4: real-time, reward, memory, and energy. During training, ωt is sampled from Dirichlet( 1) at episode boundaries to expose the Arbiter to different operating regimes. During deployment, ωt may be supplied by an application planner or scheduler, e.g., shifting toward energy under low battery or toward latency under a tighter control deadline. 2. Resource Manager. Collects runtime telemetry, including latency, memory, power, current resource configuration, and CPU, GPU DVFS levels. It forms the runtime state zt used by the Arbiter and applies 12 the executed system action ˜asys t to algorithm-specific resource knobs and DVFS controls. DVFS changes are applied at block granularity to amortize transition latency. 3. RL Arbiter. Implements the preference-conditioned runtime policy πsys θ . The Arbiter observes zt
+
+and proposes a system action asys t , such as changing the algorithm-specific resource knob or moving CPU/GPU frequencies through the available DVFS tables. The base DRL agent separately selects the environment action. 4. Hardware Override Layer. Acts as a conservative runtime guardrail. Given asys t and zt, it checks de-ployment thresholds and replaces unsafe proposals with a recovery action ˜asys t when necessary. Because telemetry and actuation are delayed, the Override is evaluated as a mechanism for reducing violation frequency and magnitude rather than as a proof of zero violations. 
+
+5.2 Unified Resource-Primitive Abstraction 
+
+A central design choice in T ETRA RL is to expose different DRL algorithms through a common Resource Manager interface. The interface consists of four resource primitives: Csample for environment interaction, 
+
+Cupdate for gradient-update compute, Mstore for replay or rollout storage, and τsync for synchronization over-head. Each DRL algorithm implements a lightweight wrapper that maps its native knobs onto these prim-itives. For off-policy agents, these knobs may include replay minibatch size, replay capacity, and update ratio; for on-policy agents, they may include rollout length, minibatch size, and update schedule. Table 6 maps the evaluated DRL algorithms onto the four primitives. The Resource Manager interface is shared across algorithms, while each algorithm supplies a lightweight wrapper that maps its native knobs to the primitive interface. Table 6: Mapping of evaluated DRL algorithms onto T ETRA RL’s four resource primitives. Off-policy methods expose replay and target-network costs, while on-policy methods expose rollout, minibatch, and synchronization costs. 
+
+Alg. Csample Cupdate Mstore τsync 
+
+DQN env.step + replay Q-network SGD replay buf. target-net sync DDQN env.step + replay double-Q SGD replay buf. target-net sync C51 env.step + replay distributional SGD replay buf. target-net sync A2C rollout collection actor-critic update rollout buf. n_envs sync PPO rollout collection clipped policy update rollout buf. n_envs sync 
+
+5.3 Preference-Conditioned Runtime Policy 
+
+The RL Arbiter implements the runtime policy πsys θ from Section 4. Following preference-conditioned MORL methods such as PCN [25] and PD-MORL [18], the actor and critic condition on the runtime state, which already includes the preference vector: 
+
+πsys θ (asys | zt), Vϕ(zt), (6) where zt = [ ht, q t, f cpu t , f gpu t , ω t]. The actor outputs changes to the algorithm-specific resource knob and DVFS levels, while the base DRL agent separately selects the environment action. PPO updates use the scalarized runtime reward. During training, ωt is sampled from Dirichlet( 1) at episode boundaries and 13 Algorithm 1 TETRA RL Runtime-Control Loop  
+
+> 1:
+
+Init base DRL agent πtask ψ , Arbiter πsys θ , Resource Manager RM , Override OL  
+
+> 2:
+
+for episode e = 1 ..E do  
+
+> 3:
+
+Sample or receive preference ωe 
+
+> 4:
+
+for control block b = 1 ..B do  
+
+> 5:
+
+ht ← RM. TELEMETRY ()  
+
+> 6:
+
+zt ← [ht, q t, f cpu t , f gpu t , ω e] 
+
+> 7:
+
+asys t ∼ πsys θ (· | zt) 
+
+> 8:
+
+˜asys t ← OL. PROJECT (asys t , z t) 
+
+> 9:
+
+RM. APPLY (˜ asys t ) 
+
+> 10:
+
+for step j = 1 ..N block do  
+
+> 11:
+
+aenv j ∼ πtask ψ (· | sj ) 
+
+> 12:
+
+sj+1 , r env j ← env .step( aenv j ) 
+
+> 13:
+
+Update base DRL agent w.r.t. its algorithm  
+
+> 14:
+
+Measure Lt, M t, E t and compute rsys t 
+
+> 15:
+
+Store (zt, ˜asys t , r sys t , z t+1 ) for Arbiter update  
+
+> 16:
+
+Update πsys θ with PPO using scalarized runtime rewards  
+
+> 17:
+
+if evaluation point then  
+
+> 18:
+
+Run preference-anchor sweep and log HV, |F |, and sparsity held fixed within the episode; during evaluation, we sweep fixed preference anchors to recover the achieved Pareto front. Because the two policies act on disjoint action spaces and share no parameters, T ETRA RL is 
+
+transparent to the base DRL agent: it leaves the agent’s observation, network, loss, and environment-action selection untouched and only reshapes how much compute and energy the surrounding training loop may consume, so disabling the Arbiter recovers the original training procedure unchanged. At evaluation time, the Arbiter is frozen and evaluated over a fixed sweep of preference anchors covering the simplex corners and interior. For each anchor, the policy runs deterministically for m episodes, produc-ing normalized return vectors in the canonical R 4 order. We then log HV, front cardinality, and sparsity when available, and save the best checkpoint according to the front-level metric. 
+
+5.4 Action Masking for Real-Time Feasibility 
+
+A naive Arbiter can propose DVFS settings and resource-knob combinations that are predicted to violate la-tency, memory, or energy thresholds under the current runtime state. Before sampling, T ETRA RL constructs a conservative feasible action set Af eas (zt) ⊆ A sys using current telemetry, reserved memory headroom, and profiled DVFS latency/energy estimates. The Arbiter assigns −∞ logits to actions outside this set before the softmax, following standard invalid-action masking practice [12]. This mask reduces obviously unsafe proposals, while the Override Layer remains responsible for correcting residual unsafe actions caused by telemetry delay, workload drift, or profiling error. Concretely, an action (∆ b, ∆fcpu , ∆fgpu ) is masked if either: • the projected per-step latency under the proposed frequencies (read from the offline DVFS profile in Table 5) exceeds the remaining per-step latency budget (this assumes the workload is well-modeled by the offline profile, which is a stronger assumption for DRL training, where the workload drifts as the policy converges, than for inference; or • the projected unified-memory footprint under the new control knob exceeds Mmax − Mreserved .14 5.5 Hardware Override Layer 
+
+The Override Layer is a practical, empirical integration in our framework rather than a formally guaran-teed safety filter: because telemetry sensing and DVFS actuation are both delayed, it cannot promise zero constraint violations, and we present it only as a mechanism that reduces the frequency and magnitude of violations in practice. It is placed after the Arbiter and before action execution. Given a proposed sys-tem action asys t and runtime state zt, it checks latency, memory, and energy telemetry against deployment thresholds with safety margins. If the proposal is predicted to be unsafe, the Override replaces it with a conservative recovery action selected from the profiled feasible set: 
+
+˜asys t =
+
+(
+
+asys t , if asys t ∈ A f eas (zt),arec t , otherwise. The recovery action is chosen to reduce the active violation while preserving latency feasibility when pos-sible. If no feasible recovery action exists under the current profile, the run is marked constraint-infeasible. Consider one concrete energy-driven recovery example. Suppose the Arbiter is at (b=256 , f cpu =2 .20 GHz ,fgpu =1 .30 GHz) and proposes at = (∆ b=+0 , ∆fcpu =+0 , ∆fgpu =+0) , but the Resource Manager’s fresh-est EMA reports Estep,t = 5 .4 J > E max = 5 .0 J . The Override emits asaf e = ( b=64 , f cpu =115 .2 MHz ,fgpu =306 MHz) . The lower GPU frequency does raise the per-step latency (a deliberately conservative trade), but the smaller batch size shortens the GPU work-per-step enough that the next-step latency budget still has positive slack at the offline-profile latency for (64 , 115 .2, 306) ; the policy then re-enters the loop with a lower energy reading and, if the EMA cools below Emax , the Arbiter is free to climb back up. The fixed point of the recovery is the operating point at which Estep falls below Emax and the projected latency at the recovered (b, f cpu , f gpu ) still meets the per-step latency budget; if no such point exists in the offline profile the Override remains pinned at the lowest corner and the run is reported as a constraint-infeasible run. 
+
+5.6 Algorithm Details 
+
+Algorithm 1 shows the full training loop in detail. We walk through it line by line. Line 1 initializes the four interacting components: the base task agent πtask ψ that learns the control policy for the environment, the system Arbiter πsys θ that decides runtime control knobs, the Resource Manager RM that reads telemetry and actuates hardware, and the Override Layer OL that filters unsafe proposals. Line 2 opens the outer loop over training episodes. Line 3 samples or receives the preference vector ωe that scalarizes the multi-objective trade-off (return versus latency, memory, and energy) for the episode, so the same network can be conditioned on different operating points. Line 4 opens the inner loop over control blocks: the Arbiter acts at the coarser block granularity rather than every environment step, which keeps DVFS and knob changes infrequent enough to avoid actuation thrash. Within each control block, line 5 queries the Resource Manager for the current hardware telemetry ht,and line 6 assembles the Arbiter’s observation zt by concatenating that telemetry with the queue/state fea-tures qt, the current CPU and GPU frequencies f cpu t , f gpu t , and the active preference ωe. Line 7 samples a system action asys t (a DVFS/knob adjustment) from the Arbiter conditioned on zt. Line 8 passes that proposal through the Override Layer’s P ROJECT operation, which masks or replaces it with a conserva-tive feasible action ˜asys t when the raw proposal is predicted to violate a constraint; line 9 then applies the projected, vetted action to the hardware through the Resource Manager. 
+
+Lines 10–14 run the base DRL agent for Nblock environment steps under the just-applied hardware con-figuration: line 11 samples the environment action aenv j from the task policy, line 12 steps the environment to obtain the next state and reward, and line 13 updates the base agent according to its own learning rule 15 (e.g. the underlying DQN or PPO update), keeping the task learner and the system Arbiter cleanly sepa-rated. After the block finishes, line 15 measures the realized latency, memory, and energy Lt, M t, E t and computes the Arbiter’s scalarized system reward rsys t , and line 16 stores the transition (zt, ˜asys t , r sys t , z t+1 )
+
+for the Arbiter’s update. Note that the reward and transition are logged against the projected action ˜asys t
+
+actually executed, not the raw proposal, so the Arbiter learns from what was really applied. Once all control blocks in the episode complete ( line 17 ), line 18 updates the Arbiter πsys θ with PPO on the collected runtime transitions using the scalarized rewards. Finally, lines 19–21 run the periodic evaluation: at an evaluation point the algorithm performs the preference-anchor sweep and logs the hyper-volume HV, the front size |F |, and the sparsity of the resulting Pareto front, which serve as the primary multi-objective quality metrics. Line 22 closes the episode loop. 
+
+# 6 Implementation 
+
+6.1 Tegrastats Async Daemon and DVFS Controller 
+
+The tegrastats async daemon is a 100 Hz sampler that scrapes the tegrastats stream, parses CPU power, GPU power, EMC bandwidth, and per-rail temperature, and dispatches a 10 Hz EMA-filtered summary to the Resource Manager via a lock-free ring buffer. The kernel/user split (sampler runs as a low-priority daemon, dispatcher polls from the RL process) follows the DVFS-DRL-Multitask pattern [13] and bounds the worst-case sensing overhead to a few hundred microseconds per RL step. The DVFS controller writes to the cpufreq sysfs setspeed node after first switching the governor to 
+
+userspace ; on shutdown we reset to schedutil . We measured the actual per-transition latency for every (from, to) frequency pair on Orin AGX (Table 5). The CPU table has 29 ×28 = 812 distinct transitions averaging 0.243 ms (max 0.374 ms); the GPU table has 11 × 10 = 110 transitions averaging 3.399 ms (max 6.857 ms). The asymmetry (GPU is roughly 14 × slower than CPU per transition) is what motivates the super-block decision granularity: one DVFS adjustment per N =10 training steps amortizes a 6.857 ms worst-case GPU transition over a 50–500 ms training step block. 
+
+6.2 Pre-Allocated Soft-Truncation Replay Buffer 
+
+PyTorch on Orin’s unified memory fragments quickly under repeated allocate/free of large tensors [6]. The replay buffer is pre-allocated at maximum size at start-up; runtime “soft truncation” is implemented by an index mask that tells the sampler to draw only from a prefix of the physically-allocated array. This eliminates the fragmentation pathology of repeated allocate/free cycles on unified memory while preserving the algorithmic effect of resizing. 
+
+6.3 Codebase and Reproducibility 
+
+TETRA RL is implemented in ∼5 KLOC of Python on top of PyTorch [26], Gymnasium [27], and the multi-objective extension MO-Gymnasium [28], with a single-process cleanrl [29] PPO backbone driv-ing the preference-conditioned arbiter. The on-device head-to-head evaluation spans three benchmarks: 
+
+CartPole-v0 and Atari-Breakout inherited from R 3 [6] plus the higher-variance CartPole-v1 , each crossed with five DRL algorithms (DQN, DDQN, C51, A2C, PPO) and five runtime wrappers (MAX-A, MAX-P, R 3, DuoJoule, and T ETRA RL), executed on two NVIDIA Jetson platforms (Orin AGX and Orin Nano) running the JetPack 6.2 CUDA stack with PyTorch 2.8. To make every reported number reproducible, unless stated otherwise, each cell fixes its compute budget rather than its episode count ( 5 × 10 4 samples for CartPole-v0, 3.2 × 10 6 for CartPole-v1, and 1.28 × 10 7 for Breakout); CartPole cells report mean ±std over three seeds while the heavier Breakout sweeps follow a single-seed protocol, and all latency, energy, 16 and peak-memory figures are collected from on-board telemetry. The complete experimental harness, run-ner scripts, per-cell launch commands, DVFS profiles, and the telemetry-aggregation pipeline, is staged for release on acceptance to enable end-to-end reproduction on commodity Jetson hardware. 
+
+6.4 Hyperparameters and Training Schedule 
+
+Unless stated otherwise, T ETRA RL trains with the following defaults, chosen to match PD-MORL [18] and 
+
+cleanrl [29] reference settings so that any HV deltas are attributable to the framework rather than to undisclosed tuning. Actor and critic are 3-layer MLPs of widths (256 , 256 , 128) ; the third 128-wide layer adds a separate ω-conditioning bottleneck without altering the (256, 256) trunk that PD-MORL uses, and is the only network-width deviation from PD-MORL’s reference. On DAG environments, the first two MLP layers are replaced by a 64-dim GraphSAGE encoder. The PPO clip ratio is 0.2, the entropy coefficient 
+
+0.01 , the value coefficient 0.5, GAE λ = 0 .95 , and the PPO horizon n_steps =2048 with 10 epochs of minibatch size 64. The Adam learning rate is 3×10 −4 for the actor and 1×10 −3 for the critic. Preferences are sampled from Dirichlet( 1) at every episode boundary and held fixed within an episode. Evaluation runs at Keval = 10 ,000 environment steps with m = 5 episodes per anchor over an 11-anchor sweep. The DVFS super-block size is Nblock = 10 , chosen so that one worst-case 6.857 ms GPU transition (Table 5) is amortized over a ∼50 ms training-step block (i.e. <15% overhead). 0 1 2 3                      
+
+> Data Budget 1e6
+> 0
+> 200
+> 400
+> Max reward
+> DQN
+> 0123
+> Data Budget 1e6
+> 0
+> 200
+> 400
+> DDQN
+> 0123
+> Data Budget 1e6
+> 0
+> 200
+> 400
+> C51
+> 0123
+> Data Budget 1e6
+> 0
+> 200
+> 400
+> A2C
+> 0123
+> Data Budget 1e6
+> 0
+> 200
+> 400
+> PPO
+> MAX-A MAX-P R3DuoJoule TetraRL TetraRL early-stop
+
+Figure 4: Per-episode running-max reward vs data budget for CartPole-v1 on Orin AGX under the controlled-variable protocol. Every cell consumes the same total data budget ( 3.2 × 10 6 samples). Each curve is the running maximum of per-episode reward (best-so-far); per-episode reward is clipped to the environmental upper bound of 500. The black vertical dashed line marks T ETRA RL’s reward-ceiling early-stop position. Note that R 3 and DuoJoule do not apply to A2C/PPO cells. 
+
+6.5 Reward-Ceiling Early-Exit Hook 
+
+Most on-device DRL baselines [6, 7] treat the training horizon as a fixed sample budget: they continue to step the environment and apply gradient updates until the budget is exhausted, even after the policy has already attained the environment’s reward ceiling. On capped-return tasks this wastes both wall-clock latency and board-input energy on episodes that cannot improve the reward column further, and in value-based agents it actively risks catastrophic forgetting because the replay distribution keeps shifting after the task is solved. Our implementation of T ETRA RL, therefore adds a lightweight reward-ceiling early-exit hook as part of the Arbiter’s stopping logic. For environments with a known per-episode reward upper bound Rmax (e.g. CartPole-v0 with Rmax =200 , CartPole-v1 with Rmax =500 ), the Arbiter monitors the cumulative reward of each completed episode and triggers an exit as soon as a single episode return satisfies Rt ≥ Rmax :stop training at step s ⇐⇒ ∃ t ≤ s : Rt ≥ Rmax . (7) 17 This single-episode trigger is intentional: once the policy has demonstrated it can solve the task once, additional training cannot raise the reward column but can only consume more samples, energy, and wall time. The Arbiter writes an early exit flag, the triggering episode index, and the step count into the run summary, so downstream telemetry (latency, energy, peak RAM) reflects the actual work performed rather than the nominal budget. For environments without a known bounded ceiling, the hook is a no-op and TETRA RL falls back to running to the full budget like every baseline. 
+
+6.6 What We Inherited from R 3 and DuoJoule 
+
+Two pieces of R 3 [6] are reused verbatim. The first is the EMA-filtered moving-average controller for the data-tracking metric, which we generalize from a single Dn data-rate target to an EMA over the entire h(t)
+
+vector. The second is the FFmpeg co-runner protocol at 720p / 1080p / 2K, which we re-use as the OS-interference reference workload (the FFmpeg-corunner cross-platform CDF specifically is still deferred; per-step framework latency is reported by hardware tier in Section 7). From DuoJoule [7] we reuse the kernel-userspace split for low-overhead sensing and the per-DNN MetricTracker pattern (renamed Resource Manager in our codebase). We did not reuse DuoJoule’s heuristic “efficiency score” or its discrete energy-mode switcher: both are subsumed by the preference-conditioned Arbiter, since any efficiency-score level is recoverable as a specific ω in our simplex. 
+
+# 7 Evaluation 
+
+We evaluate three claims: (i) a single T ETRA RL policy can recover a high-quality Pareto front on a standard MORL benchmark, (ii) the front transfers to Orin AGX hardware with low evaluation latency, and (iii) the four-component framework’s overhead is small enough for embedded deployment. 
+
+7.1 Experimental Setup 
+
+Setup overview. We evaluate T ETRA RL on two NVIDIA Jetson platforms (AGX Orin 32 GB, Orin Nano 8 GB) across four DRL environments: CartPole-v0, CartPole-v1, Atari Breakout NoFrameskip-v4, and a synthetic DAG-scheduler multi-objective environment), five DRL algorithms (DQN, DDQN, C51, A2C, PPO), and five training-runtime wrappers (MAX-A, MAX-P, R 3, DuoJoule, T ETRA RL). 
+
+Hardware. We adopt an NVIDIA Jetson AGX Orin and an NVIDIA Jetson Orin Nano as a testbed. On both platforms the CPU governor is pinned to userspace during DVFS-active runs and reset to schedutil 
+
+on shutdown. 
+
+Software stack. TETRA RL is implemented in ∼5 KLOC of Python on top of PyTorch [26], Gymna-sium [27], and the multi-objective extension MO-Gymnasium [28], with a single-process cleanrl [29] PPO backbone for the preference-conditioned arbiter. The CartPole, and dag_scheduler_mo benchmarks are based on the mo-gymnasium suite; Atari Breakout is wrapped through the ALE-py preprocessing stack inherited from R 3 [6]. Both Jetson platforms run the JetPack 6.x CUDA stack with PyTorch 2.8. The complete experimental harness toolchain is staged for release on acceptance. 
+
+Environments. Following R 3 and DuoJoule, we leverage CartPole-v0 and Atari Breakout as simple DRL environments for standard benchmarking. We extend a more modern and stability-sensitive CartPole-v1 environment in our testing. Besides, we leverage dag_scheduler_mo , a standard MORL benchmark from mo-gymnasium for verifying Pareto effectiveness. 
+
+DRL Algorithms. Five DRL algorithms are evaluated across the on-device head-to-head: DQN [8] and 
+
+DDQN [30] (off-policy value-based, replay-buffer driven); C51 [10] (distributional value-based, 51-atom categorical head); A2C [11] and PPO [12] (on-policy actor-critic, rollout-buffer driven). The preference-conditioned arbiter on top of the lightweight cleanrl backbone uses PPO. 18 Table 7: CartPole-v0 experimental results on Orin AGX. Compute budget held constant at 5 × 10 4 samples per cell, following the setting in R 3 [6]. All metrics are end-to-end aggregated over 3 seeds as mean ± std. Bold marks the per-algo best mean per column; underline marks the per-algo second-best; ties within 0.5% are co-marked. 
+
+Algo Wrapper Latency (s) Energy (J) Peak RAM (MB) Max reward DQN MAX-A 193.1 ± 0.7 130.2 ± 0.6 2909 ± 3 200.00 ± 0.00 
+
+DQN MAX-P 197.3 ± 4.1 133.4 ± 2.7 2944 ± 45 200.00 ± 0.00 
+
+DQN R3 200.5 ± 3.9 135.9 ± 1.9 2898 ± 7 200.00 ± 0.00 
+
+DQN DuoJoule 199.8 ± 2.5 136.0 ± 1.6 2901 ± 5 200.00 ± 0.00 
+
+DQN TetraRL 19.7 ± 12.3 9.3 ± 8.3 2882 ± 3 200.00 ± 0.00 
+
+DDQN MAX-A 211.2 ± 2.9 132.0 ± 2.3 2993 ± 11 200.00 ± 0.00 
+
+DDQN MAX-P 215.2 ± 3.9 133.5 ± 1.7 2925 ± 52 200.00 ± 0.00 
+
+DDQN R3 217.7 ± 0.3 135.9 ± 0.6 2894 ± 3 200.00 ± 0.00 
+
+DDQN DuoJoule 218.4 ± 2.9 135.4 ± 1.3 2925 ± 47 200.00 ± 0.00 
+
+DDQN TetraRL 13.7 ± 2.0 4.5 ± 0.9 2870 ± 6 200.00 ± 0.00 
+
+C51 MAX-A 319.9 ± 5.1 166.9 ± 2.7 3086 ± 3 200.00 ± 0.00 
+
+C51 MAX-P 323.4 ± 4.7 171.0 ± 2.2 3154 ± 118 200.00 ± 0.00 
+
+C51 R3 327.1 ± 2.4 172.6 ± 3.0 3140 ± 81 200.00 ± 0.00 
+
+C51 DuoJoule 324.4 ± 4.2 171.3 ± 2.2 3137 ± 106 200.00 ± 0.00 
+
+C51 TetraRL 42.2 ± 31.8 16.7 ± 16.6 3057 ± 11 200.00 ± 0.00 
+
+A2C MAX-A 121.9 ± 2.1 521.5 ± 7.5 3142 ± 8 200.00 ± 0.00 
+
+A2C MAX-P 118.5 ± 1.4 507.5 ± 5.7 3172 ± 27 200.00 ± 0.00 
+
+A2C R3 N/A (incompatible) 
+
+A2C DuoJoule N/A (incompatible) 
+
+A2C TetraRL 71.9 ± 34.9 304.6 ± 151.2 3141 ± 6 200.00 ± 0.00 
+
+PPO MAX-A 193.4 ± 4.9 519.6 ± 15.6 3212 ± 8 200.00 ± 0.00 
+
+PPO MAX-P 150.7 ± 1.5 509.6 ± 5.4 3206 ± 2 200.00 ± 0.00 
+
+PPO R3 N/A (incompatible) 
+
+PPO DuoJoule N/A (incompatible) 
+
+PPO TetraRL 29.5 ± 1.3 76.1 ± 3.5 3189 ± 9 200.00 ± 0.00 0 2 4                  
+
+> Data Budget 1e4
+> 0
+> 50
+> 100
+> 150
+> 200
+> Max reward
+> DQN
+> 024
+> Data Budget 1e4
+> 0
+> 50
+> 100
+> 150
+> 200
+> DDQN
+> 024
+> Data Budget 1e4
+> 0
+> 50
+> 100
+> 150
+> 200
+> C51
+> 024
+> Data Budget 1e4
+> 0
+> 50
+> 100
+> 150
+> 200
+> A2C
+> 024
+> Data Budget 1e4
+> 0
+> 50
+> 100
+> 150
+> 200
+> PPO
+> MAX-A MAX-P R3DuoJoule TetraRL TetraRL early-stop
+
+Figure 5: Per-episode running-max reward vs data budget for CartPole-v0 on Orin AGX under 5 × 10 4-sample setting. Each curve is the running maximum of per-episode reward (best-so-far). The black vertical dashed line marks T ETRA RL’s reward-ceiling early-stop position. Note that R 3 and DuoJoule do not apply to A2C/PPO cells. 19 Table 8: CartPole-v1 experimental results on Orin AGX. Compute budget held constant at 3.2×10 6 samples per cell. All metrics are end-to-end aggregated over 3 seeds as mean ± std. Bold marks the per-algo best mean per column (lower-is-better for latency/energy/RAM; higher-is-better for reward); underline marks the per-algo second-best; ties within 0.5% are co-marked.                                                                                                                                                                                                                                                                                               
+
+> Algo Wrapper Latency (s) Energy (J) Peak RAM (MB) Max reward DQN MAX-A 1053.4 ±5.5 906.5 ±0.8 9568 ±59 500.00 ±0.00
+> DQN MAX-P 132.7 ±1.0 105.2 ±0.8 9495 ±23 500.00 ±0.00
+> DQN R3266.6 ±4.4 222.9 ±1.3 9608 ±28 500.00 ±0.00
+> DQN DuoJoule 265.3 ±0.7 222.3 ±1.0 9478 ±1500.00 ±0.00
+> DQN TetraRL 267.9 ±1.6 220.1 ±1.5 9484 ±13 500.00 ±0.00
+> DDQN MAX-A 1129.7 ±7.7 912.7 ±5.0 9650 ±21 500.00 ±0.00
+> DDQN MAX-P 143.7 ±0.9 105.4 ±0.7 9499 ±10 427.67 ±125.29 DDQN R3286.8 ±2.4 223.6 ±1.9 9579 ±79 500.00 ±0.00
+> DDQN DuoJoule 289.6 ±1.4 226.0 ±0.9 9485 ±3500.00 ±0.00
+> DDQN TetraRL 286.8 ±0.3 221.1 ±0.7 9549 ±114 500.00 ±0.00
+> C51 MAX-A 1719.6 ±12.4 1,093.7 ±64.3 10209 ±144 459.00 ±36.29
+> C51 MAX-P 218.6 ±1.9 137.1 ±0.3 9799 ±22 314.00 ±75.11 C51 R3434.3 ±3.9 282.9 ±10.3 9959 ±95 340.00 ±131.02 C51 DuoJoule 445.3 ±7.5 288.2 ±10.2 9983 ±5263.33 ±46.00 C51 TetraRL 430.0 ±2.2 261.0 ±7.5 10025 ±34 353.67 ±124.20 A2C MAX-A 712.2 ±6.9 3,427.8 ±36.2 10213 ±23 500.00 ±0.00
+> A2C MAX-P 92.1 ±0.5 438.2 ±2.2 10075 ±101 219.67 ±70.47 A2C R3N/A (incompatible)
+> A2C DuoJoule N/A (incompatible)
+> A2C TetraRL 727.1 ±4.2 3,498.7 ±22.9 10142 ±96 500.00 ±0.00
+> PPO MAX-A 1042.5 ±7.3 3,467.3 ±16.1 9975 ±54 500.00 ±0.00
+> PPO MAX-P 107.9 ±3.4 426.5 ±16.7 9759 ±72 388.67 ±82.48 PPO R3N/A (incompatible)
+> PPO DuoJoule N/A (incompatible)
+> PPO TetraRL 950.7 ±186.1 2,999.3 ±889.3 9401 ±588 500.00 ±0.00
+
+Baselines. We compare T ETRA RL against these state-of-the-art systems for optimizing for DRL systems. • MAX-A [6]: Fixed parameter configuration baseline for solely optimizing algorithm performance. • MAX-P [6]: Fixed parameter configuration baseline for solely optimizing latency. • R3 [6]: Timing-bound DRL training runtime; we inherit its MAX-A and MAX-P wrappers as the two opposite ends of the schedule-budget spectrum, plus the native R 3 latency-aware controller. • DuoJoule [7]: Greedy switching over batch size and replay ratio for energy-aware DRL training. • DVFS-DRL-Multitask [13]: DVFS-aware multitask DRL scheduler that only applies to inference sce-narios. Note that [13] does not apply to our training-inference co-running scenarios; we compare it as a reference for 4-D Pareto optimization effectiveness only. Each prior system is evaluated on its native scope. Note that none of the four prior on-device baselines natively co-optimises a 4-D (latency, reward, memory, energy) objective vector under a runtime-switchable preference; T ETRA RL is the only system in this set that does so through a single preference-conditioned policy backed by the Preference Plane, Resource Manager, RL Arbiter, and hardware Override Layer. 
+
+Metrics. We report the following metrics throughout the evaluation. Latency (s, lower is better) is the wall-clock time to solve or to consume the protocol’s sample budget; Energy (J, lower is better) is the board-input 20 Table 9: Atari Breakout experimental results on Orin AGX. Compute budget held constant at 1.28 × 10 7
+
+samples per cell. Bold marks the per-algo best mean per column; underline marks the per-algo second-best; ties within 0.5% are co-marked. 
+
+Algo Wrapper Latency (s) Energy (J) Peak RAM (MB) Max reward DQN MAX-A 6625.7 11,017.1 9612 250.00 DQN MAX-P OOM 
+
+DQN R3 7029.7 7,417.2 8729 64.00 DQN DuoJoule 7005.7 7,423.5 8727 69.00 DQN TetraRL 3310.2 5,341.1 8911 320.00 
+
+DDQN MAX-A 7271.7 10,956.3 9119 280.00 
+
+DDQN MAX-P OOM 
+
+DDQN R3 7978.9 7,615.4 8886 40.00 DDQN DuoJoule 7973.9 7,669.6 9202 40.00 DDQN TetraRL 3641.6 5,362.9 9301 84.00 C51 MAX-A 9267.8 12,459.8 4923 32.00 
+
+C51 MAX-P OOM 
+
+C51 R3 4818.5 4,444.5 4379 17.00 C51 DuoJoule 4808.7 4,411.7 4443 15.00 C51 TetraRL 2703.0 3,603.7 4625 19.00 A2C MAX-A 3642.6 16,203.5 4414 16.00 
+
+A2C MAX-P OOM 
+
+A2C R3 N/A (incompatible) 
+
+A2C DuoJoule N/A (incompatible) 
+
+A2C TetraRL 3669.6 16,399.5 4417 12.00 PPO MAX-A 5072.7 17,031.0 4544 18.00 
+
+PPO MAX-P OOM 
+
+PPO R3 N/A (incompatible) 
+
+PPO DuoJoule N/A (incompatible) 
+
+PPO TetraRL 5113.2 17,124.4 4562 14.00 0 2 4                  
+
+> Data Budget 1e4
+> 0
+> 50
+> 100
+> 150
+> 200
+> Max reward
+> DQN
+> 024
+> Data Budget 1e4
+> 0
+> 50
+> 100
+> 150
+> 200
+> DDQN
+> 024
+> Data Budget 1e4
+> 0
+> 50
+> 100
+> 150
+> 200
+> C51
+> 024
+> Data Budget 1e4
+> 0
+> 50
+> 100
+> 150
+> 200
+> A2C
+> 024
+> Data Budget 1e4
+> 0
+> 50
+> 100
+> 150
+> 200
+> PPO
+> MAX-A MAX-P R3DuoJoule TetraRL TetraRL early-stop
+
+Figure 6: Per-episode running-max reward vs data budget for CartPole-v0 on Orin Nano under 5 × 10 4-sample setting. Each curve is the running maximum of per-episode reward (best-so-far). The black vertical dashed line marks T ETRA RL’s reward-ceiling early-stop position. Note that R 3 and DuoJoule do not apply to A2C/PPO cells. 21 Table 10: CartPole-v0 experimental results on Orin Nano. Compute budget held constant at 5.0 × 10 4
+
+samples per experiment. Bold marks the per-algo best mean per column (lower-is-better for latency/en-ergy/RAM; higher-is-better for reward); underline marks the per-algo second-best; ties within 0.5% are co-marked.                                                                                                                                                                                                                                        
+
+> Algo Wrapper Latency (s) Energy (J) Peak RAM (MB) Max reward DQN MAX-A 445.1 ±1.2 576.2 ±1.5 4537 ±37 92.30 ±40.26 DQN MAX-P OOM
+> DQN R3450.0 ±2.3 574.5 ±5.2 4561 ±30 95.37 ±25.48 DQN DuoJoule 453.3 ±1.1 577.0 ±2.6 4534 ±295.37 ±25.48 DQN TetraRL 449.9 ±0.7 579.1 ±1.7 4602 ±24 167.33 ±29.01
+> DDQN MAX-A 467.5 ±2.1 570.2 ±1.9 4557 ±13 138.47 ±57.45 DDQN MAX-P OOM
+> DDQN R3482.2 ±5.6 583.7 ±10.6 4737 ±165 130.83 ±69.63 DDQN DuoJoule 488.3 ±2.3 596.5 ±3.7 4921 ±27 130.83 ±69.63 DDQN TetraRL 482.6 ±3.3 590.1 ±6.0 4901 ±56 103.77 ±11.18 C51 MAX-A 698.3 ±2.1 668.9 ±3.4 5080 ±20 140.47 ±29.93
+> C51 MAX-P OOM
+> C51 R3700.3 ±8.7 645.7 ±6.2 5158 ±786.47 ±8.13 C51 DuoJoule 700.0 ±4.3 648.4 ±6.3 5210 ±40 83.60 ±4.33 C51 TetraRL 704.6 ±5.0 662.0 ±4.1 5335 ±41 124.63 ±40.82 A2C MAX-A 273.2 ±1.9 1989.7 ±15.1 5355 ±24 101.93 ±9.69
+> A2C MAX-P OOM
+> A2C R3N/A (incompatible)
+> A2C DuoJoule N/A (incompatible)
+> A2C TetraRL 231.9 ±1.3 1574.2 ±9.3 4591 ±10 101.93 ±9.69
+> PPO MAX-A 282.1 ±42.9 1146.7 ±322.7 4341 ±430 144.57 ±18.20
+> PPO MAX-P OOM
+> PPO R3N/A (incompatible)
+> PPO DuoJoule N/A (incompatible)
+> PPO TetraRL 243.1 ±2.5 867.2 ±11.2 3746 ±4144.57 ±18.20
+
+energy over the same interval; and Peak memory (MB, lower is better) is the maximum resident footprint during the run. On Jetson’s unified-memory architecture, GPU and CPU share a single physical pool, so we report a single “Peak RAM” column throughout (the maximum unified resident memory during the run). Max reward (higher is better) is the maximum raw episode return reached within the cell’s sample budget. Two table markers denote non-measured outcomes: OOM marks a cell that exhausted unified memory before completing and is therefore excluded from the per-algorithm best/second-best ranking (it is a negative outcome rather than a measured value), and N/A (incompatible) marks algorithm–wrapper pairs that do not apply (e.g. on-policy A2C/PPO have no R 3/DuoJoule replay-buffer variants). 
+
+7.2 Overall Effectiveness 
+
+We extend the evaluation of T ETRA RL beyond the original R 3 benchmark suite by incorporating three DRL benchmarks: CartPole-v0 and Atari-Breakout (inherited from R 3), and a more modern and stability-sensitive CartPole-v1. To better reflect real-world deployment scenarios in embedded robotics, all experiments are conducted on two representative NVIDIA Jetson platforms: Orin AGX and Orin Nano. This setup al-lows us to evaluate not only algorithmic effectiveness but also cross-generation hardware robustness under 22 different compute and memory constraints. Each benchmark–platform combination spans five DRL algo-rithms (DQN, DDQN, C51, A2C, PPO) and five runtime wrappers (MAX-A, MAX-P, R 3, DuoJoule, and TETRA RL), with R 3 and DuoJoule restricted to the value-based algorithms they support; CartPole cells aggregate three seeds (mean ± std) while the heavier Breakout sweeps follow the single-seed protocol of the corresponding compute budget. Following the R 3 evaluation protocol [6], we jointly measure (i) latency predictability, (ii) algorithm efficacy, and (iii) cross-platform robustness. Compared with R 3, our study em-phasizes modern embedded deployment realism by introducing CartPole-v1 as a higher-variance and more sensitive control benchmark, while retaining CartPole-v0 and Atari-Breakout for direct comparability. 
+
+Latency Predictability across Jetson Platforms. Across all three benchmarks, T ETRA RL consistently improves end-to-end timing while matching or exceeding task quality, because its reward-ceiling early-stop hook retires a cell as soon as the policy saturates rather than burning the full sample budget. We report two complementary timing views: time-to-solve (wall-clock latency to first reach the target reward) on capped-return tasks, where T ETRA RL’s early-stop reaches the same reward target on a smaller data budget rather than running the same fixed schedule faster, and budget-matched latency under an identical sample budget, where all methods consume the same data, and the comparison isolates pure per-step timing. The time-to-solve effect is most pronounced on the short-horizon CartPole-v0 task on Orin AGX (Table 7), where TETRA RL cuts time-to-solve latency from 193.1 s to 19.7 s for DQN, from 211.2 s to 13.7 s for DDQN, from 319.9 s to 42.2 s for C51, and from 150.7 s to 29.5 s for PPO reaching the same 200-reward cap on a much smaller data budget rather than running the fixed schedule faster). On the heavy Atari-Breakout workload on AGX (Table 9), the same hook reduces DQN time-to-solve latency from 6,625.7 s (MAX-A) to 3,310.2 s ( 2.0×), DDQN from 7,271.7 s to 3,641.6 s ( 2.0×), and C51 from 9,267.8 s to 2,703.0 s ( 3.4×), confirming that the predictability benefit scales from light control loops to bursty vision workloads. On the budget-matched CartPole-v1 protocol (Table 8), where every cell consumes an identical 3.2 × 10 6-sample budget, T ETRA RL tracks the latency-aware R 3 controller to within 1% on latency (e.g. DQN 267.9 s vs. 266.6 s) while avoiding the 4–8× inflation of the MAX-A schedule (1,053.4 s), and it suppresses the long-tail latency spikes that destabilize the MAX-A baseline on Orin Nano, where MAX-A exhibits run-to-run standard deviations as large as ±348 s and ±888 s (Table 11). For Atari-Breakout on the memory-constrained Orin Nano (Table 12), the early-stop hook delivers a time-to-solve latency reduction of 53 .6% 
+
+(2.15 ×) for DQN ( 2,892 .7 s → 1,343 .4 s), 53 .0% (2.13 ×) for DDQN ( 2,862 .0 s → 1,344 .7 s), and 74 .6% 
+
+(3.94 ×) for C51 ( 3,276 .4 s → 831 .0 s) relative to MAX-A while preserving reward, mirroring the AGX trend. 
+
+Algorithm Efficacy under Resource Constraints. Despite strict timing and memory constraints, T ETRA RL preserves near-optimal policy performance. On CartPole-v0/Orin AGX every T ETRA RL cell attains the 200-reward ceiling, matching the empirically optimal baselines at a fraction of their cost. On the more sensitive CartPole-v1/Orin AGX, T ETRA RL reaches the 500-reward cap on DQN, DDQN, A2C, and PPO and recovers the second-best C51 score (353.7 vs. MAX-A’s 459.0), whereas the latency-greedy MAX-P collapses on several cells (e.g. DDQN 427.7 and C51 314.0), illustrating how T ETRA RL’s adaptive alloca-tion avoids the premature performance degradation of MAX-P-style budgeting. The advantage is sharpest where the platform is most constrained: on CartPole-v0/Orin Nano (Table 10), T ETRA RL lifts DQN max reward to 167.3, roughly 1.8× the ∼90–95 reached by R 3 and DuoJoule baselines, and it also wins the A2C and PPO cells. On Atari-Breakout/Orin AGX, T ETRA RL not only runs fastest but also achieves the best DQN reward (320.0 vs. MAX-A’s 250.0) and competitive DDQN/C51 scores, demonstrating effective co-optimization between control performance and runtime safety. On Atari-Breakout/Orin Nano, T ETRA RL retains a substantial reward advantage of +26 .7% to +334 .0% over the R 3 baseline on the value-based al-gorithms DQN 133 .0 vs. 62 .0, DDQN 230 .0 vs. 53 .0, C51 19 .0 vs. 15 .0 under the tighter unified-memory budget, consistent with its AGX-Breakout and Nano-CartPole behavior. 
+
+Cross-Platform Robustness. Across both Orin AGX and Orin Nano, T ETRA RL demonstrates consistent performance trends despite the roughly 3–4× gap in compute and unified-memory budget between the two 23 Table 11: CartPole-v1 experimental results on Orin Nano. Compute budget held constant at 3.2 × 10 6
+
+samples per cell. Bold marks the per-algo best mean per column (lower-is-better for latency/energy/RAM/-converge; higher-is-better for reward); underline marks the per-algo second-best; ties within 0.5% are co-marked.                                                                                                                                                                                                                                                                                               
+
+> Algo Wrapper Latency (s) Energy (J) Peak RAM (MB) Max reward DQN MAX-A 1311.8 ±348.0 2377.1 ±6.7 4604 ±859.50 ±78.50 DQN MAX-P 248.0 ±3.4 275.1 ±2.3 4527 ±10 162.13 ±56.01
+> DQN R3652.2 ±150.1 577.0 ±2.4 4583 ±12 141.27 ±26.16 DQN DuoJoule 818.4 ±41.6 575.7 ±3.9 4528 ±5141.27 ±26.16 DQN TetraRL 310.0 ±25.6 571.8 ±1.6 4533 ±1133.67 ±18.57 DDQN MAX-A 1182.3 ±158.7 2369.3 ±1.5 4612 ±29 167.93 ±34.58
+> DDQN MAX-P 225.5 ±1.4 273.3 ±1.0 4523 ±12 111.53 ±64.68 DDQN R3709.5 ±167.6 573.2 ±1.4 4542 ±31 149.33 ±65.05 DDQN DuoJoule 701.5 ±160.2 573.8 ±3.0 4499 ±0149.33 ±65.05 DDQN TetraRL 322.0 ±66.6 570.8 ±1.6 4560 ±80 91.07 ±81.60 C51 MAX-A 2506.9 ±887.7 2728.6 ±7.0 5016 ±60 102.37 ±5.44 C51 MAX-P 703.5 ±10.7 314.8 ±1.0 4952 ±99 100.23 ±0.38 C51 R31948.3 ±379.8 672.1 ±1.3 5061 ±40 82.97 ±10.11 C51 DuoJoule 2185.3 ±11.7 678.6 ±0.8 5001 ±577.47 ±8.28 C51 TetraRL 1892.4 ±35.9 664.1 ±1.9 5025 ±27 121.07 ±55.75
+> A2C MAX-A 354.6 ±21.6 7890.9 ±31.5 5161 ±7162.00 ±9.56
+> A2C MAX-P 46.4 ±1.1 1001.8 ±2.1 5120 ±957.50 ±16.32 A2C R3N/A (incompatible)
+> A2C DuoJoule N/A (incompatible)
+> A2C TetraRL 355.8 ±8.7 8009.2 ±70.8 5208 ±33 162.00 ±9.56
+> PPO MAX-A 694.7 ±12.4 8017.5 ±66.6 5344 ±49 9.47 ±0.21 PPO MAX-P 65.1 ±0.3 1003.4 ±28.7 5324 ±28 101.37 ±19.58
+> PPO R3N/A (incompatible)
+> PPO DuoJoule N/A (incompatible)
+> PPO TetraRL 674.0 ±52.7 7338.0 ±775.1 5408 ±33 9.47 ±0.21
+
+platforms. The qualitative ordering of methods is preserved: T ETRA RL remains the latency-and-reward Pareto leader on CartPole-v0 across both platforms (DQN large time-to-solve reduction on AGX via early-stop, best reward on Nano) and stays the fastest non-degenerate wrapper on Breakout/AGX, indicating that its benefits are not an artifact of a single hardware generation. By contrast, R 3 and DuoJoule baselines degrade noticeably and reorder when moving from AGX to Nano, MAX-A’s CartPole-v1 latency balloons from ∼1,050 s on AGX to 1,311 .8 ± 348 .0 s on Nano with severe variance, and several MAX-P Break-out/AGX cells fail outright with out-of-memory errors, highlighting their limited robustness to constrained embedded environments. On Atari-Breakout/Orin Nano (Table 12), the cross-platform ordering observed on AGX is preserved under the tighter unified-memory budget: T ETRA RL is the fastest non-degenerate wrap-per on every value-based algorithm, cutting MAX-A latency by 53 .0–74 .6% (DQN, DDQN, C51) while retaining a large reward margin over the R 3/DuoJoule baselines (e.g. DQN 133 .0 vs. R 3’s 62 .0, DDQN 
+
+230 .0 vs. 53 .0). Unlike the budget-matched AGX sweep, the Nano cells run under non-uniform sample budgets ( 8 × 10 5 steps for MAX-A versus 2–4 × 10 5 for the early-stopping R 3-family and T ETRA RL cells) , reflecting T ETRA RL’s reward-ceiling hook retiring saturated policies early; despite this, all 21 Nano cells complete without the out-of-memory failures that affected several MAX-P cells on AGX, confirming that TETRA RL’s latency-and-reward advantages transfer to the memory-constrained Jetson generation. 24 Key Insight. Overall, these results demonstrate that T ETRA RL generalizes beyond our benchmark settings and remains effective under modern embedded deployments, delivering substantial time-to-solve reductions (reaching the reward target on a much smaller data budget) on short-horizon control and 2–3.4× reductions on heavy vision workloads while matching or improving task reward; under the budget-matched protocol, it instead tracks the latency-aware R 3 controller to within 1% while adding only 4.4% per-step overhead. The introduction of CartPole-v1 further highlights that as environment dynamics become more sensitive and realistic, the benefits of runtime co-optimization and adaptive control become increasingly pronounced, particularly on resource-constrained Jetson platforms where R 3 and DuoJoule baselines lose both efficiency and ranking stability. 
+
+7.3 Overhead Analysis 0 1 2 3                      
+
+> Data Budget 1e6
+> 0
+> 200
+> 400
+> Max reward
+> DQN
+> 0123
+> Data Budget 1e6
+> 0
+> 200
+> 400
+> DDQN
+> 0123
+> Data Budget 1e6
+> 0
+> 200
+> 400
+> C51
+> 0123
+> Data Budget 1e6
+> 0
+> 200
+> 400
+> A2C
+> 0123
+> Data Budget 1e6
+> 0
+> 200
+> 400
+> PPO
+> MAX-A MAX-P R3DuoJoule TetraRL TetraRL early-stop
+
+Figure 7: Per-episode running-max reward vs data budget for CartPole-v1 on Orin Nano under the controlled-variable protocol. Every cell consumes the same total data budget ( 3.2 × 10 6 samples). Each curve is the running maximum of per-episode reward (best-so-far); per-episode reward is clipped to the environmental upper bound of 500. The black vertical dashed line marks T ETRA RL’s reward-ceiling early-stop position. Note that R 3 and DuoJoule do not apply to A2C/PPO cells. Following the R 3 per-component reporting style, we instrument the six in-loop components of the TETRA RL framework with a context-manager profiler backed by time.perf_counter_ns for wall-clock latency and tracemalloc + psutil for Python and RSS memory deltas. Each component is wrapped at the framework call-site and aggregated over a 5000-step single-seed pass on Orin AGX, with 
+
+preference_ppo as the arbiter and the 4-D dag_scheduler_mo environment as the workload. Ta-ble 13 reports per-component latency and resident memory overhead on the hardware. 
+
+Execution Latency Overhead. TETRA RL adds 0.708 ms per step on Orin AGX over the bare-RL baseline, of which the DVFS controller contributes 0.630 ms (devfreq sysfs write), the arbiter forward pass 0.043 ms, and the telemetry sampler 0.016 ms; all lightweight components together add only ∼77 μs. The full frame-work step takes 1.764 ms end-to-end on AGX, so the in-loop T ETRA RL components account for 40% of the total step latency; excluding the DVFS sysfs write (which is a kernel-driven cost, not a framework-internal computation), the pure framework overhead is 0.078 ms or 4.4% of the step, well within the 5 ms per-step budget at the 200 Hz environment-step rate that dag_scheduler_mo targets. 
+
+Memory Overhead. TETRA RL components add 5.01 MB of tracemalloc measured peak Python allocator state and 2.95 MB of RSS on top of the bare-RL pipeline on Orin AGX, dominated by the DVFS con-troller (5.00 MB tracemalloc / 2.70 MB RSS, driven by the devfreq sysfs write pool) and the EMA-filtered resource manager (0.0006 MB tracemalloc / 0.25 MB RSS); the remaining four components together con-tribute <8 KB of python-allocator peak per call. Against a typical preference-conditioned PPO process resident set of ∼600 MB on AGX, T ETRA RL’s added state is well under 1% of overall process mem-ory and <0.02% of the AGX’s 32 GB unified memory pool, dwarfed by the PyTorch runtime tensors and environment-side replay state. The dominant runtime cost is DVFS actuation through sysfs: 0.630 ms of 25 Table 12: Atari Breakout experimental results on Orin Nano. Compute budget held constant at 1.28 × 10 7
+
+samples per cell. Bold marks the per-algo best mean per column; underline marks the per-algo second-best; ties within 0.5% are co-marked. 
+
+Algo Wrapper Latency (s) Energy (J) Peak RAM (MB) Max reward DQN MAX-A 2,892.7 25,529.0 7,404.00 262.00 
+
+DQN MAX-P OOM 
+
+DQN R3 1,548.0 16,261.7 7,396.00 62.00 DQN DuoJoule 1,362.3 13,287.4 7,390.00 87.00 DQN TetraRL 1,343.4 12,557.8 7,376.00 133.00 DDQN MAX-A 2,862.0 25,704.4 7,361.00 317.00 
+
+DDQN MAX-P OOM 
+
+DDQN R3 1,492.0 15,428.4 7,344.00 53.00 DDQN DuoJoule 1,357.5 12,494.7 7,424.00 42.00 DDQN TetraRL 1,344.7 12,702.3 7,412.00 230.00 C51 MAX-A 3,276.4 27,717.7 4,444.00 34.00 
+
+C51 MAX-P OOM 
+
+C51 R3 909.1 9,327.9 4,037.00 15.00 C51 DuoJoule 820.7 7,085.3 4,167.00 19.00 C51 TetraRL 831.0 7,852.2 3,997.00 19.00 A2C MAX-A 4,911.4 35,168.9 3,823.00 356.00 
+
+A2C MAX-P OOM 
+
+A2C R3 N/A (incompatible) 
+
+A2C DuoJoule N/A (incompatible) 
+
+A2C TetraRL 4,774.2 32,222.1 3,560.00 13.00 PPO MAX-A 4,644.9 31,948.8 2,791.00 13.00 
+
+PPO MAX-P OOM 
+
+PPO R3 N/A (incompatible) 
+
+PPO DuoJoule N/A (incompatible) 
+
+PPO TetraRL 4,631.7 31,829.8 2,806.00 13.00 
+
+Table 13: Per-component measurement latency and memory overhead on Orin AGX. Bare-RL and framework-step rows below the divider are reference points, not summed components.                                
+
+> Component mean (ms) p99 (ms) mem (MB)
+> preference_plane_get 0.006 0.006 0.003
+> tegra_daemon_sample 0.016 0.018 0.003
+> rl_arbiter_act 0.043 0.056 0.001
+> override_layer_step 0.005 0.006 0.001
+> resource_manager_decide 0.007 0.007 0.001
+> dvfs_controller_set 0.630 0.832 5.001
+> Bare RL step ( preference_ppo + DAG) 0.043 N/A N/A Sum of 6 in-step components 0.708 N/A N/A Framework step (real DVFS + real tegra) 1.764 N/A N/A
+
+26 the 0.708 ms added by the six in-loop components. The remaining TetraRL controller logic, including preference lookup, telemetry sampling, arbiter inference, override checking, and resource-manager decision making, adds 0.078 ms per step, or 4.4% of the measured 1.764 ms framework step. Thus, the control logic itself is lightweight, while DVFS actuation is the main overhead and must be amortized through the super-block decision interval. 
+
+7.4 4-D Pareto Effectiveness 
+
+Table 14: 4-D Pareto evaluation on Orin Nano and Orin AGX. Hypervolume reference point is shared across platforms. |F | is mean Pareto-front cardinality. DVFS-DRL-MT abbreviates DVFS-DRL-Multitask [13]. 
+
+Platform Agent Environment Mean HV Std HV |F |
+
+Nano TETRA RL CartPole-v1 1.45 ×10 −3 9.11 ×10 −7 1.87 Nano DVFS-DRL-MT [13] CartPole-v1 1.26 ×10 −3 1.81 ×10 −6 2.33 Nano TETRA RL dag_scheduler_mo 1.24 ×10 −4 3.01 ×10 −5 6.00 Nano DVFS-DRL-MT [13] dag_scheduler_mo 1.07 ×10 −4 2.60 ×10 −5 7.13 AGX TETRA RL CartPole-v1 4.23 ×10 −3 2.66 ×10 −6 1.60 AGX DVFS-DRL-MT [13] CartPole-v1 3.93 ×10 −3 1.42 ×10 −6 4.00 AGX TETRA RL dag_scheduler_mo 4.05 ×10 −4 6.59 ×10 −5 3.73 AGX DVFS-DRL-MT [13] dag_scheduler_mo 6.71 ×10 −4 8.46 ×10 −4 9.00 
+
+Furthermore, we measure whether T ETRA RL achieves comparable performance in MORL to a dedi-cated multi-objective baseline, i.e., DVFS-DRL-Multitask [13], under the full 4-D real-telemetry objective on Jetson hardware. The experiments are based on a sweep per platform on two NVIDIA Jetson tiers. We compare our proposed method under 2 DRL environments ( CartPole-v1 , dag_scheduler_mo-v0 ). Hypervolume (HV) metric is computed against the shared reference r∗ = ( −0.1, −1.0, −0.5, −0.01) on 
+
+(−Lp99 , r env , −Mutil , −Estep ). We report Mean HV (the per-cell mean of the 4-D dominated hypervol-ume), Std HV (its standard deviation across the 15 seed– ω runs in the cell, an unbiased noise estimate), and 
+
+|F | (the mean Pareto-front cardinality per cell, a density proxy for the recovered front). As demonstrated in Tab. 14, T ETRA RL reaches or exceeds the DVFS-DRL-Multitask Pareto front on three of the four (platform, env) cells. On Orin Nano, T ETRA RL preference-PPO attains Mean HV 
+
+1.45 ×10 −3 on CartPole-v1 versus 1.26 ×10 −3 for DVFS-DRL-Multitask (a 15.1% improvement) and 
+
+1.24 ×10 −4 versus 1.07 ×10 −4 on dag_scheduler_mo (a 15.9% improvement); on Orin AGX, T ETRA RL reaches 4.23 ×10 −3 versus 3.93 ×10 −3 on CartPole-v1 (a 7.6% improvement). The single cell where the baseline scores higher is AGX dag_scheduler_mo , where DVFS-DRL-Multitask reports 6.71 ×10 −4
+
+versus T ETRA RL’s 4.05 ×10 −4; however, the baseline’s Std HV on that cell ( 8.46 ×10 −4) exceeds its own mean, so the gap is not seed-significant and we treat the two agents as statistically tied there. The head-line result is therefore consistency: a single preference-conditioned policy approximates, and on three of four cells out-scores, a dedicated multi-objective baseline across two environments and two embedded tiers, while Pareto-front cardinality ( |F | ∈ [1 .60 , 9.00] ) confirms a non-degenerate front despite the near-constant Nano memory floor ( ≈ 0.347 across all 60 Nano runs, dominated by the framework’s resident set on an 8 GB tier). We read this as approximately comparable with the reference MORL baseline. 27 8 Related Work 
+
+8.1 Embedded On-Device DRL 
+
+DRL has been deployed across a wide range of embedded and autonomous applications, including self-supervised robot navigation, autonomous driving stacks, radar perception, and physics-based motor con-trol [3, 5, 31–37]. These deployments typically run on resource-constrained edge robotics platforms such as DonkeyCar, Duckiebot, and JetBot, hosted on NVIDIA Jetson hardware and exercised through stan-dard simulation-to-robot gym interfaces [38–46]. A parallel line of real-time-systems work studies the predictable execution, latency management, and scheduling of DNN-driven autonomous workloads on such hardware [47–68]. DRL workloads on embedded GPUs have a fundamentally different shape from inference-only DNN workloads. Each training step couples a CPU-bound environment rollout, a GPU-bound gradient update, and a memory-bound experience replay (or rollout) buffer [8, 14, 17]. The literature on embedded DRL deployment is small but converging on three distinct themes. R 3 [6] adopted a hierarchical two-loop control structure: an inner per-step latency-driven feedback loop that adjusts batch size against a moving-average data tracker, and an outer episode-level coordinator that adjusts memory reservations between batch and replay buffer. DuoJoule [7] extended the same Jetson hardware family (Orin AGX, Orin Nano) by adding DVFS as an actuator and a runtime “MetricTracker” that converts target deviations into a single scalar score. Both of these systems apply only to replay-based DRL. None of these systems exposes a continuous Pareto front, none supports runtime preference switching , and none jointly manages all four R 4 axes. The DRL algorithms that these embedded runtimes host span both value-based and policy-gradient families, including DQN and its variants, double and distributional Q-learning, prioritized and distributed experience replay, DDPG, SAC, TRPO, and PPO [1, 2, 10, 14, 17, 30, 69–74], and are increasingly scruti-nized for reproducibility and benchmarking rigor [75–79]. In practice these algorithms are realized on top of general-purpose deep-learning frameworks and compilers [26, 80, 81]. A recurring concern for on-device DRL is the stability of the replay buffer over long runs: as the policy and data distribution drift, naive re-play can induce catastrophic forgetting [82–84], which is precisely why memory management and buffer composition matter for embedded training. Finally, a broad body of work on the efficiency, robustness, and dynamic behavior of DNN inference [85–107] underscores that latency, energy, and memory behavior of neural workloads are first-class deployment concerns, motivating the runtime co-optimization T ETRA RL targets. 
+
+8.2 Multi-Objective Reinforcement Learning (MORL) 
+
+Multi-Objective Reinforcement Learning (MORL) has been a widely explored topic. Envelope MORL [108] introduced a vector Q-function Q(s, a, ω ) ∈ Rk trained with a homotopy loss that interpolates between two scalarizations. PD-MORL [18] replaced the sign-fragile homotopy with a cosine-similarity envelope operator, which is robust to heterogeneous-scale objectives. PD-MORL is the natural HV reference for our 2-D DST experiments precisely because its preference operator is closest to ours; the difference is that we condition on ω at the input level rather than at the action-selection level, so a single trained network suffices. Pareto Conditioned Networks (PCN) [25] train a single network that reproduces any non-dominated return on demand, supporting non-convex Pareto fronts. PG-MORL [109] maintains a population of N scalarized policies, which is impractical for memory-constrained edge devices. C-MORL [20] adds a constraint stage on top of an init-stage population and originally inspired our framework, but as we document in Section 6, its multi-process OpenAI-Baselines lineage is incompatible with the Orin AGX CUDA runtime. The MORL survey [21] documents the broader landscape and the metrics (hypervolume, sparsity, expected utility) we adopt. 28 8.3 Constrained Reinforcement Learning 
+
+Constrained RL provides the formal scaffolding for soft-constraint embedded deployment. CPO [110] was the first practical second-order safe-RL method but its Hessian step is too expensive for Jetson hardware. FOCOPS [111] relaxes CPO to a first-order primal-dual update that is feasible on edge devices. PPO-Lagrangian, popularized by OmniSafe [24] and the Safety-Gymnasium suite [112], is the off-the-shelf workhorse, but a recent empirical study by Spoor et al. [19] showed that even on cleanly simulated Safety-Gym tasks the Lagrangian dual variables routinely allow 20–30% over-budget cost. T ETRA RL does not pretend the policy will respect its budgets, and instead provides a hardware-enforced backstop. 
+
+8.4 DVFS and Energy-Aware Edge Machine Learning 
+
+DVFS-based DNN runtimes are the closest mirror of T ETRA RL on the inference side. DVFO [15] learns a DQN that jointly controls CPU/GPU/memory frequency and offloading on multiple Jetson platforms or achieves energy-efficient inference. DVFS-DRL-Multitask [13] introduces a kernel/user-space split for low-overhead sensing and uses a soft latency-target reward shaping for multitask CPU workloads. SparseD-VFS [16] predicts intra-layer sparsity and amortizes DVFS overhead by deciding at super-block rather than per-step granularity. We borrow the kernel/user split for our tegrastats daemon and the super-block de-cision granularity for our DVFS controller. Crucially, all three of these systems only apply to inference-only workloads, while T ETRA RL targets training-inference co-running workloads, where the workload is itself drifting as the policy converges, breaking the offline-profiling assumption that DVFO relies on. 
+
+# 9 Conclusion 
+
+This paper presented T ETRA RL, an embedded-systems runtime that recasts on-device DRL as a constrained multi-objective MDP over the four-axis R4 vector (real-time, reward, RAM, reserve), and solves it with a single-process, preference-conditioned PPO agent. TETRA RL contributes a four-component architecture (Preference Plane, Resource Manager, RL Arbiter, hardware Override Layer); a unified resource-primitive abstraction that makes the same controller usable for both off-policy and on-policy RL; system mechanisms close the gap between MORL theory and Jetson reality; and a multi-platform empirical study grounded in a measured DVFS transition-latency table, a Pareto front recovered on a standard benchmark with HV competitive with the published reference across all four R objectives (real-time, reward, RAM, reserve). We hope the R 4 formulation and the four-component decomposition will serve as a stable substrate for future work on edge-RL runtimes that are simultaneously battery-aware, latency-aware, memory-aware, and reward-driven. 
+
+# References 
+
+[1] Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei A Rusu, Joel Veness, Marc G Bellemare, Alex Graves, Martin Riedmiller, Andreas K Fidjeland, Georg Ostrovski, et al. Human-level control through deep reinforcement learning. nature , 518(7540):529–533, 2015. [2] John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov. Proximal policy optimization algorithms. arXiv preprint arXiv:1707.06347 , 2017. [3] Gregory Kahn, Adam Villaflor, Bosen Ding, Pieter Abbeel, and Sergey Levine. Self-supervised deep reinforcement learning with generalized computation graphs for robot navigation. ICRA, 2018. 29 [4] B. Ravi Kiran, Ibrahim Sobh, Victor Talpaert, Patrick Mannion, Ahmad A. Al Sallab, Senthil Yo-gamani, and Patrick Pérez. Deep reinforcement learning for autonomous driving: A survey. IEEE Transactions on Intelligent Transportation Systems , 2021. [5] Marco Aggravi, Andrea Bianconi, and Claudio Pacchierotti. Haptic control of multi-robot aerial manipulation systems. IEEE Transactions on Haptics, 2021. [6] Zexin Li, Aritra Samanta, Yufei Li, Andrea Soltoggio, Hyoseung Kim, and Cong Liu. R3: On-device real-time deep reinforcement learning for autonomous robotics. In Proceedings of the IEEE Real-Time Systems Symposium (RTSS) , 2023. [7] Soheil Goharian, Aritra Samanta, Zexin Li, Hyoseung Kim, and Cong Liu. DuoJoule: Accurate on-device deep reinforcement learning for energy and timeliness. In Proceedings of the IEEE Real-Time Systems Symposium (RTSS) , 2024. [8] Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei A. Rusu, Joel Veness, Marc G. Belle-mare, Alex Graves, Martin Riedmiller, Andreas K. Fidjeland, Georg Ostrovski, et al. Human-level control through deep reinforcement learning. Nature , 518(7540):529–533, 2015. [9] Hado van Hasselt, Arthur Guez, and David Silver. Deep reinforcement learning with double q-learning. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 30, 2016. [10] Marc G Bellemare, Will Dabney, and Rémi Munos. A distributional perspective on reinforcement learning. In International conference on machine learning , pages 449–458. Pmlr, 2017. [11] Volodymyr Mnih, Adria Puigdomenech Badia, Mehdi Mirza, Alex Graves, Timothy Lillicrap, Tim Harley, David Silver, and Koray Kavukcuoglu. Asynchronous methods for deep reinforcement learn-ing. In International conference on machine learning , pages 1928–1937. PmLR, 2016. [12] John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov. Proximal policy optimization algorithms. arXiv:1707.06347 , 2017. [13] Martínez-Castelá, J. García-Alonso, and D. López-Sánchez. Energy-efficient DVFS on embedded multitask workloads via deep reinforcement learning. In Proceedings of the IEEE/ACM International Symposium on Low Power Electronics and Design (ISLPED) , 2024. [14] Timothy P. Lillicrap, Jonathan J. Hunt, Alexander Pritzel, Nicolas Heess, Tom Erez, Yuval Tassa, David Silver, and Daan Wierstra. Continuous control with deep reinforcement learning. 
+
+arXiv:1509.02971 , 2015. [15] Tao Zhang, Junping Yi, Bo Yang, Wei Bao, and Min Yang. DVFO: Learning-based DVFS for energy-efficient edge-cloud collaborative inference. IEEE Transactions on Mobile Computing (TMC) , 2023. [16] Rohit Patel and Anirban Mukherjee. SparseDVFS: Sparsity-predictive coarse-grained DVFS for DNN inference. In Proceedings of the Design Automation Conference (DAC) , 2025. [17] Dan Horgan, John Quan, David Budden, Gabriel Barth-Maron, Matteo Hessel, Hado van Hasselt, and David Silver. Distributed prioritized experience replay. In Proceedings of the International Conference on Learning Representations (ICLR) , 2018. [18] Toygun Basaklar, Suat Gumussoy, and Umit Y. Ogras. PD-MORL: Preference-driven multi-objective reinforcement learning algorithm. In Proceedings of the International Conference on Learning Rep-resentations (ICLR) , 2023. 30 [19] Daniel Spoor, Diederik M. Roijers, and Eugenio Bargiacchi. An empirical study of lagrangian meth-ods for constrained reinforcement learning. arXiv:2510.17564, 2025. [20] Ruoh-Lin Liu, Xinyi Li, Animesh Garg, Yingdong Wang, and Yang Liu. C-MORL: Constrained multi-objective reinforcement learning via two-stage pareto front discovery. In Proceedings of the International Conference on Learning Representations (ICLR) , 2025. [21] Conor F. Hayes, Roxana Radulescu, Eugenio Bargiacchi, Johan Källström, Matthew Macfarlane, Mathieu Reymond, Timothy Verstraeten, Luisa M. Zintgraf, Richard Dazeley, Fredrik Heintz, Enda Howley, Athirai A. Irissappane, Patrick Mannion, Ann Nowé, Gabriel Ramos, Marcello Restelli, Peter Vamplew, and Diederik M. Roijers. A practical guide to multi-objective reinforcement learning and planning. Autonomous Agents and Multi-Agent Systems , 36(1), 2022. [22] Peter Vamplew, Richard Dazeley, Adam Berry, Rustam Issabekov, and Evan Dekker. Empirical evaluation methods for multiobjective reinforcement learning algorithms. Machine Learning , 2011. [23] Eckart Zitzler and Simon Künzli. Indicator-based selection in multiobjective search. In Proceedings of the International Conference on Parallel Problem Solving from Nature (PPSN) , 2004. [24] Jiaming Ji, Jiayi Zhou, Borong Zhang, Juntao Dai, Xuehai Pan, Ruiyang Sun, Weidong Huang, Yiran Geng, Mickel Liu, and Yaodong Yang. OmniSafe: An infrastructural framework for accelerating safe reinforcement learning research. arXiv:2305.09304, 2023. [25] Mathieu Reymond, Eugenio Bargiacchi, and Ann Nowé. Pareto conditioned networks. In Pro-ceedings of the International Conference on Autonomous Agents and Multi-Agent Systems (AAMAS) ,2022. [26] Adam Paszke, Sam Gross, Francisco Massa, Adam Lerer, James Bradbury, Gregory Chanan, Trevor Killeen, Zeming Lin, Natalia Gimelshein, Luca Antiga, et al. PyTorch: An imperative style, high-performance deep learning library. Advances in Neural Information Processing Systems (NeurIPS) ,2019. [27] Mark Towers, Jordan K. Terry, Ariel Kwiatkowski, et al. Gymnasium: A standard interface for reinforcement learning environments. Online; https://gymnasium.farama.org/ , 2023. [28] Florian Felten, Lucas N. Alegre, Ann Nowé, Ana L. C. Bazzan, El-Ghazali Talbi, Grégoire Danoy, Travis Mason de Jonge, and Diederik M. Roijers. A toolkit for reliable benchmarking and research in multi-objective reinforcement learning. NeurIPS Datasets and Benchmarks Track, 2023. [29] Shengyi Huang, Rousslan Fernand Julien Dossa, Chang Ye, Jeff Braga, Dipam Chakraborty, Kinal Mehta, and João G. M. Araújo. CleanRL: High-quality single-file implementations of deep reinforce-ment learning algorithms. Journal of Machine Learning Research, vol. 23, 2022. [30] Hado Van Hasselt, Arthur Guez, and David Silver. Deep reinforcement learning with double q-learning. In Proceedings of the AAAI conference on artificial intelligence , volume 30, 2016. [31] Francesca Favarò, Sky Eurich, and Nazanin Nader. Autonomous vehicles’ disengagements: Trends, triggers, and regulatory limitations. Accident Analysis & Prevention , 110:136–148, 2018. [32] Shinpei Kato, Shota Tokunaga, Yuya Maruyama, Seiya Maeda, Manato Hirabayashi, Yuki Kitsukawa, Abraham Monrroy, Tomohito Ando, Yusuke Fujii, and Takuya Azumi. Autoware on board: Enabling autonomous vehicles with embedded systems. In 2018 ACM/IEEE 9th International Conference on Cyber-Physical Systems (ICCPS) , pages 287–296. IEEE, 2018. 31 [33] Chris Nota. The autonomous learning library. https://github.com/cpnota/ autonomous-learning-library , 2020. [34] Alexander Popov, Patrik Gebhardt, Ke Chen, Ryan Oldja, Heeseok Lee, Shane Murray, Ruchi Bhar-gava, and Nikolai Smolyanskiy. Nvradarnet: Real-time radar obstacle and free space detection for autonomous driving. arXiv preprint arXiv:2209.14499 , 2022. [35] Xue Bin Peng, Pieter Abbeel, Sergey Levine, and Michiel van de Panne. Deepmimic: Example-guided deep reinforcement learning of physics-based character skills. ACM Transactions on Graphics (TOG) , 37(4):143, 2018. [36] Branislav Kisaˇ canin. Deep learning for autonomous vehicles. In 2017 IEEE 47th International Symposium on Multiple-Valued Logic (ISMVL) , pages 142–142. IEEE, 2017. [37] Mahsa Nikkhoo, Soroush Bateni, and Cong Liu. PIMBot: Predictable inference for multi-robot systems on edge GPUs. arXiv preprint, 2023. [38] Donkey Car. Donkey docs. https://docs.donkeycar.com/guide/build_hardware ,2023. [39] robocarstore. Donkey car s1. https://www.robocarstore.com/products/ donkey-car-starter-kit , 2023. [40] Tawn Kramer. Openai gym environments for donkey car, 2023. [41] NVIDIA. Duckiebot (db-j). https://get.duckietown.com/products/ duckiebot-db21 , 2022. [42] NVIDIA. Sparkfun jetbot ai kit. https://www.sparkfun.com/products/18486 , 2022. [43] NVIDIA. Waveshare jetbot ai kit. https://www.amazon.com/ Waveshare-JetBot-AI-Kit-Accessories/dp/B07V8JL4TF/ , 2022. [44] NVIDIA. Jetson agx xavier. https://developer.nvidia.com/embedded/ jetson-agx-xavier , 2020. [45] NVIDIA Corporation. NVIDIA Jetson AGX Orin developer kit technical specifications. Online; 
+
+https://developer.nvidia.com/embedded/jetson-agx-orin , 2022. [46] Greg Brockman, Vicki Cheung, Ludwig Pettersson, Jonas Schneider, John Schulman, Jie Tang, and Wojciech Zaremba. Openai gym, 2016. [47] Tobias Blaß, Arne Hamann, Ralph Lange, Dirk Ziegenbein, and Björn B. Brandenburg. Automatic latency management for ROS 2: Benefits, challenges, and open problems. In 27th IEEE Real-Time and Embedded Technology and Applications Symposium, RTAS 2021, Nashville, TN, USA, May 18-21, 2021 , pages 264–277. IEEE, 2021. doi: 10.1109/RTAS52030.2021.00029. URL https:// doi.org/10.1109/RTAS52030.2021.00029 .[48] Hyunjong Choi, Yecheng Xiang, and Hyoseung Kim. Picas: New design of priority-driven chain-aware scheduling for ROS2. In 27th IEEE Real-Time and Embedded Technology and Applications Symposium, RTAS 2021, Nashville, TN, USA, May 18-21, 2021 , pages 251–263. IEEE, 2021. doi: 10.1109/RTAS52030.2021.00028. URL https://doi.org/10.1109/RTAS52030.2021. 00028 .32 [49] Tobias Blaß, Daniel Casini, Sergey Bozhko, and Björn B. Brandenburg. A ROS 2 response-time analysis exploiting starvation freedom and execution-time variance. In 42nd IEEE Real-Time Systems Symposium, RTSS 2021, Dortmund, Germany, December 7-10, 2021 , pages 41–53. IEEE, 2021. doi: 10.1109/RTSS52674.2021.00016. URL https://doi.org/10.1109/RTSS52674.2021. 00016 .[50] Mingoo Ji, Saehanseul Yi, Changjin Koo, Sol Ahn, Dongjoo Seo, Nikil D. Dutt, and Jong-Chan Kim. Demand layering for real-time DNN inference with minimized memory usage. In IEEE Real-Time Systems Symposium, RTSS 2022, Houston, TX, USA, December 5-8, 2022 , pages 291– 304. IEEE, 2022. doi: 10.1109/RTSS55097.2022.00033. URL https://doi.org/10.1109/ RTSS55097.2022.00033 .[51] Xu Jiang, Dong Ji, Nan Guan, Ruoxiang Li, Yue Tang, and Yi Wang. Real-time scheduling and analysis of processing chains on multi-threaded executor in ROS 2. In IEEE Real-Time Systems Symposium, RTSS 2022, Houston, TX, USA, December 5-8, 2022 , pages 27–39. IEEE, 2022. doi: 10.1109/RTSS55097.2022.00013. URL https://doi.org/10.1109/RTSS55097.2022. 00013 .[52] Jingyan Jiang, Ziyue Luo, Chenghao Hu, Zhaoliang He, Zhi Wang, Shutao Xia, and Chuan Wu. Joint model and data adaptation for cloud inference serving. In 42nd IEEE Real-Time Systems Symposium, RTSS 2021, Dortmund, Germany, December 7-10, 2021 , pages 279–289. IEEE, 2021. doi: 10.1109/ RTSS52674.2021.00034. URL https://doi.org/10.1109/RTSS52674.2021.00034 .[53] Ruoxiang Li, Nan Guan, Xu Jiang, Zhishan Guo, Zheng Dong, and Mingsong Lv. Worst-case time disparity analysis of message synchronization in ROS. In IEEE Real-Time Systems Symposium, RTSS 2022, Houston, TX, USA, December 5-8, 2022 , pages 40–52. IEEE, 2022. doi: 10.1109/RTSS55097. 2022.00014. URL https://doi.org/10.1109/RTSS55097.2022.00014 .[54] Vinod Nigade, Pablo Bauszat, Henri E. Bal, and Lin Wang. Jellyfish: Timely inference serving for dynamic edge networks. In IEEE Real-Time Systems Symposium, RTSS 2022, Houston, TX, USA, December 5-8, 2022 , pages 277–290. IEEE, 2022. doi: 10.1109/RTSS55097.2022.00032. URL 
+
+https://doi.org/10.1109/RTSS55097.2022.00032 .[55] Yue Tang, Zhiwei Feng, Nan Guan, Xu Jiang, Mingsong Lv, Qingxu Deng, and Wang Yi. Re-sponse time analysis and priority assignment of processing chains on ROS2 executors. In 41st IEEE Real-Time Systems Symposium, RTSS 2020, Houston, TX, USA, December 1-4, 2020 , pages 231– 243. IEEE, 2020. doi: 10.1109/RTSS49844.2020.00030. URL https://doi.org/10.1109/ RTSS49844.2020.00030 .[56] Harun Teper, Mario Günzel, Niklas Ueter, Georg von der Brüggen, and Jian-Jia Chen. End-to-end timing analysis in ROS2. In IEEE Real-Time Systems Symposium, RTSS 2022, Houston, TX, USA, December 5-8, 2022 , pages 53–65. IEEE, 2022. doi: 10.1109/RTSS55097.2022.00015. URL 
+
+https://doi.org/10.1109/RTSS55097.2022.00015 .[57] Soroush Bateni and Cong Liu. NeuOS: A latency-predictable multi-dimensional optimization frame-work for DNN-driven autonomous systems. In Proceedings of the USENIX Annual Technical Con-ference (ATC) , 2020. [58] Soroush Bateni, Husheng Zhou, Yuankun Zhu, and Cong Liu. PredJoule: A timing-predictable energy optimization framework for deep neural networks. In Proceedings of the IEEE Real-Time Systems Symposium (RTSS) , 2018. 33 [59] Soroush Bateni and Cong Liu. Apnet: Approximation-aware real-time neural network. In 2018 IEEE Real-Time Systems Symposium (RTSS) , pages 67–79. IEEE, 2018. [60] Joo Seong Jeong, Jingyu Lee, Donghyun Kim, Changmin Jeon, Changjin Jeong, Youngki Lee, and Byung-Gon Chun. Band: coordinated multi-dnn inference on heterogeneous mobile processors. In 
+
+Proceedings of the 20th Annual International Conference on Mobile Systems, Applications and Ser-vices , pages 235–247, 2022. [61] Woosung Kang, Kilho Lee, Jinkyu Lee, Insik Shin, and Hoon Sung Chwa. Lalarand: Flexible layer-by-layer cpu/gpu scheduling for real-time dnn tasks. In 2021 IEEE Real-Time Systems Symposium (RTSS) , pages 329–341. IEEE, 2021. [62] Simon Ramstedt and Chris Pal. Real-time reinforcement learning. In Hanna M. Wallach, Hugo Larochelle, Alina Beygelzimer, Florence d’Alché-Buc, Emily B. Fox, and Roman Garnett, ed-itors, Advances in Neural Information Processing Systems 32: Annual Conference on Neural Information Processing Systems 2019, NeurIPS 2019, December 8-14, 2019, Vancouver, BC, Canada , pages 3067–3076, 2019. URL https://proceedings.neurips.cc/paper/ 2019/hash/54e36c5ff5f6a1802925ca009f3ebb68-Abstract.html .[63] Yufei Li, Soroush Bateni, and Cong Liu. RT-LM: Uncertainty-aware resource management for real-time inference of language models. In Proceedings of the IEEE Real-Time Systems Symposium (RTSS) , 2023. [64] Yufei Li, Zexin Li, Wei Yang, and Cong Liu. RED: A systematic real-time scheduling approach for robotic environmental dynamics. In Proceedings of the IEEE Real-Time Systems Symposium (RTSS) ,2023. [65] Andrew G. Barto, Richard S. Sutton, and Charles W. Anderson. Neuronlike adaptive elements that can solve difficult learning control problems. IEEE Transactions on Systems, Man, and Cybernetics ,SMC-13(5):834–846, 1983. doi: 10.1109/TSMC.1983.6313077. [66] Larkin Heintzman, Amanda Hashimoto, Nicole Abaid, and Ryan K Williams. Anticipatory planning and dynamic lost person models for human-robot search and rescue. In 2021 IEEE International Conference on Robotics and Automation (ICRA) , pages 8252–8258. IEEE, 2021. [67] Yecheng Xiang and Hyoseung Kim. Pipelined data-parallel cpu/gpu scheduling for multi-dnn real-time inference. In 2019 IEEE Real-Time Systems Symposium (RTSS) , pages 392–405. IEEE, 2019. [68] Husheng Zhou, Soroush Bateni, and Cong Liu. Sˆ 3dnn: Supervised streaming and scheduling for gpu-accelerated real-time dnn workloads. In 2018 IEEE Real-Time and Embedded Technology and Applications Symposium (RTAS) , pages 190–201. IEEE, 2018. [69] Tom Schaul, John Quan, Ioannis Antonoglou, and David Silver. Prioritized experience replay. arXiv preprint arXiv:1511.05952 , 2015. [70] Tom Schaul, John Quan, Ioannis Antonoglou, and David Silver. Prioritized experience replay. In 4th International Conference on Learning Representations, ICLR 2016 , 2016. [71] Marc G Bellemare, Yavar Naddaf, Joel Veness, and Michael Bowling. The arcade learning envi-ronment: An evaluation platform for general agents. Journal of Artificial Intelligence Research , 47: 253–279, 2013. 34 [72] Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel, and Sergey Levine. Soft actor-critic: Off-policy max-imum entropy deep reinforcement learning with a stochastic actor. In Proceedings of the International Conference on Machine Learning (ICML) , 2018. [73] John Schulman, Sergey Levine, Philipp Moritz, Michael I. Jordan, and Pieter Abbeel. Trust region policy optimization. In Proceedings of the International Conference on Machine Learning (ICML) ,2015. [74] Kai Arulkumaran, Marc Peter Deisenroth, Miles Brundage, and Anil Anthony Bharath. Deep rein-forcement learning: A brief survey. IEEE Signal Processing Magazine , 34(6):26–38, 2017. [75] Peter Henderson, Riashat Islam, Philip Bachman, Joelle Pineau, Doina Precup, and David Meger. Deep reinforcement learning that matters. AAAI , 2018. [76] William Fedus, Prajit Ramachandran, Rishabh Agarwal, Yoshua Bengio, Hugo Larochelle, Mark Rowland, and Will Dabney. Revisiting fundamentals of experience replay. In International Confer-ence on Machine Learning , pages 3061–3071. PMLR, 2020. [77] Alexander Nikulin, Vladislav Kurenkov, Denis Tarasov, Dmitry Akimov, and Sergey Kolesnikov. Q-ensemble for offline rl: Don’t scale the ensemble, scale the batch size. arXiv preprint arXiv:2211.11092 , 2022. [78] Pierre Thodoroff, Wenyu Li, and Neil D Lawrence. Benchmarking real-time reinforcement learning. In NeurIPS 2021 Workshop on Pre-registration in Machine Learning , pages 26–41. PMLR, 2022. [79] Javier García and Fernando Fernández. A comprehensive survey on safe reinforcement learning. 
+
+Journal of Machine Learning Research , 16(1):1437–1480, 2015. [80] Tianqi Chen, Thierry Moreau, Ziheng Jiang, Lianmin Zheng, Eddie Yan, Meghan Cowan, Haichen Shen, Leyuan Wang, Yuwei Hu, Luis Ceze, et al. Tvm: An automated end-to-end optimizing compiler for deep learning. arXiv preprint arXiv:1802.04799 , 2018. [81] Martín Abadi, Paul Barham, Jianmin Chen, Zhifeng Chen, Andy Davis, Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Geoffrey Irving, Michael Isard, et al. Tensorflow: a system for large-scale machine learning. In 12th USENIX symposium on operating systems design and implementation (OSDI 16) , pages 265–283, 2016. [82] Michael McCloskey and Neal J Cohen. Catastrophic interference in connectionist networks: The sequential learning problem. In Psychology of learning and motivation , volume 24, pages 109–165. Elsevier, 1989. [83] Ali Ayub and Carter Fendley. Few-shot continual active learning by a robot. In 
+
+NeurIPS , 2022. URL http://papers.nips.cc/paper_files/paper/2022/hash/ c58437945392cec01e0c75ff6cef901a-Abstract-Conference.html .[84] Matthew Riemer, Sharath Chandra Raparthy, Ignacio Cases, Gopeshh Subbaraj, Maximilian Puelma Touzel, and Irina Rish. Continual learning in environments with polynomial mixing times. In 
+
+NeurIPS , 2022. URL http://papers.nips.cc/paper_files/paper/2022/hash/ 89c61fce5a8b73871d1c4073f486b134-Abstract-Conference.html .[85] Simin Chen, Mirazul Haque, Cong Liu, and Wei Yang. Deepperform: An efficient approach for performance testing of resource-constrained neural networks. In Proceedings of the 37th IEEE/ACM International Conference on Automated Software Engineering , pages 1–13, 2022. 35 [86] Simin Chen, Zihe Song, Mirazul Haque, Cong Liu, and Wei Yang. Nicgslowdown: Evaluating the efficiency robustness of neural image caption generation models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 15365–15374, 2022. [87] Yiming Chen, Simin Chen, Zexin Li, Wei Yang, Cong Liu, Robby T Tan, and Haizhou Li. Dynamic transformers provide a false sense of efficiency. arXiv preprint arXiv:2305.12228 , 2023. [88] Yiming Chen, Yan Zhang, Bin Wang, Zuozhu Liu, and Haizhou Li. Generate, discriminate and contrast: A semi-supervised sentence representation learning framework. arXiv preprint arXiv:2210.16798 , 2022. [89] Junfeng Guo, Ang Li, and Cong Liu. Backdoor detection and mitigation in competitive reinforcement learning. arXiv preprint arXiv:2202.03609 , 2022. [90] Sihong He, Yue Wang, Shuo Han, Shaofeng Zou, and Fei Miao. A robust and constrained multi-agent reinforcement learning framework for electric vehicle amod systems. arXiv preprint arXiv:2209.08230 , 2022. [91] Sihong He, Songyang Han, Sanbao Su, Shuo Han, Shaofeng Zou, and Fei Miao. Robust multi-agent reinforcement learning with state uncertainty. Transactions on Machine Learning Research , 2023. [92] Sihong He, Shuo Han, and Fei Miao. Robust electric vehicle balancing of autonomous mobility-on-demand system: A multi-agent reinforcement learning approach. arXiv preprint arXiv:2307.16228 ,2023. [93] Yiming Chen, Yan Zhang, Chen Zhang, Grandee Lee, Ran Cheng, and Haizhou Li. Revisiting self-training for few-shot learning of language model. arXiv preprint arXiv:2110.01256 , 2021. [94] Simin Chen, Hamed Khanpour, Cong Liu, and Wei Yang. Learning to reverse dnns from ai programs automatically. arXiv preprint arXiv:2205.10364 , 2022. [95] Zexin Li, Xiaoxi He, Yufei Li, Shahab Nikkhoo, Wei Yang, Lothar Thiele, and Cong Liu. Mimonet: Multi-input multi-output on-device deep learning. arXiv preprint arXiv:2307.11962 , 2023. [96] Zexin Li, Bangjie Yin, Taiping Yao, Junfeng Guo, Shouhong Ding, Simin Chen, and Cong Liu. Sibling-attack: Rethinking transferable adversarial attacks against face recognition. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pages 24626–24637, 2023. [97] Soroush Bateni, Yufei Li, Wei Yang, and Cong Liu. LeMix: Co-scheduling LLM training and infer-ence on heterogeneous edge hardware. In Proceedings of the IEEE Real-Time Systems Symposium (RTSS) , 2025. [98] Soroush Bateni, Wei Yang, and Cong Liu. BoxR: Box-constrained real-time inference for edge DNN workloads. In Proceedings of the IEEE Real-Time Systems Symposium (RTSS) , 2024. [99] Mahbod Afarin, Chao Gao, Shafiur Rahman, Nael Abu-Ghazaleh, and Rajiv Gupta. Commongraph: Graph analytics on evolving data. In Proceedings of the 28th ACM International Conference on Architectural Support for Programming Languages and Operating Systems, Volume 2 , pages 133– 145, 2023. [100] Jingyao Zhang, Mohsen Imani, and Elaheh Sadredini. Bp-ntt: Fast and compact in-sram number theoretic transform with bit-parallel modular multiplication. arXiv preprint arXiv:2303.00173 , 2023. 36 [101] Sefik Ilkin Serengil and Alper Ozpinar. Lightface: A hybrid deep face recognition framework. In 2020 Innovations in Intelligent Systems and Applications Conference (ASYU) , pages 23–27. IEEE, 2020. doi: 10.1109/ASYU50717.2020.9259802. URL https://doi.org/10.1109/ASYU50717. 2020.9259802 .[102] Xiaoxue Gao, Chitralekha Gupta, and Haizhou Li. Automatic lyrics transcription of polyphonic music with lyrics-chord multi-task learning. IEEE/ACM Transactions on Audio, Speech, and Language Processing , 30:2280–2294, 2022. [103] Xiaoxue Gao, Chitralekha Gupta, and Haizhou Li. Polyscriber: Integrated fine-tuning of extractor and lyrics transcriber for polyphonic music. IEEE/ACM Transactions on Audio, Speech, and Language Processing , 2023. [104] Ionel Gog, Sukrit Kalra, Peter Schafhalter, Joseph E Gonzalez, and Ion Stoica. D3: a dynamic deadline-driven approach for building autonomous vehicles. In Proceedings of the Seventeenth Eu-ropean Conference on Computer Systems , pages 453–471, 2022. [105] John K Haas. A history of the unity game engine. Diss. Worcester Polytechnic Institute , 483(2014): 484, 2014. [106] Yuan Yao, Lorenzo Rosasco, and Andrea Caponnetto. On early stopping in gradient descent learning. 
+
+Constructive Approximation , 26(2):289–315, 2007. [107] Baidu Apollo team (2017), Apollo: Open Source Autonomous Driving, howpublished = https: //github.com/apolloauto/apollo , note = Accessed: 2019-02-11. [108] Runzhe Yang, Xingyou Sun, and Karthik Narasimhan. A generalized algorithm for multi-objective reinforcement learning and policy adaptation. In Advances in Neural Information Processing Systems (NeurIPS) , 2019. [109] Jie Xu, Yunsheng Tian, Pingchuan Ma, Daniela Rus, Shinjiro Sueda, and Wojciech Matusik. Prediction-guided multi-objective reinforcement learning for continuous robot control. In Proceed-ings of the International Conference on Machine Learning (ICML) , 2020. [110] Joshua Achiam, David Held, Aviv Tamar, and Pieter Abbeel. Constrained policy optimization. In 
+
+Proceedings of the International Conference on Machine Learning (ICML) , 2017. [111] Yiming Zhang, Quan Vuong, and Keith W. Ross. First order constrained optimization in policy space. In Advances in Neural Information Processing Systems (NeurIPS) , 2020. [112] Alex Ray, Joshua Achiam, and Dario Amodei. Benchmarking safe exploration in deep reinforcement learning. OpenAI Technical Report, 2019. 37

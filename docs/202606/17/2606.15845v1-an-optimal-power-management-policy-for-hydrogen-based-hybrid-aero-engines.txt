@@ -1,0 +1,906 @@
+Title: An Optimal Power Management Policy for Hydrogen-based Hybrid Aero Engines
+
+URL Source: https://arxiv.org/pdf/2606.15845v1
+
+Published Time: Tue, 16 Jun 2026 01:38:07 GMT
+
+Number of Pages: 18
+
+Markdown Content:
+# Highlights 
+
+## An Optimal Power Management Policy for Hydrogen-based Hybrid Aero Engines 
+
+Faezeh Pak, Uto Perra, Frank Willems, Theo Hofman, Mauro Salazar 
+
+• We develop an optimization problem for a hydrogen hybrid aero engine by using curvature-constrained regression to ensure uniqueness of the solution. 
+
+• We formulate an optimal power management problem using the tractable formulation and solved analytically using Karush-Kuhn-Tucker condition. 
+
+• A closed-form analytical power management is derived. It enables real-time implementation without iterative numerical calculations. 
+
+• The validation against high fidelity models demonstrates less than 1.5% normalized root mean square error in power allocation and lower than 0.7% normalized root mean square error in fuel consumption. 
+
+> arXiv:2606.15845v1 [eess.SY] 14 Jun 2026
+
+# An Optimal Power Management Policy for Hydrogen-based Hybrid Aero Engines ⋆
+
+## Faezeh Pak a,∗,1 , Uto Perra a,2 , Frank Willems a,3 , Theo Hofman a,4 and Mauro Salazar a,5 
+
+> aEindhoven University of Technology, Groene Loper 3, Eindhoven, 5612AE, North Brabant, The Netherlands
+
+A R T I C L E I N F O 
+
+> Keywords :Power management Optimal control Solid oxide fuel cell Hybrid propulsion system
+
+A B S T R A C T     
+
+> This paper presents a power management policy for a hydrogen-based hybrid aero engine combining a gas turbine and a solid oxide fuel cell (SOFC). Specifically, we first identify a quadratic quasi-steady-state model of the propulsion system and formulate the minimum-fuel optimal control problem as a function of the power split between gas turbine and SOFC that captures the interconnections between the components and accounts for their operational limits. Second, leveraging the Karush-Kuhn-Tucker optimality conditions and partial convexity and monotonicity model properties, we compute the globally optimal steady-state power split for the different phases of the flight in closed form. Finally, we verify this power management policy with a high-fidelity integrated static model across different flight phases, revealing in less than 1.5% normalized root mean square error in power allocation and less than 0.7% in predicted fuel consumption. Our results show that the optimal power management policy can be translated into a heuristic control law requesting the highest SOFC power that does not exceed its maximum operating temperature, ultimately paving the way for minimal-effort on-board implementations.
+
+## 1. Introduction 
+
+The aviation industry has committed to becoming cli-mate neutral by 2050, partly by adopting a range of novel electrical aerospace propulsion concepts such as more-electric aircraft (MEA) [2], hybrid-electric aircraft (HEA) [3], and all-electric aircraft (AEA) [4]. In this classification, MEA enhances subsystem electrification without funda-mentally altering propulsion, e.g., hydraulic and pneumatic systems [5], and AEA concepts eliminate combustion en-tirely. Although the AEAs can reach higher efficiency [4], their main drawbacks are their increasing mass due to the current battery technology and long charging time [5]. On the other hand, HEAs combine the conventional gas turbine engines with electrical power sources in order to enhance the efficiency, power density and feasibility. In such configurations, determining the optimal power allocation between subsystems becomes a key challenge [6]. To contribute to the transition toward clean aviation, this study investigates a power management policy for a hybrid electric propulsion system as illustrated in Fig. 1, consisting of a hydrogen gas turbine (GT) and a solid oxide fuel cell (SOFC) that are thermodynamically coupled, to power a pro-peller via a gas turbine and an electric motor, respectively. The SOFC/GT configuration has only one power source, which is hydrogen here, still it lies within HEA concepts since it represents a combined-cycle implementation [7, 8].          
+
+> ⋆Research funded by the European Union (ID 101138488) and by the UK Research and Innovation (ID 10106893) as a part of the FlyECO project. Views expressed are those of the author(s) only and do not necessarily reflect those of the funding entities. Neither the European Union nor the granting authority can be held responsible for them. [1]
+> ∗Corresponding author
+> f.pak@tue.nl (F. Pak); u.perra@tue.nl (U. Perra);
+> F.P.T.Willems@tue.nl (F. Willems); T.Hofman@tue.nl (T. Hofman); m.r.u.salazar@tue.nl (M. Salazar)
+
+This complex aero engine requires a high-level power man-agement policy to coordinate the components’ operation and minimize hydrogen consumption while realizing the requested output power. Although the analysis of such a system can be structured either in a steadystate operation or a transient operation, the current work focuses exclusively on the steadystate behavior of the propulsion system during take off, top of climb, and cruise, laying the foundation for future investigations into transient dynamics. 
+
+Related Literature: Research in this area spans three streams: (i) control systems for hybrid and conventional aircraft engines, (ii) coordinated control of SOFC/GT inte-grated systems, and (iii) minimum-fuel strategies in automo-tive propulsion. In conventional aero-engines, optimization methods such as the maximum principle for the Mayer op-timal control problem [9], dynamic programming for power tracking [10], and iterative Hamilton-Jacobi-Bellman refor-mulations of minimum fuel optimal power tracking during transient operation [11] have been used to improve engine performance. For hybrid SOFC/GT propulsion, PID-based turbine speed control [12] and neural-network multi-loop controllers with optimal tracking [13] have been developed for power tracking rather than fuel-optimal control. The studies on SOFC/GT configuration in different applications, including in power plants [14], in the marine industry [15], vehi-cles [16], and in aviation [17], mainly rely on multiloop coordinated control architectures in which innerloop con-trollers regulate the local subsystem dynamics, while an outer-loop controller tracks the required power. In these approaches, power allocation is typically generated by PID controller [18], while the delay in SOFC temperature is not considered, or by optimal approaches using dynamic programming and NLP frameworks for power tracking and maximizing the efficiency [14] or via equilibrium-optimizer 
+
+F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 1 of 17 Power Management Policy for Hybrid Aero Engines Power Management Policy Prop. Power demand 
+
+Power set points 
+
+HPT 
+
+CC 
+
+EM 
+
+SOFC 
+
+H2
+
+LPC FT 
+
+Inv. 
+
+HPC 
+
+Steam + 
+
+GT 
+
+HEX 
+
+HEX               
+
+> Figure 1: Simplified schematic view of the aero engine, including a GT, the SOFC, and an electrical motor (EM) [8]. In this figure, ̇𝑚 f,gt and ̇𝑚 f,fc are the fuel flow directed to the GT and SOFC, respectively. ̇𝑚 bis the bleed air flow, which is guided from the compressor to the SOFC system after warm-up, and ̇𝑚 f,res is the SOFC off-gas hydrogen. 𝑃 gt ,𝑃 fc , and 𝑃 em are GT output power, SOFC electrical power, and EM power, respectively.
+
+algorithms embedded in neural-network-based coordination scheme [15] to avoid local minima in naval warship by fixing the fuel utilization of the SOFC and manipulating the current through changing the fuel flow rate. These controllers focus on meeting power demand rather than computing fuel-optimal supervisory policies for aviation propulsion. Automotive research offers numerically solved opti-mal control [19], or analytical optimal control such as ECMS [20], which utilizes Pontryagins minimum principle (PMP) [21], delivers fast real-time solutions and provides global guarantees under convex formulations [22], and rule-based methods [23] offer robust sub-optimal performance. However, despite their relevance, such optimal and sub-optimal supervisory strategies have not been transferred to aerospace hybrid systems, which involve fundamentally different constraints and mission profiles. The analysis and control of propulsion systems are ad-dressed at two levels: transient dynamics [24] or steady-state operation [25]. The transient models capture the dy-namic response of the system and they are essential for the trajectory planning [9] and feedback control [10], but they result in high-dimensional nonlinear control problems which are computationally expensive. On the other hand, in decentralized control systems, the steady state formulation focuses on the quasi-static relationship between the power requirement and the subsystems operation, neglecting the dynamic effects strategically while maintaining the domi-nant thermodynamic interconnections. In hybrid SOFC/GT systems, this distinction is relevant due to the slow thermal dynamics of the fuel cell compared to the faster response of the gas turbine [12]. Therefore, in this work we adopt a quasi-static modeling framework based on the steady-state operation to derive the analytical power management policy. Although extensive work exists on powertracking con-trol, degradation mitigation, and multiloop coordination for SOFC/GT systems, to the best of the authors’ knowledge no prior studies have addressed optimal supervisory power management aimed specifically at minimizing fuel con-sumption in SOFC/GT hybrid propulsion for aerospace ap-plications. Existing optimal control methods either target efficiency or power tracking rather than fuel minimization, neglect critical SOFC thermal constraints, or have only been applied in automotive or stationary contexts. 
+
+Statement of Contribution: In this study, we formulate an optimal static feedforward control problem designed to determine such a policy, which is subsequently solved using the KKT conditions. This paper makes three main con-tributions: (i) We identify computationally tractable affine  
+
+> F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 2 of 17 Power Management Policy for Hybrid Aero Engines
+
+and quadratic surrogate models of the propulsion system in algebraic formulation by performing a parametric sweep of a high-fidelity simulation of the system in steady-state operation. The constraints for the regression curvature en-sures that these models maintain the curvature properties for the analytical optimization. (ii) By using the resulted surrogate models with quasi-static approach, we formulate the static minimum-fuel problem that incorporates the sys-tem’s thermal and operational constraints. By using the monotonicity and curvature behavior of the lifting variables, the problem can be expressed in a partially convex, one dimensional form. (iii) We eventually derive the optimal power management policy analytically by using the Karush-Kuhn-Tucker optimality conditions, resulting in a closed form supervisory policy that requires no iterative compu-tations. This facilitates the real-time implementation while preserving consistency with physical limits. A preliminary version of this study is submitted to the 2026 Congress of the International Council of the Aero-nautical Sciences [26]. In the present extended version, we provided a comprehensive review of the relevant literature and offer a detailed exposition of the model structure for different phases. Based on the modeling assumptions and the structure inferred from the data we establish an argument regarding convexity of the resulting optimal problem. The purpose is to guarantee optimality in a specific domain. Furthermore, a complete derivation of the proposed policy is included in the Appendix to support the claims made in the main text. 
+
+Organization: The study is structured as follows: Sec-tion 2 outlines the problem and system models. Section 3 describes the optimal control formulation and analytical solution, Section 4 presents the results briefly to validate the methodology, Section 5 suggests future approaches, and Section 6 concludes with key findings and future directions. 
+
+## 2. Problem Statement 
+
+This section introduces the propulsion system architec-ture. Then, we present the system mathematical modeling approach, and then we formulate the objective function and the optimization problem for the optimal control problem. 
+
+2.1. System Description 
+
+The hybrid propulsion system illustrated in Fig. 1 con-sists of a GT and an electrical subsystem. The electrical subsystem is composed of an SOFC, an inverter, and an electrical motor. The GT features low- and high-pressure compressor stages (LPC, HPC). A portion of the compressed air is routed to the SOFC cathode after warm-up through a heat exchanger (HEX), while hydrogen is supplied to the anode after a HEX. The electrochemical reactions in the SOFC generate electricity and produce steam. The SOFC off-gases are recirculated to the GT combustion chamber af-ter moving through the HEX, where hydrogen is burned.The recirculation of the air through the propulsion system intro-duces strong thermodynamic coupling between the GT and the SOFC. The supervisory power management policy de-termines the power distribution law between the gas turbine and the fuel cell. The following assumption had been taken into account for this problem: (i) all flight phases are modeled as steady state operating points with no dynamic state evolution, (ii) the surrogate models are assumed valid within the admissible power and thermal operating envelopes defined in Eq. (18), (iii) the admissible fuel cell power range lies strictly below the peak of the concave SOFC inlet tempera-ture surrogate. 
+
+2.2. Mathematical Modeling 
+
+For modeling we first generate steady-state simulation data through a parametric sweep of a high fidelity thermody-namic model. Then, we identifying dominant dependencies to power allocation between gas turbine and the SOFC, re-gression of affine or quadratic surrogate models, we enforce the curvature constraints to preserve the geometry properties for the optimal control problem. Based on the steady state dataset, we approximate the key thermodynamic and flow variables, i.e., lifting and input variables, of the hybrid SOFC/GT system using a quasi-static mapping from the gas turbine output power 𝑃 gt and the SOFC electrical power 𝑃 fc . For each flight phase, we select the simplest functional form (affine or quadratic) that provides sufficient accuracy while maintaining the convexity and concavity structures of each variable for the subsequent optimization problem. This approach acknowledges that the operating conditions and the dominant system nonlinearities vary substantially between take off, top of climb, and cruise. We interpret each mapping as a reduced-order surrogate of the high-fidelity model, obtained by projecting the steady-state response manifold onto the low dimensional space of 
+
+𝑃 gt , 𝑃 fc . By defining 𝐏 𝑘 = [𝑃 gt ,𝑘 𝑃 fc ,𝑘 
+
+]⊤, affine coeffi-cients are obtained using 
+
+min 
+
+> {𝜃 1,𝜃 2,𝜃 0}
+> 𝑁
+
+∑
+
+> 𝑘 =1
+
+‖‖‖𝑦 𝑘 − ([ 𝜃 1 𝜃 2
+
+] 𝐏 𝑘 + 𝜃 0
+
+)‖‖‖2 , (1) while quadratic terms subject to curvature constraints are estimated via semidefinite programming of the form shown in Eq. (2) 
+
+min 
+
+> {𝑄, 𝐪 ,𝑞 0}
+> 𝑁
+
+∑
+
+> 𝑘 =1
+
+‖‖‖𝑦 𝑘 − (𝐏 ⊤𝑘 𝑄 𝐏 𝑘 + 𝐪 ⊤𝐏 𝑘 + 𝑞 0
+
+)‖‖‖2 ,
+
+s.t. 𝑄 ⪰ 0 or 𝑄 ⪯ 0 .
+
+(2) The semidefinite constraints on 𝑄 enforce convexity or concavity of the quadratic maps, ensuring compatibility with the optimality of the power management problem formula-tion. Imposing convex or concave curvature on the surrogate models preserves the structure required for the partial convex optimization formulations in Section 3, guaranteeing global optimality and efficient solution of the power split optimiza-tion problem. The model output vector is 
+
+𝐱 ∶= [̇𝑚 ḃ 𝑚 f,fc ̇ 𝑚 f,gt 𝑇 in 𝑇 hpc 𝑇 et 𝑇 out 
+
+]⊤ , (3)  
+
+> F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 3 of 17 Power Management Policy for Hybrid Aero Engines
+
+where 𝑇 in is the SOFC inlet temperature, 𝑇 hpc is the HPC temperature, 𝑇 et is the turbine outlet temperature and 𝑇 out 
+
+is the SOFC outlet temperature. Each variable 𝑥 𝑗 of 𝐱 is parameterized either in an affine manner 
+
+𝑥 𝑗 (𝐩 ) = 𝜃 𝑗, 0 + 𝜽 ⊤𝑗 𝐩 , (4) or in a quadratic form 
+
+𝑥 𝑗 (𝐩 ) = 𝐩 ⊤𝑄 𝑗 𝐩 + 𝐪 ⊤𝑗 𝐩 + 𝑞 𝑗, 0, 𝑄 𝑗 ∈ 𝕊 2, (5) where 𝕊 2 denotes the set of 2 × 2 real symmetric matrices. 
+
+𝑥 𝑗 is convex if 𝑄 𝑗 ⪰ 0 and concave if 𝑄 𝑗 ⪯ 0 and the vector 
+
+𝐪 𝑗 = [𝑞 𝑗, 1 𝑞 𝑗, 2
+
+]⊤ and scalar 𝑞 𝑗, 0 are fitting parameters. The selection is based on the local nonlinear characteristics of the steady state data for each flight phase. The constraints are not to perfectly model all the nonlinear thermodynamic effects, but rather to structure an approximation which creates a balance between model fidelity and optimization tractability. 
+
+2.2.1. Take off 
+
+During the take off phase, the fuel flow rate for the SOFC, the HPC temperature, the turbine exit temperature, and the SOFC outlet temperature are well approximated using affine functions, whereas the gas turbine fuel flow rate, the bleed air mass flow rate, and the SOFC inlet tempera-ture exhibit nonlinear behavior and require quadratic forms. While the the quadratic models for GT fuel flow rate and the bleed air fuel flow have convex formulations, the SOFC inlet temperature model is inherently concave, as indicated by negative semidefinite 𝑄 matrix. The quadratic terms significantly improve modeling accuracy for these variables, especially under the take off high load condition. Therefore, the models for take off are ̇𝑚 f,fc =𝑏 0 + 𝑏 1 ⋅ 𝑃 gt + 𝑏 2 ⋅ 𝑃 fc , (6) 
+
+𝑇 et =𝑑 0 + 𝑑 1 ⋅ 𝑃 gt + 𝑑 2 ⋅ 𝑃 fc , (7) 
+
+𝑇 out =ℎ0 + ℎ1 ⋅ 𝑃 gt + ℎ2 ⋅ 𝑃 fc , (8) ̇𝑚 f,gt = [𝑃 gt 𝑃 fc 
+
+] 𝑄 f
+
+[𝑃 gt 
+
+𝑃 fc 
+
+]
+
++ 𝐪 f ⊤
+
+[𝑃 gt 
+
+𝑃 fc 
+
+]
+
++ 𝑞 f,0, (9) ̇𝑚 b = [𝑃 gt 𝑃 fc 
+
+] 𝑄 a
+
+[𝑃 gt 
+
+𝑃 fc 
+
+]
+
++ 𝐪 a⊤
+
+[𝑃 gt 
+
+𝑃 fc 
+
+]
+
++ 𝑞 a,0, (10) 
+
+𝑇 hpc = [𝑃 gt 𝑃 fc 
+
+] 𝑄 h
+
+[𝑃 gt 
+
+𝑃 fc 
+
+]
+
++ 𝐪 ⊤
+
+> h
+
+[𝑃 gt 
+
+𝑃 fc 
+
+]
+
++ 𝑞 h,0, (11) 
+
+𝑇 in = [𝑃 gt 𝑃 fc 
+
+] 𝑄 
+
+[𝑃 gt 
+
+𝑃 fc 
+
+]
+
++ 𝐪 ⊤
+
+[𝑃 gt 
+
+𝑃 fc 
+
+]
+
++ 𝑞 0. (12) Here, ̇ 𝑚 f,fc is the SOFC fuel flow rate, 𝑇 hpc represents the high pressure compressor temperature, 𝑇 et corresponds to the turbine temperature, 𝑇 out refers to the SOFC outlet temperature at both anode and cathode side, ̇ 𝑚 f,gt denotes the gas turbine fuel flow rate, ̇ 𝑚 b is the bleed air flow rate and 𝑇 in 
+
+is the SOFC inlet temperature. The coefficients 𝑏 0, 𝑏 1, 𝑏 2 are the regression parameters used in the approximation of ̇ 𝑚 f,fc ,while 𝑄 h, 𝐪 h, 𝑞 h,0 are the corresponding parameters for 
+
+𝑇 hpc . Similarly, 𝑑 0, 𝑑 1, 𝑑 2 are the fitted coefficients for 𝑇 et ,                        
+
+> Table 1
+> NRMSE for Input, Decision and Lifting Variables
+> Variable Take off Top of climb Cruise ̇𝑚 f,gt 0.6% 0.8% 0.9% ̇𝑚 f,fc 0.6% 0.2% 0.4% ̇𝑚 b0.6% 1.1% 1.1%
+> 𝑇 in 0.06% 0.2% 0.2%
+> 𝑇 hpc 0.3% 0.3% 0.2%
+> 𝑇 et 0.8% 0.4% 0.3%
+> 𝑇 out 0.04% 0.5% 0.4%
+
+and ℎ0, ℎ 1, ℎ 2 parameterize the model for 𝑇 out . The Eqs. (6) to (12) model the relationship between the gas turbine output and fuel flow rate. This mapping is obtained from the high fidelity models parametric sweep and approximated using a set of convex and one monotonic concave functions. 
+
+2.2.2. Top of climb and cruise 
+
+Under top of climb and cruise conditions, the system operates under more steadily and less demanding conditions. As a result, most variables, including fuel flow rates and tem-peratures, are approximated by affine models. Only the bleed air mass flow rate and the SOFC inlet temperature retain a nonlinear quadratic dependence. The models for top of climb and cruise are similar to take off for ̇ 𝑚 f,fc , 𝑇 et , 𝑇 out ,̇ 𝑚 b
+
+and 𝑇 in as Eqs. (6) to (8), (10) and (12), respectively, with different values for their coefficients. We model the rest of the variables linearly as ̇𝑚 f,gt =𝑒 0 + 𝑒 1 ⋅ 𝑃 gt + 𝑒 2 ⋅ 𝑃 fc , (13) 
+
+𝑇 hpc =𝑡 0 + 𝑡 1 ⋅ 𝑃 gt + 𝑡 2 ⋅ 𝑃 fc . (14) As in the take off case, the quadratic coefficient matrix 𝑄 a
+
+associated with the bleed air flow rate is positive semidefi-nite, while the SOFC inlet temperature model again exhibits concavity, reflected by a negative semidefinite matrix 𝑄 . In the models we assumed: (i) the inlet temperature for both anode and cathode are identical, (ii) the outlet temperature for both anode and cathode are identical, (iii) within each phase, the system performs in steady-state operation. Hence, a quasi-static mapping is appropriate. Model fidelity is assessed using the normalized root-mean-square error (NRMSE) computed over the steady state dataset for each flight phase. Table 1 summarizes the NRMSE values for all variables across take off, top of climb ans cruise. All linear and semi definite programs used for surrogate model identification were solved using MOSEK [27] optimization solver. The models are identified using steady-state data and to ensure consistency between the regression models and the data, we explicitly define the admissible modeling domain of the sampled operating points, means that we ensure that all the interpolated operat-ing points remain within the region spanned by the available data and extrapolation is not admissible.  
+
+> F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 4 of 17
+
+Power Management Policy for Hybrid Aero Engines 
+
+(a) Take off map (b) Take off modeling residual error 
+
+(c) Top of climb map (d) Top of climb modeling residual error 
+
+(e) Cruise map (f) Cruise modeling residual error 
+
+Figure 2: The SOFC inlet temperature map with respect to power allocation and their residual error scatter plots across flight phases. F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 5 of 17 Power Management Policy for Hybrid Aero Engines 
+
+(a) Take off (b) Take off modeling residual error 
+
+(c) Top of climb (d) Top of climb modeling residual error 
+
+(e) Cruise (f) Cruise modeling residual error 
+
+Figure 3: SOFC outlet temperature maps as function of GT power and FC power and their residual error scatter plots across flight phases. F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 6 of 17 Power Management Policy for Hybrid Aero Engines     
+
+> (a) Take off (b) Take off modeling residual error
+> (c) Top of climb (d) Top of climb modeling residual error
+> (e) Cruise (f) Cruise modeling residual error
+> Figure 4: SOFC fuel flow rate maps as function of GT power and FC power and their residual error scatter plots across flight phases.
+
+Additionally, Figs. 2 to 5 present three dimensional surface maps illustrating how subsystem power allocation influences key outputs of the propulsion system across differ-ent flight phases. The horizontal axes present the values for gas turbine power and fuel cell power, while the vertical axis shows the resulting outputs. On the right side of the maps, the residual error of the models are shown for each variable.      
+
+> F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 7 of 17 Power Management Policy for Hybrid Aero Engines
+> (a) Take off (b) Take off modeling residual error
+> (c) Top of climb (d) Top of climb modeling residual error
+> (e) Cruise (f) Cruise modeling residual error
+> Figure 5: Gas turbine fuel flow rate maps as function of GT power and FC power and their residual error scatter plots across flight phases.
+
+We show the SOFC inlet temperature map in Fig. 2. The SOFC inlet temperature varies approximately between 
+
+840 𝐾 to 973 .15 𝐾 , and increases as both GT power and FC power rise. Although the surface shows a noticeable upward slope with fuel cell power in all three phases, showing higher fuel cell power leads to hotter SOFC inlet condition, the temperature gradient is steepest along the GT power during take off comparing to top of climb and the cruise phases.  
+
+> F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 8 of 17 Power Management Policy for Hybrid Aero Engines
+
+This suggests that gas turbine performance has a slight influence on the inlet temperature of SOFC in take off. Figure 3 depicts the surfaces that quantify the SOFC outlet temperature changes as power is distributed between the GT and SOFC. At take off, higher total power demand causes outlet temperature to rise sharply with increasing the FC power, and slightly decreasing with rising GT power, reflecting the thermal behavior of the SOFC and the cool-ing impact of the air from GT. During top of climb, the temperature surface shows smoother and less steep changes, corresponding to reduced power demand. Furthermore, Fig. 4 shows the dependency of fuel cell fuel mass flow rate on the power allocation. Across all three flight phases the fuel consumption increases linearly with fuel cell power. During take off, the SOFC fuel flow rate increases significantly with increasing fuel cell power and decreases gradually with rising gas turbine power, while in top of climb and in cruise the gas turbine power does not affect the fuel flow required for the fuel cell. Finally, Fig. 5 depicts the surface map for GT fuel flow rate changing with the power distribution. The maps for cruise and top of climb shows that the fuel flow rate to gas turbine from tank rises linearly by increasing GT power and slightly decreasing by rising the fuel cell power; however, it has a convex behavior in take off, showing almost no dependency on the fuel cell power but a rapid quadratic change with rising the gas turbine power. This behavior reflects the nonlinear efficiency of the gas turbine under high load condition. To validate the models, Figs. 2b, 2d, 2f, 3b, 3d, 3f, 4b, 4d, 4f, 5b, 5d and 5f present the scatter plots of the residual errors of the surrogate models for key lifting variables across take off, top of climb and cruise conditions as 
+
+𝑟 e = (𝑥 −̂𝑥 )
+
+𝑥 max 
+
+, (15) where ̂ 𝑥 is the estimated value of the variable from the approximation models and 𝑥 max is the maximum value from the dataset for each variables. The residual analysis shows that across all variables and flight phases, the residuals are centered around zero and exhibits no discernible bias, indicating that the surrogate models fo not systematically over or under predict the behavior of the system. Moreover, the absence of visible patterns in Figs. 2b, 2d, 2f, 4b, 4d, 4f, 5b, 5d and 5f suggests that the order of the system and nonlinearities are sufficiently captured. However, the presence of a low order pattern in Figs. 3b, 3d and 3f suggests that higher order thermal model is relevant at the studied power ranges. We neglect the nonlinearity effect as the residual magnitude remains small and does not affect power management results. These surface maps demonstrate that the surrogate models not only achieve sufficient accuracy but also capture relevant physical trends required for the optimal controller. 
+
+2.3. Problem Formulation 
+
+The objective is to minimize the fuel consumption over a given time horizon 𝑡 ∈ [0 , 𝑇 ] during each flight phase, 
+
+min ∫
+
+> 𝑇
+> 0
+
+̇ 𝑚 f d𝑡, (16) where ̇ 𝑚 f =̇ 𝑚 f,gt +̇𝑚 f,fc denotes the combined fuel flow rate to the gas turbine and the fuel cell. The required propulsion power is enforced through the power balance in the inte-grated propulsion system, 
+
+𝑃 req = 𝑃 gt + 𝜂 ⋅ (𝑃 fc − 𝑃 aux 
+
+) . (17) Here, the 𝑃 req , 𝑃 aux and 𝜂 are the required power, auxiliary power, and electrical motor efficiency, respectively. These quantities are assumed to be known. Based on the quasi-static models in Eqs. (6) to (14) and Eq. (17), together with the safety and operational constraints of the propulsion system, the optimal control problem is framed in Problem 1. 
+
+Problem 1 (Optimal power management problem) . Given a power request, 𝑃 req , the optimal power to be provided by GT and SOFC results from the solution of: 
+
+min  
+
+> 𝑃 fc
+
+∫
+
+> 𝑇
+> 0
+
+̇ 𝑚 f 𝑑𝑡 
+
+s.t. Eqs. (6) to (14) and Eq. (17) 
+
+𝑃 gt ∈ [ 𝑃 gt ,min , 𝑃 gt ,max ],𝑃 fc ∈ [ 𝑃 fc ,min , 𝑃 fc ,max ],𝑃 em ∈ [ 𝑃 em ,min , 𝑃 em ,max ],𝑇 in ∈ [ 𝑇 in ,min , 𝑇 in ,max ],𝑇 hpc ∈ [ 𝑇 hpc ,min , 𝑇 hpc ,max ],𝑇 et ∈ [ 𝑇 et ,min , 𝑇 et ,max ],𝑇 out ∈ [ 𝑇 out ,min , 𝑇 out ,max ],̇ 𝑚 f,gt ∈ [ ̇𝑚 f,gt ,min ,̇𝑚 f,gt ,max ],̇ 𝑚 f,fc ∈ [ ̇𝑚 f,fc ,min ,̇𝑚 f,fc ,max ],̇ 𝑚 b ∈ [ ̇𝑚 b,min ,̇𝑚 b,max ].
+
+(18) The decision variable in this problem is the fuel cell output power 𝑃 fc , such that the Problem 1 reduces to a one dimen-sional optimization problem. Because the system model is purely algebraic and does not include dynamics, the opti-mization in Problem 1 reduces to a pointwise steady state problem. The resulting control action is therefore com-puted offline or online as a static optimal control input for each operating point. The Eq. (16) defines the total hydrogen consumption minimized by the optimal controller, while Eq. (17) enforces the power balance between mechan-ical and electrical subsystems. The remaining constraints in Eq. (18) represent thermal, mechanical and operational limits. 
+
+Lemma 1 (Monotonicity of SOFC inlet temperature) . Let the SOFC inlet temperature be approximated by the quadratic  
+
+> F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 9 of 17 Power Management Policy for Hybrid Aero Engines
+
+term Eq. (12) . After substituting the power balance con-straint Eq. (17) , the mapping 𝑇 in (𝑃 fc ) is a concave quadratic function of 𝑃 fc with a unique maximizer at 
+
+𝑃 peak fc = − 𝑏 
+
+2𝑎 , (19) 
+
+where 𝑎 < 0. If the admissible operating set satisfies 
+
+𝑃 fc ≤ 𝑃 peak fc , (20) 
+
+then 𝑇 in (𝑃 fc ) is strictly increasing over the feasible set. Proof. Substituting the power balance into Eq. (12) yields 
+
+𝑇 in (𝑃 fc ) = 𝑎𝑃 2fc + 𝑏𝑃 fc + 𝑐, (21) where 𝑎 , 𝑏 and 𝑐 are defined in Eqs. (A.11) to (A.13). The coefficient 𝑎 < 0 follows from 𝑄 ⪯ 0 . The derivative is 
+
+d𝑇 in 
+
+d𝑃 fc 
+
+= 2 𝑎𝑃 fc + 𝑏. (22) This derivative is positive for all 𝑃 fc < − 𝑏  
+
+> 2𝑎
+
+and vanishes uniquely at 
+
+𝑃 peak fc = − 𝑏 
+
+2𝑎 . (23) Therefore, 𝑇 in (𝑃 fc ) is strictly increasing over the admissible region. By the Lemma 1 the SOFC inlet temperature constraint 
+
+𝑇 in ≤ 𝑇 in ,max can be equivalently expressed as an upper bound on 𝑃 fc . Consequently, although the quadratic con-straint yields two analytical roots, only the smaller root lies within the admissible region. This consideration with the constraints in the Problem 1, not only ensure the perfor-mance safety of the system but also restrict the problem to the admissible range so that all admissible operating points remain in the reliable region. 
+
+## 3. Methodology 
+
+To derive a closed-form supervisory power management policy, we formulate the Lagrangian of Problem 1 and apply the KKT optimality conditions [28]. For convex opti-mization problems, these conditions are both necessary and sufficient for optimality and consists of stationarity, primal feasibility, dual feasibility, and complementary slackness. Since no system dynamics are included, the resulting policy does not provide feedback adaptation but represents a com-putationally efficient feedforward control input evaluated independently at each operating point. Based on the Problem 1, the system model in Eqs. (6) to (14) are expressed using affine, convex and monotonic concave functions together with the constraints on power, temperatures, and mass flow rate variables. Considering the monotonicity of the non-convex quadratic constraints, the resulting problems admits a unique solution in the feasible set. This structure results in explicit expressions for the optimal fuel cell power at each operating point without iterative numerical solvers. 
+
+Theorem 1 (Structure of the optimal policy) . For all ad-missible steady state operating points studied in this paper, the power management policy saturates the SOFC inlet tem-perature constraint whenever feasible. The corresponding optimal control policy is given by 
+
+𝑃 ∗fc ,const = −𝑏 +
+
+√
+
+𝑏 2 − 4 𝑎𝑐 
+
+2𝑎 , (24) 
+
+where 
+
+𝑎 = 𝑄 22 − 2 𝑄 12 𝜂 + 𝑄 11 𝜂 2, (25) 
+
+𝑏 = 2( 𝑄 12 − 𝜂𝑄 11 )( 𝑃 req + 𝜂𝑃 aux ) − 𝑞 1𝜂 + 𝑞 2, (26) 
+
+𝑐 = 𝑄 11 (𝑃 req + 𝜂𝑃 aux )2 + 𝑞 1(𝑃 req + 𝜂𝑃 aux )+ 
+
+𝑞 0 − 𝑇 in ,max , (27) 
+
+where 𝑄 , 𝐪 and 𝑞 0 are the mapping coefficients of the 𝑇 in 
+
+model. Proof. The unconstrained optimum corresponds to the min-imum fuel consumption obtained by neglecting system con-straints, which equals 
+
+𝑃 ∗fc ,unc =
+
+⎧⎪⎪⎨⎪⎪⎩
+
+2( 𝑄 f11 𝜂 − 𝑄 f12 )( 𝑃 req + 𝜂𝑃 aux )+ 2( 𝑄 f11 𝜂 2 − 2 𝑄 f12 𝜂 
+
+(𝑏 1 + 𝑞 f1 )𝜂 − ( 𝑞 f2 + 𝑏 2)+𝑄 f22 )
+
+if take off ,
+
++∞ if top of climb and cruise .
+
+(28) However, feasibility is determined with respect to the op-erational and thermal constraints. Therefore, if 𝑃 ∗fc ,unc lies beyond the feasible set, the KKT conditions guarantee that the optimal solution occurs at an active constraint. 
+
+Constrained Solution 
+
+The KKT conditions associated with Problem 1 are given as 
+
+𝜕𝐿 𝜕𝑃 fc 
+
+= 0 , (29) 
+
+𝜇 𝑖 ⋅ 𝑔 𝑖 = 0 , (30) 
+
+𝜇 𝑖 ≥ 0, (31) 
+
+𝑔 𝑖 ≤ 0, 𝑖 = 1 , 2, 3, ..., 20 , (32) where 29 denotes the stationarity condition, 30 is the com-plementary slackness, 31 is the dual feasibility, and 32 is the primal feasibility and it is expanded in Eq. (A.1). We define the corresponding Lagrangian as 
+
+𝐿 =̇ 𝑚 f,fc +̇ 𝑚 f,gt + 𝝁 ⊤ ⋅ 𝐠 , (33) where 𝝁 ∈ denotes the vector of Lagrange multipliers associated with the inequality constraints. Applying the sta-tionary condition with respect to the decision variable 𝑃 fc 
+
+gives 
+
+𝜕𝐿 𝜕𝑃 fc 
+
+= 𝜕 (̇𝑚 f,fc +̇ 𝑚 f,gt )
+
+𝜕𝑃 fc 
+
++ 𝝁 ⊤ 𝜕 𝐠 
+
+𝜕𝑃 fc 
+
+, (34)  
+
+> F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 10 of 17 Power Management Policy for Hybrid Aero Engines
+
+which leads to a piecewise analytical expression for the opti-mal power management policy after implementing Eqs. (30) to (32). As a result, when only affine constraints are active, the optimal value follows the closed form expression of 
+
+𝑃 ∗fc ,lin = 𝑥 𝑗, max∕min − 𝜃 𝑗, 0 − 𝜃 𝑗, 1(𝑃 req + 𝜂𝑃 aux )−𝜃 𝑗, 1𝜂 + 𝜃 𝑗, 2
+
+, (35) and if a quadratic constraint is active then the optimal power for fuel cell is obtained from the scalar quadratic root as 
+
+𝑃 ∗fc ,quad =−𝑏 𝑗 ±
+
+√
+
+𝑏 2 
+
+> 𝑗
+
+− 4 𝑎 𝑗 𝑐 𝑗 
+
+2𝑎 𝑗 
+
+, (36) with coefficients 
+
+𝑎 𝑗 = 𝑄 𝑗, 22 − 2 𝑄 𝑗, 12 𝜂 + 𝑄 𝑗, 11 𝜂 2, (37) 
+
+𝑏 𝑗 = 2( 𝑄 𝑗, 12 − 𝜂𝑄 𝑗, 11 )( 𝑃 req + 𝜂𝑃 aux ) − 𝑞 𝑗, 1𝜂 + 𝑞 𝑗, 2,
+
+(38) 
+
+𝑐 𝑗 = 𝑄 𝑗, 11 (𝑃 req + 𝜂𝑃 aux )2 + 𝑞 𝑗, 1(𝑃 req + 𝜂𝑃 aux )+ 
+
+𝑞 𝑗, 0 − 𝑥 𝑗, max∕min . (39) Therefore, when a linear constraint is active, the optimal fuel cell power reduces to the affine expression in Eq. (35). Similarly, when a quadratic constraint is active the optimal power is obtained by solving a scalar quadratic equation. By implementing this methodology as explained in appendix A, the optimal power allocation is represented in Eqs. (A.10) and (A.21) and the effective optimal control policy is 
+
+𝑃 ef f fc ,opt = min { 𝑃 fc ,const , 𝑃 fc ,unc }. (40) It is concluded that the only constraint that is active in all three studied operating points is the thermal limit enforced by the SOFC inlet temperature upper bound. According to Theorem 1, the constrained optimal power allocation for take off, top of climb and cruise are bounded by the thermal limitation of the SOFC inlet. The results derived by KKT conditions shows a boundary-seeking behavior. 
+
+## 4. Results 
+
+To validate the proposed analytical control policy, we compare the resulting power split with the result from the numerical NLP based integrated model [29] , for all three phases and over a representative range of power demands. We show the comparison in Fig. 6, which presents the distribution of power between the gas turbine subsystem and the electrical components along a range of total power requirement during different flight phases. As the power requirement increases, the gas turbine power increases ap-proximately linearly, while the electrical motor power re-mains almost constant in all three phases. Showing that the electrical motor power is primarily constrained by the SOFC inlet temperature rather than being affected by the total power demand. However, take off requires substantially higher power demand than cruise and top of climb and larger part of the power is provided by the gas turbine rather than the electrical power source. The analytical results closely matches the numerical results, which confirms that the simplified models that have been used for analytical solution are sufficient for the power management problem. Figure 7 shows the corresponding overall fuel consump-tion of the propulsion system. As the power requirement increases the fuel consumption is also rising linearly in cruise and top of climb phases. The fuel flow rate in take off shows a weakly convex monotonic increase, which was expected from the quadratic fuel flow rate map for GT. As the power requirement is higher in take off than the other phases, the fuel consumption is higher than in cruise and top of climb. Comparing the results from the analytical power management policy with the numerical optimal strategy, the NRMSEs are less than 0.7% for fuel consumption and less than 1.5% for power allocation, confirming that the analytical solution provides an accurate approximation over the relevant operating range. The fuel flow rate maps in Fig. 8 illustrates the fuel consumption as function of gas turbine power and fuel cell power representing linear changes for top of climb and cruise and the quadratic behavior in take off. The maximum admissible fuel cell power is constraint by the fuel cell inlet temperature constraint and it is depicted as 𝑃 fc ,max .The contour plots show the feasible combination of gas turbine and fuel cell power that satisfy a given constant power requirement in each flight phase. The minimum fuel flow rates consistently occur along the upper bound for the fuel cell power resulting from the SOFC inlet temperature upper bound, which is interpreted that the fuel optimal operation is achieved by operating the SOFC at its maximum allowable power and supplying the remaining power demand with the gas turbine. This confirms that the optimal solution shows boundary seeking behavior with respect to the inlet temperature upper bound. Moreover, Fig. 9 further illustrates the effect of power split on fuel consumption for three fixed total power re-quirements. The results show that increasing the fuel cell power consistently reduces the overall fuel flow rate, which is caused due to the higher efficiency of the SOFC compared to GT. However, this trend holds up to the maximum admis-sible fuel cell power, constrained by its inlet temperature. Any additional power demand beyond that is supplied by the GT. To validate the policy performance during all phases, we show the comparison between the powersplit result by the analytical policy with the numerical result with high fidelity models in Fig. 10. The figure shows an acceptable precision in results for the desired power ranges for all three phases, despite the simple models that were utilized. At each operating point, the proposed static feedforward power man-agement policy yields optimal power setpoints that closely match the numerical steady state optimal solution. The optimal powersplit in Fig. 10a depicts that the share of the electrical motor power during different flight phases all together. In terms of computational efficiency, solving  
+
+> F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 11 of 17 Power Management Policy for Hybrid Aero Engines
+
+the optimization problem for 360 different data points, the numerical optimization requires 214 .23 s , whereas the an-alytical method requires 0.81 s . Both computations were performed in MATLAB on a computer equipped with a 12th Gen Intel ® Core ™ i7-12700H (2.30 GHz) processor and a 16.0 GB of RAM, highlighting the computational advantage of the analytical approach. 
+
+## 5. Discussion and Future Work 
+
+While the current work establishes a theoretical founda-tion for the analytical optimal power management policy in the hybrid propulsion system, future research will focus on implementing and validating this policy under steady state operating conditions on a test-bench. 
+
+## 6. Conclusion 
+
+This paper presented a minimum-fuel supervisory power management policy for a hydrogen based hybrid aero en-gine combining a gas turbine and a solid oxide fuel cell. This policy enables optimal power split decisions with-out iterative computation. We showed that the optimization problem can be formulated such that it results to a unique solution through curvature characteristics of the variables. Therefore, it can be solved analytically under steady state condition within the admissible domain. By devising KKT conditions to solve the optimization problem, a closed-form power management policy is obtained, which requires no iterative numerical computation while maintaining accu-racy. The results revealed a key insight, which indicates that the resulted minimum-fuel behavior consistently drives the system to operate the SOFC at its thermal limit, highlighting the important role of thermal conditioning and SOFC inlet temperature constraint in such a hybrid propulsion system’s efficiency. This outcome provides a physical interpretation of the power management decisions. The main implication is that the supervisory policy for hybrid aero engine could be reduced to a heuristic rule with lower computational complexity. The validation against a high-fidelity nonlinear model demonstrates lower than 
+
+1.5% NRMSE, which means that the analytical solution is aligned with the numerical power management strategy during the representative flight phases. Additionally, this policy is simple and fast to implement on-line and ensures optimality within the admissible range, supporting that it is suitable for a real-time supervisory control. Since the derived close-form policy enables computationally efficient real-time power management, it is a practical solution for on-board implementation in a hybrid SOFC/GT propulsion system. This method is limited to the steady-state operation; however, the proposed framework provides a foundation for future extensions toward dynamic optimal control for transient maneuvers using optimal control methods such as model predictive control (MPC). 
+
+## Acknowledgment 
+
+In this paper, we used Microsoft Copilot as an editor tool.  
+
+> F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 12 of 17
+
+Power Management Policy for Hybrid Aero Engines 
+
+(a) Take off 
+
+(b) Top of climb 
+
+(c) Cruise 
+
+Figure 6: Power split between subsystems for different power requirements across flight phases. 
+
+(a) Take off 
+
+(b) Top of climb 
+
+(c) Cruise 
+
+Figure 7: Fuel flow rate for different power requirements across flight phases. F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 13 of 17 Power Management Policy for Hybrid Aero Engines 
+
+(a) Take off 
+
+(b) Top of climb 
+
+(c) Cruise 
+
+Figure 8: Fuel flow rate contour maps for different flight phases. In each phase the constant power requirement is drawn in blue line to show how different power split affects the fuel consumption. 
+
+Figure 9: Fuel flow rate changes with respect to different power split schemes with three fixed power requirements. 
+
+(a) Power split for different power requirements 
+
+(b) Fuel flow rate for different power requirements 
+
+Figure 10: Comparison of power split and fuel flow rate for different power requirements. F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 14 of 17 Power Management Policy for Hybrid Aero Engines 
+
+## A. Appendix 
+
+The constrained solution is obtained by solving the KKT conditions Eqs. (30) to (32). The constraint vector 𝐠 
+
+in Eq. (32) collects the operational boundaries on lifting variables as well as the powers and inputs, 
+
+𝐠 =
+
+⎡⎢⎢⎢⎢⎢⎢⎢⎢⎢⎢⎢⎢⎢⎢⎢⎢⎢⎢⎢⎢⎢⎢⎢⎢⎢⎣
+
+𝑃 gt ,min − 𝑃 gt 
+
+𝑃 gt − 𝑃 gt ,max 
+
+𝑃 fc ,min − 𝑃 fc 
+
+𝑃 fc − 𝑃 fc ,max 
+
+𝑃 em ,min − 𝑃 em 
+
+𝑃 em − 𝑃 em ,max 
+
+𝑇 in ,min − 𝑇 in 
+
+𝑇 in − 𝑇 in ,max 
+
+𝑇 out ,min − 𝑇 out 
+
+𝑇 out − 𝑇 out ,max ̇𝑚 f,fc ,min −̇ 𝑚 f,fc ̇𝑚 f,fc −̇ 𝑚 f,fc ,max ̇𝑚 f,gt ,min −̇ 𝑚 f,gt ̇𝑚 f,gt −̇ 𝑚 f,gt ,max ̇𝑚 b,min −̇ 𝑚 ḃ𝑚 b −̇ 𝑚 b,max 
+
+𝑇 hpc ,min − 𝑇 hpc 
+
+𝑇 hpc − 𝑇 hpc ,max 
+
+𝑇 et ,min − 𝑇 et 
+
+𝑇 et − 𝑇 et ,max 
+
+⎤⎥⎥⎥⎥⎥⎥⎥⎥⎥⎥⎥⎥⎥⎥⎥⎥⎥⎥⎥⎥⎥⎥⎥⎥⎥⎦
+
+. (A.1) We expand the Lagrangian in Eq. (33) according to Eq. (A.1), which yields to 
+
+𝐿 =̇𝑚 f,fc +̇ 𝑚 f,gt ,tank + 𝜇 1(𝑃 gt ,min − 𝑃 gt )+ 
+
+𝜇 2(𝑃 gt − 𝑃 gt ,max ) + 𝜇 3(𝑃 fc ,min − 𝑃 fc )+ 
+
+𝜇 4(𝑃 fc − 𝑃 fc ,max ) + 𝜇 5(𝑃 em ,min − 𝑃 em )+ 
+
+𝜇 6(𝑃 em − 𝑃 em ,max ) + 𝜇 7(𝑇 in ,min − 𝑇 in )+ 
+
+𝜇 8(𝑇 in − 𝑇 in ,max ) + 𝜇 9(̇𝑚 f,fc ,min −̇ 𝑚 f,fc )+ 
+
+𝜇 10 (̇𝑚 f,fc −̇ 𝑚 f,fc ,max ) + 𝜇 11 (̇𝑚 f,gt ,min −̇ 𝑚 f,gt )+ 
+
+𝜇 12 (̇𝑚 f,gt −̇ 𝑚 f,gt ,max ) + 𝜇 13 (̇𝑚 b,min −̇ 𝑚 b)+ 
+
+𝜇 14 (̇𝑚 b −̇ 𝑚 b,max ) + 𝜇 15 (𝑇 hpc ,min − 𝑇 hpc )+ 
+
+𝜇 16 (𝑇 hpc − 𝑇 hpc ,max ) + 𝜇 17 (𝑇 et ,min − 𝑇 et )+ 
+
+𝜇 18 (𝑇 et − 𝑇 et ,max ) + 𝜇 19 (𝑇 out ,min − 𝑇 out )+ 
+
+𝜇 20 (𝑇 out − 𝑇 out ,max ).
+
+(A.2) However, we can shorten the problem size in order to de-crease the offline computational effort for each operating point. 
+
+A.1. Take off 
+
+During the take off phase, we combine the affine con-straints into effective upper and lower bounds on the fuel cell power, denoted as 𝑃 fc ,max and 𝑃 fc ,min , respectively, as 
+
+𝑃 ef f fc ,max = min 
+
+{
+
+𝑃 fc ,max ,
+
+(𝑃 req + 𝜂𝑃 aux − 𝑃 gt ,min 
+
+)
+
+𝜂 ,̇ 𝑚 f,fc ,max − 𝑏 0 − 𝑏 1(𝑃 req + 𝜂𝑃 aux )−𝑏 1𝜂 + 𝑏 2
+
+,𝑇 out ,max − ℎ0 − ℎ1(𝑃 req + 𝜂𝑃 aux )−ℎ1𝜂 + ℎ2
+
+, 𝑃 em ,max 
+
+𝜂 
+
++ 𝑃 aux , 𝑇 hpc ,max − 𝑡 0 − 𝑡 1(𝑃 req + 𝜂𝑃 aux )−𝑡 1𝜂 + 𝑡 2
+
+}
+
+(A.3) 
+
+𝑃 ef f fc ,min = max 
+
+{
+
+𝑃 fc ,min , (𝑃 req + 𝜂𝑃 aux − 𝑃 gt ,max )
+
+𝜂 ,̇ 𝑚 f,fc ,min − 𝑏 0 − 𝑏 1(𝑃 req + 𝜂𝑃 aux )−𝑏 1𝜂 + 𝑏 2
+
+,𝑇 out ,min − ℎ0 − ℎ1(𝑃 req + 𝜂𝑃 aux )−ℎ1𝜂 + ℎ2
+
+, 𝑃 em ,min 
+
+𝜂 
+
++ 𝑃 aux , 𝑇 hpc ,min − 𝑡 0 − 𝑡 1(𝑃 req + 𝜂𝑃 aux )−𝑡 1𝜂 + 𝑡 2
+
+}
+
+.
+
+(A.4) This bounds are obtained by enforcing the power require-ments, the power balance Eq. (17), electrical components limits, fuel flow rate constraints and temperature bounds. By using the effective bounds, we reduce the original constraint set in Problem 1 to a smaller set of constraints presented in 
+
+𝐠 ef f as 
+
+𝐠 ef f =
+
+⎡⎢⎢⎢⎢⎢⎢⎢⎢⎢⎣
+
+𝑃 ef f fc ,min − 𝑃 fc 
+
+𝑃 fc − 𝑃 ef f fc ,max 
+
+𝑇 in ,min − 𝑇 in (𝑃 fc )
+
+𝑇 in (𝑃 fc ) − 𝑇 in ,max ̇𝑚 b,min −̇ 𝑚 b(𝑃 fc )̇𝑚 b(𝑃 fc ) − ̇ 𝑚 b,max ̇𝑚 f,gt ,min −̇ 𝑚 f,gt (𝑃 fc )̇𝑚 f,gt (𝑃 fc ) − ̇ 𝑚 f,gt ,max 
+
+⎤⎥⎥⎥⎥⎥⎥⎥⎥⎥⎦
+
+(A.5) This reduction simplifies the KKT analysis while preserving all critical operational limits. The associated Lagrangian is written as 
+
+𝐿 =̇𝑚 f,fc +̇ 𝑚 f,gt + 𝜇 ef f 1 (𝑃 ef f fc ,min − 𝑃 fc )+ 
+
+𝜇 ef f 2 (𝑃 fc − 𝑃 ef f fc ,max ) + 𝜇 ef f 3 (𝑇 in ,min − 𝑇 in )+ 
+
+𝜇 ef f 4 (𝑇 in − 𝑇 in ,max ) + 𝜇 ef f 5 (̇𝑚 b,min −̇ 𝑚 b)+ 
+
+𝜇 ef f 6 (̇𝑚 b −̇ 𝑚 b,max ) + 𝜇 ef f 7 (̇𝑚 f,gt ,min −̇ 𝑚 f,gt )+ 
+
+𝜇 ef f 8 (̇𝑚 f,gt −̇ 𝑚 f,gt ,max )) ,
+
+(A.6) 
+
+F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 15 of 17 Power Management Policy for Hybrid Aero Engines 
+
+where 𝜇 ef f  
+
+> 𝑖
+
+denotes the Lagrange multiplier in the reduced KKT problem. The cost function for the take-off is 
+
+𝐽 =̇𝑚 f = 𝑏 0 + 𝑏 1 ⋅ (𝑃 req − 𝜂 (𝑃 fc − 𝑃 aux )) + 𝑏 2 ⋅ 𝑃 fc +
+
+(𝑄 f11 𝜂 2 − 2 𝑄 f12 𝜂 + 𝑄 f22 
+
+) 𝑃 2fc −
+
+(2( 𝑄 f12 − 𝑄 f11 𝜂 )( 𝑃 req + 𝜂𝑃 aux ) − 𝑞 f1 𝜂 + 𝑞 f2 
+
+)
+
+𝑃 fc + 𝑄 f11 (𝑃 req + 𝜂𝑃 aux )2+
+
+𝑞 f1 (𝑃 req + 𝜂𝑃 aux ) + 𝑞 f,0.
+
+(A.7) Solving unconstrained problem, 𝜕𝐽 𝜕𝑃 fc 
+
+= 0 , yields the uncon-strained optimal solution 
+
+𝑃 ∗fc ,unc = 2( 𝑄 f11 𝜂 − 𝑄 f12 )( 𝑃 req + 𝜂𝑃 aux )2( 𝑄 f11 𝜂 2 − 2 𝑄 f12 𝜂 
+
++( 𝑏 1 + 𝑞 f1 )𝜂 − ( 𝑞 f2 + 𝑏 2)+𝑄 f22 ) .
+
+(A.8) However, according to KKT condition the constrained opti-mal policy is achieved by adapting Eq. (34) to 
+
+𝜕𝐿 𝜕𝑃 fc 
+
+= 𝜕 (̇𝑚 f,fc +̇ 𝑚 f,gt )
+
+𝜕𝑃 fc 
+
++ 𝝁 ef f ⊤ ⋅ 𝜕 𝐠 ef f 
+
+𝜕𝑃 fc 
+
+. (A.9) Solving Eq. (A.9) reveals that the power requirement is distributed between the subsystems, pushing SOFC to pro-duce power as much as possible, while it is constrained by its inlet temperature upper bound, i.e., 𝑇 in ≤ 𝑇 in ,max .Consequently, the optimal control policy is given by the constrained solution when 𝑔 ef f 4 = 0 is active, equals to 
+
+𝑃 ∗fc ,const = −𝑏 +
+
+√
+
+𝑏 2 − 4 𝑎𝑐 
+
+2𝑎 , (A.10) where the 𝑎 , 𝑏 and 𝑐 coefficients are 
+
+𝑎 = 𝑄 22 − 2 𝑄 12 𝜂 + 𝑄 11 𝜂 2, (A.11) 
+
+𝑏 = 2( 𝑄 12 − 𝜂𝑄 11 )( 𝑃 req + 𝜂𝑃 aux ) − 𝑞 1𝜂 + 𝑞 2, (A.12) 
+
+𝑐 = 𝑄 11 (𝑃 req + 𝜂𝑃 aux )2 + 𝑞 1(𝑃 req + 𝜂𝑃 aux )+ 
+
+𝑞 0 − 𝑇 in ,max . (A.13) To calculate the active constraint’s corresponding Lagrange multiplier we substitute the optimal fuel cell power in the stationarity condition as 
+
+0 = 𝜕𝐿 𝜕𝑃 fc 
+
+= − 𝜂𝑏 1 + 𝑏 2 + 2( 𝑄 f11 𝜂 2 − 2 𝑄 f12 𝜂 + 𝑄 f22 )
+
+𝑃 ef f fc ,opt − 2 𝑄 f11 𝜂 (𝑃 req + 𝜂𝑃 aux ) + 2 𝑄 f12 (𝑃 req + 𝜂𝑃 aux )− 
+
+𝑞 f1 𝜂 + 𝑞 f2 + 𝜇 ef f 4 (2( 𝑄 11 𝜂 2 − 2 𝑄 12 𝜂 + 𝑄 22 )𝑃 ef f fc ,opt +2( 𝑄 12 − 𝑄 11 𝜂 )( 𝑃 req + 𝜂𝑃 aux ) − 𝑞 1𝜂 + 𝑞 2).
+
+(A.14) Therefore the dual multiplier 𝜇 ef f 4 is calculated as 
+
+𝜇 ef f 4 =
+
+𝜂𝑏 1 − 𝑏 2 − 2( 𝑄 f11 𝜂 2 − 2 𝑄 f12 𝜂 + 𝑄 f22 )𝑃 ef f fc ,opt 
+
+2( 𝑄 11 𝜂 2 − 2 𝑄 12 𝜂 + 𝑄 22 )𝑃 ef f fc ,opt ++2( 𝑄 f11 𝜂 − 𝑄 f12 )( 𝑃 req + 𝜂𝑃 aux ) + 𝑞 f1 𝜂 − 𝑞 f2 
+
+2( 𝑄 12 − 𝑄 11 𝜂 )( 𝑃 req + 𝜂𝑃 aux ) − 𝑞 1𝜂 + 𝑞 2
+
+,
+
+(A.15) which represents its dependency on the power requirement 
+
+𝑃 req and the optimal fuel cell power 𝑃 ef f fc ,opt .
+
+A.2. Top of climb and cruise 
+
+As in take off case, we combine the affine constraints into effective upper and lower bounds on the fuel cell power as 
+
+𝑃 ef f fc ,max = min 
+
+{
+
+𝑃 fc ,max ,
+
+(𝑃 req + 𝜂𝑃 aux − 𝑃 gt ,min 
+
+)
+
+𝜂 ,̇ 𝑚 f,fc ,max − 𝑏 0 − 𝑏 1(𝑃 req + 𝜂𝑃 aux )−𝑏 1𝜂 + 𝑏 2
+
+, 𝑃 em ,max 
+
+𝜂 
+
++ 𝑃 aux , 𝑇 out ,max − ℎ0 − ℎ1(𝑃 req + 𝜂𝑃 aux )−ℎ1𝜂 + ℎ2
+
+,𝑇 hpc ,max − 𝑡 0 − 𝑡 1(𝑃 req + 𝜂𝑃 aux )−𝑡 1𝜂 + 𝑡 2
+
+,̇ 𝑚 f,gt ,min − 𝑒 0 − 𝑒 1(𝑃 req + 𝜂𝑃 aux )−𝑒 1𝜂 + 𝑒 2
+
+}
+
+,
+
+(A.16) 
+
+𝑃 ef f fc ,min = max 
+
+{
+
+𝑃 fc ,min , (𝑃 req + 𝜂𝑃 aux − 𝑃 gt ,max )
+
+𝜂 ,̇ 𝑚 f,fc ,min − 𝑏 0 − 𝑏 1(𝑃 req + 𝜂𝑃 aux )−𝑏 1𝜂 + 𝑏 2
+
+, 𝑃 em ,min 
+
+𝜂 
+
++ 𝑃 aux , 𝑇 out ,min − ℎ0 − ℎ1(𝑃 req + 𝜂𝑃 aux )−ℎ1𝜂 + ℎ2
+
+,𝑇 hpc ,min − 𝑡 0 − 𝑡 1(𝑃 req + 𝜂𝑃 aux )−𝑡 1𝜂 + 𝑡 2
+
+,̇ 𝑚 f,gt ,max − 𝑒 0 − 𝑒 1(𝑃 req + 𝜂𝑃 aux )−𝑒 1𝜂 + 𝑒 2
+
+}
+
+.
+
+(A.17) Therefore, the reduced constraint vector 𝐠 ef f contains the dominant limits as 
+
+𝐠 ef f =
+
+⎡⎢⎢⎢⎢⎢⎢⎣
+
+𝑃 ef f fc ,min − 𝑃 fc 
+
+𝑃 fc − 𝑃 ef f fc ,max 
+
+𝑇 in ,min − 𝑇 in (𝑃 fc )
+
+𝑇 in (𝑃 fc ) − 𝑇 in ,max ̇𝑚 b,min −̇ 𝑚 b(𝑃 fc )̇𝑚 b(𝑃 fc ) − ̇ 𝑚 b,max 
+
+⎤⎥⎥⎥⎥⎥⎥⎦
+
+. (A.18) And the corresponding Lagrangian is written as 
+
+𝐿 =̇𝑚 f,fc +̇ 𝑚 f,gt + 𝜇 ef f 1 (𝑃 ef f fc ,min − 𝑃 fc )+ 
+
+𝜇 ef f 2 (𝑃 fc − 𝑃 ef f fc ,max ) + 𝜇 ef f 3 (𝑇 in ,min − 𝑇 in )+ 
+
+𝜇 ef f 4 (𝑇 in − 𝑇 in ,max ) + 𝜇 ef f 5 (̇𝑚 b,min −̇ 𝑚 b)+ 
+
+𝜇 ef f 6 (̇𝑚 b −̇ 𝑚 b,max ).
+
+(A.19) 
+
+F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 16 of 17 Power Management Policy for Hybrid Aero Engines 
+
+Applying the KKT stationarity condition 
+
+𝜕𝐿 𝜕𝑃 fc 
+
+= 𝜕 (̇𝑚 f,fc +̇ 𝑚 f,gt )
+
+𝜕𝑃 fc 
+
++ 𝝁 ef f ⊤
+
+⋅ 𝜕 𝐠 ef f 
+
+𝜕𝑃 fc 
+
+, (A.20) shows again that the dominant active constraint is the SOFC inlet temperature upper bound. Consequently, the corre-sponding optimal control policy is given by 𝑔 ef f 4 = 0 , equals to 
+
+𝑃 ∗fc ,const = −𝑏 +
+
+√
+
+𝑏 2 − 4 𝑎𝑐 
+
+2𝑎 , (A.21) where 
+
+𝑎 = 𝑄 22 − 2 𝑄 12 𝜂 + 𝑄 11 𝜂 2, (A.22) 
+
+𝑏 = 2( 𝑄 12 − 𝜂𝑄 11 )( 𝑃 req + 𝜂𝑃 aux ) − 𝑞 1𝜂 + 𝑞 2, (A.23) 
+
+𝑐 = 𝑄 11 (𝑃 req + 𝜂𝑃 aux )2 + 𝑞 1(𝑃 req + 𝜂𝑃 aux )+ 
+
+𝑞 0 − 𝑇 in ,max . (A.24) 
+
+## CRediT authorship contribution statement 
+
+Faezeh Pak: Conceptualization, Methodology, Data curation, Software implementation, Writing. Uto Perra: 
+
+Conceptualization, Data curation, Software implementation, Writing, Review and editing. Frank Willems: Co-author, Proof-read, Writing and review, Supervision. Theo Hof-man: Co-author, Proof-read, Review and editing, Supervi-sion. Mauro Salazar: Methodology, Writing, Proof-read, Review and editing, Supervision. 
+
+## References 
+
+[1] FlyECO, Future enabling technologies for hydrogen-powered elec-trified aero engine for clean aviation, Available online at https: //flyeco-european-project.eu/ , 2024. [2] L. Cheng, F. Zhang, S. Liu, Z. Zhang, Configuration method of hybrid energy storage system for high power density in more electric aircraft, Journal of power sources (2020). [3] S. J. Reid, R. E. Perez, P. W. Jansen, Hybrid electric aircraft design with optimal power management, Aerospace Science and Technology (2024). [4] X. Xia, C. P. Lawson, The development of a design methodology for dynamic power distribution management on a civil transport all electric aircraft, Aerospace Science and Technology (2013). [5] S. Li, C. Gu, M. Xu, J. Li, P. Zhao, S. Cheng, Optimal power system design and energy management for more electric aircrafts, Journal of Power Sources (2021). [6] S. Liang, L. He, Y. Wu, H. Zhao, H. Li, W. Li, Overview and analysis of electric power systems for more/all electric aircraft, in: IECON 2023-49th Annual Conference of the IEEE Industrial Electronics Society. [7] S. Geuther, F. M. Capristan, Feasibility of a solid oxide fuel cell system applied to hybrid-electric regional aircraft, in: AIAA Scitech 2020 Forum. [8] D. San Benito Pastor, E. Pontika, S. de Graaf, D. Ewald, A. Weber, S. Kazula, M. Ferrari, P. Laskaridis, Hydrogen-powered integrated power and propulsion system (ipps) architecture for sustainable avi-ation: Leveraging synergies between gas turbine and solid oxide fuel cells, Towards Sustainable Aviation Summit (TSAS) (2025). [9] O. Cots, J. Gergaud, D. Goubinat, Direct and indirect methods in optimal control with state constraints and the climbing trajectory of an aircraft, Optimal Control Applications and Methods (2018). [10] T. Sun, X. M. Sun, A. Sun, Optimal output tracking of aircraft engine systems: A data-driven adaptive performance seeking control, IEEE Transactions on Circuits and Systems II: Express Briefs (2021). [11] S. Liu, Y. Shi, T. Sun, P. Li, X. Zhao, Transient-state adaptive optimal control of aircraft engine systems with input saturation, IEEE Transactions on Aerospace and Electronic Systems (2024). [12] V. Zaccaria, D. Tucker, A. Traverso, Transfer function development for sofc/gt hybrid systems control using cold air bypass, Applied Energy (2016). [13] B. Restrepo, L. Banta, D. Tucker, Simulation of model predictive control for a fuel cell/gas turbine power system based on experimental data and the recursive identification method, in: Proc. ASME Fuel Cell Science, Engineering and Technology Conference 2016. [14] S. Kameswaran, L. Biegler, S. T. Junker, H. Ghezel-Ayagh, Optimal off-line trajectory planning of hybrid fuel cell/gas turbine power plants, AIChE journal (2007). [15] X. Mi, J. Wen, S. Xiao, X. Sun, X. Jia, Y. Weng, S. Weng, X. Lv, Quick-safe intelligent control strategy for sofc/gt all-electric ship propulsion system under pulsed load using eo-nn approach, Energy (2025). [16] Z. Dimitrova, F. Maréchal, Environomic design for electric vehicles with an integrated solid oxide fuel cell (sofc) unit as a range extender, Renewable energy (2017). [17] S. N. Motapon, L. A. Dessaint, K. Al Haddad, A comparative study of energy management schemes for a fuel-cell hybrid emergency power system of more-electric aircraft, IEEE Transactions on Industrial Electronics (2013). [18] J. Chen, M. Liang, H. Zhang, S. Weng, Study on control strategy for a sofc-gt hybrid system with anode and cathode recirculation loops, International Journal of Hydrogen Energy (2017). [19] R. Wang, S. M. Lukic, Dynamic programming technique in hybrid electric vehicle optimization, in: 2012 IEEE International Electric Vehicle Conference. [20] A. Rezaei, J. B. Burl, B. Zhou, Estimation of the ecms equivalent factor bounds for hybrid electric vehicles, IEEE Transactions on Control Systems Technology (2017). [21] A. Sciarretta, L. Serrao, P. Dewangan, P. Tona, E. Bergshoeff, C. Bor-dons, L. Charmpa, P. Elbert, L. Eriksson, T. Hofman, et al., A control benchmark on the energy management of a plug-in hybrid electric vehicle, Control engineering practice (2014). [22] K. R. Bouwman, T. Pham, S. Wilkins, T. Hofman, Predictive energy management strategy including traffic flow data for hybrid electric vehicles, IFAC-PapersOnLine (2017). [23] T. Hofman, M. Steinbuch, R. van Druten, A. Serrarens, Rule-based energy management strategies for hybrid vehicle drivetrains: A fun-damental approach in reducing computation time, IFAC Proceedings Volumes (2006). 4th IFAC Symposium on Mechatronic Systems. [24] C. Wang, Y. G. Li, B. Y. Yang, Transient performance simulation of aircraft engine integrated with fuel and control systems, Applied Thermal Engineering (2017). [25] Q. Wen, D. Liang, Y. Xue, Z. Liang, Y. Liang, H. Deng, L. Zhang, Transient and steady-state energy management strategy for all-electric aircraft with high-power pulsed loads, IEEE Transactions on Trans-portation Electrification (2026). [26] F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar, An optimal power management policy for hydrogen-based hybrid aero engines, in: Proceedings of the 2026 Congress of the International Council of the Aeronautical Sciences (ICAS). Submitted. [27] MOSEK ApS, Mosek optimizer api, Available online at https: //www.mosek.com , 2025. Version 11.0.14. [28] S. S. Rao, Engineering optimization: theory and practice, John Wiley & Sons, 2019. [29] U. Perra, F. Pak, E. Pontika, S. Bhapkar, D. Ewald, D. Buzzola, T. Hofman, F. Willems, M. Salazar, Optimization models and steady-state minimum-fuel operating strategies for hydrogen-based hybrid electric aerospace propulsion systems, Arxiv preprint (2026). 
+
+F. Pak, U. Perra, F. Willems, T. Hofman, M. Salazar Page 17 of 17
