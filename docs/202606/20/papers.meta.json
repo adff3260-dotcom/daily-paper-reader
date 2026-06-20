@@ -1,0 +1,24 @@
+{
+  "label": "2026-06-20",
+  "date": "2026-06-20",
+  "generated_at": "2026-06-20T21:26:34",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202606/20/2606.16303v1-an-adjoint-based-neural-regulator-for-real-time-optimal-control-with-state-constraints",
+      "section": "quick",
+      "title_en": "An Adjoint-based Neural Regulator for Real-Time Optimal Control with State Constraints",
+      "authors": "Isaiah A. Agboola, Yuxin Tong, Uduak Inyang-Udoh",
+      "date": "2026-06-15",
+      "pdf": "https://arxiv.org/pdf/2606.16303v1",
+      "score": "7.0",
+      "evidence": "使用庞特里亚金极小值原理进行实时约束最优控制，可应用于混合动力无人机能量管理",
+      "tldr": "针对带状态约束的非线性系统实时最优控制，提出基于庞特里亚金最小值原理的伴随式神经调节器(ANR)。该方法学习神经伴随策略编码最优性，运行时通过凸投影实时施加安全与执行器约束。在独轮车模型上，ANR以比NMPC低两个数量级的计算成本达到与其相当的控制性能，并在未见场景下保持稳定，泛化能力显著优于强化学习。",
+      "tags": "query:uav",
+      "abstract_en": "This paper introduces a learning-based control framework for real-time constrained optimal control of nonlinear systems with safety guarantees based on the Pontryagin's Minimum Principle. The approach learns a neural co-state (adjoint) policy that encodes optimality through the system Hamiltonian, rather than directly approximating a control law. Feasibility is enforced separately at runtime through an efficient convex projection that incorporates actuator limits and safety constraints expressed as control barrier functions. We refer to this framework as an adjoint-based neural regulator (ANR) as it yields a controller that satisfies constraints while retaining the optimality structure encoded by the learned adjoint. We demonstrate the effectiveness of the proposed framework on nonlinear constrained control tasks using a unicycle model. The ANR achieves performance at par with nonlinear model predictive control at more than two orders of magnitude lower computational cost, while exhibiting near-invariant performance across unseen scenarios, thus, significantly outperforming reinforcement learning methods in out-of-training-distribution regimes.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

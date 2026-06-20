@@ -1,0 +1,436 @@
+Title: An Adjoint-based Neural Regulator for Real-Time Optimal Control with State Constraints
+
+URL Source: https://arxiv.org/pdf/2606.16303v1
+
+Published Time: Tue, 16 Jun 2026 02:18:31 GMT
+
+Number of Pages: 7
+
+Markdown Content:
+# An Adjoint-based Neural Regulator for Real-Time Optimal Control with State Constraints 
+
+Isaiah A. Agboola 1, Yuxin Tong 1, Uduak Inyang-Udoh 1
+
+Abstract — This paper introduces a learning-based control framework for real-time constrained optimal control of nonlin-ear systems with safety guarantees based on the Pontryagin’s Minimum Principle. The approach learns a neural co-state (adjoint) policy that encodes optimality through the system Hamiltonian, rather than directly approximating a control law. Feasibility is enforced separately at runtime through an efficient convex projection that incorporates actuator limits and safety constraints expressed as control barrier functions. We refer to this framework as an adjoint-based neural regulator (ANR) as it yields a controller that satisfies constraints while retaining the optimality structure encoded by the learned adjoint. We demonstrate the effectiveness of the proposed framework on nonlinear constrained control tasks using aunicycle model. The ANR achieves performance at par with nonlinear model predictive control at more than two orders of magnitude lower computational cost, while exhibiting near-invariant performance across unseen scenarios, thus, signifi-cantly outperforming reinforcement learning methods in out-of-training-distribution regimes. 
+
+I. I NTRODUCTION 
+
+Real-time constrained optimal control is a central chal-lenge in robotics and autonomous systems, where controllers must balance performance with constraint satisfaction under limited computational time [1], [2]. In nonlinear systems, optimal control is most widely implemented using nonlinear model predictive control (NMPC), which solves a finite-horizon optimization problem online [3]. However, in safety-critical and fast dynamical settings, repeated nonlinear opti-mization and solver latency can make NMPC prohibitively expensive in practice [4], [5]. This computational burden limits its deployability in certain applications where control decisions must be made on millisecond timescales [5]. Learning-based control, particularly reinforcement learn-ing (RL), offers an appealing alternative by amortizing computation into an offline training phase and producing fast online policies [6]. Despite impressive empirical successes, RL often faces practical barriers for constrained control problems. In particular, RL often requires substantial reward engineering, can become increasingly sample-inefficient over long horizons, may generalize poorly to out-of-distribution conditions, and does not generally provide strict constraint satisfaction without additional safety mechanisms [6]–[8]. A common strategy for enforcing safety is to combine RL with control barrier functions (CBFs), projecting a learned           
+
+> 1Department of Mechanical Engineering, University of Michigan, Ann Arbor, Michigan, USA.
+
+agboola@umich.edu, yuxinton@umich.edu, udiinyang@umich.edu 
+
+> Code available here.
+
+nominal action onto the set of safe controls through aquadratic program (QP) [2], [9]. While effective in many settings, this nominal-then-project paradigm introduces struc-tural limitations. First, feasibility can become challenging when CBF-based state safety conditions must be enforced si-multaneously with nontrivial or coupled input constraints [2]. Second, if the nominal policy does not reflect the underlying optimality structure of the control problem, the safety filter may produce conservative or aggressive corrective actions, leading to frequent and large projections [9]. These issues arise because the nominal policy does not explicitly encode the optimality structure of the constrained control problem. To address these limitations, we utilize an adjoint-based neural control framework that, based on prior work in [10], learns adjoint variables rather than control actions directly. These adjoints represent the sensitivity of the value function (control objective) with respect to the state and encode the indirect optimality structure of the control problem [11], [12]. By predicting adjoints online, the controller computes the applied input through a real-time constrained Hamiltonian minimization, in which state safety and input feasibility are enforced simultaneously. This yields a unified framework for handling hard state constraints through CBF conditions together with input constraints, while preserving the compu-tational advantages of amortized inference. We evaluate the proposed approach on a unicycle with safety constraints and compare its performance against NMPC and RL baselines. This paper is organized as follows. Sec. II reviews NMPC and RL-based approaches, along with CBFs, for constrained optimal control, and motivates the adjoint-based learning ap-proach. Sec. III describes the adjoint-based neural controller while Sec. IV presents results in contrast to those obtained using NMPC and RL. We conclude in Sec. V. II. B ACKGROUND AND MOTIVATION 
+
+A. Constrained Optimal Control 
+
+Consider a continuous-time optimal control problem (OCP) over a fixed horizon [0 , t f ]:
+
+min  
+
+> u(·)
+
+J = ϕ(x(tf )) + 
+
+Z tf
+
+> 0
+
+ℓ(x(t), u(t), t ) dt, (1a) s.t. ˙x(t) = f (x(t)) + g(x(t)) u(t), x(0) = x0, (1b) 
+
+u(t) ∈ U , (1c) 
+
+hi(x(t)) ≥ 0, i = 1 , . . . , m, ∀t ∈ [0 , t f ]. (1d) Here, x(t) ∈ Rn is the system state and u(t) ∈ Rq is the con-trol input. The admissible input set U captures actuator limits, 
+
+> arXiv:2606.16303v1 [eess.SY] 15 Jun 2026
+
+and the inequalities hi(x(t)) ≥ 0, i = 1 , . . . , m , encode hard state-safety requirements such as obstacle avoidance [13]. The functions ℓ(x(t), u(t), t ) and ϕ(x(tf )) denote the running (stage) and terminal costs, respectively. Quadratic costs are typically adopted: [14]: 
+
+ℓ(x(t), u(t)) = x⊤(t)Qx(t) + u⊤(t)Ru(t),ϕ(x(tf )) = x⊤(tf )P x(tf ) (2) where Q, P ⪰ 0 and R ≻ 0 are weightings. 
+
+B. Nonlinear Model Predictive Control (NMPC) 
+
+A standard approach for handling constrained OCP in Eq. (1) is NMPC, which, at each sampling instant solves a finite-horizon constrained optimization problem using the current state as the initial condition [3] and the discretized system dynamics. At time tk, let xk+j and uk+j denote the predicted state and control input at time step k + j over the prediction horizon. The NMPC problem is formulated as: 
+
+min  
+
+> uk+j,j =0 ,...,N −1
+
+ϕ(xk+N ) +  
+
+> N−1
+
+X
+
+> j=0
+
+ℓ(xk+j , uk+j ) (3a) s.t. xk+j+1 = fd(xk+j , uk+j ), j = 0 , . . . , N − 1, (3b) 
+
+uk+j ∈ U , j = 0 , . . . , N − 1, (3c) 
+
+hi(xk+j ) ≥ 0, i = 1 , . . . , m, j = 1 , . . . , N. (3d) where fd(·) denotes the system dynamics in discrete-time. In this formulation,both state and input constraints are enforced directly within the optimization. Its main limitation, however, is that Eq. (3) must be solved online at every feedback step as a constrained nonlinear program. For fast dynamical systems or safety critical tasks, this repeated online optimization can become computationally prohibitive. 
+
+C. Reinforcement Learning via SAC 
+
+Reinforcement learning (RL) offers an alternative to re-peated online optimization by shifting most computation to offline training and enabling fast policy evaluation during deployment. In control applications, soft actor–critic (SAC), is among the most widely used RL algorithms. SAC learns a stochastic control policy that maximizes returns (or the negation of the control objective). Let πθ denote a nominal stochastic policy parameterized by θ, which generates the control input according to uk ∼ πθ (· | xk). Then, over a distribution of training tasks or environments ξ ∼ D,the policy is learned by maximizing the expected entropy-regularized discounted return rξ [15]: 
+
+arg max  
+
+> θ
+
+E ξ∼D  
+
+> τ∼πθ
+
+" Tξ −1
+
+X
+
+> k=0
+
+γk
+
+rξ (xk, uk) − α log πθ (uk | xk)
+
+#
+
+(4) where γ ∈ (0 , 1) is the discount factor, α > 0 is the entropy regularization weight, and τ denotes a rollout generated by executing policy πθ in training environment ξ.Eq. (4) is evaluated using state-transition samples collected from simulator rollouts and stored in a replay buffer [8]. The learned policy provides fast nominal control actions during deployment, but by itself does not guarantee satisfaction of state or input constraints. For this reason, the nominal SAC policy is typically augmented with a safety filter at deployment, as described next. 
+
+D. CBF-Based Safety Filtering 
+
+To enforce safety during deployment, the nominal policy output is passed through an online safety filter. For the control-affine dynamics in Eq. (1b) with input constraint set 
+
+U, safety may be enforced using control barrier functions (CBFs) which may be expressed as [16]: 
+
+Lf h(x) + Lg h(x) u + α(h(x)) ≥ 0, (5) where α(·) is any extended class-K function, and Lf h, Lg h
+
+denote the Lie derivatives along f and g respectively. For the obstacle-avoidance, higher-order CBFs (HOCBFs) may be employed, by taking higher Lie derivatives [17], [18]. For example, for the state constraint (safety function) in (1d) we may define a conservative state-dependent admissible control set with a HOCBFs of relative degree two as [16] 
+
+S(x) := 
+
+n
+
+u ∈ Rnu L2 
+
+> f
+
+hi(x) + Lg Lf hi(x) u
+
++ k1,i Lf hi(x) + k0,i hi(x) ≥ 0, i = 1 , . . . , m 
+
+o
+
+.
+
+(6) where k1,i , k 0,i > 0 are constant HOCBF gains. Together with the input constraint set U, this defines the inputs that are both safe and actuator-feasible. Hence, given the nominal SAC policy output uRL (t), we apply a HOCBF-QP safety filter that computes the smallest correction required to satisfy the input and safety constraints. The deployed control is 
+
+u∗(t) = uRL (t) + ∆ u∗(t),
+
+where 
+
+∆u∗(t) = arg min  
+
+> ∆u
+
+∥∆u∥22 s.t. uRL (t)+∆ u ∈ U∩S (x(t)) .
+
+Equivalently, 
+
+u∗(t) = arg min  
+
+> u∈U∩S (x(t))
+
+∥u − uRL (t)∥22.
+
+While the CBF modifies the RL policy output to enforce safety constraints [19], the RL-CBF framework still inherits key challenges of RL, including ill-conditioned learning with long-horizon or high system dimensionality, which lead to sample inefficiency and/or poor generalizability [20]. 
+
+E. PMP Optimality Structure for Adjoint Prediction 
+
+It is known from Pontryagin’s Minimum Principle (PMP) that the state, control input pair (x⋆(t), u⋆(t)) that solves the OCP in Eq. (1) must satisfy the so-called two-point boundary value problem (TPBVP): 
+
+˙x⋆(t) = ∇λH(x⋆(t), u⋆(t), λ⋆(t), t ), (7) 
+
+˙λ⋆(t) = −∇ xH(x⋆(t), u⋆(t), λ⋆(t), t ), (8) 
+
+u⋆(t) = arg min  
+
+> u∈U
+
+H(x⋆(t), u, λ⋆(t), t ), (9) 
+
+x⋆(0) = x0, λ⋆(tf ) = ∇ϕ(x⋆(tf )) . (10) where H is the control Hamiltonian defined as H(x(t), u(t), λ(t), t ) = ℓ(x(t), u(t), t )+λ(t)⊤
+
+f (x(t)) + g(x(t)) u(t)
+
+
+
+, (11) and λ(t) ∈ Rn denotes the co-state, or adjoint. The adjoint captures the local sensitivity of the optimal cost-to-go to the state, while Eq. (9) induces a control action through the Hamiltonian minimization. Although the TPBVP is generally difficult to solve in real time, recent work has shown that its solution can be approximated via neural parameterization of the adjoint [21]. This suggests that the RL-CBF paradigm for fast control inference and safety enforcement can be replaced by a framework that parameterizes optimality through the adjoint and enforces feasibility/safety via a constrained Hamiltonian minimiza-tion, thereby overcoming the long-horizon control learning limitations in RL. This framework is developed in the next section. III. A DJOINT -B ASED NEURAL CONTROL 
+
+Motivated by the structure of PMP, we develop an adjoint-based neural regulator (ANR), illustrated in Fig. 1. The framework employs a co-state neural network (CoNN), fol-lowing [10], to predict a finite-horizon co-state trajectory from the current state. The predicted co-state trajectory is then used to recover a nominal control sequence through pointwise Hamiltonian minimization. The resulting closed-loop rollout is used to define a training objective derived from the original optimal control cost. After training, the CoNN may be deployed in a feedback control scheme in which the predicted costate is now used to find the control input through a constrained Hamiltonian minimization in realtime. This yields a controller that preserves the fast online inference of learning-based methods while retaining the indirect optimality structure implied by PMP. 
+
+A. Co-State Parameterization by CoNN 
+
+As shown in Fig. 1, the CoNN maps an arbitrarily given state, denoted xi, to a co-state sequence over a prediction interval [0 , T ]:
+
+ˆΛi = CoNN θ (xi), (12) where θ denotes the trainable network parameters. The predicted sequence ˆΛi = {ˆλ0|i, ˆλ1|i, . . . , ˆλnp−1|i}, where 
+
+ˆλk|i := ˆλ(k∆t), with x(0) = xi, k = 0 , 1, . . . , n p − 1,
+
+corresponds to co-state trajectory over the horizon T =
+
+np∆t, conditioned on the given state xi. In the implemen-tation used here, the CoNN is realized as a fully connected feedforward neural network. We note that unlike in RL, the neural network is not used to imitate an action policy, but to parametrize the state-to-co-state mapping needed to construct a structured nominal controller. 
+
+B. Horizon Rollout for Training 
+
+Given the co-state sequence {ˆλk|i}np−1 
+
+> k=0
+
+, we obtain the corresponding control input sequence by minimizing the Hamiltonian at each interval: 
+
+ˆu⋆k|i = arg min  
+
+> u∈Rq
+
+Hd(xk|i, u, ˆλk|i), (13) For the quadratic cost in our objective (Eq. (2)), this mini-mization may be explicitly computed, so that we may obtain the corresponding input and state sequences using 
+
+ˆu⋆k|i = − 12 R−1g⊤(xk|i)ˆλk|i. (14) 
+
+xk+1 |i =
+
+Z (k+1)∆ tk∆t
+
+f (x(t)) + g(x(t))ˆ u⋆k|i dt (15) for k = 0 , 1, . . . , n p − 1 with ˆx0|i = xi. This rollout process yields the trajectories {ˆuk|i}np−1 
+
+> k=0
+
+and {ˆxk|i}np 
+
+> k=1
+
+which are then used to construct the training loss. 
+
+C. Training Objective 
+
+The training objective consists of a three-term loss func-tion: a stage-cost term, a terminal-cost term, and a co-state regularization term, 
+
+Lstage |i =
+
+> np−1
+
+X
+
+> k=0
+
+ℓ(xk|i, uk|i) = 
+
+> np−1
+
+X
+
+> k=0
+
+x⊤
+
+> k|i
+
+Qxk|i + u⊤
+
+> k|i
+
+Ruk|i,
+
+Lterminal |i = ϕ(xnp|i) = x⊤
+
+> np|i
+
+Qxnp|i
+
+Lco -state |i = β∥ ˆΛi∥1,1,
+
+(16) where β > 0 is a scalar hyperparameter and ∥ · ∥ 1,1 denotes the entrywise ℓ1 norm. Together, these terms encourage the CoNN to produce the minimum-norm co-state predictions that induce cost-minimizing trajectories. The total training loss is given by 
+
+Li = Lstage |i + Lterminal |i + Lco -state |i. (17) The CoNN parameters θ are optimized end-to-end by back-propagating through thehorizon rollout induced by Eqs. (14)-(15) for all xi in a training domain D.
+
+D. Safe Online Deployment via HOCBF-QP 
+
+After offline training, the CoNN is deployed in feedback form using the current state xk, at each time tk, to predict a finite-horizon co-state sequence ˆΛk = CoNN θ (xk) =
+
+{ˆλ0|k, ˆλ1|k, . . . , ˆλN −1|k}, and the first predicted co-state 
+
+ˆλ0|k is used for control computation. The applied control is obtained by solving the following safety-aware constrained Hamiltonian minimization based on the HOCBF in Eq. (6): 
+
+u⋆k = arg min 
+
+> u
+
+
+
+u⊤Ru + ˆλ⊤
+
+> 0|k
+
+g(xk)u
+
+
+
+, (18a) s.t. u ∈ U , (18b) 
+
+¨hi(xk, u) + k1,i ˙hi(xk) + k0,i hi(xk) ≥ 0, (18c) for i = 1 , . . . , m. 
+
+This yields a control law that directly incorporates the predicted co-state, actuator constraints, and safety constraints at each sampling instant. (a) Offline Training (b) Online Deployment 
+
+Fig. 1: Adjoint-based Neural Regulator architecture. (a) During offline training, the CoNN predicts a finite-horizon co-state sequence from the current state. Pointwise Hamiltonian minimization and a horizon rollout are then used to define the physics-informed training loss. (b) During online deployment, the CoNN predicts a finite-horizon co-state sequence from the current state, and the first predicted co-state is used in a safety-aware constrained Hamiltonian minimization to compute the applied control. IV. CASE STUDY AND RESULTS To evaluate the ANR’s performance, we consider a unicy-cle robot with dynamics 
+
+˙x = v cos θ, ˙y = v sin θ, ˙θ = ω, ˙v = a, (19) where x = [ xp, y p, θ, v ]⊤ denotes the state and u = [ a, ω ]⊤
+
+the control input. The objective is to steer the robot to a desired reference while satisfying actuator bounds and safety constraints. The control objective is of the form given in Eq. (1) with running cost ℓ(x, u) and terminal cost ϕ(x(tf )) .The admissible input set is chosen as U = {(a, ω ) : −1 ≤
+
+a ≤ 1, −4 ≤ ω ≤ 4}. The robot is constrained by arbitrarily placed circular obstacles in the x − y plane. Offline, the CoNN is trained end-to-end to map the current state (or tracking error), without any obstacles, to a finite-horizon co-state trajectory with length np = 30 . During deployment, the first predicted co-state is used to determine the control action, while safety is enforced separately through a CBF filter. For each circular obstacle, we define 
+
+hi(x) = ( xp − xo,i )2 + ( yp − yo,i )2 − r2 
+
+> i
+
+, (20) where (xo,i , y o,i ) is the obstacle center and ri is the effective safety radius. In this problem, the steering input ω does not appear in the first derivative of the barrier function, hence, a HOCBF, as given in (18c), is used to describe the admissible control set. Defining 
+
+Px = xp − xo,i , Py = yp − yo,i , s = Px cos θ + Py sin θ. 
+
+we obtain, 
+
+˙hi = 2 vs, (21) 
+
+¨hi = 2 v2 + 2 as + 2 vω (−Px sin θ + Py cos θ). (22) Thus, the applied control is computed using the safety-aware constrained Hamiltonian minimization given in Eq. (18). Hence, the learned adjoint defines the control action, while the HOCBF-QP enforces input and safety constraints online. In the following subsections, we compare the performance of ANR with those of RL and NMPC as benchmarks under similar simulation scenarios 1. RL was carried out based on the SAC algorithm in [8]. For NMPC, the ipopt optimization solver is used for solving the nonlinear programming in 
+
+CasADi . Our results showed that while RL operates at the fastest in runtime, it generalizes poorly outside the train-ing domain. By comparison, the ANR operates at slightly higher computational speeds but exhibits a generalizable performance that is similar to NMPC, including in cases with unseen initial states and references, as well as with or without obstacles. All simulations were performed on a desktop computer equipped with an Intel Core i9-14900K CPU and an NVIDIA GeForce RTX 4080 SUPER GPU. 
+
+A. Obstacle-Free Scenarios 
+
+Here, we evaluate all three controllers (ANR, RL and NMPC) in three different obstacle-free cases. 
+
+1) Case A: In-distribution evaluation with seen x(0) :
+
+First, we consider the obstacle-free scenario, where initial states were randomized within the training domain, and the performance of ANR and RL was evaluated over 100 trials. Specifically, the training was carried out, for both, on a grid over [−2, 2] for (x, y, θ, v ) with 10 samples per state dimension. The ANR and RL achieved 100% and 30% success rates, respectively, using an absolute convergence error (ACE) of ≤ 0.6 as the success criterion 2. In addition, RL produced a lower average state and control mean square derivative (MSD) (0 .03 and 0.05) compared to ANR (0 .17 
+
+and 1.81) . Ostensibly, the RL’s low performance is due to its limited generalization to unseen initial states, even within the training domain. Although this first testing utilized initial   
+
+> 1We additionally evaluated SQP-RTI variant of NMPC. Although SQP-RTI is often preferred for real-time NMPC applications because of its lower computational cost, our SQP-RTI implementation exhibited reduced robustness. In particular, SQP-RTI showed noticeable control chattering and was more prone to early termination or failure to satisfy the terminal convergence criterion (see our github page). Consequently, we use the ipopt
+> NMPC implementation for the benchmark results reported in this paper.
+> 2Absolute convergence error is the ℓ1-norm of the final state error.
+
+states from the same range, because they were continuously randomly selected, many evaluation points were not encoun-tered explicitly during training, hence, the poor performance on testing. For qualitative comparison, we selected an initial state where RL, ANR, and NMPC all show comparable ACE performance to show their respective navigation trajectories (see Case A in Fig. 2 and in Table I). RL operates at the fastest speed (0 .5ms ), compared to ANR (1 .2ms )
+
+and NMPC (347 .7ms ). RL’s slight computational advantage is expected because, during deployment, the SAC policy produces a nominal control input by direct policy evaluation, whereas ANR first predicts a costate trajectory and then solves a QP online based on the first predicted costate vector to recover the control action. 
+
+2) Case B: Out of Distribution Evaluation (Unseen 
+
+x(0) ): In this example, we evaluate generalization to initial conditions outside the training domain. RL does not general-ize reliably in this setting, whereas the proposed ANR shows good generalizability. The navigation trajectories of ANR, RL, and MPC are shown in Fig. 2. While MPC attains a lower ACE than ANR, it does so with a substantially higher computational cost, as summarized in Table I. 
+
+3) Case C: Out of Distribution Evaluation with NonZero Reference xref : In this case, we used the same out-of-distribution initial state as in IV-A.2, but changed the objective to track a nonzero reference, xref =[1 .00 , 1.00 , 0.00 , 0.00] ⊤. Accordingly, the error state 
+
+(xk − xref ) was used as the input to the CoNN [10]. We do not consider RL in this case study since it already showed poor performance outside the training domain in the earlier case. Again, our ANR shows the capability of reaching the desired goal, as shown in Fig. 2, with comparable performance to MPC and at a much faster computational speed, as summarized in Table I. 
+
+Fig. 2: Without Obstacles : Comparison of the representative initial state navigation trajectories. 
+
+B. Obstacles-Laden Scenarios 
+
+Here, we evaluate all three controllers (ANR, RL, and NMPC) in cases with obstacles. 
+
+1) Case A: In distribution Evaluation with seen x(0) :
+
+We first consider a constrained case with the same initial condition as the representative initial state used in IV-A.1. We randomized the locations of two obstacles within the same domain. Using the same success criterion defined in IV-A.1, performance was evaluated over 100 trials. ANR and     
+
+> Performance Metric Case A Case B Case C MSD (State)
+> ANR: 0.21
+> RL : 0.05
+> MPC: 0.22 ANR: 0.82
+> MPC: 0.57
+> ANR: 0.80
+> MPC: 0.59
+> MSD (Control Input)
+> ANR: 2.37
+> RL : 0.07
+> MPC: 2.64
+> ANR: 3.02
+> MPC: 5.77
+> ANR: 3.06
+> MPC: 6.94
+> Absolute Convergence Error
+> ANR: 0.26 RL : 0.25
+> MPC: 0.17
+> ANR: 0.14
+> MPC: 0.04
+> ANR: 0.13
+> MPC: 0.07
+> Computational Speed (ms )
+> ANR: 1.2
+> RL : 0.5
+> MPC: 349.5
+> ANR: 1.2
+> MPC: 370.1
+> ANR: 1.2
+> MPC: 378.9
+
+TABLE I: ANR, RL, and MPC performance comparison without obstacles. Italicized entries indicate better perfor-mance. RL achieved success rates of 82% and 38%, respectively. To illustrate the qualitative difference between the controllers, Fig. 3 shows a representative obstacle configuration, together with the corresponding state and control input trajectories, in which ANR reaches the target, whereas RL fails. We also included MPC for comparison. 
+
+> (a) ANR navigation, state, and control input trajectories.
+> (b) RL navigation, state, and control input trajectories.
+> (c) MPC navigation, state, and control input trajectories.
+
+Fig. 3: In distribution comparison between ANR, RL, and MPC with obstacles 
+
+2) Case B: Out of Distribution Evaluation (Unseen 
+
+x(0) ): For this case, we now consider constrained navigation with three densely-placed obstacles to evaluate how well our ANR generalizes outside the training domain with obstacles present. Since RL already failed in the obstacle-free out-of-distribution setting, it is not included here; the results are summarized in Table II. Fig. 4 shows the resulting naviga-tion, state, and control input trajectories of both ANR and MPC. To further evaluate ANR robustness, we selected an initial state outside the training domain and, in 100 trials, we randomized the obstacle locations within the feasible region between the start and goal while enforcing non-overlap and minimum separation. In this setting, ANR achieved a 98% success rate. 
+
+(a) ANR navigation, state, and control input trajectories. 
+
+(b) MPC navigation, state, and control input trajectories. 
+
+Fig. 4: Out of distribution comparison between ANR and MPC with obstacles. 
+
+3) Case C: Out of Distribution Evaluation with NonZero Reference x(0) : As explained in IV-A.3, the objective to track a nonzero reference, and we do not consider RL in this case study since it already showed poor performance outside the training domain. Using the same out-of-distribution initial state as in IV-B.2, we then consider a constrained navigation with three densely-placed obstacles to evaluate how well our ANR generalizes outside the training domain with non-zero reference. Again, our ANR shows comparable results to MPC, at a much faster computational speed, as summarized in Table II. Fig. 5 shows the navigation, state, and control input trajectories, with obstacles for both ANR and MPC.     
+
+> Performance Metric Case A Case B Case C MSD (State)
+> ANR: 0.19
+> MPC: 0.30 ANR: 0.70
+> MPC: 0.56 ANR: 0.76
+> MPC: 10.0
+> MSD (Control Input)
+> ANR: 3.79
+> MPC: 5.09
+> ANR: 3.49
+> MPC: 7.76
+> ANR: 3.97
+> MPC: 9.05
+> Absolute Convergence Error
+> ANR: 0.28
+> MPC: 0.18
+> ANR: 0.16
+> MPC: 0.09
+> ANR: 0.20
+> MPC: 0.13
+> Computational Speed (ms )
+> ANR: 1.4
+> MPC: 803.8
+> ANR: 1.4
+> MPC: 1206.7
+> ANR: 1.4
+> MPC: 1228.9
+
+TABLE II: ANR and MPC performance comparison with obstacles. Italicized entries indicate better performance. V. C ONCLUSION 
+
+In this paper, we utilized an ANR framework based a CoNN that incorporates HOCBF constraints into the online 
+
+(a) ANR navigation, state, and control input trajectories. 
+
+(b) MPC navigation, state, and control input trajectories. 
+
+Fig. 5: Comparison between ANR and MPC with obstacles for out-of-distribution with nonzero reference. control optimization, such that actuator limits and safety constraints are both enforced. The resulting ANR-HOCBF controller retains the low online computational cost of the CoNN framework while extending its applicability to safety-critical control problems. We applied the proposed approach to a unicycle robot navigating in an unknown environment under real-time safety constraints. Results show that the pro-posed approach achieves performance comparable to MPC at a much lower computational cost while generalizing more effectively than RL to unseen initial states and references. Future work will consider dynamic obstacles and higher-dimensional systems. REFERENCES [1] D. Hsu et al. , “Safety filters for safe control and reinforcement learning in robotics,” Annual Review of Control, Robotics, and Autonomous Systems , 2024. [2] A. D. Ames et al. , “Control barrier functions: Theory and applica-tions,” European Journal of Control , 2019. [3] J. B. Rawlings, D. Q. Mayne, and M. Diehl, Model Predictive Control: Theory, Computation, and Design . Nob Hill, 2020. [4] M. Diehl et al. , “Efficient numerical methods for nonlinear mpc,”                            
+
+> Annual Reviews in Control , 2009. [5] R. Hewson et al. , “Real-time nonlinear model predictive control for robotics,” IEEE Robotics and Automation Letters , 2023. [6] L. Brunke et al. , “Safe learning in robotics: From learning-based control to safe reinforcement learning,” Annual Review of Control, Robotics, and Autonomous Systems , 2022. [7] J. Garcia and F. Fernandez, “A comprehensive survey on safe rein-forcement learning,” Journal of Machine Learning Research , 2015. [8] Y. Emam, G. Notomista, P. Glotfelter, Z. Kira, and M. Egerstedt, “Safe reinforcement learning using robust control barrier functions,” IEEE Robotics and Automation Letters , vol. 10, no. 3, pp. 2886–2893, 2025. [9] R. Cheng, G. Orosz et al. , “End-to-end safe reinforcement learning through barrier functions,” in AAAI , 2019. [10] L. Lian, Y. Tong, and U. Inyang-Udoh, “Neural co-state regulator: Adata-driven paradigm for real-time optimal control with input constraints,” in 2025 IEEE 64th Conference on Decision and Control (CDC) , 2025, pp. 359–366. [11] L. S. Pontryagin, The Mathematical Theory of Optimal Processes .Interscience, 1962. [12] L. Lian and U. Inyang-Udoh, “Co-state neural network for real-time nonlinear optimal control with input constraints,” in 2025 American Control Conference (ACC) , 2025, pp. 2617–2624.
+
+[13] J. Huang, Z. Liu, J. Zeng, X. Chi, and H. Su, “Obstacle avoidance for unicycle-modelled mobile robots with time-varying control barrier functions,” in Proceedings of the IEEE International Conference on Electronics, Control, Optimization and Computer Engineering (IECON) , 2023, arXiv preprint arXiv:2307.08227. [14] D. P. Bertsekas, Dynamic Programming and Optimal Control . Athena Scientific, 1995. [15] X. Kong, Y. Xia, Z. Sun, D.-H. Zhai, Y. Deng, and S. Zhang, “Dif-ferential high order control barrier function-based safe reinforcement learning,” IEEE Robotics and Automation Letters , vol. 10, no. 7, pp. 7524–7531, 2025. [16] ——, “Differential high order control barrier function-based safe rein-forcement learning,” IEEE Robotics and Automation Letters , vol. 10, no. 7, pp. 7524–7531, 2025. [17] A. Rahmanian, A. A. Nasab, and M. H. Asemani, “A control barrier function based approach for safe and efficient navigation of unicycle mobile robots,” in 2024 10th International Conference on Control, Instrumentation and Automation (ICCIA) , 2024, pp. 1–6. [18] Y. Xiong, D.-H. Zhai, M. Tavakoli, and Y. Xia, “Discrete-time control barrier function: High-order case and adaptive case,” IEEE Transac-tions on Automatic Control , vol. 68, no. 4, pp. 4603–4616, 2023. [19] S. K. Janani and S. Kolathaya, “Fixed time convergence guar-antees for higher order control barrier functions,” arXiv preprint arXiv:2507.13888 , 2025. [20] L. Yang, B. Werner, and A. D. Ames, “Cbf-rl: Safety filtering rein-forcement learning in training with control barrier functions,” arXiv preprint arXiv:2510.14959 , 2025. [21] L. Lian and U. Inyang-Udoh, “Neural co-state projection regulator: A model-free paradigm for real-time optimal control with input constraints,” arXiv preprint arXiv:2503.00529 , 2025.
