@@ -1,0 +1,209 @@
+Title: Physics-Informed Predictive Control for Integrated Electric-Vehicle Thermal Management: An Open, Real-Data-Anchored Benchmark
+
+URL Source: https://arxiv.org/pdf/2606.22529v1
+
+Published Time: Tue, 23 Jun 2026 02:14:55 GMT
+
+Number of Pages: 7
+
+Markdown Content:
+# Physics-Informed Predictive Control for Integrated Electric-Vehicle Thermal Management: An Open, Real-Data-Anchored Benchmark 
+
+Yifan Wang 
+
+Department of Mechanical Engineering, McGill University, QC, H3A 2T7, Canada yifan.wang18@mail.mcgill.ca 
+
+June 21, 2026 
+
+Project: OpenEV-ThermoSciML (code V7.1) • Target journal: eTransportation (Elsevier) 
+
+Document: pre-submission technical overview • Status: analysis complete; all internal verification gates passed (13/13) 
+
+Abstract 
+
+Thermal management in a battery-electric vehicle (BEV) is a coupled, vehicle-level problem: the battery pack, the passenger cabin, the heat pump, and cabin air qual-ity compete for shared actuation and energy, yet most studies optimise a single sub-system on proprietary models, which prevents fair, reproducible comparison. We present 
+
+OpenEV-ThermoSciML , an open and reproducible benchmark that couples a battery electro-thermal–aging model, a two-node cabin model, a heat-pump/HVAC model, and a CO 2/ventilation model under real driving cycles (EPA) and real weather (NREL TMY3, NASA POWER), scored by a multi-objective suite spanning battery health, PMV/PPD comfort, cabin air quality, and HVAC energy. The benchmark’s battery thermal core is anchored and validated on real BEV battery-management-system (BMS) data; the re-duced battery (two-state) and cabin (two-node) models are validated against converged higher-fidelity references and, for the cabin, independently cross-checked against En-ergyPlus 25.2.0. On top of the benchmark we develop a physics-informed scientific-machine-learning (Sci-ML) surrogate—a nominal-physics prior plus a learned residual with conservation penalties—that is exact on conserved quantities and dominates black-box and Koopman surrogates out-of-distribution (overall rollout RMSE 0.014 vs 1.168 and 3.991). A shielded Sci-ML model-predictive controller (MPC) delivers statistically significant, all-positive improvements over a production-like rule-based controller across six scenarios—including a real hot-day US06 trip (energy −15%, comfort RMSE −47%, peak CO 2 −25%, battery thermal-gradient −78%)—and these gains transfer to an inde-pendently exported OpenModelica 8-node co-simulation plant. 
+
+Colour key for the equations: red = battery–cabin shared-capacity coupling; blue = learned Sci-ML residual; green = physics / conservation terms. 
+
+1 Motivation: why this benchmark is needed 
+
+A modern BEV thermal-management system regulates the battery, the e-drive, and the cabin through a shared reversible-heat-pump circuit, and it is one of the largest auxiliary energy consumers—materially reducing range in hot and cold weather. The practical conflicts are intrinsically coupled: fresh air lowers cabin CO 2 but raises the thermal load; cabin pull-down competes with battery protection for the same compressor capacity; cold-start battery pre-heating competes with cabin comfort. 1
+
+> arXiv:2606.22529v1 [eess.SY] 21 Jun 2026
+
+Three structural problems hold the field back. (i) Fragmentation: studies optimise battery or 
+
+cabin or heat-pump control, almost never with cabin air quality in the loop. (ii) Irreproducibil-ity: vehicle/HVAC parameters and drive logs are private, or simulations run in proprietary tools (AMESim, GT-SUITE), so methods cannot be compared on equal footing. (iii) Physics-blind learning: black-box surrogates can violate conservation laws and generalise poorly, and reduced-order plants are seldom anchored to real vehicles. 
+
+Gap and value. Table 1 contrasts representative recent work with ours. No open, reproducible, real-weather-coupled BEV benchmark jointly evaluates battery health, PMV/PPD comfort, cabin air quality, and energy while supporting physics-constrained surrogate modelling, constrained predictive control, and an independent higher-fidelity cross-validation. OpenEV-ThermoSciML fills this gap; its distinctive value is the open, coupled, multi-objective, real-data-anchored construction with an explicit cabin-air-quality axis. 
+
+Table 1: Positioning against representative recent EV thermal-management work (illustrative).                                     
+
+> Work Batt. health PMV/PPD Air qual. Real wx Surrogate+baselines Open code Heat-pump BEV NMPC ✓partial ————Integrated power/thermal MPC ✓——partial ——Koopman EV thermal MPC partial ———Koopman only —BTMS design benchmark ✓(design) ————✓
+> OpenEV-ThermoSciML (this work) ✓✓✓✓✓✓
+
+2 Why a coupled battery–cabin model is legitimate 
+
+A natural question is whether “joint battery–cabin control” is a real problem or an artificial stitching of two tasks. It is real: in an actual BEV the two loops physically share hardware and energy. The battery needs cooling/heating to hold temperature and limit its internal gradient; the cabin needs cooling/heating for occupant comfort; ventilation lowers CO 2 and infection risk but adds thermal load; and the heat pump, compressor, pump and blower are a shared 
+
+energy source. A single controller must therefore decide compressor power, blower, pump, fresh-air ratio, and—critically— how to split one cooling/heating capacity between the battery and the cabin .Our model encodes exactly this causal chain, and every link is physically standard: 1. drive cycle / vehicle speed → traction power Ptrac (road-load equation); 2. Ptrac + HVAC electrical load → battery current, heat generation, and SOC; 3. ambient temperature / solar / occupancy → cabin thermal load and CO 2;4. HVAC actuation → simultaneously battery temperature, cabin temperature, CO 2, and energy; 5. the controller trades off energy, comfort, CO 2/health proxy, battery gradient, and an aging proxy. The single decision that makes the loops genuinely coupled—rather than two independent problems running side by side—is the heat-pump capacity split sbatt in §3.3. Allocating capacity to the battery starves the cabin, and vice versa, so coordinated, prediction-based allocation is where a model-based controller can add value. 
+
+3 Methods and innovation 
+
+23.1 Plant: state, action, disturbance 
+
+The control-oriented plant uses a compact observable state with an internally higher-fidelity battery and cabin: 
+
+x = [ SOC, Tbatt , Tcab , CO 2 ] (observed), d = [ Ptrac , Tamb , Isol , nocc ] (disturbance), 
+
+u = [ ucomp , ublow , upump , ffresh , sbatt ] ∈ [0, 1 ]5 (actuators; sbatt = battery/cabin split). 
+
+3.2 Battery: two-state core/surface electro-thermal model 
+
+I = Ptrac + Pelec 
+
+Voc (SOC ) , Qgen = I2 R0(T), ˙SOC = − I
+
+3600 CAh 
+
+, (1) 
+
+Cc ˙Tcore = Qgen − Rcs (upump ) ( Tcore − Tsurf ), (2) 
+
+Cs ˙Tsurf = Rcs (upump ) ( Tcore − Tsurf ) + Qhvac batt − hA (Tsurf − Tamb ), (3) with observed Tbatt = ( Cc Tcore + Cs Tsurf )/Cbatt and physical cell gradient ∆T = Tcore − Tsurf . A comparative Arrhenius aging severity S(T) = exp  Ea 
+
+> R
+
+( 1 
+
+> Tref
+
+− 1 
+
+> T
+
+)(1 + 0.3 |C-rate |) is integrated as a relative SOH-stress proxy. 
+
+3.3 Heat pump: the battery–cabin shared-capacity coupling 
+
+A single compressor capacity is split between the cabin and the battery loop—this is the core integrated-thermal-management coupling (e.g. a multi-way valve block): 
+
+Qavail = COP (Tamb ) Pcomp ,
+
+Qhvac cab = ( 1 − sbatt ) Qavail ηcab σcab ,
+
+Qhvac batt = sbatt Qavail ηbatt σbatt .(4) The red terms make cabin pull-down and battery protection compete for one resource ; COP falls as ambient rises (cooling) and toward a resistive floor as ambient drops (heating), and σ
+
+enforces evaporator/condenser approach-temperature saturation. 
+
+3.4 Cabin (two-node) and cabin air quality 
+
+Cair ˙Tair = Qhvac cab + nocc qocc + ( 1−β)Qsol + U A (Tamb −Tair ) (5) 
+
++ ˙mfcp(Tamb −Tair ) + hat (Ttrim −Tair ), (6) 
+
+Ctrim ˙Ttrim = βQsol + hat (Tair − Ttrim ), V ˙CCO 2 = nocc G − ˙mf 
+
+> ρ
+
+(CCO 2 − Camb ). (7) Comfort uses PMV/PPD (ISO 7730); a ventilation-health proxy uses the Rudnick–Milton rebreathed fraction f = ( CCO 2 − Camb )/Ca inside a Wells–Riley dose (relative ranking only). Drive cycles map to Ptrac via the standard road load F = mgC rr + 12 ρCd Av 2 + ma , P = Fv /η.
+
+3.5 Sci-ML surrogate: a physics-informed gray box 
+
+The MPC needs a fast, accurate, physically consistent predictor. We learn a residual on a nominal-physics prior ˆ xt+1:
+
+xt+1 = ˆx nominal 
+
+> t+1
+
+| {z }
+
+> physics prior
+
++ NN θ (xt, ut, dt) , (8) 
+
+L = ∥·∥ 2data 
+
+| {z } 
+
+> fit
+
++λ1 relu (Camb −CO 2)2 + λ2 relu (sgn (I) ∆SOC )2 + λ3∥res ∥2. (9) 3The green penalties enforce CO 2 mass-balance and SOC discharge-monotonicity, so the surrogate is exact on conserved quantities ; the blue network only corrects hard closures (effective COP, saturation, coupling). It is a dependency-free NumPy MLP (no GPU required). 
+
+3.6 Shielded multi-objective MPC 
+
+All optimisation-based controllers minimise one cost with a cross-entropy-method (CEM) receding-horizon planner; only the prediction model changes (nominal / black-box / Koopman / Sci-ML / oracle), isolating model fidelity: 
+
+J = ∑
+
+> k
+
+h
+
+wE Ek + wTb viol (Tbatt ) + wg viol (∆T) + wsoh Sk
+
++ wc viol (PMV ) + wh
+
+  f , viol (CO 2) + ws∥∆u∥2 i
+
+.(10) An auditable safety shield (state-triggered fresh-air, comfort, and shared-capacity guards) guarantees constraint satisfaction. 
+
+4 What the data supports, and what the simulators do 
+
+A common reviewer concern is over-claiming from data. We therefore separate the three roles data plays, and what each tool is responsible for. 
+
+4.1 Three classes of data—and the claim each one supports Class 1 — public disturbance data. EPA dynamometer cycles (UDDS/US06/HWFET/SC03) supply the speed profile; NREL TMY3 (Golden, CO) supplies ambient temperature and solar irradiance. These do not calibrate the vehicle; they guarantee the experiments are driven by 
+
+realistic public driving and weather excitation rather than invented inputs. 
+
+Class 2 — real BEV BMS data merged with NASA POWER weather. The KU Leuven BEV V2 logs (2 vehicles, 351 driving sessions) provide measured pack temperature, power/dissipation and SOC. Their role is to anchor and validate the battery thermal-model form (leave-one-vehicle-out held-out RMSE ≈ 2.0–2.5 ◦C). We do not claim they validate the cabin, the HVAC/heat-pump system, or the full coupled vehicle; what they add is real-vehicle credibility to the battery core, with external reanalysis weather—a deliberate novelty. 
+
+Class 3 — simulation / reference data. A converged N-node battery and an 8-node cabin refer-ence show the reduced two-state battery and two-node cabin are not arbitrary; an OpenModel-ica FMU provides an independent high-fidelity closed-loop cross-check; and EnergyPlus 25.2.0 provides an independent cabin thermal-load cross-check. The defensible one-sentence sum-mary: we use public data to construct realistic disturbances, physical models as the control plant, and higher-fidelity references / FMU to validate the reduced-order models and control—never claiming that one dataset already contains a complete coupled battery–cabin system. 
+
+4.2 What each simulator is responsible for Python (NumPy/SciPy) builds the scenarios, runs the reduced-order plant, trains and calls the Sci-ML surrogate, runs the CEM-MPC, and produces the 15-seed statistics and ablations. 
+
+OpenModelica 1.24.4 + FMPy (FMI 2.0) export an independent implementation of the battery– cabin–CO 2 dynamics as a co-simulation FMU and step it in closed loop, so the controller is not merely “self-confirming” on the Python plant; all six scenarios pass and the minimum FMU gains remain positive (energy +1.75%, comfort +35.32%, CO 2 +4.94%, health proxy +9.98%, battery gradient +31.65%). EnergyPlus 25.2.0 independently solves the single-zone cabin heat 4balance to cross-check the cabin thermal-load submodel under matched hot-soak boundary conditions (Fig. 1). Together these give two independent confirmations of the reduced cabin and one independent confirmation of the closed loop. 
+
+5 Experimental results and findings 
+
+5.1 Surrogate accuracy and model fidelity 
+
+Out-of-distribution (hotter ambient + aggressive cycle), the Sci-ML surrogate’s 40-step rollout error is 0.014 overall vs 1.168 (black-box) and 3.991 (best-of-search Koopman); per state the Sci-ML advantage is 1.4–1.8 × (battery temp), 3.6–4.5 × (cabin temp), and exact on CO 2/SOC. The reduced models match converged references: two-state battery vs 8-node ≈ 0.08 ◦C; two-node cabin vs converged 8-node 0.65 ◦C (−90% vs one-node). The battery thermal core reproduces real BMS pack temperature at leave-one-vehicle-out held-out RMSE ≈ 2.0–2.5 ◦C, and the measured cell spread (mean 4.1 ◦C, p95 6.75 ◦C) validates the gradient scale. 
+
+Independent cabin cross-check. Driven by the same hot-soak boundary conditions, an EnergyPlus 25.2.0 single-zone cabin and our two-node cabin agree to 1.65 ◦C RMSE as-is; a light, physically-bounded re-identification of the cabin parameters reduces this to 0.11 ◦C
+
+RMSE (Fig. 1), with the identified envelope conductance and solar aperture remaining within their documented physical ranges. This is a cabin thermal-load confirmation only—the full closed-loop high-fidelity evidence remains the OpenModelica FMU.    
+
+> Figure 1: Independent cabin cross-check. The two-node cabin (orange) already tracks the EnergyPlus single-zone cabin (black) to 1.65 ◦C RMSE; bounded physical re-identification (blue) reaches 0.11 ◦C. Lower panel: pointwise error.
+
+5.2 Closed-loop control: six scenarios (shielded Sci-ML MPC vs rule-based) 
+
+Table 2 and Fig. 2 report the gains on the independent OpenModelica FMU plant; all 30 gains are positive and the FMU ↔Python headline gaps are small (energy ≤ 0.05%). Over 15 seeds on the Python plant, every one of the 30 paired comparisons favours the controller (rank-biserial = 1.0; Holm-corrected Wilcoxon p ≪ 0.01), and the gains stay positive under ±20% 5perturbation of plant and guard parameters. 
+
+Table 2: Improvement of the shielded Sci-ML MPC over the rule-based controller (% better), on the independent OpenModelica 8-node FMU plant.                                     
+
+> Scenario Energy Comfort RMSE CO 2max Battery gradient Health proxy A hot-soak 11.3 44.6 25.6 75.0 45.6 C ventilation 3.4 45.9 17.6 53.8 40.0 D long mixed 1.8 44.0 25.8 51.3 45.9
+> E cabin–battery co-cooling 8.7 35.3 13.1 71.7 24.9
+> REAL hot US06 14.8 46.8 25.1 78.3 45.5 REAL cold UDDS 1.8 40.7 4.9 31.7 10.0
+
+Figure 2: Closed-loop improvement of the shielded Sci-ML MPC over the rule-based controller on the independent OpenModelica/FMPy plant, by metric and scenario. Every bar is positive. 
+
+5.3 Key finding: the cabin–battery co-cooling coupling (scenario E) 
+
+Scenario E is the physically meaningful coupling point: a 42 ◦C ambient with a hot cabin and 
+
+a hot pack forces the controller to allocate one heat-pump capacity (the sbatt split) between cabin pull-down and battery protection. Here the rule-based controller either starves the cabin or overheats the pack, whereas the shielded Sci-ML MPC—predicting the coupled dynamics—achieves simultaneous energy ( −8.7%), comfort ( −35.3%), and battery-gradient (−71.7%) improvement. This is the clearest evidence that the battery and cabin are genuinely coupled through shared capacity and that coordinated, prediction-based allocation is valuable. A second finding: in heating-dominated cold starts the energy headroom is small (rigid heating load), so value shifts to comfort and gradient—a Pareto shift the benchmark exposes rather than hides. 
+
+6 Contributions 
+
+1. An open, reproducible, weather-coupled whole-vehicle BEV thermal-management bench-mark unifying battery health, PMV/PPD comfort, cabin air quality, and energy over six standardised scenarios. 2. A real-BMS-anchored battery thermal core (KU Leuven + NASA POWER; leave-one-vehicle-out validation) and reduced battery/cabin models validated against converged higher-fidelity references , with the cabin additionally cross-checked against EnergyPlus. 63. A physics-informed Sci-ML surrogate that is conservation-exact and dominates black-box and Koopman baselines out-of-distribution. 4. A shielded, model-swappable multi-objective MPC with statistically significant, all-positive gains, cross-validated on an independent OpenModelica FMU closed loop. 5. A fully released package (code, processed data, trained models, parameter-provenance and data-mapping documentation) for reproducible comparison. 
+
+7 Limitations and future work 
+
+Validation is in-silico (reduced-order benchmark + real-data-anchored battery + independent FMU co-simulation + EnergyPlus cabin cross-check); hardware-in-the-loop / bench / vehicle tests are the key next step . Real-data validation currently covers the battery thermal core (cabin/HVAC/ventilation use literature parameters, backstopped by ±20% sensitivity and the EnergyPlus cabin cross-check); cross-vehicle evidence is preliminary (two vehicles). The aging and ventilation-health terms are comparative proxies, not absolute predictions. A tuned deep-RL (SAC/PPO) comparator and a public archival release (DOI) are planned. 
+
+> All quantitative results are produced by the released V7.1 code and pass the internal verification gate (13/13).
+
+7

@@ -1,0 +1,24 @@
+{
+  "label": "2026-06-23",
+  "date": "2026-06-23",
+  "generated_at": "2026-06-23T21:22:28",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202606/23/2606.22529v1-physics-informed-predictive-control-for-integrated-electric-vehicle-thermal-management-an-open-real-data-anchored-benchmark",
+      "section": "quick",
+      "title_en": "Physics-Informed Predictive Control for Integrated Electric-Vehicle Thermal Management: An Open, Real-Data-Anchored Benchmark",
+      "authors": "Yifan Wang",
+      "date": "2026-06-21",
+      "pdf": "https://arxiv.org/pdf/2606.22529v1",
+      "score": "7.0",
+      "evidence": "物理信息预测控制用于电动汽车集成能量管理，使用了MPC这一混合无人机能量管理分类中的关键方法。",
+      "tldr": "电动汽车热管理涉及电池、座舱、热泵等多子系统强耦合，现有研究多基于专有模型，缺乏开放、可复现的基准。本研究提出OpenEV-ThermoSciML开放基准，耦合电池电热老化、双节点座舱、热泵及CO₂通风等模型，基于真实驾驶循环与气象数据锚定验证。进一步构建物理信息科学机器学习代理模型，并设计模型预测控制器。在真实US06高温行程中，与规则控制相比，能耗降低15%，舒适度误差减少47%，CO₂峰值降低25%，电池梯度降低78%，并成功迁移至OpenModelica八节点仿真平台。",
+      "tags": "query:uav",
+      "abstract_en": "Thermal management in a battery-electric vehicle (BEV) is a coupled, vehicle-level problem: the battery pack, the passenger cabin, the heat pump, and cabin air quality compete for shared actuation and energy, yet most studies optimise a single subsystem on proprietary models, which prevents fair, reproducible comparison. We present OpenEV-ThermoSciML, an open and reproducible benchmark that couples a battery electro-thermal-aging model, a two-node cabin model, a heat-pump/HVAC model, and a CO$_2$/ventilation model under real driving cycles (EPA) and real weather (NREL TMY3, NASA POWER), scored by a multi-objective suite spanning battery health, PMV/PPD comfort, cabin air quality, and HVAC energy. The benchmark's battery thermal core is anchored and validated on real BEV battery-management-system (BMS) data; the reduced battery (two-state) and cabin (two-node) models are validated against converged higher-fidelity references and, for the cabin, independently cross-checked against EnergyPlus 25.2.0. On top of the benchmark we develop a physics-informed scientific-machine-learning (Sci-ML) surrogate -- a nominal-physics prior plus a learned residual with conservation penalties -- that is exact on conserved quantities and dominates black-box and Koopman surrogates out-of-distribution (overall rollout RMSE 0.014 vs 1.168 and 3.991). A shielded Sci-ML model-predictive controller (MPC) delivers statistically significant, all-positive improvements over a production-like rule-based controller across six scenarios -- including a real hot-day US06 trip (energy $-15\\%$, comfort RMSE $-47\\%$, peak CO$_2$ $-25\\%$, battery thermal-gradient $-78\\%$) -- and these gains transfer to an independently exported OpenModelica 8-node co-simulation plant.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

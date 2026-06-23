@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "extractor": "papercropper",
+  "figures": [
+    {
+      "url": "assets/figures/arxiv/2606.22529v1/fig-001.webp",
+      "caption": "",
+      "page": 0,
+      "index": 1,
+      "width": 1347,
+      "height": 903,
+      "label": "Figure"
+    },
+    {
+      "url": "assets/figures/arxiv/2606.22529v1/fig-002.webp",
+      "caption": "",
+      "page": 0,
+      "index": 2,
+      "width": 1463,
+      "height": 622,
+      "label": "Figure"
+    }
+  ]
+}

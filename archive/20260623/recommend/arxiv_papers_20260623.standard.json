@@ -1,0 +1,52 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-23T21:21:30.426888+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2606.22529v1",
+      "source": "arxiv",
+      "title": "Physics-Informed Predictive Control for Integrated Electric-Vehicle Thermal Management: An Open, Real-Data-Anchored Benchmark",
+      "abstract": "Thermal management in a battery-electric vehicle (BEV) is a coupled, vehicle-level problem: the battery pack, the passenger cabin, the heat pump, and cabin air quality compete for shared actuation and energy, yet most studies optimise a single subsystem on proprietary models, which prevents fair, reproducible comparison. We present OpenEV-ThermoSciML, an open and reproducible benchmark that couples a battery electro-thermal-aging model, a two-node cabin model, a heat-pump/HVAC model, and a CO$_2$/ventilation model under real driving cycles (EPA) and real weather (NREL TMY3, NASA POWER), scored by a multi-objective suite spanning battery health, PMV/PPD comfort, cabin air quality, and HVAC energy. The benchmark's battery thermal core is anchored and validated on real BEV battery-management-system (BMS) data; the reduced battery (two-state) and cabin (two-node) models are validated against converged higher-fidelity references and, for the cabin, independently cross-checked against EnergyPlus 25.2.0. On top of the benchmark we develop a physics-informed scientific-machine-learning (Sci-ML) surrogate -- a nominal-physics prior plus a learned residual with conservation penalties -- that is exact on conserved quantities and dominates black-box and Koopman surrogates out-of-distribution (overall rollout RMSE 0.014 vs 1.168 and 3.991). A shielded Sci-ML model-predictive controller (MPC) delivers statistically significant, all-positive improvements over a production-like rule-based controller across six scenarios -- including a real hot-day US06 trip (energy $-15\\%$, comfort RMSE $-47\\%$, peak CO$_2$ $-25\\%$, battery thermal-gradient $-78\\%$) -- and these gains transfer to an independently exported OpenModelica 8-node co-simulation plant.",
+      "authors": [
+        "Yifan Wang"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-06-21T14:37:30+00:00",
+      "link": "https://arxiv.org/pdf/2606.22529v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Physics-informed predictive control for integrated electric-vehicle energy management, using MPC which is a key method in hybrid UAV energy management taxonomy.",
+      "llm_evidence_cn": "物理信息预测控制用于电动汽车集成能量管理，使用了MPC这一混合无人机能量管理分类中的关键方法。",
+      "llm_evidence": "物理信息预测控制用于电动汽车集成能量管理，使用了MPC这一混合无人机能量管理分类中的关键方法。",
+      "canonical_evidence": "物理信息预测控制用于电动汽车集成能量管理，使用了MPC这一混合无人机能量管理分类中的关键方法。",
+      "llm_tldr_en": "OpenEV-ThermoSciML provides an open benchmark for integrated BEV thermal management using physics-informed MPC, enabling fair comparison of multi-objective energy optimization strategies that balance battery health, comfort, and energy use, with methods transferable to UAV hybrid energy management.",
+      "llm_tldr_cn": "该论文针对电池电动汽车热管理耦合优化问题，提出开放基准OpenEV-ThermoSciML，耦合电池电热老化模型、座舱热模型及HVAC系统，在真实驾驶循环和天气下采用物理信息模型预测控制进行多目标优化。实验表明该方法能在电池健康、乘员舒适性和能耗间取得平衡。该基准及其MPC方法为无人机混合能量系统中热与功率的联合优化提供了可复现的评估框架和可迁移的控制策略。",
+      "llm_tldr": "该论文针对电池电动汽车热管理耦合优化问题，提出开放基准OpenEV-ThermoSciML，耦合电池电热老化模型、座舱热模型及HVAC系统，在真实驾驶循环和天气下采用物理信息模型预测控制进行多目标优化。实验表明该方法能在电池健康、乘员舒适性和能耗间取得平衡。该基准及其MPC方法为无人机混合能量系统中热与功率的联合优化提供了可复现的评估框架和可迁移的控制策略。",
+      "llm_tags": [
+        "query:uav:composite"
+      ],
+      "matched_query_tag": "query:uav:composite",
+      "matched_query_text": "Papers central to 查找关于混合动力无人机和混合电推垂直起降飞行器能量管理策略的综述论文和代表性研究。重点关注串联混合动力无人机、燃料电池/电池混合动力无人机、内燃机-发电机/电池混合动力无人机和混合电推垂直起降飞行器。总结主要的能量管理方法，包括基于规则控制、模糊逻辑控制、等效消耗最小化策略、自适应等效消耗最小化策略、动态规划、庞特里亚金极小值原理、模型预测控制和强化学习。优先考虑讨论系统建模、基于任务剖面的功率分配、电池荷电状态维持控制、降低油耗、发电机瞬态抑制、电池老化、实时实现以及实验或硬件验证的论文。识别当前局限性和潜在研究空白，以支持混合动力无人机能量管理的未来创新。, especially work that connects or combines: UAV power management; fuel cell battery UAV; hybrid-electric propulsion; energy management strategy for hybrid electric unmanned aerial vehicles; | English keyword            | 中文含义       | | -------------------------- | ---------- | | hybrid-powered UAV         | 混合动力无人机    | | energy management strategy | 能量管理策略     | | hybrid-electric propulsion | 混合电推进      | | series hybrid UAV          | 串联混动无人机    | | fuel cell battery UAV      | 燃料电池/电池无人机 | | UAV power management       | 无人机功率管理    |; equivalent consumption minimization strategy for hybrid electric vehicles; Which papers provide a clear taxonomy of rule based, fuzzy, ECMS, dynamic programming, PMP, MPC, and reinforcement learning methods?; What are the unsolved problems in hybrid UAV energy management, such as SOC control, fuel consumption, generator transients, and mission adaptation?; What are the main categories of energy management strategies for hybrid powered UAVs?; What are the current limitations and research gaps in hybrid UAV energy management?.",
+      "matched_requirement_id": "req-composite-uav",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
