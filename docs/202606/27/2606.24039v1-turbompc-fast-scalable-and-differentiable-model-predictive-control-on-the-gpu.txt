@@ -1,0 +1,2738 @@
+Title: TurboMPC: Fast, Scalable, and Differentiable Model Predictive Control on the GPU
+
+URL Source: https://arxiv.org/pdf/2606.24039v1
+
+Published Time: Wed, 24 Jun 2026 00:21:29 GMT
+
+Number of Pages: 20
+
+Markdown Content:
+> 1
+
+# TurboMPC : Fast, Scalable, and Differentiable Model Predictive Control on the GPU 
+
+Gabriel Bravo-Palacios, Jianghan Zhang, Zachary Pestrikov, Brian Plancher, and Thomas Lew 
+
+Fig. 1. TurboMPC is a differentiable MPC solver that runs entirely on the GPU. It supports realistic problem formulations that enable deployment on challenging robotics applications such as minimum-time racing. Thanks to its differentiability and GPU support, it can be used in learning pipelines such as auto-tuning via reinforcement learning (RL), imitation learning (IL), and Bayesian optimization (BO). 
+
+Abstract —Robotics increasingly relies on GPUs for parallel simulation, large-scale learning, and neural-network inference. For model predictive control (MPC) to scale with this paradigm, solvers must run efficiently on this hardware while remaining fast, differentiable, and compatible with expressive MPC formu-lations used in robotics. We present TurboMPC , a differentiable MPC solver that runs entirely on the GPU and supports state and control inequality constraints, implicit integrators, cross-time-coupled costs, and slack variables. TurboMPC combines sequential quadratic programming (SQP), an alternating di-rection method of multipliers (ADMM) inner solver, implicit differentiation, and a co-designed JAX-CUDA implementation for efficiency and ease of use. In simulation, we validate TurboMPC 
+
+on constrained planning, humanoid imitation learning, and re-inforcement learning with neural-network cost function tasks, achieving up to 15 × and 58 × speedups over state-of-the-art CPU and GPU differentiable solvers, respectively. We deploy 
+
+TurboMPC on a full-scale car for minimum-time racing and find that batched, GPU-accelerated tuning of MPC parameters via Bayesian optimization yields significantly faster driving than a hand-tuned baseline. TurboMPC also scales to planning horizons of over 8000 knot points while maintaining control of the vehicle. We open-source TurboMPC at: https://github.com/ToyotaResearchInstitute/turbompc 
+
+Gabriel Bravo-Palacios, Jianghan Zhang, Zachary Pestrikov, and Brian Plancher are with Dartmouth College, Hanover, NH, USA (Email: {gbravo, jianghan.zhang.gr, zpestrikov, plancher }@dartmouth.edu )Thomas Lew is with Toyota Research Institute, Los Altos, CA, USA. (Email: thomas.lew@tri.global )Toyota Research Institute provided funds to support this work, but this article solely reflects the opinions and conclusions of its authors. 
+
+I. I NTRODUCTION 
+
+# ROBOTICS is increasingly powered by scale: large datasets, parallel simulation, and neural networks trained on graphics processing units (GPUs) [1]–[5]. How can optimization-based model predictive control (MPC) scale with this new computational paradigm? MPC remains one of the most reliable tools for controlling robotic systems, as it enables planning with a model, reasoning about constraints, and reacting to changing conditions [6]– [13]. Yet, most high-performance MPC solvers are designed for central processing units (CPUs), where sequential algo-rithms such as Riccati recursions can exploit the temporal structure of optimal control problems [14]–[17]. This CPU-centric design limits the integration of MPC into learning-based pipelines that rely on batching, parallel rollouts, and differentiable architectures at scale. While GPU-based differentiable solvers offer a path to scale MPC and bring its structured decision-making into modern learning-based robotics, useful GPU acceleration is not only a matter of parallel execution . The solver must also be fast enough for online control and expressive enough to model the dynamics and constraints that determine real-world perfor-mance. MPC formulations may require implicit integration for stiff dynamics, control-rate penalties for input smoothness and actuators protection, state inequalities for safety constraints, and slack variables to maintain feasibility. As shown in Table I, existing tools force a tradeoff: GPU-based solvers often restrict the problem class to expose parallelism, while CPU-based solvers support richer formulations and online deployment, with limited scalability.                                                      
+
+> arXiv:2606.24039v1 [cs.RO] 23 Jun 2026 2
+> TABLE I SOLVER FEATURES :✓SUPPORTED ,✗NOT SUPPORTED ,∼PARTIAL .
+> Solver StateIneq. Implicit RateCost Slack Diff. GPU
+> acados [21] ✓✓✓✓✓✗
+> Trajax [22], DiffMPC [24]
+> mpc.pytorch [23] ✗✗✗✗✓✓
+> CusADi [26] ✓✓✓✓✗✓
+> Other GPU Solvers [25], [27]–[34], [36], [46] ∼✗✗✗✗✓
+> Standard NLP Solvers [18], [19] ✓✓✓✓✗✗
+> TurboMPC (Ours) ✓✓✓✓✓✓
+
+A. Related Work Solvers on the CPU: MPC solvers have long exploited the time-induced sparsity of optimal control problems ( OCPs )via sequential Riccati recursions and factorization approaches, achieving efficient resolution on CPUs [14]–[17], and outper-forming general-purpose solvers [18], [19] that do not exploit the OCP structure. In particular, acados [20], [21] supports implicit integrators, inequality constraints, and differentiabil-ity. However, relying on a CPU-based implementation limits scalability to larger models and batch sizes. 
+
+Solvers on the GPU: GPU-based differentiable solvers for MPC offer a promising path toward scaling and com-bining optimization-based control and learning. However, existing methods restrict problem classes to leverage both the structure of OCPs and expose parallelism. For example, 
+
+trajax [22], mpc.pytorch [23], and DiffMPC [24] do not handle implicit integrators, cross-time costs, or state in-equality constraints. Other GPU-accelerated solvers, whether gradient-based [25]–[34] or sampling-based [35]–[37] improve throughput or latency, but either lack differentiability or do not support the full set of features needed for many target MPC applications, see Table I. 
+
+Co-Design of Solvers and Learning Infrastructure: One barrier to GPU-native MPC is the mismatch between learning infrastructure and solver throughput. JAX [38] provides au-tomatic differentiation and batching that are used in learning pipelines, but incurs per-kernel launch overhead that is signif-icant for iterative solver design. CUDA provides low-overhead kernels needed for efficient GPU execution, but is more difficult to interface with. Moreover, the sparsity structure of the problems in the forward and backward passes of a differen-tiable MPC solver can be different. These requirements require a careful design to unlock an efficient yet practical GPU-accelerated solver (see Section III-E). Our approach addresses this gap through a JAX frontend and fused CUDA backend, using direct sparse factorization [39] as a shared primitive for online control, batched learning, and differentiation. 
+
+Autonomous Racing: Driving a vehicle at its limits via MPC remains a challenging problem [37], [40], [41], requiring long-horizon planning with track bound constraints, stiff dy-namics, control-rate costs to protect actuators, and slack vari-ables to ensure recursive feasibility despite model mismatch. Recent work has integrated learning and automated MPC tun-ing into racing pipelines through differentiable or gradient-free methods [42]–[45]. However, existing approaches use CPU-only solvers or only partly support GPU acceleration [41], limiting batching and large-scale tuning. 
+
+B. Contribution 
+
+We propose TurboMPC , a differentiable GPU-accelerated MPC solver that addresses problems of the form Optimal Control Problem ( OCP )
+
+min  
+
+> (x,u,ξ )
+> N−1
+
+X
+
+> t=0
+
+ℓt
+
+h xt
+
+> ut
+
+i
+
+,
+
+hxt+1 
+
+> ut+1
+
+i 
+
++ ℓN
+
+h xN
+
+> uN
+
+i 
+
++ γξ
+
+> 2
+> N
+
+X
+
+> t=0
+
+∥ξt∥22
+
+s.t. x0 = xinit ,ft(xt, u t, x t+1 , u t+1 ) = 0 , t = 0 , . . . , N − 1,gt ≤ gt(xt, u t) + δξ ξt ≤ gt, t = 0 , . . . , N, 
+
+with states xt ∈ Rnx , controls ut ∈ Rnu , optional equality constraints u0 = uinit and slack variables ξt, and horizon N .The binary δξ ∈ { 0, 1} and the scalar γξ > 0 toggle and penalize ξt, respectively. The solver supports key features:  
+
+> •
+
+Control rate costs to smooth inputs and protect actuators  
+
+> •
+
+Implicit integrators to handle stiff dynamics  
+
+> •
+
+Inequality constraints for obstacle avoidance, actuator lim-its, and additional constraints  
+
+> •
+
+Slack variables to improve recursive feasibility Since the solver is differentiable and runs entirely on the GPU, it can efficiently:  
+
+> •
+
+plan over long horizons,  
+
+> •
+
+use expressive costs & constraints (e.g., neural networks),  
+
+> •
+
+handle high-dimensional systems, and  
+
+> •
+
+be used in imitation learning (IL), reinforcement learning (RL), and Bayesian optimization (BO) pipelines. 
+
+1) Approach: The solver tackles OCP via sequential quadratic programming (SQP) [47]. It runs entirely on the GPU and leverages the time-induced sparse structure of OCP 
+
+to exploit the GPU’s parallel computation capabilities. The inner quadratic programs (QPs) in the SQP loop are solved by a custom alternating direction method of multipliers (ADMM) scheme using the Schur complement method. The ADMM scheme is inspired from OSQP [16], with the primal-update linear systems solved via cuDSS [39], and slack variables tackled using ideas from [48] to simplify the implementation and avoid extending the size of the problem. Using implicit differentiation, custom vector-Jacobian products (VJP) give gradients of functions of the OCP solution by differentiating the active-set KKT conditions and solving a linear system. 
+
+2) Software: The solver is implemented in JAX and CUDA 
+
+to simplify its use and ensure performance. It is open-source: https://github.com/ToyotaResearchInstitute/turbompc 
+
+3) Results: We demonstrate the full feature set above across simulation results and deployment on a Lexus LC500 vehicle. The results show significant speedups over strong baselines such as the CPU solver acados [21] and a hybrid GPU-CPU solver using OSQP [16]. Some highlights of the on-vehicle results include the efficient and automatic tuning of the parameters of OCP via Bayesian optimization to race significantly faster, and real-time re-planning with horizon 
+
+N > 8000 , an 8× longer horizon than the largest horizon at which the baseline maintains control of the vehicle. 3
+
+II. B ACKGROUND 
+
+A. Differentiable Model Predictive Control 
+
+MPC [49] is a planning and control strategy that recursively solves OCP from the current robot state xinit and executes the first control input u0 of the solution x := ( xt, u t)Nt=0 ,before replanning again from the next robot state xinit . The 
+
+OCP depends on parameters θ that encode the costs ℓt (e.g., weights penalizing the distance to the goal) and constraints 
+
+ft, g t, x init (e.g., positions of obstacles or friction coefficients of the vehicle dynamics model). A differentiable MPC solver implements two capabilities: 
+
+Forward Pass: OCP is solved for a given parameter θ to obtain the solution x. The solver design is key to efficiently and reliably solve OCP , e.g., via an interior-point method or SQP [18], [19], [47]. 
+
+Backward Pass: The sensitivity of the solution with respect to the parameters θ is computed. One approach is to differentiate through the solver iterations, but this approach can be slow and memory-intensive [50], [51]. Instead, we use implicit differentiation at the converged solution [21], [23], [52]–[55]: The primal-dual variables w = ( x, y ) satisfy the KKT conditions F (w, θ ) = 0 , and sensitivities are obtained by differentiating these conditions. The backward pass then amounts to solving a linear system, which avoids unrolling solver iterates. 
+
+B. Exploiting Time-Induced Sparse Structure 
+
+The finite-horizon structure of OCP induces sparse linear systems that MPC solvers exploit through Riccati recursions, structured factorizations, or iterative methods [14]–[16], [20], [21], [56], [57]. For explicit dynamics and per-stage costs, the associated KKT systems are block tridiagonal across time. CPU solvers exploit this structure efficiently for single OCP solves, while GPU methods seek parallelism across time, batches, or sparse linear algebra operations [22]–[26], [29], [32]. PCG-based solvers and parallel cyclic reduction effi-ciently solve these block-tridiagonal subclass on GPUs [14], [29], [32], but control-rate costs, implicit dynamics, and general inequalities, essential in robotics applications and autonomous racing [40], [41], introduce cross-time couplings or active-set-dependent KKT structures that can break the aforementioned structure. Differentiable MPC adds a second structural challenge: the forward and backward passes do not necessarily share the same sparsity structure. For the forward pass, using our ADMM approach, the primal linear systems admit a Schur complement reduction to a block-tridiagonal linear system, whereas the linear systems in the backward pass do not admit this reduction. Thus, linear system solver primitives specialized only to the forward block-tridiagonal system OCP 
+
+do not directly cover the full differentiable feature set in Table I. TurboMPC therefore uses cuDSS [39] for GPU-friendly sparse direct factorization as a common linear system solver primitive for the forward and backward passes, supporting implicit dynamics, control-rate costs, inequalities, slack vari-ables, and differentiability in one solver. Other supported (but potentially slower) linear system solvers are listed in Table III. III. S OLVER DESIGN AND IMPLEMENTATION 
+
+The differentiable solver is described in Algorithms 1-3. We solve OCP via SQP [47, Chapter 18]. At each SQP iteration, we form a convex approximation of OCP (Section III-A). We solve the resulting QP via an ADMM scheme inspired by OSQP [16] and the slack variables handling of [48] (Sec-tion III-B). Then, the next SQP iterate is selected using a back-tracking linesearch (Section III-C). Finally, after convergence of the SQP scheme, gradients can be computed using an active-set VJP based on implicit differentiation (Section III-D). Each component has prior art, but the combined and co-designed implementation is what unlocks the performance of this GPU solver. We discuss design choices and implementation details in Section III-E. For compact presentation, we refer the reader to the Appendix for additional details. 
+
+A. QP Approximation of OCP 
+
+At each SQP iterate, we quadratize the cost and linearize the constraints, giving the following approximation of OCP :Quadratic Program ( QP )
+
+min  
+
+> (x,ξ )12
+
+x⊤P x + q⊤x + γξ 
+
+> 2
+
+∥ξ∥2
+
+s.t. Cx = c, G ≤ Gx + δξ ξ ≤ G, 
+
+where x stacks the stage variables x := (xt, u t)Nt=0 , and 
+
+(P, q, C, c, G, G, G ) are defined in Appendix B. Leveraging the sparsity of QP enables an efficient solver for three reasons. First, as the cost of OCP couples only neighboring stages, the matrix P is block-tridiagonal. Second, the matrix C encodes the linearized dynamics and initial-state equality constraints and is block-bidiagonal. Third, the matrix G encodes the linearized pointwise-in-time inequality constraints and is block diagonal. 
+
+P =
+
+       
+
+> D0E⊤
+> 0
+> E0D1
+> . . .. . .. . .E⊤
+> N−1
+> EN−1DN
+
+,C =
+
+                  
+
+> Ainit 00· · · 0
+> A−
+> 0A+00· · · 0
+> .... . .. . .. . .00· · · 0A−
+> N−1A+
+> N−1
+
+, G =
+
+      
+
+> G0000. . .000GN
+
+.
+
+(1) 
+
+B. Solving QP via ADMM 
+
+We solve QP via an ADMM scheme that combines OSQP ’s [16] splitting scheme and the slack variables handling of [48]. We introduce the slack variables z1 and rewrite QP as 
+
+min  
+
+> (x,z,ξ )12
+
+x⊤P x + q⊤x + γξ 
+
+> 2
+
+∥ξ∥2 (2) s.t. Ax − z = 0 , z +
+
+h 0 
+
+> δξI
+
+i
+
+ξ ∈ [l, u ],
+
+where A =
+
+hCG
+
+i
+
+, l =
+
+h cG
+
+i
+
+, and u =
+
+h cG
+
+i
+
+.         
+
+> 1The slack variables ξshould not be confused with the slack variables z.The variables ξrelax the inequality constraints. The variables zcome from the ADMM scheme and capture the right hand sides of the constraints. 4
+
+Let y be the multipliers associated to the constraints Ax =
+
+z. The KKT conditions of QP define the primal-dual residuals 
+
+rprim = ∥Ax − z∥∞ , rdual =
+
+hP x + q + A⊤yγξ ξ + [0; δξ I]y
+
+i
+
+> ∞
+
+. (3) We terminate when 
+
+rprim ≤ εabs + εrel ∥(Ax, z )∥∞ , (4a) 
+
+rdual ≤ εabs + εrel (P x, A ⊤y, q, γ ξ ξ, [0; δξ I]y) ∞ . (4b) Our ADMM solver is derived as follows. We introduce the duplicated variables (˜ x, ˜z) and rewrite QP as 
+
+min  
+
+> (x,z, ˜x, ˜z,ξ )12
+
+˜x⊤P ˜x + q⊤ ˜x + γξ 
+
+> 2
+
+∥ξ∥2 + I[l,u ](z + [0; δξ I]ξ)
+
+s.t. A˜x − ˜z = 0 , ˜x − x = 0 , ˜z − z = 0 , (5) where IC is the indicator function of a set C, with I[l,u ](z) := 0 if z ∈ C and IC (z) := + ∞ otherwise. Let w and y be the dual variables associated with the constraints ˜x − x = 0 and ˜z − z = 0 , respectively. The augmented Lagrangian is then 
+
+Lσ,ρ (˜ x, ˜z, x, z, ξ, w, y ) = 12 ˜x⊤P ˜x + q⊤ ˜x + γξ 
+
+> 2
+
+∥ξ∥2++ I[l,u ](z + [0; δξ I]ξ) + I{0}(A˜x − ˜z) (6) 
+
++ σ 
+
+> 2
+
+∥˜x − x + σ−1w∥2 + ρ 
+
+> 2
+
+∥˜z − z + ρ−1y∥2,
+
+where σ > 0 and ρ ≻ 0 are step-size parameters (with ρ
+
+diagonal). 
+
+ADMM scheme : Our QP solver consists of 1) minimizing 
+
+Lσ,ρ over (˜ x, ˜z), 2) minimizing Lσ,ρ over (x, z, ξ ), and 3) updating the multipliers (w, y ). By also including an over-relaxation strategy, we obtain the following three updates. 
+
+Remark 1 (ADMMSlack : Differences with OSQP )The standard OSQP [16] ADMM scheme would introduce a copy ˜ξ of ξ, and use a primal update that minimizes the Lagrangian over (˜ x, ˜z, ˜ξ), solving a larger linear system. Instead, our ADMM scheme for handling slack variables is inspired from [48]. It is easier to implement as it only consists of a small change to the projection step. 
+
+1) Primal update: Minimizing the augmented Lagrangian 
+
+Lσ,ρ over (˜ x, ˜z) gives an equality-constrained QP, whose KKT conditions give the linear system 
+
+P + σI A⊤
+
+A −ρ−1I
+
+  ˜xk+1 
+
+νk+1 
+
+
+
+=
+
+ σx k − qzk − ρ−1yk
+
+
+
+. (7) Thanks to the bottom-right block −ρ−1I, we can eliminate the multipliers νk+1 , which gives the Schur-complement system 
+
+S ˜xk+1 = ηk, (8) where the k superscript denotes ADMM iterations and 
+
+S = P + σI + A⊤ρA, ηk = σx k − q + A⊤(ρz k − yk).
+
+After solving (8), we recover 
+
+˜zk+1 = A˜xk+1 . (9) 
+
+DiffMPC (Differentiable MPC Solver) 
+
+Alg. 1 SQP (Forward Pass) 
+
+Inputs : OCP , tolerance ϵ, max SQP iterations, line-search parameters 
+
+Initial guess : primal-dual guess (x, y ) 
+
+> 1:
+
+while not converged do  
+
+> 2:
+
+QP ← Convexify OCP Sec. III-A  
+
+> 3:
+
+(x⋆, ξ ⋆, y ⋆) ← Solve QP via ADMM Alg. 3  
+
+> 4:
+
+(x, y ) ← Linesearch (x⋆, y ⋆, x, y ) 
+
+> 5:
+
+Convergence Check Eq. 18  
+
+> 6:
+
+Return : solution (x, ξ, y )
+
+Alg. 2 Active-Set VJP (Backward Pass) 
+
+Inputs : solution (x, ξ, y ), parameters θ, upstream gradient ∂L/∂x  
+
+> 1:
+
+Identify active inequalities A Sec. III-D  
+
+> 2:
+
+Form the active-set KKT conditions F (w, θ ) = 0  
+
+> 3:
+
+Assemble ∂F/∂w and ∂F/∂θ  
+
+> 4:
+
+if slack variables are disabled then  
+
+> 5:
+
+Solve the no-slack linear system Eq. 62  
+
+> 6:
+
+else  
+
+> 7:
+
+Solve the slack linear system Eq. 65  
+
+> 8:
+
+Compute the VJP Eq. 63  
+
+> 9:
+
+Return : gradients ∂L/∂θ 
+
+Algorithm 3 ADMM (QP Solver) 
+
+Inputs : P, q, A, l, u, σ, ρ f , ρ g , α, γ ξ , δ ξ
+
+Initial guess : x0, z 0, y 0
+
+Partition : z =
+
+hzf
+
+> zg
+
+i
+
+, y =
+
+hyf
+
+> yg
+
+i
+
+, A =
+
+hCG
+
+i
+
+, l =
+
+h cG
+
+i
+
+, u =
+
+h cG
+
+i 
+
+> 1:
+
+while not converged do  
+
+> 2:
+
+Primal update :
+
+˜xk+1 ← Solve (S ˜x = ηk) Eq. 8 
+
+˜zk+1 = A˜xk+1  
+
+> 3:
+
+Slack update : with ˆxk+1 = α˜xk+1 + (1 −α)xk and 
+
+ˆzk+1 = α˜zk+1 + (1 −α)zk,
+
+xk+1 ← ˆxk+1 , zk+1  
+
+> f
+
+← c, zk+1  
+
+> g
+
+←
+
+
+
+Π[G,G ](ˆ zk+1  
+
+> g
+
++ ρ−1 
+
+> g
+
+ykg ), if δξ = 0 ,
+
+eΠγξ
+
+> [G,G ]
+
+(ˆ zk+1  
+
+> g
+
++ ρ−1 
+
+> g
+
+ykg ), if δξ = 1 ,ξk+1 ←
+
+
+
+0, if δξ = 0 ,
+
+∆eΠγξ
+
+> [G,G ]
+
+(ˆ zk+1  
+
+> g
+
++ ρ−1 
+
+> g
+
+ykg ), if δξ = 1 . 
+
+> 4:
+
+Dual update : yk+1 ← yk + ρ ˆzk+1 − zk+1  
+
+> 5:
+
+Update residuals, check convergence, and update ρ
+
+when scheduled Eq. 3  
+
+> 6:
+
+Return : solution (xk+1 , ξ k+1 , y k+1 )
+
+The matrix S is block-tridiagonal thanks to the sparsity of (P, C, G ), enabling efficient solutions to (8) on the GPU (where Θ, Φ are defined in Appendix C): 
+
+S =
+
+       
+
+> Θ0Φ⊤
+> 0
+> Φ0Θ1
+> . . .. . .. . .Φ⊤
+> N−1
+> ΦN−1ΘN
+
+.5
+
+Remark 2 (Implicit dynamics and KKT system sparsity) 
+
+Implicit integrators couple neighboring stages through both xt, ut and xt+1 , ut+1 , which breaks the temporal decoupling that Riccati recursions require. However, the resulting A− 
+
+> t
+
+, A+ 
+
+> t
+
+Jacobian blocks preserve the block-bidiagonal structure of C and the block-tridiagonal struc-ture of S. Hence, implicit dynamics still enable GPU par-allelism through the KKT primal solve even though they are incompatible with sequential Riccati-based methods. 
+
+2) Slack update: Given α ∈ (0 , 2) , we first form the over-relaxed variables 
+
+ˆxk+1 = α˜xk+1 + (1 − α)xk, ˆzk+1 = α˜zk+1 + (1 − α)zk.
+
+(10) The slack update then consists of minimizing Lσ,ρ over 
+
+(x, z, ξ ), which gives the following updates. First, minimizing Lσ,ρ over x gives 
+
+xk+1 ← ˆxk+1 + σ−1wk = ˆ xk+1 , (11) noting that w ≡ 0 (see Appendix C for details). Second, we split the equality and inequality constraints into two blocks 
+
+z =
+
+hzf
+
+> zg
+
+i
+
+, y =
+
+hyf
+
+> yg
+
+i
+
+, A =
+
+hCG
+
+i
+
+, l =
+
+h cG
+
+i
+
+, u =
+
+h cG
+
+i
+
+, ρ =
+
+hρf I 00 ρg I
+
+i
+
+,
+
+with the subscripts f and g denoting correspondence to the equality and inequality constraints, respectively. For the equality block, minimizing Lσ,ρ over zf results in 
+
+zk+1  
+
+> f
+
+← c, and as such we do not store it explicitly. For the inequality block, when minimizing Lσ,ρ over (zg , ξ ), we distinguish two cases:  
+
+> •
+
+Without slack variables ( δξ = 0 ), we obtain 
+
+ξk+1 ← 0, zk+1  
+
+> g
+
+← Π[G,G ](ˆ zk+1  
+
+> g
+
++ ρ−1 
+
+> g
+
+ykg ), (12) where Π is the standard projection 
+
+Π[G,G ](˜ z) = 
+
+
+
+˜z if G ≤ ˜z ≤ G, G if ˜z < G, G if ˜z > G. 
+
+(13)  
+
+> •
+
+With slack variables ( δξ = 1 ), by minimizing Lσ,ρ over 
+
+(zg , ξ ), we get the smoothed projection [48]: 
+
+ξk+1 ← ∆eΠγξ
+
+> [G,G ]
+
+(ˆ zk+1  
+
+> g
+
++ ρ−1 
+
+> g
+
+ykg ),zk+1  
+
+> g
+
+← eΠγξ
+
+> [G,G ]
+
+(ˆ zk+1  
+
+> g
+
++ ρ−1 
+
+> g
+
+ykg ), (14) where 
+
+eΠγξ
+
+> [G,G ]
+
+(v) = ρg
+
+γξ + ρg
+
+v + γξ
+
+γξ + ρg
+
+Π[G,G ](v), (15a) 
+
+∆eΠγξ
+
+> [G,G ]
+
+(v) = ρg
+
+γξ + ρg
+
+ Π[G,G ](v) − v. (15b) Note that γξ → ∞ recovers the hard projection. 
+
+Remark 3 (Slack variables and learning stability) Slack variables are essential not only for solver robustness but for learning stability. Batched RL and BO rollouts can encounter infeasible states due to model mismatch and pa-rameter exploration. A solver that crashes on infeasibility produces undefined gradients and halts training, motivating the use of slack variables for training and deployment. 
+
+3) Dual update: It is as follows, where w vanishes after the first iteration, so we only store the multipliers y:
+
+wk+1 ← wk + σ(ˆ xk+1 − xk+1 ) = 0 , (16a) 
+
+yk+1 ← yk + ρ(ˆ zk+1 − zk+1 ). (16b) 
+
+Step-size parameters selection . The performance of ADMM highly depends on the choice of the step-size param-eters (σ, ρ ). We found the parameter selection rule in [16] to work well in practice. Hence, we fix σ = 10 −6 and use 
+
+ρf = 10 3 ¯ρ, ρg = ¯ ρ, 
+
+with initial ¯ρ = 0 .1. We adapt ¯ρ every fixed number kiter  
+
+> ρ
+
+≥ 1
+
+of ADMM iterations to balance the primal and dual residuals. At each scheduled interval, we compute a candidate 
+
+¯ρnew = Π [ρ,ρ ] ¯ρk
+
+q rprim /∥(Ax,z )∥∞  
+
+> rdual /∥(P x,A ⊤y,q,γ ξξ, [0; δξI]y)∥∞
+
+!
+
+, (17) which we accept ( ¯ρk+1 ← ¯ρnew ) if the primal and dual residuals have not yet satisfied the convergence criteria (4), and if max   ¯ρnew  
+
+> ¯ρk
+
+, ¯ρk
+
+> ¯ρnew
+
+ is higher than a threshold value kratio  
+
+> ρ
+
+.The last check measures how large the multiplicative change in ¯ρ would be. The threshold values and the bounds in (17) are user and problem dependent. We use ρ = 10 −6 ρ = 10 6,
+
+kiter  
+
+> ρ
+
+= 25 , and kratio  
+
+> ρ
+
+= 5 by default. The ADMM literature shows similar strategies [16], [58], [59]. 
+
+C. Linesearch and Convergence Check 
+
+We use a standard backtracking linesearch as described in [47, Algorithm 18.3] and Appendix D. We terminate the SQP loop once the first-order optimality conditions are sufficiently satisfied, where ∥g(x)∥∞,[g,g ] denotes the maximum compo-nentwise violation of the inequality bounds, and ϵc > 0 is a user-defined tolerance: 
+
+∥∇ ℓ(x) + y⊤ 
+
+> f
+
+∇f (x) + y⊤ 
+
+> g
+
+∇g(x)∥∞ ≤ ϵc, (18a) 
+
+∥f (x)∥∞ ≤ ϵc, ∥g(x)∥∞,[g,g ] ≤ ϵc, (18b) This convergence criterion is standard in the optimization literature [14], [47]. 
+
+Remark 4 (Rescaling) Problem rescaling by normalizing states and controls is a standard practice in aerospace trajectory optimization [60] that meaningfully improves solver convergence. For the racing OCP , where state variables span several orders of magnitude, poor scaling inflates condition numbers and slows down convergence. Our solver leverages rescaling internally to improve robustness, while keeping this step transparent and optional through the user-facing JAX API. 6
+
+D. Backward Pass: Computing Sensitivities 
+
+We compute sensitivities of the solution (x, ξ ) of OCP with respect to parameters θ via implicit differentation, based on the function theorem (IFT) [61]. At convergence of SQP, the solution satisfies the OCP KKT conditions. We differentiate these KKT conditions while keeping the active set fixed, like [21], [23]. 
+
+Active-set KKT system. Let A denote the set of active inequality constraints at the converged solution. From iden-tifying the active inequality constraints gA, as described in Appendix E, we rewrite these inequality constraints as equality constraints: 
+
+gA(x) = 0 if δξ = 0 (without slack variables) ,gA(x) + Σ AξA = 0 if δξ = 1 (with slack variables) ,
+
+where ΣA is diagonal with entries +1 for lower-bound activa-tions and −1 for upper-bound activations. The reduced active-set KKT conditions of OCP are 
+
+∇xL(x, y f , y A) = 0 , (19a) 
+
+f (x) = 0 , (19b) 
+
+gA(x) − δξ γ−1 
+
+> ξ
+
+yA = 0 , (19c) where L is the Lagrangian L(x, y f , y A) = ℓ(x) + y⊤ 
+
+> f
+
+f (x) + 
+
+y⊤AgA(x). We eliminate the slack stationarity condition γξ ξA +ΣAyA = 0 in the presence of slack variables. We then write (19) compactly as 
+
+F (w, θ ) = 0 , w = ( x, y f , y A). (20) 
+
+Gradients computation : We can now use standard tech-niques to obtain gradients, see e.g. [23], [24]. By the chain rule, differentiating F (w(θ), θ ) = 0 with respect to θ gives 
+
+∂F ∂w ∂w ∂θ + ∂F ∂θ = 0 = ⇒ ∂w ∂θ = −
+
+ ∂F ∂w 
+
+−1 ∂F ∂θ . (21) The above computation corresponds to a Jacobian-Vector Product (JVP), and requires solving a large linear system. Instead, the gradient of a loss ∇θ L(xθ , ξ θ ) can be more efficiently computed via a Vector-Jacobian Product (VJP): 
+
+∇θ L⊤ = − ∂F ∂θ  
+
+> ⊤
+
+ ∂F ∂w 
+
+−1 " ∇xL∇ξA L
+
+> 0
+
+#! 
+
+= − ∂F ∂θ 
+
+> ⊤
+
+"ηx
+
+> ηξ
+> ηy
+
+#
+
+, (22) which also follows from the chain rule, and requires solving the following where ηy = ( ηyf , η yA ), H = ∇2
+
+> xx
+
+L(x, y f , y A):
+
+" H ∇xf ⊤ ∇xg⊤A      
+
+> ∇xf00
+> ∇xgA0−δξγ−1
+> ξI
+
+# 
+
+ηx
+
+ηξ
+
+ηy
+
+ =
+
+
+
+∇xL∇ξA L
+
+0
+
+ . (23) 
+
+Linear systems in the forward and backward passes .Note the difference in sparsity structure: 
+
+Primal Linear System (Forward Pass) 
+
+P + σI A⊤
+
+A −ρ−1I
+
+
+
+Adjoint Linear System (Backward Pass) 
+
+ H ∇f T
+
+∇f 0
+
+
+
+For the forward pass, the block ρ−1I is amenable to a Schur reduction with a block-tridiagonal structure. Unfortunately, that block is zero for the backward pass. Eliminating the top left block instead generally destroys block-tridiagonality whenever H contains cross-time coupling from implicit dy-namics or control-rate costs. Thus, PCG primitives designed for the forward system [24], [29], [32] do not directly apply to our backward pass, motivating the use of cuDSS .
+
+Remark 5 (Co-design of forward and backward passes) The incompatibility of PCG with the backward pass im-plies that the forward and backward passes must be co-designed from the start. Choosing cuDSS as a uniform solver, serving both the forward primal update and the adjoint linear system, is a direct consequence. 
+
+E. Algorithm-Implementation-Learning Co-Design 
+
+The development of TurboMPC is a three-way co-design of the optimization algorithm, the GPU implementation, and the learning pipeline. Unlike hardware/control co-design [62]– [64], where mechanical and control tasks have clear physical boundaries, the boundary between solver and differentiable policy here is subtle: the same ADMM splitting that gives the forward pass its block-tridiagonal structure determines whether the backward pass is tractable, and the same cuDSS factorization that solves the primal update also solves the adjoint system. Designing these concurrently, rather than building a fast solver and then asking how to differentiate it, is what allows TurboMPC to simultaneously achieve GPU acceleration, constraint expressiveness, and differentiability. The architecture of TurboMPC is summarized in Figure 1. The JAX layer hosts the outer SQP loop, problem-data lin-earization via autodiff of (ℓ, f, g, h ), and vmap -based batching across problem instances. A C++ FFI (Foreign Function Inter-face) bridge passes JAX-managed device buffers to the CUDA implementation. The CUDA layer hosts the entire ADMM inner loop as a fused implementation, with custom parallel-over-time kernels for matrix-vector products with P , C, G, A,
+
+A⊤, S that exploit the time-induced block sparsity established in Section III-A. The same compiled artifact supports online deployment (batch one, low latency) and batched offline eval-uation (batch B, throughput proportional to GPU occupancy) from a single API. Two important co-design choices of TurboMPC are: 
+
+Linear-system primitive. The forward primal update (8) and the backward linear system (23) both require sparse linear-system solves, but as established in Section III-D the backward system has a structure that rules out the PCG-based primitives prior GPU MPC work relies on [24], [29]. We use direct sparse factorization via cuDSS [39] as a uniform primitive across both passes, called from within our fused CUDA ADMM loop through cuDSS ’s host API. This approach trades a constant-factor solve-time penalty for three benefits: (1) generality across the explicit-vs-implicit and decoupled-vs-coupled-cost axes, (2) robustness near constraint activation where iterative methods can exhibit long-tail convergence, and (3) batched factorization across many problem instances. cuDSS ’s sym-bolic factorization is reused across ADMM iterations and refactorized only when ρ adapts. 7
+
+Fused CUDA ADMM Loop. An earlier version hosted ADMM in JAX, dispatching only the cuDSS solves to CUDA via FFI. Per-iteration kernel-launch overhead dominated solve time. We fused the entire ADMM loop into a single CUDA implementation that calls cuDSS through its host API and reuses the symbolic factorization across iterations, yielding a 
+
+4−8× speedup at batch sizes 256 −512 relative to the JAX-FFI variant while preserving the user-facing JAX API. Overall, we jointly select the ADMM splitting, the slack-variable smoothed projection of [48], and the implicit-differentiation-based backward pass to admit time-induced block sparsity, with a forward-pass linear system whose Schur reduction preserves block-tridiagonality even with implicit dynamics or cross-time costs, both with underlying CUDA for performance and a JAX frontend for easy integration with learning-based tools. 
+
+F. Reinforcement and Imitation Learning 
+
+TurboMPC can be used as a differentiable policy class for reinforcement learning (RL) and imitation learning (IL): 
+
+RL: max  
+
+> θ
+
+E
+
+h HX
+
+> t=1
+
+R(xt, π θ 
+
+> 0
+
+(xt)) 
+
+i
+
+, x t+1 =Sim (xt, π θ (xt)) ,
+
+IL: min  
+
+> θ
+
+E
+
+h
+
+∥(ˆ u0, . . . , ˆuT ) − πθ 
+
+> 0: T
+
+(x0)∥2i
+
+,
+
+where R is the reward function, πθ 
+
+> 0: T
+
+(x0) is the OCP 
+
+control-input solution, Sim is a differentiable simulator, and 
+
+(ˆ u0, . . . , ˆuT ) is expert demonstration data. Compared to black-box neural networks, this MPC policy class leverages optimal-control structure for inductive bias and zero-shot generaliza-tion across problem instances. Our GPU-accelerated solver supports the larger batch sizes and expressive models these data-driven workflows might require. IV. S IMULATION EXPERIMENTS 
+
+We first validate TurboMPC in simulation using a con-strained drone task, a linear-system RL scaling benchmark, a humanoid imitation-learning task, and a neural-network (NN) training task. Timings are collected using an NVIDIA GeForce RTX 5090 GPU and a 12th Gen Intel(R) Core(TM) i9-12900K CPU with Ubuntu 22.04 and CUDA 13.0. 
+
+A. Constrained Drone Obstacle Avoidance 
+
+We validate that TurboMPC handles state inequalities, control constraints, and slack variables on a 6-DoF drone obstacle-avoidance task with three circular obstacles in (x, y ),initial and final state constraints, and control box constraints. Figure 2 shows representative trajectories from running closed-loop simulations from noisy initial states using a straight-line warm start and RK4 integration. Adding slack variables can increase the rate of solver convergence at the cost of increased constraint violation, as the relaxed constraints allow the trajectory to trade feasibility for convergence. We provide a Jupyter notebook that replicates this example and serves as an introductory tutorial. 2.0 1.5 1.0 0.5 0.0  
+
+> x(m)
+> 0.4
+> 0.2
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> y (m)
+> Obstacle
+> Start
+> Goal
+> w/o slack (representative)
+> w/ slack (representative)
+> w/o slack (other seeds)
+> w/ slack (other seeds)
+> Fig. 2. Drone obstacle avoidance: Closed-loop trajectories from random initial conditions (i.e., seeds).
+
+B. Linear-System RL Scaling 
+
+We next compare TurboMPC against state-of-the-art dif-ferentiable MPC baselines: the PyTorch-based iLQR solver 
+
+mpc.pytorch [23] 2 and the C-based solver acados [21]. To enable a comparison against these solvers within their supported problem class, we benchmark on an RL task (Sec-tion III-F) including linear-quadratic optimal control problems with control input box inequality constraints. We do not compare against trajax [22] or DiffMPC [24] since these differentiable solvers do not support inequality constraints. The linear quadratic setting represents the common subclass that all the baseline solvers support, enabling a direct compar-ison of raw solver scaling without confounding factors from nonlinear dynamics such as Hessian approximation quality and linesearch behaviour. While this task is more restrictive than the full feature set TurboMPC supports, this evaluation provides a fair comparison on this easy subclass, with more challenging problem instances in the next sections. The linear system’s discretized dynamics are xt+1 = Ax t +
+
+Bu t + b for t = 0 , . . . , T − 1, with xt ∈ Rnx , ut ∈ Rnu ,and control bounds ∥ut∥∞ ≤ umax , with umax ∈ { 1, 10 }.The dynamics matrices are randomized as A = I + 0 .1 ∆ A,
+
+vec(∆ A) ∼ N (0 , I ), with eigenvalues clipped to |λ(A)| ∈ 
+
+(0 , 0.99] ; vec( B) ∼ N (0 , I ); b ∼ N (0 , 10 −4I); and initial conditions x0 ∼ N (0 , 25 I). The stage cost is ℓt(x, u ) =
+
+x⊤Qx +∥u∥22 with Q = diag( θ). The RL reward is R(x, u ) = 
+
+−(∥x∥22 + ∥u∥22). The learned parameters are θ = diag( Q).The evaluation tackles the RL problem in Section III-F. Timing results measure the evaluation of closed-loop roll-outs and reward gradient evaluation through the closed-loop MPC rollouts. The nominal configuration uses: batch size B = 64 , planning horizon N = 40 , episode length 
+
+H = 50 , and state-control dimensions (nx, n u) = (8 , 4) .Then, we sweep B ∈ { 1, 8, 16 , 32 , 64 , 128 , 256 , 512 , 1024 },
+
+N ∈ { 10 , 20 , 40 , 80 , 160 , 320 }, (nx+nu) ∈ { 6, 12 , 24 , 48 , 96 }
+
+and the solver tolerance tol ∈ { 10 −3, 10 −5}, with statis-tics computed over ten seeds per configuration. The solver tolerance of TurboMPC corresponds to ϵc in (18) and the maximum number of ADMM iterations is set to 10 3. Figure 3 compiles the timing results for each solver with solver tol-erance tol = 10 −5. This threshold produces both accurate gradients (see cosine similarity plot in Appendix F) and fast solve times across both TurboMPC and baselines. In contrast,                                    
+
+> 2mpc.pytorch excludes comparing on problems with state inequalities, implicit dynamics, or rate costs as it only supports control box constraints. 810 2
+> 10 1
+> 10 0
+> Fwd. Time (s)
+> 10 1
+> 10 0
+> 10 1
+> 10 1
+> 10 0
+> 10 1
+> 2023242526272829210
+> Batch size
+> 10 1
+> 10 0
+> 10 1
+> Bwd. Time (s)
+> 10 20 40 80 160 320
+> Horizon
+> 10 1
+> 10 0
+> 10 1
+> 612 24 48 96
+> State+ctrl dim
+> 10 0
+> 10 1
+> acados, umax =1 acados, umax =10 mpc.pytorch, umax =1 mpc.pytorch, umax =10 TurboMPC, umax =1 TurboMPC, umax =10
+
+Fig. 3. Linear-system RL: mean solve time vs. batch size (left), planning horizon (center), state + control dimension (right) for TurboMPC (blue), acados 
+
+(red), and mpc.pytorch (green) at umax ∈ { 1, 10 } with tol = 10 −5.0 200 400 600 800 1000 
+
+> Gradient step
+> 10 −1
+> 10 0
+> 10 1
+> ‖̂ w − w * ‖2
+
+(a) Weight recovery      
+
+> median
+> best
+> 0200 400 600 800 1000
+> Gradient step
+> 10 −5
+> 10 −4
+> 10 −3
+> 10 −2
+> 10 −1
+> 10 0
+> 10 1
+> 10 2
+> (w)
+
+(b) Imitation loss 
+
+> median
+> best
+
+(c) Initial state (d) Final state 
+
+Fig. 4. Humanoid SRB IL: (a) weight recovery and (b) imitation loss over gradient steps for TurboMPC across 20 initializations. Closed-loop balancing in MuJoCo with recovered weights: (c) initial perturbed state and (d) reached equilibrium state. 
+
+lower tolerances like tol = 10 −3 can be used for deployed applications of TurboMPC (e.g., Fig. 9), where higher speed is desired and accurate gradients are not required. 
+
+TurboMPC ’s advantage grows with planning horizon, prob-lem size, and batch size. Compared to mpc.pytorch the gain reaches 14 .6× and 9.4× speedups for the forward and backward passes for (B, N, n x, n u) = (64 , 160 , 8, 4) with 
+
+umax = 1 .0. On the other hand, acados , which exploits efficient CPU linear algebra and parallelization across cores, is the fastest for single-instance forward solves overall, although 
+
+TurboMPC catches up as the batch size, horizon, and problem size increase. For the batch-size and horizon sweeps, for 
+
+umax = 1 .0, TurboMPC is 2.0× and 2.2× faster for the back-ward pass at batch size 1024 and horizon 320 , respectively. The speedup is even more significant for umax = 10 .0. On the largest configurations, the baselines fail: mpc.pytorch 
+
+hits GPU memory limits, and acados cannot compile above 
+
+(nx+nu) = 48 . TurboMPC solves all sizes by leveraging GPU parallelism, time-induced sparsity, and cuDSS for the linear system solves. With a 10 −3 tolerance, the results show similar trends, with TurboMPC further outperforming base-lines, achieving up to 15 × and 58 × speedups over acados 
+
+and mpc.pytorch , respectively, as detailed in Appendix F. 
+
+C. Differentiability on Constrained Nonlinear Systems 
+
+We demonstrate end-to-end differentiability on constrained nonlinear systems via a humanoid imitation-learning (IL) task and a neural-network (NN) training task. 
+
+Humanoid Imitation Learning : We recover expert cost weights θ⋆ ∈ R18 from demonstrations of a Unitree G1 hu-manoid performing standing balance. Both expert and student MPCs use Single Rigid Body (SRB) centroidal dynamics with state x ∈ R12 , and control u ∈ R6 (see Appendix G). We col-lect B = 100 expert demonstrations (x(i)0 , u (i)) and minimize the imitation loss L(θ) = PBi=1 1
+
+> N
+
+PN −1 
+
+> t=0
+
+∥ut(θ; x(i)0 )−u(i) 
+
+> t
+
+∥22
+
+with respect to θ using Adam from Ninits = 20 random initializations ( θ0 ∼ U (0 .5, 12 .0) , applied in log-space). Figure 4 summarizes the results. At step 1000, the median weight-recovery error is ∥ˆθ − θ⋆∥2 = 0 .59 , with 19/20 runs below 1.0 and the best at 0.080. The median imitation loss reaches 1.4 × 10 −4, with the best run at 3.4 × 10 −6. Closed-loop balancing in MuJoCo XLA [65] from a perturbed initial state to equilibrium (Fig. 4, (c) (d)) demonstrates the recovered MPC weights produce a usable controller. Differentiating through the constrained MPC embeds constraint-awareness into the recovered cost weights, capturing expert balancing behavior near the friction-cone boundary. 
+
+Neural Network Training : We train a TurboMPC policy using a neural-network cost function for a 3D point-mass system tracking a periodic zig-zag reference under input bounds ∥u∥∞ ≤ 5. The parameters θ are the weights of a two-layer neural network that maps the state to the MPC’s state-tracking and control-effort cost weights, trained by analytic policy gradient with closed-loop gradients flowing through 90 200 400          
+
+> Training Step
+> 0.09
+> 0.10
+> 0.11
+> 0.12
+> RMSE
+> untrained
+> learned 0.1 0.0 0.1 0.0
+> 0.1
+> 0.0
+> 0.1
+> reference
+> untrained
+> learned
+> start
+> 020 40 60
+> time step
+> Fig. 5. RL with a trainable MPC policy using a neural-network cost function on a 3D point-mass system tracking a zig-zag reference. (Left) Two-cycle eval RMSE over 500 Adam steps. (Right) Closed-loop trajectory after training: learned policy (blue) vs. untrained initialisation (grey).
+
+TurboMPC to maximize a reference tracking reward. With 
+
+B = 4 rollouts per Adam step at horizon N = 8, the policy reduces the two-cycle closed-loop tracking RMSE from 
+
+1.2×10 −1 m at initialization to 8.3×10 −2 m after 500 gradient steps, with control inputs satisfying constraints throughout. Figure 5 shows the learning curve and the converged closed-loop trajectory. Appendix H includes additional details. V. H ARDWARE DEPLOYMENT : A UTONOMOUS RACING 
+
+Finally, we evaluate TurboMPC on a 2019 Lexus LC 500 vehicle racing along the oval track in Figure 8. This problem involves the full feature set covered by OCP : state and control constraints, cross-time costs on control rates for smoothness, slack variables for recursive feasibility under disturbance, and implicit dynamics constraints to handle stiff dynamics. First, we use TurboMPC to automatically tune the racing controller for faster driving performance via Bayesian optimization. Then, we evaluate the solver’s scalability for long horizons. The vehicle is equipped with a GeForce RTX 4070 Ti Super GPU and an Intel Xeon E2278GE CPU @3.30GHz with a computer running Ubuntu, with state estimates provided by an OXTS GPS system. The powertrain, drivetrain, and suspension are unchanged from their production configuration. Experiments are performed on a closed-course. We use a standard single-track vehicle model in curvilinear coordinates [41], [66]–[68]. The state and control inputs are 
+
+x = ( r, v, β, ω r , ∆Fz , e, ∆φ, t ), u = ( δ, τ rear , τ front ),
+
+parameterized over the track length with a node (xt, u t) every three meters, where r is the yaw rate, v is the total velocity, 
+
+β is the sideslip, ωr is the rear wheelspeed, ∆Fz is the load transferred from the front to rear axle, e and ∆φ are the lateral and angle deviations to the reference, t is time, δ is the steering angle, τrear is the total rear axle torque combining engine and braking torques, and τfront is the rear brake torque. We model tire forces using a Fiala tire model [69]. The racing OCP is the minimum-time problem 
+
+min  
+
+> x,u
+
+ℓT (xN ) +  
+
+> N−1
+
+X
+
+> t=0
+
+ℓ(xt, u t, u t+1 ) + 
+
+> N
+
+X
+
+> t=1
+
+γ∥ξ∥2 (24) s.t. f (xt+1 , x t, u t, u t+1 , μ ) = 0 , t = 0 , . . . , N − 1,
+
+(x0, u 0) = ( xinit , u init ),
+
+(xmin , u min ) ≤ (xt, u t) + ξt ≤ (xmax , u max ), t = 1 , . . . , N, 
+
+with the costs 
+
+ℓT (x) = α t, ℓ(x, u, u +) = ( x − xref )⊤Q(x − xref ) + (25) 
+
+(u − uref )⊤R(u − uref ) + ( u − u+)⊤W (u − u+),
+
+where (Q, R, W ) are diagonal cost matrices, (xref , u ref ) is a state-control reference, and α is a terminal-time penalty. The racing OCP is solved recursively from the current (xinit , u init )
+
+and the plan (u0, . . . , u N ) is sent to the vehicle. A low-level controller executes the control u at the current position along the track via linear interpolation of the latest MPC solution. This racing problem pushes the vehicle to its handling limits. As such, closed-loop performance is highly sensitive to the parameters θ = ( the tire friction coefficients (μfront , μ rear ),the terminal-time penalty α, and the diagonal entries of the state cost Q, control cost R), motivating the GPU-accelerated Bayesian optimization tuning of Section V-A. We then stress-test the solver for long planning horizons to demonstrate the scalability of TurboMPC in Section V-B. 
+
+A. Auto-tuning of the MPC parameters 
+
+To avoid the slow manual tuning of θ = (μ, α, Q, R ),we apply Bayesian optimization over GPU-batched closed-loop simulations leveraging Optuna ’s [70] Tree-structured Parzen Estimator (TPE) sampler [71]. The control-rate (or smoothness) cost weights W remain constant to smooth inputs. All weights are optimized in log-space over their respective search intervals, with control weights for the torque channels tied together to reduce search dimensionality. At each iteration, a batch of B = 8 candidate parameter vectors is evaluated in parallel, with each candidate assessed over Nseed = 4 closed-loop simulations with randomized tire friction coefficients 
+
+μsim ∈ [0 .7, 1.4] , initial track positions s0 ∈ [95 , 135] m, and initial velocities v0 ∈ [11 , 20] m/s, yielding B × Nseed = 32 
+
+parallel rollouts per batch. The simulation environments are sampled once at start and held fixed throughout, ensuring all candidates are evaluated under identical conditions. The objective maximized by TPE is R(θ) = ¯R(θ) − k ·
+
+σR(θ), where ¯R(θ) and σR(θ) are the mean and standard deviation of the per-seed rewards {Rj (θ)}Nseed  
+
+> j=1
+
+, and k = 0 .5
+
+balances average performance against consistency across con-ditions. Each per-seed reward is as follows, where Tj ≤ Tmax 
+
+is the number of steps completed before a spin-out or off-track termination in seed j, Tmax is the full rollout budget, and λ = 0 .9 penalizes each missed step uniformly: 
+
+Rj (θ) =  
+
+> Tj−1
+
+X
+
+> t=0
+
+rt − λ max(0 , T max − Tj ). (26) The per-step reward is as follows, where et and eref are the actual and reference lateral deviations, respectively, δe =min( eref − emin , e max − eref ) is the half-width of the track boundary margin at the reference position, βt is the vehicle slip angle, and vt is the longitudinal velocity: 
+
+rt = αe,β 
+
+ min( δe − | et−eref |, 0) + min  β − | βt|, 0 + αv vt.
+
+The first two terms penalize leaving the track and reaching sideslip values above β = 0 .55 rad , while the third term rewards higher speed. We use (αe,β , α v ) = (0 .8, 0.14) .10    
+
+> TABLE II BASELINE VS .TRAINED MPC POLICY PARAMETERS .
+
+Qr Qv Qβ Qωr Qe Q∆φ α Rδ Rτrear Rτfront μfront μrear 
+
+Baseline 10 .0 0.01 1.0 0.01 10 .0 0.01 10 .0 0.1 1 × 10 −4 1 × 10 −5 1.02 1.08 
+
+Trained 0.080 0.016 11 .70 0.449 14 .93 13 .72 129 .30 0.018 4.8 × 10 −7 4.8 × 10 −7 1.081 1.032 
+
+Ratio ×0.008 ×1.6 ×11 .7 ×44 .9 ×1.5 ×1372 ×12 .9 ×0.18 ×0.005 ×0.048 +6% −4% 
+
+The entire rollout pipeline runs on the GPU, with dy-namics integration via Diffrax [72], and the MPC solve and reward accumulation batched together inside a single 
+
+jax.lax.scan and jax.vmap call across B × Nseed 
+
+instances. This GPU parallelism makes Bayesian optimization tractable with more than 256 trials. 
+
+GPU acceleration enables faster hyperparameter search .Using the default batch size B = 8 on the GPU, the trial throughput is of ≈150 trials /hour or 24 secs ./ trial ,while on the CPU the trial rate is of ≈21 trials /hour or 
+
+171 secs ./ trial . The GPU-over-CPU speedup is of ≈7.12 ×,which represents a per-trial time reduction of ≈86 secs .
+
+The CPU runs used a PCG-based JAX solver backend (i.e., 
+
+admm_jax_loop_pcg backend for both the forward and backward passes) that we make available with our implementa-tion, see Table III. In addition, we verified the GPU scalability by running the Optuna trainings with B = 1024 batches at a rate of ≈1, 029 trials /hour or 3.5 secs ./ trial , which represents trial-throughput speedups of ≈6.9× and ≈50 × over the 8-batch trainings on the GPU and CPU, respectively. 
+
+Auto-tuned MPC parameters enable faster racing : We select the best BO weights and evaluate them on the vehi-cle, comparing against a baseline using hand-tuned weights. Figure 6 shows that the auto-tuned weights yield significantly faster racing. The vehicle’s speed v is 2.44 m /sec . faster in average, and the vehicle turns with higher yaw rates r. The total torque τtotal is also larger in average, signaling more aggressive driving. This automatic tuning experiment exposes a weakness of the baseline MPC, which tracks the reference control trajectory too closely and brakes at each turn even when the car could drive faster, while TurboMPC ’s auto-tuned weights enable driving closer to the limits of handling. The baseline and Optuna -tuned MPC parameters are in Table II. The higher terminal time cost weight α and lower control reference tracking weights (Rτrear , R τfront ) enable more aggressive driving and deviating from the reference control trajectory if it enables faster racing. Indeed, Figure 6 shows harder braking before each turn and earlier accelerations in the turns using tuned weights. Also, the higher sideslip and angle deviation weights (Qβ , Q ∆φ) reduce sideslip and enable better acceleration in the turns. Finally, the tire friction parameters (μfront , μ rear ) change slightly, but this change is likely negligible compared to changes in the cost weights (e.g. compare with the larger changes in [24]). 
+
+B. Scalability to longer planning horizons 
+
+Next, we compare TurboMPC against an SQP solver using 
+
+OSQP [16] as the inner QP solver. This solver is a strong 10                     
+
+> 20
+> v [m /s]  Baseline, N=32 Tuned, N=32
+> 0.0
+> 0.5
+> r [rad /s]
+> −0.05
+> 0.00
+> 0.05
+> β [rad]
+> 0.0
+> 0.2
+> δ [rad]
+> 100 200 300 400 500 600 700 800
+> s[m]
+> −5000
+> 0
+> τtotal  [Nm]
+> Fig. 6. Auto-tuning enables faster racing. The baseline (blue) brakes conser-vatively at each turn. The tuned MPC (yellow) drives much faster. 32 256 512 1024 2048 4096 8192
+> Planning Horizon H
+> 10 ms
+> 0.1 s
+> Solve Time
+> GPU-ADMM (Ours, Full GPU) OSQP (GPU + CPU)
+> 1.3x 3.2x 6.8x 17.8x
+> Fig. 7. Solve times across planning horizons N, demonstrating the scalability of TurboMPC to long horizons beyond what the OSQP baseline supports.
+
+baseline, as its SQP outer loop forms the QP approximations on the GPU, and OSQP uses the multi-threaded Intel MKL PARDISO sparse linear system solver 3. Both solvers use the same MPC problem formulation, auto-tuned weights from the previous section, and solver hyperparameters, isolating the effect of the inner QP solver on scalability. Results in Figure 7 show that the OSQP-based baseline is slower than TurboMPC for longer planning horizons, with the gap widening at longer horizons. Thus, running the solver entirely on the GPU unlocks significant speedups. For exam-
+
+> 3OSQP-CUDA is known to be performant only for problems substantially larger than ours [29], [73], so we use the CPU implementation of OSQP. 11
+
+ple, at N = 1024 the OSQP-based controller loses control of the vehicle (Fig. 8), while TurboMPC maintains control. On the other hand, TurboMPC scales to planning horizons of 
+
+N > 8000 discretization nodes , enabling the controller to anticipate multiple corners ahead within a single MPC solve. These results demonstrate new capabilities in online, very-long-horizon planning. VI. D ISCUSSION , L IMITATIONS , AND FUTURE WORK 
+
+Differentiable GPU solvers help integrate MPC into learning pipelines and scale to higher-dimensional systems, longer planning horizons, larger batch sizes, and more expressive objectives, dynamics, and constraints models such as neural networks. However, TurboMPC comes with limitations. First, direct sparse factorization methods for solving linear systems pay a constant-factor solve-time overhead relative to iterative methods such as PCG [24], [29]. A hybrid backend that selects PCG for the forward pass and direct factorization elsewhere could recover this advantage. Second, TurboMPC supports pointwise inequality con-straints, linearized as slab constraints G ≤ Gx ≤ G inside the solver. Extending support to conic and complementary con-straints would be useful to many problems in robotics (e.g., contact-rich humanoid locomotion without simplified friction-cone box constraints as in our IL experiments), aerospace (e.g., rocket engine thrust pointing constraints), and others. Third, TurboMPC ’s backward pass inherits the advantages but also the limitations of implicit differentation: (1) Gradient discontinuities at active-set transitions can destabilize training and require small learning rates that slow down learning. This is particularly a challenge for long-horizon problems like the racing case where such numerical instabilities can compound over time. (2) The gradients’ accuracy relies on the convergence of the forward pass that solves the MPC prob-lem. However, gradient-based optimization may not always converge, motivating the development of robust warm-starting strategies. (3) Implicit differentiation requires constraint Hes-sian information, which can be expensive to obtain. Better understanding where approximate second-order information is sufficient for successful application of differentiable MPC [23], [24], [74] (our code supports this approximation to help further investigation), where it is necessary [21], and how second-order information can be efficiently computed, is of interest for future work. Finally, TurboMPC currently relies on double precision for numerical robustness. This limits how much it can exploit modern GPUs, which increasingly devote more hardware resources to low-precision compute units for deep learning. We observed that lower precision yields higher numerical errors and degrades solver convergence and gradient accuracy. Future work should co-design problem scaling and mixed-precision linear algebra [75], [76], so that the solver can better exploit low-precision throughput. VII. C ONCLUSION 
+
+TurboMPC is a differentiable and GPU-accelerated MPC framework that supports state and control inequalities, implicit 0               
+
+> 20
+> v [m /s]
+> TurboMPC (GPU), N=1024 OSQP (GPU + CPU), N=1024
+> 0
+> 1
+> r [rad /s]
+> −1
+> 0
+> β [rad]
+> −0.25
+> 0.00
+> 0.25
+> δ [rad]
+> 100 200 300 400 500 600 700 800
+> s[m]
+> −5000
+> 0
+> τtotal  [Nm]
+> Fig. 8. At a planning horizon N= 1024 , the OSQP baseline (yellow) loses control of the vehicle, while TurboMPC (blue) drives the vehicle successfully throughout the track.
+
+integrators, cross-time-coupled costs, and slack variables. The solver combines an SQP outer loop with a custom ADMM inner solver, implicit differentiation, and a co-designed JAX-CUDA implementation. We validated TurboMPC in simu-lation across constrained planning, reinforcement learning, imitation learning, and neural network MPC tasks. We also deployed TurboMPC on a Lexus LC500 autonomous race car, where GPU-batched Bayesian optimization was used to tune controller parameters to drive closer to the vehicle’s limits. The solver enabled planning over horizons with more than 8000 
+
+discretization nodes. These results point toward differentiable MPC as a fast, GPU-native, constraint-aware primitive that exploits optimal control structure and can be trained at scale. APPENDIX 
+
+MATHEMATICAL DETAILS OF THE SOLVER AND 
+
+ADDITIONAL EXPERIMENT INFORMATION 
+
+We describe the solver in further details as follows. A Optimal Control Problem 12 B QP Approximation 12 C ADMM 13 D Line Search 14 E Backward Pass 14 We then provide additional details on our experiments. F Linear-System Scaling 16 G Humanoid Balancing Imitation Learning 16 H 3D Point-Mass Tracking Training 18 12 
+
+A. Optimal Control Problem ( OCP )
+
+We define the OCP in Sec. I-B and restate it below: 
+
+OCP 
+
+min  
+
+> x,u,ξ N−1
+
+X
+
+> t=0
+
+ℓt(xt, ..., u t+1 ) + ℓN (xN , u N ) + γξ
+
+> 2
+> N
+
+X
+
+> t=0
+
+∥ξt∥22,
+
+(27a) s.t. x0 = xinit , (27b) 
+
+ft(xt, u t, x t+1 , u t+1 ) = 0 , t = 0 , . . . , N − 1, (27c) 
+
+gt ≤ gt(xt, u t) + δξ ξt ≤ gt, t = 0 , . . . , N. (27d) where xt ∈ Rnx and ut ∈ Rnu are the state and control at node t = 0 , . . . , N , and the binary δξ ∈ { 0, 1} toggles the use of slack variables ξt, penalized by the scalar penalty γξ > 0.All the OCP functions are assumed twice continuously differentiable in (x, u ).
+
+Remark A1 (Dynamics constraints & implicit integrators) The dynamics equality constraints support both explicit and implicit integrators. Explicit dynamics constraints do not depend on ut+1 and can be written as 
+
+ft(xt, u t, x t+1 , u t+1 ) = Φ t(xt, u t) − xt+1 .
+
+For a trapezoidal implicit scheme with continuous-time dynamics ˙xt = f ct  
+
+> t
+
+and step size ∆t,
+
+ft(. . . ) = xt + ∆t 
+
+> 2
+
+(f ct  
+
+> t
+
+(xt, u t)+ f ct 
+
+> t+1
+
+(xt+1 , u t+1 )) −xt+1 .
+
+B. QP Approximation 
+
+At each SQP iterate (¯ x, ¯u), we form a quadratic approx-imation of the objective and linear approximations of the constraints, yielding the quadratic program (QP) defined in Sec. III-A and restated below: 
+
+QP : min  
+
+> (x,ξ )12
+
+x⊤P x + q⊤x + γξ 
+
+> 2
+
+∥ξ∥2 (28a) s.t. Cx = c, G ≤ Gx + δξ ξ ≤ G. (28b) where x stacks the stage variables x := ( xt, u t)Nt=0 .The P , C, and G matrices derived from the cost and constraint approximations, are block-tridiagonal, -bidiagonal, and -diagonal, respectively, with dimensions denoted below.  
+
+> •
+
+P ⪰ 0 contains the Hessian of the cost quadratic approxi-mation. 
+
+P =
+
+       
+
+> D0E⊤
+> 0
+> E0D1
+> . . .. . .. . .E⊤
+> N−1
+> EN−1DN
+
+ ∈ R(N +1) n×(N +1) n. (29)  
+
+> •
+
+C encodes the linearized initial and dynamics constraints via Cx = c.
+
+C =
+
+                     
+
+> Ainit 00· · · 0
+> A−
+> 0A+00· · · 00A−
+> 1A+1
+> . . ........ . .. . .. . .00· · · 0A−
+> N−1A+
+> N−1
+
+ ∈ R(ninit +N n )×(N +1) n.
+
+(30)  
+
+> •
+
+G encodes the linearized inequality constraints, with op-tional slack variables, via G ≤ Gx + δξ ξ ≤ G:
+
+G =
+
+"G0 0 00 . . . 00 0 GN
+
+#
+
+∈ R(N +1) ng ×(N +1) n. (31) Leveraging the sparse structure of P , C, and G is key to an efficient implementation. The following sections describe other terms in further detail. 
+
+1) Cost: For each stage t = 0 , . . . , N − 1, we quadratize ℓt
+
+around (¯ xt, ¯xt+1 ) (xt ← (xt, u t) denotes the stacked variable): 
+
+ℓt(xt, x t+1 ) ≈ ℓt(¯ xt, ¯xt+1 ) + q−⊤  
+
+> t
+
+δx t + q+⊤ 
+
+> t
+
+δx t+1 
+
++ 12
+
+ δx t
+
+δx t+1 
+
+⊤  H− 
+
+> t
+
+H±
+
+> t
+
+H±⊤  
+
+> t
+
+H+
+
+> t
+
+  δx t
+
+δx t+1 
+
+
+
+, (32) where δx := x − ¯x and 
+
+q− 
+
+> t
+
+:= ∇xt ℓt, q+ 
+
+> t
+
+:= ∇xt+1 ℓt,H− 
+
+> t
+
+:= ∇2 
+
+> xtxt
+
+ℓt, H± 
+
+> t
+
+:= ∇2 
+
+> xtxt+1
+
+ℓt, H+ 
+
+> t
+
+:= ∇2 
+
+> xt+1 xt+1
+
+ℓt,
+
+all evaluated at (¯ xt, ¯xt+1 ). Similarly for the terminal cost, 
+
+ℓN (xN ) ≈ ℓN (¯ xN ) + q−⊤  
+
+> N
+
+δx N + 12 δx ⊤ 
+
+> N
+
+H− 
+
+> N
+
+δx N , (33) with q−⊤  
+
+> N
+
+:= ∇xN ℓN (¯ xN ) and H− 
+
+> N
+
+:= ∇2 
+
+> xN
+
+ℓN (¯ xN ).Collecting all terms, the block entries of P are 
+
+D0 = H− 
+
+> 0
+
+, (34a) 
+
+Dt = H+ 
+
+> t−1
+
++ H− 
+
+> t
+
+, t = 1 , . . . , N, (34b) 
+
+Et = H± 
+
+> t
+
+, t = 0 , . . . , N − 1, (34c) and the linear term q = ( q0, . . . , q N ) ∈ R(N +1) n, with 
+
+q0 = q− 
+
+> 0
+
+, qt = q+ 
+
+> t−1
+
++ q− 
+
+> t
+
+, t = 1 , . . . , N. (35) 
+
+2) Equality constraints: The initial state and (optional) control constraints are already linear and define Ainit in C.The dynamics constraints are linearized and take the form 
+
+A−
+
+> t
+
+xt
+
+ut
+
+
+
++ A+
+
+> t
+
+xt+1 
+
+ut+1 
+
+
+
+= bt, t = 0 , . . . , N − 1, (36) where A− 
+
+> t
+
+and A+ 
+
+> t
+
+are Jacobian blocks of 
+
+ft(xt, u t, x t+1 , u t+1 ) at (¯ xt, ¯ut, ¯xt+1 , ¯ut+1 ), and 
+
+bt = A−
+
+> t
+
+¯xt
+
+¯ut
+
+
+
++ A+
+
+> t
+
+¯xt+1 
+
+¯ut+1 
+
+
+
+− ft(¯ xt, ¯ut, ¯xt+1 , ¯ut+1 ). (37) The affine term of the equality constraints is then defined as 
+
+c = ( binit , b 0, b 1, . . . , b N −1).
+
+3) Inequality constraints: They are linearized as 
+
+Gt ≤ Gt
+
+xt
+
+ut
+
+
+
++ δξ ξt ≤ Gt, Gt = ∇(x,u )gt(¯ xt, ¯ut), (38) with shifted bounds Gt = gt − gt(¯ xt, ¯ut) + Gt
+
+¯xt
+
+¯ut
+
+
+
+and Gt =
+
+gt − gt(¯ xt, ¯ut) + Gt
+
+¯xt
+
+¯ut
+
+
+
+. Stacking these constraints for all stages t = 0 , . . . , N gives the block diagonal matrix G and the stacked bounds G := ( G0, . . . , G N ) and G := ( G0, . . . , G N ).13 
+
+C. ADMM 
+
+We reformulate the QP as in OSQP . The main formulation is described in Sec. III-B. We further contrast the derivations with and without slack variables below. 
+
+1) ADMM without slack variables ( OSQP , δξ = 0 ): First, we derive our ADMM scheme for the case without slack variables (δξ , ξ ) = (0 , 0) . The scheme follows OSQP .The corresponding augmented Lagrangian is given by 
+
+Lσ,ρ (˜ x, ˜z, x, z, w, y ) = 12 ˜x⊤P ˜x + q⊤ ˜x + I[l,u ](z) + I0(A˜x − ˜z)+ σ 
+
+> 2
+
+∥˜x − x + σ−1w∥2 + ρ 
+
+> 2
+
+∥˜z − z + ρ−1y∥2. (39) Then, applying ADMM consists of a) minimizing Lσ,ρ over (˜ x, ˜z)
+
+b) minimizing Lσ,ρ over (x, z )
+
+c) updating the multipliers (w, y )
+
+By also including an over-relaxation strategy, these steps produce the following updates. 
+
+Primal update: 
+
+(˜ xk+1 , ˜zk+1 ) ← arg min  
+
+> (˜ x, ˜z)12
+
+˜x⊤P ˜x+q⊤ ˜x+ σ 
+
+> 2
+
+∥˜x−xk+σ−1wk∥2
+
++ ρ 
+
+> 2
+
+∥˜z − zk + ρ−1yk∥2 s.t. A˜x = ˜ z. (40) 
+
+Over-relaxation: Given α ∈ (0 , 2) , let 
+
+ˆxk+1 = α˜xk+1 + (1 − α)xk, ˆzk+1 = α˜zk+1 + (1 − α)zk.
+
+Slack update: 
+
+xk+1 ← arg min  
+
+> xσ
+> 2
+
+∥ˆxk+1 − x + σ−1wk∥2
+
+= ˆ xk+1 + σ−1wk, (41a) 
+
+zk+1 ← arg min 
+
+> z
+
+I[l,u ](z) + ρ 
+
+> 2
+
+∥ˆzk+1 − z + ρ−1yk∥2
+
+= Π [l,u ]
+
+ ˆzk+1 + ρ−1yk , (41b) with z decomposed in: 
+
+zk+1  
+
+> f
+
+= c, (42a) 
+
+zk+1  
+
+> g
+
+= Π [G,G ]
+
+ αG ˜xk+1 + (1 − α)zkg + ρ−1 
+
+> g
+
+ykg
+
+ . (42b) Because zkf ≡ c for all ADMM steps, our implementation does not store zf and substitutes it with c throughout. 
+
+Dual update: 
+
+wk+1 ← wk + σ(ˆ xk+1 − xk+1 ), (43a) 
+
+yk+1 ← yk + ρ(ˆ zk+1 − zk+1 ), (43b) with y decomposed in: 
+
+yk+1  
+
+> f
+
+= ykf + ρf
+
+ αC ˜xk+1 + (1 − α)zkf − c, (44) 
+
+yk+1  
+
+> g
+
+= ykg + ρg
+
+ αG ˜xk+1 + (1 − α)zkg − zk+1 
+
+> g
+
+. (45) 
+
+Eliminating w and ˆx: From (41a) and (43a), 
+
+wk+1 = wk + σ ˆxk+1 − (ˆ xk+1 + σ−1wk) = 0 , (46) so wk = 0 and xk = ˆ xk for all k ≥ 1. Substituting into the ADMM updates above and unrolling the over-relaxation step yields Algorithm 3. 
+
+Linear-system solve via the Schur complement method: 
+
+The primal update (40) is an equality-constrained QP. Its KKT conditions are 
+
+(P + σI )˜ xk+1 + q − σx k + A⊤νk+1 = 0 , (47a) 
+
+ρ˜zk+1 − ρz k + yk − νk+1 = 0 , (47b) 
+
+A˜xk+1 − ˜zk+1 = 0 , (47c) where νk+1 denotes the multipliers associated with the equal-ity constraint A˜x = ˜ z.Eliminating ˜zk+1 (47b) 
+
+= zk + ρ−1(νk+1 − yk), and stacking (47a) and (47c) gives the linear system 
+
+P + σI A⊤
+
+A −ρ−1I
+
+  ˜xk+1 
+
+νk+1 
+
+
+
+=
+
+ σx k − qzk − ρ−1yk
+
+
+
+. (48) From the second block row, we obtain 
+
+νk+1 = yk + ρ A˜xk+1 − zk, (49) which once substituted into (47a) yields the Schur complement system S ˜xk+1 = ηk defined in (8). After solving the linear system, we recover 
+
+˜zk+1 (47c) 
+
+= A˜xk+1 .
+
+Structure from OCP: We specialize to the OCP QP struc-ture by partitioning 
+
+A =
+
+CG
+
+
+
+, l =
+
+ cG
+
+
+
+, u =
+
+ cG
+
+
+
+, z =
+
+zf
+
+zg
+
+
+
+, ˜z =
+
+˜zf
+
+˜zg
+
+
+
+, y =
+
+yf
+
+yg
+
+
+
+,
+
+and choosing 
+
+ρ = diag( ρf I, ρ g I)
+
+to reflect the equality and inequality constraints. Hence, the primal update (40) consists of the steps 1) ˜xk+1 ← Solve  
+
+> x
+
+{Sx k+1 = ηk},2) (˜ zk+1  
+
+> f
+
+, ˜zk+1  
+
+> g
+
+) = ( C ˜xk+1 , G ˜xk+1 ),using the Schur complement components 
+
+S = P + σI + C⊤ρf C + G⊤ρg G (50) 
+
+=
+
+
+
+Θ0 Φ⊤
+
+> 0
+
+Φ0 Θ1
+
+. . .. . . . . . Φ⊤ 
+
+> N−1
+
+ΦN −1 ΘN
+
+ ,ηk = σx k − q + C⊤(ρf zkf − ykf ) + G⊤(ρg zkg − ykg ), (51) with 
+
+Θ0 = D0 + σI + ρf (A⊤
+
+> init
+
+Ainit + A−⊤  
+
+> 0
+
+A− 
+
+> 0
+
+) + ρg G⊤ 
+
+> 0
+
+G0,
+
+Θt = Dt + σI + ρf (A+⊤
+
+> t−1
+
+A+ 
+
+> t−1
+
++ A−⊤  
+
+> t
+
+A− 
+
+> t
+
+) + ρg G⊤ 
+
+> t
+
+Gt,t = 1 , . . . , N − 1,
+
+ΘN = DN + σI + ρf A+⊤ 
+
+> N−1
+
+A+  
+
+> N−1
+
++ ρg G⊤ 
+
+> N
+
+GN .
+
+Φt = Et + ρf A+⊤ 
+
+> t
+
+A− 
+
+> t
+
+, t = 0 , . . . , N − 1,14 
+
+2) ADMM with slack variables ( ADMMSlack , δξ = 1 ): 
+
+We tackle problems with slack variables as follows. While the 
+
+QP with δξ = 1 is a quadratic program that could be handled via the OSQP scheme presented previously, this approach is more complicated to implement: the structure of the primal linear system would change and one would need to keep track of the slack variables ξ.Instead, we adapt ideas from the ADMMSlack [48] ap-proach to tackle the QP previously defined by (5): 
+
+min  
+
+> (x,z, ˜x, ˜z,ξ )12
+
+˜x⊤P ˜x + q⊤ ˜x + γξ 
+
+> 2
+
+∥ξ∥2 + I{c}(zf ) + I[G,G ](zg + ξ)
+
+s.t. A˜x − ˜z = 0 , ˜x − x = 0 , ˜z − z = 0 ,
+
+with augmented Lagrangian defined before by (6): 
+
+Lσ,ρ (˜ x, ˜z, x, z, ξ, w, y ) = 12 ˜x⊤P ˜x + q⊤ ˜x + γξ 
+
+> 2
+
+∥ξ∥2++ I{c}(zf ) + I[G,G ](zg + ξ) + I0(A˜x − ˜z)+ σ 
+
+> 2
+
+∥˜x − x + σ−1w∥2 + ρ 
+
+> 2
+
+∥˜z − z + ρ−1y∥2.
+
+Then, our ADMM scheme consists of a) minimizing Lσ,ρ over (˜ x, ˜z)
+
+b) minimizing Lσ,ρ over (x, z, ξ )
+
+c) updating the multipliers (w, y )
+
+These steps give the following updates, including an over-relaxation strategy similar to the case without slacks. 
+
+Primal update: Same as in (40) 
+
+Slack update: Same as in (41), but with 
+
+(zk+1  
+
+> g
+
+, ξ k+1 ) ← arg min   
+
+> (zg,ξ )
+> γξ
+> 2
+
+∥ξ∥2 + I[G,G ](zg + ξ)+ + ρ 
+
+> 2
+
+∥ˆzk+1  
+
+> g
+
+− zg + ρ−1ykg ∥2 (52a) 
+
+=
+
+" eΠγξ
+
+> [G,G ]
+
+ ˆzk+1  
+
+> g
+
++ ρ−1 
+
+> g
+
+ykg
+
+
+
+∆eΠγξ
+
+> [G,G ]
+
+ ˆzk+1  
+
+> g
+
++ ρ−1 
+
+> g
+
+ykg
+
+#
+
+, (52b) where eΠ and ∆eΠ are defined in (15). 
+
+Dual update: Same as (43) The step in (52) follows from [48, Lemma 1]. Specifically, denoting Z = ˆ zk+1  
+
+> g
+
++ ρ−1 
+
+> g
+
+ykg , with appropriate substitutions, the last result of the proof of [48, Lemma 1] shows 
+
+
+
+zi = ρZ i+γξ Gi 
+
+> ρ+γξ
+
+, ξi = ρρ+γξ (Gi − Zi) if Zi < G i,zi = ρZ i+γξ Gi 
+
+> ρ+γξ
+
+, ξi = ρρ+γξ (Gi − Zi), if Zi > G i,zi = Zi, ξi = 0 if Gi ≤ Zi ≤ Gi,
+
+and (52b) then follows from the definitions of (eΠ, ∆eΠ) .The remainder of the derivations to retrieve the steps in Algorithm 3 follow those for the case without slack variables as described previously. 
+
+Remark A2 (ADMMSlack : Differences with OSQP )The OSQP ADMM scheme would introduce a copy ˜ξ of 
+
+ξ, and use a primal update that minimizes the Lagrangian over (˜ x, ˜z, ˜ξ), solving a larger linear system. Instead, our ADMM scheme for handling slack variables is inspired from [48]. It is easier to implement as it only consists of a small change to the projection step. 
+
+3) Step-size parameters selection: The performance of ADMM highly depends on the choice of the step-size param-eters (σ, ρ ). As in [16], we fix σ = 10 −6. We also partition 
+
+ρ = diag( ρf I, ρ g I) to reflect the always-active equality block and the inequality block and set 
+
+ρf = 10 3 ¯ρ, ρg = ¯ ρ, 
+
+with initial ¯ρ = 0.1. We adapt ¯ρ to balance primal and dual residuals following an adaptive schedule as described in Sec. III-B. 
+
+D. Line search 
+
+We use a standard backtracking linesearch [47, Chapter 18]. After each QP subproblem solve formulated at ˜x = ( x, ξ ) and with solution ˜x∗ = ( x∗, ξ ∗), we search along the direction 
+
+∆˜ x = ˜ x∗ − ˜x. We use the merit function 
+
+φ(˜ x) = ℓ(˜ x) + μ  ∥f (˜ x)∥1 + ∥[g(˜ x) − ¯g]+∥1 + ∥[g − g(˜ x)] +∥1
+
+,
+
+where ℓ(˜ x) is the total cost, f (˜ x) corresponds to equality constraints, and g(˜ x) to inequality constraints. The penalty parameter is chosen as 
+
+μ = ∇ℓ(˜ x)⊤∆˜ x 
+
+> 12
+
+max  ∥h(˜ x)∥1 + ∥[g(˜ x) − ¯g]+∥1 + ∥[g − g(˜ x)] +∥1, ϵ c
+
+ .
+
+A candidate step size α is accepted if it satisfies the Armijo-type condition 
+
+φ(˜ x + α∆˜ x) ≤ φ(˜ x) + ηαD μ,
+
+with the directional derivative Dμ = ∇ℓ(˜ x)⊤∆˜ x −
+
+μ  ∥f (˜ x)∥1 + ∥[g(˜ x) − ¯g]+∥1 + ∥[g − g(˜ x)] +∥1
+
+ and η =0.4. Merit values are evaluated in parallel over a set of α values and the largest candidate satisfying the decrease condition is selected. If no finite candidate satisfies the Armijo condition, we take the finite candidate with the smallest merit value. 
+
+E. Backward Pass: Sensitivities Computation 
+
+The solution (xθ , ξ θ ) to OCP depends on parameters θ ∈
+
+Rp through the cost and constraints. To integrate the solver into learning pipelines, we compute gradients of functions of the solution ∂L(xθ , ξ θ )
+
+∂θ , (53) where L denotes a downstream scalar loss. We use implicit dif-ferentiation, computing these gradients through differentiation of the KKT conditions at the converged primal-dual solution, while keeping the active set fixed. In the following, all quantities are evaluated at the converged primal-dual solution, and we suppress explicit dependence on 
+
+θ whenever this does not create ambiguity. 
+
+1) Active constraints identification: Let f (x) = 0 collect all initial and dynamics equality constraints. Let A = A ∪ A 
+
+denote the set of active inequality constraints. An inequality constraint belongs to A (i.e., it is lower active) if 
+
+ygi < −ϵg or (|ygi | < ϵ g and gi(x) − gi ≤ ϵg |gi|),
+
+and it belongs to A (i.e., it is upper active) if 
+
+ygi > ϵ g or (|ygi | < ϵ g and gi − gi(x) ≤ ϵg |gi|),15 
+
+where ϵg > 0 is a user-defined tolerance, with our code using a combination of ϵabs and ϵrel . The dual check gives the KKT-consistent active side and takes priority, while the proximity to the bounds is used only when the dual side is ambiguous (i.e., |ygi | < ϵ g ). From this active-set check, we identify the active constraints as gA.In the presence of slack variables ( δξ = 1), the active constraints are written compactly as 
+
+gA(x) + Sξ A = 0 , S = diag( Si), (54) where 
+
+Si =
+
+(
+
++1 , if the lower bound is active or ξi = 0 ,
+
+−1, if the upper bound is active ,
+
+so that Si = sign( ξi) for active softened constraints. Inactive softened constraints have ξi = 0 and are not included in the backward KKT system. 
+
+2) Implicit differentiation: We compute the gradients by differentiating the KKT conditions. We denote the active-set Lagrangian by 
+
+L(x, ξ A, y ) = ℓ(x) + γξ 
+
+> 2
+
+∥ξA∥2 + y⊤ 
+
+> f
+
+f (x) + y⊤
+
+> g
+
+ gA(x) + Sξ A
+
+,
+
+(55) where yf are the multipliers of the equality constraints and yg
+
+are the multipliers of the active inequality constraints. The OCP KKT conditions are 
+
+∇xℓ(x) + ∇xf (x)⊤yf + ∇xgA(x)⊤yg = 0 , (56a) 
+
+γξ ξA + Sy g = 0 , (56b) 
+
+f (x) = 0 , (56c) 
+
+gA(x) + Sξ A = 0 . (56d) We write these conditions compactly as 
+
+F (w, θ ) = 0 , w = ( x, ξ A, y ). (57) We can now use standard implicit differentiation tech-niques to obtain gradients. By the chain rule, differentiating 
+
+F (w(θ), θ ) = 0 with respect to θ gives 
+
+∂F ∂w ∂w ∂θ + ∂F ∂θ = 0 = ⇒ ∂w ∂θ = −
+
+ ∂F ∂w 
+
+−1 ∂F ∂θ . (58) The above computation corresponds to a Jacobian-Vector Product (JVP), and requires solving a large linear system. Instead, the gradient of a loss ∇θ L(xθ , ξ θ ) can be more efficiently computed via a Vector-Jacobian Product (VJP): 
+
+∇θ L⊤ = − ∂F ∂θ  
+
+> ⊤
+
+ ∂F ∂w 
+
+−1 " ∇xL∇ξA L
+
+> 0
+
+#! 
+
+= − ∂F ∂θ 
+
+> ⊤
+
+"ηx
+
+> ηξ
+> ηy
+
+#
+
+, (59) which also follows from the chain rule, and requires solving the linear system 
+
+∂F ∂w 
+
+ηx
+
+ηξ
+
+ηy
+
+ =
+
+ ∇xL∇ξA L
+
+0
+
+ , (60) with ηy = ( ηyf , η yg ) and 
+
+∂F ∂w =
+
+              
+
+> H0∇xf⊤∇xg⊤A
+> 0γξI0S
+> ∇xf000
+> ∇xgAS00
+
+,
+
+where H := ∇2
+
+> xx
+
+
+
+ℓ(x) + y⊤ 
+
+> f
+
+f (x) + y⊤AgA(x)
+
+
+
+.
+
+To solve this linear system, we distinguish two cases. 
+
+a) No slack variables (δξ , ξ ) = (0 , 0) : When slack variables are disabled, the active inequality constraints are 
+
+gA(x) = 0 .
+
+The KKT conditions reduce to 
+
+∇xℓ(x) + ∇xf (x)⊤yf + ∇xgA(x)⊤yg = 0 , (61a) 
+
+f (x) = 0 , (61b) 
+
+gA(x) = 0 , (61c) with F (w, θ ) = 0 , w = ( x, y ), and 
+
+∂F ∂w =
+
+" H ∇xf ⊤ ∇xg⊤A    
+
+> ∇xf00
+> ∇xgA00
+
+#
+
+. (62) The gradient is then 
+
+∇θ L⊤ = − ∂F ∂θ  
+
+> ⊤
+
+ ∂F ∂w 
+
+−1 ∇xL
+
+0
+
+!
+
+= − ∂F ∂θ  
+
+> ⊤
+
+ηx
+
+ηy
+
+
+
+(63) where 
+
+hηx
+
+> ηy
+
+i
+
+solves the linear system ∂F ∂w 
+
+hηx
+
+> ηy
+
+i
+
+=
+
+h∇xL
+
+> 0
+
+i
+
+.
+
+b) Slack variables ( δξ = 1 ): We first eliminate the slack adjoints ηξ . From the last and second block rows of (60), 
+
+ηξ = −S∇xgA ηx, ηyg = S∇ξA L + γξ ∇xgA ηx. (64) By substituting (64) into the first block row of (60), we obtain the reduced linear system 
+
+H+γξ ∇xg⊤A∇xgA ∇xf ⊤
+
+∇xf 0
+
+  ηx
+
+ηyf
+
+
+
+=
+
+∇xL−∇ xg⊤AS∇ξA L
+
+0
+
+
+
+.
+
+(65) After solving (65), (ηξ , η yg ) are recovered via (64). If the slack penalty γξ is also a parameter to differentiate, since the only explicit dependence of F on γξ is through the stationarity condition γξ ξA + Sy g = 0 ,
+
+∂L
+
+∂γ ξ
+
+= −ξ⊤A ηξ = ξ⊤A S∇xgA ηx. (66) 
+
+c) Solving the linear systems in the backward pass: The backward pass requires solving a linear system that shares the time-induced sparsity of the forward primal updates, includ-ing: a block-tridiagonal Hessian, a block-bidiagonal equality Jacobian ∇xf , and a block-diagonal active inequality Jacobian 
+
+∇xgA. However, the forward and backward linear-system solves diverge in the structure of the assembled KKT matrix. 
+
+Forward Pass 
+
+⋆ ⋆⋆ −ρ−1I
+
+ Backward Pass 
+
+⋆ ⋆⋆ 0
+
+
+
+In the forward pass, the −ρ−1I block is derived from the ADMM augmented Lagrangian, while in the backward-pass matrix ∂F/∂w (23), the bottom right block is zero. The backward pass differentiates the KKT stationarity conditions at the forward-pass converged solution, at which the penalty over the inequality constraints via ρ has no role. 16             
+
+> TABLE III QP SOLVER BACKENDS . A LL BACKENDS ARE AVAILABLE FOR BOTH PASSES UNLESS MARKED †(BACKWARD ONLY ). Backend Schur solver
+> admm_jax_loop_pcg PCG (JAX)
+> admm_jax_loop_pcg_ffi PCG (FFI)
+> admm_jax_loop_cudss_ffi cuDSS (FFI)
+> admm_jax_loop_jax_dense Dense (JAX)
+> admm_fused_pcg PCG (fused)
+> admm_fused_cudss cuDSS (fused)
+> direct_jax_dense †Direct KKT (JAX)
+> direct_cudss_ffi †Direct KKT (cuDSS)
+
+Rather than attempting a Schur reduction on the backward-pass linear system, we assemble the full sparse linear sys-tem in CSR (Compressed Sparse Row) format and solve it directly using cuDSS in general-symmetric mode, which handles indefiniteness natively via LDL ⊤ decomposition. This implementation entails our default and fastest GPU backward-solver backend, but we also provide a pure-JAX reference, (i.e., direct_jax_dense ) useful for debugging and CPU-only testing. Table III identifies the backends that we make available through our implementation. We also explored solving the backward pass iteratively by formulating a reduced adjoint QP whose optimality conditions approximate the sensitivity system. This QP takes the form: 
+
+min 
+
+> x
+
+ 12 ˜x⊤ ∇xx L+γξ ∇x∆g⊤A∇x∆gA
+
+ ˜x (67a) 
+
+− ( ∂L 
+
+> ∂x
+
+− ∇ x∆g⊤A ∂L 
+
+> ∂ξ A
+
+)⊤ ˜x
+
+s.t. ∇xf ˜x = 0 , (67b) where the active inequality constraints are absorbed into the Hessian via the penalty term γξ , producing a convex equality-only QP that reuses the forward ADMM infrastructure directly. This approach recovers accurate gradients when the ADMM iterates are converged tightly, but introduces a small bias proportional to the convergence tolerance and the active-set approximation error. In contrast, the direct-backward solve via cuDSS yields the exact sensitivity in a single factoriza-tion. Our open-sourced code enables testing these different backward-solve strategies, by choosing between direct- and ADMM-based solver backends (Table III). 
+
+F. Linear-System RL Scaling 
+
+This section provides additional details regarding scalability and gradient accuracy. First, concerning scalability, Fig. 9 shows scalability results with tolerance tol = 10 −3. Compared to mpc.pytorch in this case, the gain reaches 24 .0× and 14 .7× speedups for the forward and backward passes with the nominal configuration and umax = 1 .0. The highest gain achieved corresponds to a 58 .1× speedup with umax = 10 .0 for the same nominal configuration. On the other hand, compared to acados ,
+
+TurboMPC starts to consistently outperform acados at batch sizes 8–32 on the backward pass, achieving 3.6× and 
+
+13 .3× gains for the backward pass at batch size 1024 , with 
+
+umax = 1 .0 and umax = 10 .0, respectively. The highest gain compared to acados is a 15 .1× speedup for the backward pass for (B, N, n x, n u) = (64 , 160 , 32 , 16) with umax = 10 .0.These results demonstrate the superior speedup performance that TurboMPC can achieve at deployment, when more com-putational effort lies on the forward than the backward pass. Concerning the backward pass, we evaluate the accuracy of the gradients computed by TurboMPC against finite dif-ferences approximations depending on the solver tolerance. Fig. 10 reports the results for the nominal configuration with umax = 1 .0 and statistics computed over 100 problem instances. The gradient accuracy increases with tighter tol-erances. The outlier values can show low-primal feasibility solution due to the random seeds, or gradient discontinuities due to the solution landing on a constraint boundary that turns the active set ambiguous. Nonetheless, as noticed before, a tol-erance below 10 −5 produces accurate gradients. This analysis motivates future work to improve gradients computation at coarser tolerances. 
+
+G. Humanoid Balancing Imitation Learning 1) State and control: The state xt = ( pt, Θt, v t, ω t) ∈ R12 
+
+comprises the CoM position pt ∈ R3, the ZYX Euler angles (roll, pitch, yaw) Θt = ( ϕt, θ t, ψ t) ∈ R3, and the linear and angular velocities, vt ∈ R3 and ωt ∈ R3, respectively. The control ut = ( fL,t , f R,t ) ∈ R6 includes the left, fL,t ,and right, fR,t , foot contact forces in the world frame. 
+
+2) Single Rigid Body (SRB) dynamics: The SRB dynamics are governed by: 
+
+˙pt = vt, (68a) 
+
+˙Θt = T (Θ t)ωt, (68b) 
+
+˙vt = 1
+
+m (fL,t + fR,t ) + g, (68c) 
+
+˙ωt = I−1 (rL × fL,t + rR × fR,t − ωt × (Iω t)) , (68d) where m = 33 .34 kg is the total robot mass, g = (0 , 0, −9.81) 
+
+m/s 2 is the gravity acceleration vector, I ∈ R3×3 is the body-frame inertia tensor, and rL, r R ∈ R3 are contact position vectors from CoM to the corresponding feet. The ZYX convention relates body-frame angular velocity 
+
+ωt to Euler angle rates via: 
+
+T (Θ t) = 
+
+1 sin ϕt tan θt cos ϕt tan θt
+
+0 cos ϕt − sin ϕt
+
+0 sin ϕt/ cos θt cos ϕt/ cos θt
+
+ . (69) This parameterization avoids 3D rotation matrix Lie group complexity, and has a singularity at θt = ±π/ 2 (gimbal lock) that does not occur during balance recovery. The parame-terization is a deliberate simplification, acknowledging that unit quaternions (or another (SO(3))-consistent representation) would be the representation of choice for robust full locomo-tion with large rotations. We use a 4th-order Runge-Kutta (RK4) scheme with ∆t =0.025 secs .: xt+1 = Φ( xt, u t), where Φ( ·) is a function of the continuous-time SRB dynamics in (68) via the RK4 coefficients. 17 10 2                                  
+
+> 10 1
+> 10 0
+> Fwd. Time (s)
+> 10 1
+> 10 0
+> 10 1
+> 10 1
+> 10 0
+> 2023242526272829210
+> Batch size
+> 10 1
+> 10 0
+> 10 1
+> Bwd. Time (s)
+> 10 20 40 80 160 320
+> Horizon
+> 10 1
+> 10 0
+> 10 1
+> 612 24 48 96
+> State+ctrl dim
+> 10 1
+> 10 0
+> 10 1
+> acados, umax =1 acados, umax =10 mpc.pytorch, umax =1 mpc.pytorch, umax =10 TurboMPC, umax =1 TurboMPC, umax =10
+
+Fig. 9. Linear-system RL ( tol =10 −3): mean solve time vs. batch size (left), planning horizon (center), state + control dimension (right) for TurboMPC (blue), 
+
+acados (red), and mpc.pytorch (green) at umax ∈ { 1, 10 }. TurboMPC ’s GPU advantage grows with batch size, problem size, and horizon. 10 9 10 7 10 5 10 3 10 1
+
+> Solver tolerance
+> 1.00
+> 0.75
+> 0.50
+> 0.25
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00
+> Cosine similarity (AD vs FD)
+
+Fig. 10. Linear-system RL: Cosine similarity between computed gradients and finite differencing across solver tolerances. 
+
+3) Optimal Control Problem: We solve the OCP 
+
+min 
+
+> x,u N
+
+X
+
+> t=0
+
+δx ⊤ 
+
+> t
+
+Q(θ) δx t + δu ⊤ 
+
+> t
+
+R δu t (70a) s.t. x0 = xinit , (70b) 
+
+xt+1 = Φ( xt, u t) ∀t = 0 , . . . , N − 1, (70c) 
+
+umin ≤ ut ≤ umax ∀t = 0 , . . . , N. (70d) where δx t = xt −xref , δu t = ut −uref , and θ ∈ R12 represents the learnable cost weights used to parameterize the state cost matrix Q(θ), R = diag(10 −3, . . . , 10 −3) ∈ R6×6 is a control cost matrix, and N = 20 is the horizon length. 
+
+4) Learnable cost weights: To ensure positive semi-definiteness, we parameterize the weights in log-space: 
+
+Q(θ) = diag (exp( θ1), . . . , exp( θ12 )) ∈ R12 ×12 . (71) The log-space parameterization ensures positivity by construc-tion and allows the optimizer to work in an unconstrained search space. 
+
+5) Friction cone as box bounds: Friction cone constraints are approximated as independent box bounds: 
+
+umin = ( −240 , −240 , 0, −240 , −240 , 0) (N) , (72a) 
+
+umax = (240 , 240 , 400 , 240 , 240 , 400) (N) , (72b) which enforces:  
+
+> •
+
+Horizontal forces: |fx|, |fy | ≤ 240 N 
+
+> •
+
+Vertical forces: 0 ≤ fz ≤ 400 NThe box structure avoids second-order cone constraints and is directly compatible with TurboMPC .
+
+6) WBC approximation: We implement a SRB MPC that outputs desired ground reaction forces fL,t , f R,t mapped to joint torques using a static whole-body inverse-dynamics ap-proximation on the full MuJoCo model: 
+
+τt =  h(qt, 0) − Jfeet (qt)⊤fdes ,t 
+
+ 
+
+> ID
+
+(73) where fdes ,t = ( fL,t , f R,t ), h is the MuJoCo bias-force vector (gravity + Coriolis + centrifugal), and Jfeet is the stacked translational foot Jacobian. The operator (·)ID selects actuated joints (29 DoF) from generalized coordinates (35 DoF). This setting corresponds to a quasi-static WBC assumption with 
+
+˙q = 0 and ¨q = 0 , and it is intentionally used as a bridge from centroidal MPC to full-body torque commands during balance-recovery experiments. A dynamic acceleration-level WBC is deferred to a walking-phase implementation as future work. 
+
+7) MuJoCo validation protocol: We validate the SRB-to-WBC pipeline in MuJoCo with three modes:  
+
+> •
+
+Kinematic replay: set floating-base pose from SRB states, no physics stepping.  
+
+> •
+
+Open-loop physics: apply precomputed WBC torques and run forward dynamics.  
+
+> •
+
+Closed-loop physics: apply 
+
+τapplied ,t = τWBC ,t + Kp(qdes − qt) + Kd( ˙ qdes − ˙qt), (74) with qdes = 0 , ˙qdes = 0 for nominal standing. Kp and Kd
+
+are diagonal, joint-group-dependent PD feedback gains: 
+
+Kp = diag(200 , . . . , 200 
+
+| {z } 
+
+> 12 leg joints
+
+, 100 , 100 , 100 
+
+| {z } 
+
+> 3waist joints
+
+, 50 , . . . , 50 
+
+| {z } 
+
+> 14 arm joints
+
+),
+
+(75a) 
+
+Kd = diag(10 , . . . , 10 
+
+| {z } 
+
+> 12 leg joints
+
+, 5, 5, 5
+
+| {z }  
+
+> 3waist joints
+
+, 2, . . . , 2
+
+| {z } 
+
+> 14 arm joints
+
+), (75b) with units N ·m/rad and N ·m·s/rad, respectively. The open-loop mode validates short-horizon feasibility but drifts over longer horizons due to model mismatch and lack of 18 
+
+TABLE IV PERIODIC POINT -MASS REFERENCE TRAJECTORY OVER ONE CYCLE .Cycle segment Waypoint Steps i pref  
+
+> i
+
+= ( x, y, z ) m0 0 0–3 ( 0.10 , 0.00 , 0.00) 
+
+1 1 4–7 (−0.10 , 0.05 , 0.05) 
+
+2 2 8–11 ( 0.10 , 0.10 , 0.10) 
+
+3 3 12 –15 (−0.10 , 0.15 , 0.15) 
+
+4 4 16 –19 ( 0.10 , 0.10 , 0.10) 
+
+5 5 20 –23 (−0.10 , 0.05 , 0.05) 
+
+6 4 24 –27 ( 0.10 , 0.10 , 0.10) 
+
+7 3 28 –31 (−0.10 , 0.15 , 0.15) 
+
+8 2 32 –35 ( 0.10 , 0.10 , 0.10) 
+
+9 1 36 –39 (−0.10 , 0.05 , 0.05) 
+
+feedback. The closed-loop mode reduces drift and is used as a practical validation mode. Future work includes using time-varying contact schedules and dynamic WBC for walking. 
+
+H. Neural Network Training 
+
+We use TurboMPC as a differentiable MPC policy with a neural-network cost function for a constrained 3D point-mass tracking task. The state is x = ( p, v ) ∈ R6, where p ∈ R3 is the position and v ∈ R3 is the velocity. The control is the thrust vector u ∈ R3. The dynamics are a unit-mass double integrator discretized with forward Euler at ∆t = 0 .1, with thrust box constraints ∥ut∥∞ ≤ 5 N. The MPC planning horizon is N =8, and the closed-loop RL training rollout horizon is H = 8 .The reference is a periodic zig-zag trajectory defined by six waypoints. Each waypoint is held for four control steps. After reaching the last waypoint, the reference reverses through the waypoint sequence. This gives the 40 -step cycle in Table IV. At each MPC call, the reference window contains the next 
+
+N + 1 waypoint targets from the current phase. The learned parameters θ are the weights of a two-layer neural network with one hidden layer, 6 → 8 → 81 . The hidden activation is tanh . The first-layer weights are initialized i.i.d. from a zero-mean Gaussian with standard deviation 
+
+0.5, all biases and the output layer weights are initialized to zero. Thus, at initialization the network outputs zero log-multipliers and the controller recovers the default MPC cost prior (Qθt , R θt ) = ( I6, 10 −3I3) for all stages t. The network output is reshaped as a (N + 1) × 9 matrix, providing time-varying cost weights. At closed-loop phase i, the network evaluates the current state xi and produces one row ηt = ( ηpt , η vt , η ut ) ∈ R9 for each MPC stage t = 0 , . . . , N , with ηpt , η vt , η ut ∈ R3. These outputs assemble the MPC cost matrices 
+
+Qθt = diag(exp( ηpt ), exp( ηvt )) ∈ R6×6, (76) 
+
+Rθt = 10 −3 diag(exp( ηut )) ∈ R3×3. (77) The MPC problem solved at that closed-loop step is 
+
+min 
+
+> (x,u )
+> N
+
+X
+
+> t=0
+
+(xt − xref 
+
+> i+t
+
+)⊤Qθt (xt − xref 
+
+> i+t
+
+) + u⊤ 
+
+> t
+
+Rθt ut, (78a) s.t. x0 = xi, (78b) 
+
+pt+1 = pt + ∆ t v t, t = 0 , . . . , N − 1, (78c) 
+
+vt+1 = vt + ∆ t u t, t = 0 , . . . , N − 1, (78d) 
+
+∥xt∥∞ ≤ 5, ∥ut∥∞ ≤ 5, t = 0 , . . . , N, (78e) where xref  
+
+> i+t
+
+= ( pref 
+
+> i+t
+
+, 0, 0, 0) is the phase-aligned position refer-ence with zero velocity reference. The policy applies only the first control πθ (xi) = u⋆ 
+
+> 0
+
+before resolving the MPC problem at the next state. The exponential parameterization keeps all MPC cost weights positive while allowing unconstrained optimization over θ.Training minimizes the expected closed-loop tracking loss 
+
+L(θ) = Ex0,i 0
+
+h 1
+
+> H
+
+PH−1 
+
+> t=0
+
+∥pt+1 − pref 
+
+> i0+t+1
+
+∥22 + 10 −3∥ut∥22
+
+i
+
+. (79) The phase i0 is sampled uniformly over one reference cycle. Initial states x0 are sampled near the reference: the initial position is the waypoint at phase i0 plus uniform perturbation in [−0.03 , 0.03] 3, and the initial velocity is sampled uniformly in [−0.05 , 0.05] 3. We optimize (79) with Adam using batch size B = 4 , learning rate 3 × 10 −3, and 500 gradient steps. We use analytic policy gradients to train the neural network, which flow through the closed-loop rollout, with derivatives propagated through each MPC solution used by the policy. For evaluation, the system starts on the first reference waypoint with zero velocity and is simulated for 80 closed-loop steps. The reported metric is the position RMSE against the phase-aligned reference. Training takes 30 .9 minutes on an RTX 5090, with a median training step time of 3.2 seconds. The tracking RMSE is reduced from 1.20 × 10 −1 m at initialization to 8.33 × 10 −2 m after 500 gradient steps. REFERENCES [1] B. Zitkovich, T. Yu, S. Xu, P. Xu, T. Xiao, et al. , “RT-2: Vision-language-action models transfer web knowledge to robotic control,” in Conf. on Robot Learning , 2023. [2] V. Makoviychuk, L. Wawrzyniak, Y. Guo, M. Lu, K. Storey, M. Macklin, D. Hoeller, N. Rudin, A. Allshire, A. Handa, et al. , “Isaac gym: High performance GPU-based physics simulation for robot learning,” 2021, available at https://arxiv.org/abs/2108.10470. [3] A. O’Neill, A. Rehman, A. Maddukuri, A. Gupta, A. Padalkar, et al. ,“Open X-embodiment: Robotic learning datasets and RT-X models: Open X-embodiment collaboration,” in Proc. IEEE Conf. on Robotics and Automation , 2024. [4] N. Rudin, D. Hoeller, P. Reist, and M. Hutter, “Learning to walk in minutes using massively parallel deep reinforcement learning,” in Conf. on Robot Learning , 2022. [5] J. Barreiros, A. Beaulieu, A. Bhat, R. Cory, E. Cousineau, et al. , “A careful examination of large behavior models for multitask dexterous manipulation,” Science Robotics , vol. 11, no. 113, 2026. [6] S. Kuindersma, R. Deits, M. Fallon, A. Valenzuela, H. Dai, F. Permenter, T. Koolen, P. Marion, and R. Tedrake, “Optimization-based locomotion planning, estimation, and control design for the Atlas humanoid robot,” 
+
+Autonomous Robots , vol. 40, no. 3, pp. 429–455, 2016. [7] J. Di Carlo, P. M. Wensing, B. Katz, G. Bledt, and S. Kim, “Dynamic locomotion in the MIT cheetah 3 through convex model-predictive control,” in IEEE/RSJ Int. Conf. on Intelligent Robots & Systems , 2018. [8] C. Mastalli, I. Havoutis, M. Focchi, D. G. Caldwell, and C. Semini, “Motion planning for quadrupedal locomotion: Coupled planning, terrain mapping, and whole-body control,” IEEE Transactions on Robotics ,vol. 36, no. 6, pp. 1635–1648, 2020. [9] M. Tranzatto, T. Miki, M. Dharmadhikari, L. Bernreiter, M. Kulkarni, F. Mascarich, O. Andersson, S. Khattak, M. Hutter, R. Siegwart, et al. ,“Cerberus in the DARPA subterranean challenge,” Science Robotics ,vol. 7, no. 66, 2022. [10] P. M. Wensing, M. Posa, Y. Hu, A. Escande, N. Mansard, and A. Del Prete, “Optimization-based control for dynamic legged robots,” 
+
+IEEE Transactions on Robotics , vol. 40, pp. 43–63, 2023. [11] R. Grandia, F. Jenelten, S. Yang, F. Farshidian, and M. Hutter, “Per-ceptive locomotion through nonlinear model-predictive control,” IEEE Transactions on Robotics , vol. 39, no. 5, pp. 3402–3421, 2023. [12] K. Nguyen, S. Schoedel, A. Alavilli, B. Plancher, and Z. Manchester, “TinyMPC: Model-predictive control on resource-constrained microcon-trollers,” in Proc. IEEE Conf. on Robotics and Automation , 2024. 19 
+
+[13] H. Bui, Y. Gao, H. Yang, E. Cui, S. Mody, B. Acosta, T. S. Felix, B. Bianchini, and M. Posa, “Push anything: Single-and multi-object pushing from first sight with contact-implicit MPC,” in Proc. IEEE Conf. on Robotics and Automation , 2026. [14] A. Jordana, S. Kleff, A. Meduri, J. Carpentier, N. Mansard, and L. Righetti, “Structure-exploiting sequential quadratic programming for model-predictive control,” IEEE Transactions on Robotics , vol. 41, pp. 4960–4974, 2025. [15] G. Frison and M. Diehl, “HPIPM: a high-performance quadratic pro-gramming framework for model predictive control,” IFAC-Papers On-line , vol. 53, no. 2, pp. 6563–6569, 2020. [16] B. Stellato, G. Banjac, P. Goulart, A. Bemporad, and S. Boyd, “OSQP: an operator splitting solver for quadratic programs,” Mathematical Programming Computation , vol. 12, no. 4, pp. 637–672, 2020. [17] R. Grandia, F. Farshidian, E. Knoop, C. Schumacher, M. Hutter, and M. B¨ acher, “DOC: Differentiable optimal control for retargeting motions onto legged robots,” ACM Transactions on Graphics , vol. 42, no. 4, pp. 1–14, 2023. [18] A. W¨ achter and L. T. Biegler, “On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming,” 
+
+Mathematical programming , vol. 106, no. 1, pp. 25–57, 2006. [19] P. E. Gill, W. Murray, and M. A. Saunders, “SNOPT: An SQP algorithm for large-scale constrained optimization,” SIAM review , vol. 47, no. 1, pp. 99–131, 2005. [20] R. Verschueren, G. Frison, D. Kouzoupis, J. Frey, N. v. Duijkeren, A. Zanelli, B. Novoselnik, T. Albin, R. Quirynen, and M. Diehl, “acados—a modular open-source framework for fast embedded optimal control,” Mathematical Programming Computation , vol. 14, no. 1, pp. 147–183, 2022. [21] J. Frey, K. Baumgartner, G. Frison, D. Reinhardt, J. Hoffmann, L. Ficht-ner, S. Gros, and M. Diehl, “Differentiable nonlinear model predictive control,” 2025, available at https://arxiv.org/abs/2505.01353. [22] R. Frostig, S. Sindhwani, and S. Tu, “Trajax,” 2021, available at http: //github.com/google/trajax. [23] B. Amos, I. D. J. Rodriguez, J. Sacks, B. Boots, and Z. Kolter, “Differentiable MPC for end-to-end planning and control,” Conf. on Neural Information Processing Systems , vol. 31, 2018. [24] E. Adabag, M. Greiff, J. Subosits, and T. Lew, “Differentiable model predictive control on the GPU,” in Int. Conf. on Learning Representa-tions , 2026. [25] L. Amatucci, J. Sousa-Pinto, G. Turrisi, D. Orban, V. Barasuol, and C. Semini, “Primal-dual iLQR for GPU-accelerated learning and control in legged robots,” IEEE Robotics and Automation Letters , vol. 11, no. 1, pp. 1010–1017, 2025. [26] S. H. Jeon, S. Hong, H. J. Lee, C. Khazoom, and S. Kim, “Cusadi: A GPU parallelization framework for symbolic expressions and optimal control,” IEEE Robotics and Automation Letters , 2024. [27] B. Plancher and S. Kuindersma, “A performance analysis of parallel dif-ferential dynamic programming on a GPU,” in Workshop on Algorithmic Foundations of Robotics , 2018. [28] B. Sundaralingam, S. K. S. Hari, A. Fishman, C. Garrett, K. Van Wyk, V. Blukis, A. Millane, H. Oleynikova, A. Handa, F. Ramos, et al. ,“Curobo: Parallelized collision-free robot motion generation,” in Proc. IEEE Conf. on Robotics and Automation , 2023. [29] E. Adabag, M. Atal, W. Gerard, and B. Plancher, “MPCGPU: Real-time nonlinear model predictive control through preconditioned conjugate gradient on the GPU,” in Proc. IEEE Conf. on Robotics and Automation ,2024. [30] A. L. Bishop, J. Z. Zhang, S. Gurumurthy, K. Tracy, and Z. Manchester, “Relu-QP: A GPU-accelerated quadratic programming solver for model-predictive control,” in Proc. IEEE Conf. on Robotics and Automation ,2024. [31] G. M. Chari, A. G. Kamath, P. Elango, and B. Acikmese, “Fast monte carlo analysis for 6-dof powered-descent guidance via GPU-accelerated sequential convex programming,” in AIAA SciTech 2024 Forum , 2024, p. 1762. [32] A. Du, E. Adabag, G. Bravo, and B. Plancher, “GATO: GPU-accelerated and batched trajectory optimization for scalable edge model predictive control,” in Proc. IEEE Conf. on Robotics and Automation , 2026. [33] E. Alboni, P. N. Crestaz, E. Fontanari, and A. Del Prete, “CACTO-BIC: Scalable actor-critic learning via biased sampling and GPU-accelerated trajectory optimization,” 2026, available at https://arxiv.org/abs/2006. 10277. [34] J. Fang and G. Chou, “Safe large-scale robust nonlinear MPC in milliseconds via reachability-constrained system level synthesis on the GPU,” 2026, available at https://arxiv.org/abs/2604.07644. [35] G. Williams, A. Aldrich, and E. A. Theodorou, “Model predictive path integral control: From theory to parallel computation,” Journal of Guidance, Control, and Dynamics , vol. 40, no. 2, pp. 344–357, 2017. [36] J. Alvarez-Padilla, J. Z. Zhang, S. Kwok, J. M. Dolan, and Z. Manch-ester, “Real-time whole-body control of legged robots with model-predictive path integral control,” in Proc. IEEE Conf. on Robotics and Automation , 2025. [37] H. Jardali, D. Pushp, Y. Yu, M. Ali, I. S. Mohamed, A. Murillo-Gonzalez, P. D. Coen, M. A.-M. Khan, R. C. Pulivendula, S. Park, 
+
+et al. , “From zero to high-speed racing: An autonomous racing stack,” 2025, available at https://arxiv.org/abs/2512.06892. [38] J. Bradbury, R. Frostig, P. Hawkins, M. J. Johnson, C. Leary, D. Maclau-rin, G. Necula, A. Paszke, J. VanderPlas, S. Wanderman-Milne, and Q. Zhang, “JAX: composable transformations of Python+NumPy pro-grams,” 2018. [39] NVIDIA, “cuDSS,” 2026, available at https://developer.nvidia.com/ cudss. [40] J. Kabzan, M. I. Valls, V. J. Reijgwart, H. F. Hendrikx, C. Ehmke, M. Prajapat, A. B¨ uhler, N. Gosala, M. Gupta, R. Sivanesan, et al. ,“AMZ driverless: The full autonomous racing system,” Journal of Field Robotics , vol. 37, no. 7, pp. 1267–1294, 2020. [41] T. Lew, M. Greiff, F. Djeumou, M. Suminaka, M. Thompson, and J. Subosits, “Risk-averse model predictive control for racing in adverse conditions,” in Proc. IEEE Conf. on Robotics and Automation , 2025. [42] L. P. Fr¨ ohlich, C. K¨ uttel, E. Arcari, L. Hewing, M. N. Zeilinger, and A. Carron, “Contextual tuning of model predictive control for autonomous racing,” in IEEE/RSJ Int. Conf. on Intelligent Robots & Systems , 2022. [43] R. Rickenbach, A. A. Lahoud, E. Schaffernicht, M. N. Zeilinger, and J. A. Stork, “ZipMPC: Compressed context-dependent MPC cost via imitation learning,” 2025, available at 2507.13088. [44] A. Romero, Y. Song, and D. Scaramuzza, “Actor-critic model predictive control,” in Proc. IEEE Conf. on Robotics and Automation , 2024. [45] F. Jahncke, B. Zarrouki, M. Piccinini, J. D’sa, D. Isele, S. Bae, and J. Betz, “Differentiable weights-varying nonlinear MPC via gradient-based policy learning: An autonomous vehicle guidance example,” IEEE Robotics and Automation Letters , pp. 1–8, 2026. [46] G. Williams, P. Drews, B. Goldfain, J. M. Rehg, and E. A. Theodorou, “Aggressive driving with model predictive path integral control,” in Proc. IEEE Conf. on Robotics and Automation , 2016. [47] J. Nocedal and S. J. Wright, Numerical Optimization , 2nd ed. Springer New York, 2006. [48] T. Lew, M. Greiff, J. Subosits, and B. Plancher, “Solving quadratic pro-grams with slack variables via ADMM without increasing the problem size,” in European Control Conference , 2026. [49] B. Houska and M. E. Villanueva, “Robust optimization for MPC,” in Handbook of Model Predictive Control . Springer International Publishing, 2018, pp. 413–443. [50] A. Shaban, C.-A. Cheng, N. Hatch, and B. Boots, “Truncated back-propagation for bilevel optimization,” in AI & Statistics , 2019. [51] D. Scieur, G. Gidel, Q. Bertrand, and F. Pedregosa, “The curse of unrolling: Rate of differentiating through optimization,” in Conf. on Neural Information Processing Systems , 2022. [52] S. Gould, B. Fernando, A. Cherian, P. Anderson, R. S. Cruz, and E. Guo, “On differentiating parameterized argmin and argmax problems with application to bi-level optimization,” 2016, available at https://arxiv.org/ abs/1607.05447. [53] B. Amos and Z. Kolter, “Optnet: Differentiable optimization as a layer in neural networks,” in Int. Conf. on Machine Learning , 2017. [54] M. Blondel and V. Roulet, “The elements of differentiable program-ming,” 2024, available at https://arxiv.org/abs/2505.01353. [55] A. Agrawal, S. Barratt, S. Boyd, and B. Stellato, “Learning convex optimization control policies,” in Learning for Dynamics & Control Conference , 2020. [56] F. Song, R. Schwan, Y. Chen, and C. N. Jones, “Parallel KKT solver in PIQP for multistage optimization,” 2025, available at https://arxiv.org/ abs/2511.00946. [57] R. Schwan, Y. Jiang, D. Kuhn, and C. N. Jones, “PIQP: A proximal interior-point quadratic programming solver,” in Proc. IEEE Conf. on Decision and Control , 2023. [58] S. Boyd, N. Parikh, E. Chu, B. Peleato, and J. Eckstein, “Distributed optimization and statistical learning via the alternating direction method of multipliers,” Foundations and Trends in Machine Learning , vol. 3, no. 1, pp. 1–122, 2011. [59] G. Bravo-Palacios and P. M. Wensing, “Large-scale admm-based co-design of legged robots,” in IEEE/RSJ Int. Conf. on Intelligent Robots & Systems , 2022. 20 
+
+[60] B. N. Fanger and R. P. Russell, “Augmented Lagrangian methods for handling terminal constraints in spacecraft trajectory optimization,” 
+
+Astrodynamics , vol. 10, no. 1, pp. 179–197, 2026. [61] S. G. Krantz and H. R. Parks, The implicit function theorem: history, theory, and applications , 2002, vol. 202, no. 11. [62] G. Bravo-Palacios, H. Li, and P. M. Wensing, “Engineering compliance in legged robots via robust co-design,” IEEE/ASME Transactions on Mechatronics , vol. 29, no. 6, pp. 4711–4722, 2024. [63] F. Bjelonic, J. Lee, P. Arm, D. Sako, D. Tateo, J. Peters, and M. Hutter, “Learning-based design and control for quadrupedal robots with parallel-elastic actuators,” IEEE Robotics and Automation Letters , vol. 8, no. 3, pp. 1611–1618, 2023. [64] F. De Vincenti, D. Kang, and S. Coros, “Control-aware design opti-mization for bio-inspired quadruped robots,” in IEEE/RSJ Int. Conf. on Intelligent Robots & Systems , 2021. [65] E. Todorov, T. Erez, and Y. Tassa, “Mujoco: A physics engine for model-based control,” in IEEE/RSJ Int. Conf. on Intelligent Robots & Systems ,2012. [66] J. Y. Goh, T. Goel, and C. J. Gerdes, “Toward automated vehicle control beyond the stability limits: Drifting along a general path,” ASME Journal of Dynamic Systems, Measurement, and Control , vol. 142, no. 2, 2019. [67] J. Dallas, M. Thompson, J. Goh, and A. Balachandran, “A hierarchical adaptive nonlinear model predictive control approach for maximizing tire force usage in autonomous vehicles,” Journal of Field Robotics ,vol. 3, no. 1, pp. 222–242, 2023. [68] T. Kobayashi, T. P. Weber, and J. C. Gerdes, “Trajectory planning using tire thermodynamics for automated drifting,” in IEEE Intelligent Vehicles Symposium , 2024. [69] E. Fiala, “Seitenkraften am rollenden luftreifen,” VdI Zeitschrift , vol. 96, pp. 973–979, 1954. [70] T. Akiba, S. Sano, T. Yanase, T. Ohta, and M. Koyama, “Optuna: A next-generation hyperparameter optimization framework,” in ACM Int. Conf. on Knowledge Discovery and Data Mining , 2019. [71] J. Bergstra, R. Bardenet, Y. Bengio, and B. K´ egl, “Algorithms for hyper-parameter optimization,” in Conf. on Neural Information Processing Systems , 2011. [72] P. Kidger, “On Neural Differential Equations,” Ph.D. dissertation, Uni-versity of Oxford, 2021. [73] M. Schubiger, G. Banjac, and J. Lygeros, “GPU acceleration of ADMM for large-scale quadratic programming,” Journal of Parallel and Dis-tributed Computing , vol. 144, pp. 55–67, 2020. [74] P. Karkus, B. Ivanovic, S. Mannor, and M. Pavone, “Diffstack: A differentiable and modular control stack for autonomous vehicles,” in 
+
+Conf. on Robot Learning , 2023. [75] J. Arrizabalaga, K. Tracy, and Z. Manchester, “A differentiable interior-point method in single precision,” 2026, available at https://arxiv.org/ abs/2605.17913. [76] A. E. Yilmaz, T. Bourgeat, L. Pentecost, B. Plancher, and S. M. Neuman, “RoboPrec: Enabling reliable embedded computing for robotics by providing accuracy guarantees across mixed-precision datatypes,” IEEE Robotics and Automation Letters , vol. 11, no. 2, pp. 2234–2241, 2025.

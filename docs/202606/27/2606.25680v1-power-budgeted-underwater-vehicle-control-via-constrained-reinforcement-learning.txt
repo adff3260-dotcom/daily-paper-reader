@@ -1,0 +1,389 @@
+Title: Power-Budgeted Underwater Vehicle Control via Constrained Reinforcement Learning
+
+URL Source: https://arxiv.org/pdf/2606.25680v1
+
+Published Time: Thu, 25 Jun 2026 00:58:10 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+> IEEE TRANSACTIONS, JUNE 2026 1
+
+# Power-Budgeted Underwater Vehicle Control via Constrained Reinforcement Learning 
+
+Yinuo Wang, Gavin Tao ∗, and Yuze Liu 
+
+Abstract —Underwater vehicles operate from a fixed onboard energy budget that propulsion rapidly depletes, so a controller that completes its task while drawing less thruster power directly extends mission range and endurance. Reinforcement learning yields capable model-free controllers for station-keeping and trajectory tracking, but optimizing task accuracy alone drives the policy toward oscillatory, energy-wasting actuation. The established remedy subtracts an energy penalty from the reward, yet this sets the task-power trade-off through a single weight with no physical units: a target power level cannot be specified, the weight must be re-tuned for every vehicle and task, and a mismatched weight can even raise power. This paper instead formulates energy-efficient underwater control as a constrained Markov decision process in which average thruster power is subject to an explicit budget, solved with a PPO-Lagrangian algorithm. The power level is set by declaring a budget in physical units, and a single dual variable is updated online to meet it for each vehicle and task, without manual weight search. Across three vehicles and four tasks in the MarineGym simulator, the energy-constrained policy draws the least power in all twelve settings, reducing it by 14–65% (up to 64.9%) over a task-only baseline and below an energy-reward baseline everywhere, while remaining the smoothest in ten settings and preserving task accuracy except in one deliberately power-limited regime. Imposing energy as an explicit constraint thus offers a tuning-free route to energy-efficient underwater control that needs no per-vehicle, per-task weight search. 
+
+Index Terms —Autonomous underwater vehicle (AUV), rein-forcement learning, constrained Markov decision process, energy efficiency, safe reinforcement learning, motion control. 
+
+I. I NTRODUCTION 
+
+# UNDERWATER vehicles, including autonomous underwa-ter vehicles (AUVs) and remotely operated vehicles, are increasingly deployed for ocean exploration, environmental monitoring, and the inspection of submerged infrastructure, where they must operate from a fixed onboard energy budget that propulsion rapidly depletes [1]. Once deployed, a vehicle cannot replenish its batteries, and the dense, viscous medium makes propulsion the dominant draw on that budget. For the same task, a controller that draws less thruster power directly extends mission range, dive duration, and payload budget, so energy efficiency is a primary control objective rather than a secondary concern. The control problem is therefore inherently two-sided: the vehicle must perform its task, such as holding a setpoint or following a reference, while spending as little energy as possible. Reinforcement learning (RL) is an appealing route to such controllers. Classical model-based and PID controllers must 
+
+Yinuo Wang and Gavin Tao contributed equally to this work. 
+
+> ∗
+
+Corresponding author: Gavin Tao. 
+
+be tuned by hand and depend on hydrodynamic parameters that are notoriously difficult to identify for the nonlinear, strongly coupled dynamics of underwater vehicles [1], whereas RL learns a control policy directly from interaction and attains strong station-keeping and trajectory-tracking perfor-mance without an explicit model [2]. However, an RL policy optimizes exactly what its reward specifies. When the reward credits only task accuracy, the learned policy gravitates toward high-gain, oscillatory actuation that reaches the target quickly but wastes energy and stresses the thrusters, precisely the behavior an endurance-limited vehicle cannot afford. The established way to make an RL policy energy-aware is to subtract an energy penalty from the reward [3], but this omits properties that practical energy-efficient control requires. The trade-off between task accuracy and power is fixed before training by a single weight and is not adapted to the operating condition. The weight is not specifiable: it carries no physical units, so a target power level cannot be stated in advance, and the power a trained policy draws is known only after training. Nor does the weight’s meaning carry across platforms, so it must be re-searched by hand for every vehicle and task, and, as our experiments confirm, a mismatched weight can even 
+
+increase power consumption relative to a task-only baseline. This is the core gap we address: how to specify and attain a target power level reliably, without per-setting weight search. To address this gap, we treat energy as a budget and model it as an explicit constraint rather than a reward term. We formulate energy-efficient underwater control as a constrained Markov decision process (CMDP) [4] that maximizes the task reward subject to an explicit limit on average thruster power, and solve it with a PPO-Lagrangian algorithm [5], [6]. The constraint is enforced by a single dual variable that is updated online by dual ascent, rising when the policy exceeds its power budget and falling when it stays within it [7]. This changes how the operating point is selected rather than which operating points are reachable: instead of choosing a unitless weight and accepting whatever power it induces, one declares a power budget in physical units, and the dual variable is driven automatically to the value at which the policy meets that budget, separately for each vehicle and task. The power level is thereby specified in advance and attained without manual weight search. We instantiate this idea in MarineGym [8], a GPU-accelerated underwater-robotics platform built on Isaac Gym [9], and design a controlled comparison that isolates the effect of the energy formulation. Three policies share the same network, observations, task reward, and training budget, and differ only in how they treat energy: a task-only PPO  
+
+> arXiv:2606.25680v1 [cs.RO] 24 Jun 2026 IEEE TRANSACTIONS, JUNE 2026 2
+
+baseline ( PPO ), PPO with a fixed-weight action-effort reward (PPO-Energy ), and the proposed energy-constrained PPO-Lagrangian ( PPO-Lag ). We evaluate them on three vehicles with distinct actuation and inertia, namely the six-thruster BlueROV, the eight-thruster BlueROV-Heavy, and a tiltrotor hybrid aerial–underwater vehicle (HAUV), and on four tasks, namely station-keeping and the tracking of lemniscate, circu-lar, and spiral references (Fig. 1), giving twelve vehicle-task settings in total. The evidence is consistent across all twelve settings. The energy-constrained policy draws the least thruster power ev-erywhere, reducing power by 14–65% over the task-only base-line and remaining below the energy-reward variant in every setting, with the largest savings (up to 64.9%) on the over-actuated HAUV, where the baseline has the most authority to waste. It is also the smoothest controller in ten of the twelve settings, a property that directly reduces thruster wear and acoustic signature. These gains are essentially free in task quality, as success rate and tracking error remain comparable to, and in several cases better than, the baselines. The single deliberate exception is HAUV hover, where the tight budget trades station-keeping precision for a 60.7% power saving. The scalarized penalty, by contrast, behaves erratically and sometimes increases power, confirming that the benefit comes from how energy is imposed, namely as an adaptive constraint, rather than from merely including an energy term. In summary, this paper makes the following contributions:  
+
+> •
+
+Energy as an explicit constraint for underwater con-trol. We formulate energy-efficient underwater vehicle control as a constrained MDP with an explicit average-power budget, solved by PPO-Lagrangian. The desired power level is set by declaring a budget in physical units and is met by an adaptively updated dual variable, which removes the hand-tuned energy weight and the per-setting weight search it requires.  
+
+> •
+
+Controlled multi-vehicle, multi-task study. We conduct a controlled comparison of task-only, energy-reward, and energy-constrained RL across three vehicles and four tasks in MarineGym, under identical network, observa-tion, reward, and training settings. This isolates the effect of the energy formulation and exposes the unreliability of fixed-weight reward penalties.  
+
+> •
+
+Empirical findings and analysis of the energy-accuracy trade-off. Experiments show that the energy-constrained policy draws the lowest thruster power in every vehicle-task setting and the smoothest actuation in most, while preserving task success and tracking accuracy except in a single deliberately power-limited regime. We further analyze when and why energy is traded for task accuracy, illustrated by HAUV hover. The remainder of this paper is organized as follows. Sec-tion II reviews RL for underwater control, energy-aware con-trol, and constrained RL. Section III formulates the CMDP and the PPO-Lagrangian algorithm. Section IV describes the vehicles, tasks, simulator, and evaluation metrics. Section V presents and analyzes the results. Section VI concludes. Our implementation builds on the open-source MarineGym plat-form. II. R ELATED WORK 
+
+A. Reinforcement Learning for Underwater Vehicle Control 
+
+RL has been applied to AUV station-keeping and trajectory tracking as a model-free alternative to PID and model-based control, which are sensitive to the poorly known hydrodynamic parameters of underwater vehicles [1], [2]. Actor–critic and policy-gradient methods, including PPO [5] and off-policy methods, have shown that learned policies can stabilize and track references under disturbances [3]. The recent availability of GPU-accelerated underwater simulators such as Marine-Gym [8], built on Isaac Gym [9], has made large-scale training across many vehicles and tasks practical, which is what enables the controlled, multi-platform comparison reported here. Most of these works optimize task accuracy and treat energy use only implicitly, if at all. 
+
+B. Energy-Aware and Smooth Control 
+
+Energy efficiency for underwater vehicles has traditionally been addressed through optimal-control trajectory planning and drag-aware path design [1]. Within learning-based control, the dominant approach is to add an energy or effort penalty to the reward, scalarizing the task–energy trade-off [3]. Action-smoothness penalties are used similarly to suppress oscillatory commands and reduce actuator wear. The common limitation is that a fixed penalty weight encodes a single, hand-chosen trade-off: it carries no physical units, so the resulting power level cannot be specified in advance, and its meaning does not carry across vehicles and tasks, as we quantify in Section V. 
+
+C. Constrained and Safe Reinforcement Learning 
+
+Constrained MDPs [4] maximize reward subject to bounds on auxiliary cost signals, which is the natural language for budgets such as energy. Constrained Policy Optimization (CPO) [10] enforces constraints within a trust region, while Lagrangian methods [6] convert the constraint into an adaptive penalty whose multiplier is learned by dual ascent; PID-style multiplier updates improve their stability [7]. These methods are widely used for safety constraints in benchmark suites [6]. We repurpose this machinery for energy: rather than treating power as a safety hazard, we treat it as a resource budget, so that the power level is declared in physical units and met by an adaptive dual variable without weight tuning. To our knowledge, a systematic, multi-vehicle, multi-task study of constrained-RL energy control for underwater vehicles has not previously been reported. Table I situates our work against representative energy-handling strategies. III. E NERGY -C ONSTRAINED POLICY OPTIMIZATION 
+
+A. Underwater Control as a Markov Decision Process 
+
+We model underwater motion control as a discrete-time MDP (S, A, P, r, γ ). At control step t, the state st ∈ S
+
+comprises the vehicle pose and twist together with the task reference (the hover setpoint or the upcoming reference way-points), and the action at ∈ A is the vector of normalized IEEE TRANSACTIONS, JUNE 2026 3
+
+TABLE I: Strategies for handling energy in learning-based control, and comparison with the proposed approach.                
+
+> Strategy Energy handling Tuning Power level set by
+> Task-only RL [2] none n/a not addressed Energy-reward (scalarized) [3] penalty in reward manual weight per setting weight (induced, weight-sensitive) CPO / trust-region [10] cost constraint trust-region radius cost threshold (in expectation)
+> Ours: PPO-Lagrangian average-power constraint adaptive dual variable declared budget in watts
+
+thruster commands. The policy πθ (at | st) is a Gaussian whose mean and state-independent log-standard-deviation are produced by a neural network. The task reward rt = r(st, at)
+
+encodes proximity to the setpoint or reference trajectory and an alive bonus; it is identical across all three methods we compare, so that any difference in behavior is attributable solely to how energy is treated. 
+
+B. Power and Smoothness Signals 
+
+Energy efficiency is defined on the actual electrical power drawn by the thrusters, not on a proxy. For a commanded action the i-th thruster produces a thrust force fi,t , whose elec-trical power follows a power-law fit to the thruster datasheet that is asymmetric in the thrust direction, 
+
+P (f ) = 
+
+(af f bf , f ≥ 0,ar |f | br , f < 0, (1) with forward and reverse coefficients (af , b f ) and (ar, b r); the exponents satisfy bf , b r ≈ 1.6, so power grows super-linearly with thrust and is higher in reverse. The per-step power cost is the sum over the M thrusters, ct = PMi=1 P (fi,t ), and the episodic power is its average over the horizon T ,
+
+¯P = 1
+
+T 
+
+> T−1
+
+X
+
+> t=0
+
+ct. (2) Because ct is a measured electrical quantity in watts, a budget imposed on it has a direct physical meaning, unlike a unitless penalty weight. We additionally report an action-smoothness score 
+
+S = − 1
+
+T 
+
+> T−1
+
+X
+
+> t=1
+
+at − at−1
+
+> 22
+
+, (3) the negative mean squared change of consecutive commands, so that values closer to zero indicate smoother actuation. Smoothness is a diagnostic, not an objective; energy is the only quantity we constrain. 
+
+C. Three Ways to Treat Energy 
+
+We compare three policies that differ only in their objective. 
+
+(i) Task-only PPO ( PPO ). The policy maximizes the ex-pected task return 
+
+Jr (π) = Eτ ∼π
+
+hPT −1 
+
+> t=0
+
+γtrt
+
+i
+
+(4) with no energy term. This is the standard baseline and tends to learn aggressive, power-hungry actuation. 
+
+(ii) Energy-reward PPO ( PPO-Energy ). Following common practice, energy use is discouraged by adding a fixed-weight action-effort reward to the task reward, 
+
+reff  
+
+> t
+
+= rt + wE e−∥ at∥, wE ≥ 0, (5) which grows as the commanded actuation shrinks (PPO is the special case wE = 0 ). This term is a unitless proxy: it acts on action magnitude rather than the measured power of (1), and the weight wE is fixed before training and chosen by hand for each vehicle and task, so it neither targets a specific power level nor reflects the nonlinear, direction-dependent thrust-to-power map. 
+
+(iii) Energy-constrained PPO ( PPO-Lag , proposed). We in-stead keep the task reward intact and impose an explicit budget on the average power. Formally, we solve the constrained MDP [4] 
+
+max  
+
+> π
+
+Jr (π) s.t. Jc(π) ≜ Eτ ∼π
+
+h 1
+
+> T
+
+PT −1 
+
+> t=0
+
+ct
+
+i
+
+≤ d, (6) where d is the target average-power budget in watts. The trade-off is now set by this budget, and the constraint acts on the measured power ct of (1) rather than on the action-magnitude proxy of (5). 
+
+D. PPO-Lagrangian Solution 
+
+We solve (6) with its Lagrangian [6] 
+
+L(π, λ ) = Jr (π) − λ Jc(π) − d, λ ≥ 0, (7) and seek the saddle point max π min λ≥0 L(π, λ ). For a fixed multiplier λ, the policy is updated with PPO [5] using a Lagrangian advantage that combines a reward and a cost term, 
+
+At(λ) = Art − λ A ct , (8) where Art and Act are generalized advantage estimates obtained from separate reward and cost value functions V rϕ and V cψ ; the cost advantage is formed from the budget-centered signal ct −
+
+d, so that Act is positive when the policy is over budget. The multiplier is updated by projected dual ascent on the estimated constraint violation, 
+
+λ ← clip  λ + ηλ ( ˆJc − d), λ min , λ max 
+
+, (9) where ˆJc is the average power over the most recent batch, ηλ
+
+is the dual step size, and [λmin , λ max ] bounds the multiplier, which is kept positive by a log-space parameterization. Equation (8) shows the key difference from PPO-Energy (5): the energy weight is no longer a fixed hyperparameter wE
+
+acting on an action-magnitude proxy, but a state of the optimizer , λ, acting on measured power, that rises when the policy exceeds the power budget and falls when it operates IEEE TRANSACTIONS, JUNE 2026 4
+
+within budget. The multiplier thus discovers, per vehicle and per task, the value needed to meet the budget while sacrificing as little task reward as possible. The complete procedure is summarized in Algorithm 1. 
+
+Algorithm 1 Energy-Constrained PPO (PPO-Lagrangian)  
+
+> 1:
+
+Input: power budget d, dual step ηλ, policy πθ , value nets 
+
+V rϕ , V cψ 
+
+> 2:
+
+Initialize λ ← λmin  
+
+> 3:
+
+for iteration = 1 , 2, . . . do  
+
+> 4:
+
+Roll out πθ in parallel envs; collect {(st, at, r t, c t)} 
+
+> 5:
+
+Compute advantages Ar , A c via GAE (cost from ct −
+
+d) 
+
+> 6:
+
+Update θ with clipped PPO loss on Ar − λA c ▷
+
+Eq. (8)  
+
+> 7:
+
+Update V rϕ , V cψ by regression on returns  
+
+> 8:
+
+Estimate ˆJc ← batch-mean average power  
+
+> 9:
+
+λ ← clip  λ + ηλ( ˆJc − d), λ min , λ max 
+
+ ▷ Eq. (9)  
+
+> 10:
+
+end for  
+
+> 11:
+
+return πθ
+
+IV. V EHICLES , T ASKS , AND EVALUATION 
+
+A. Simulator and Vehicles 
+
+All experiments are conducted in MarineGym [8], a GPU-accelerated underwater-robotics RL platform that simulates rigid-body and hydrodynamic effects and thruster power for thousands of parallel environments. We study three vehicles with deliberately different actuation and inertia, so as to test whether the energy formulation generalizes across embodi-ments:  
+
+> •
+
+BlueROV : a six-thruster multirotor-type ROV (Blue Robotics) that achieves full 6-DoF control through dif-ferential thrust;  
+
+> •
+
+BlueROV-Heavy : an eight-thruster configuration of the same Blue Robotics platform, more strongly and redun-dantly actuated; and  
+
+> •
+
+HAUV : a tiltrotor-type hybrid aerial–underwater vehicle whose independently tiltable propellers give it substantial actuation authority. 
+
+B. Tasks 
+
+We evaluate four control tasks, illustrated in Fig. 1:  
+
+> •
+
+Hover : reach and hold a 6-DoF setpoint from randomized initial conditions (Fig. 1d);  
+
+> •
+
+Track-Lemniscate : follow a figure-eight reference (Fig. 1a);  
+
+> •
+
+Track-Circle : follow a horizontal circular reference (Fig. 1b); and  
+
+> •
+
+Track-Spiral : follow a descending/ascending helical ref-erence (Fig. 1c). Together these cover station-keeping and tracking of refer-ences with increasing curvature and vertical motion, exercising different regions of each vehicle’s actuation envelope.   
+
+> (a) Track-Lemniscate (b) Track-Circle
+> (c) Track-Spiral (d) Hover
+
+Fig. 1: The four control tasks in MarineGym: tracking a (a) lemniscate, (b) circular, and (c) spiral reference, and (d) station-keeping at a setpoint (“Goal”). 
+
+C. Evaluation Metrics 
+
+We report six metrics. Return is the undiscounted episodic task reward (higher is better). Power (W) is the mean thruster power ¯P in (2) (lower is better), our primary efficiency metric. 
+
+Smoothness is S in (3) (closer to zero is smoother). Track Err (m) is the root-mean-square Euclidean position error to the reference (tracking tasks). TTG (time-to-goal) is the number of control steps to first reach and hold the setpoint tolerance (hover only). Success (%) is the fraction of episodes meeting the task tolerance for the required duration. Each policy is evaluated over 10 episodes per vehicle–task setting, and all numbers are reported as mean ± standard deviation over these episodes. 
+
+D. Training Details 
+
+The three methods share the same policy and value net-works, observation space, task reward, optimizer, and number of training frames; they differ only in the objective of Sec-tion III. PPO-Energy uses a fixed weight wE , and PPO-Lag uses a fixed power budget d with the dual update (9). Training uses massively parallel environments in MarineGym for 100 M frames per run. V. E XPERIMENTS AND ANALYSIS 
+
+We organize the analysis around four questions: (Q1) How do the three energy formulations behave during training? (Q2) How much power does each consume at deployment? (Q3) How smooth is the resulting actuation? (Q4) Is task quality (success and tracking) preserved? Table II reports the full quantitative comparison; the figures provide the supporting training and rollout evidence. IEEE TRANSACTIONS, JUNE 2026 5
+
+TABLE II: Performance comparison across tasks, vehicles, and energy-handling strategies. PPO uses task reward only (baseline); PPO-Energy adds a fixed-weight action-effort reward, an energy proxy (baseline); PPO-Lag (ours), i.e. PPO-Lagrangian, constrains average power via an adaptive Lagrange multiplier. Power is the primary efficiency metric; the lowest power in each task–vehicle group is in bold (achieved by PPO-Lag in all twelve groups). Values are mean ± std over 10 evaluation episodes per policy. 
+
+Task Robot Algorithm Return Smoothness Track Err TTG Power (W) Success Hover BlueROV PPO 184 .4 ± 38 .5 −0.280 ± 0.129 – 153 .3 ± 34 .1 2196 .1 ± 244 .8 80.0% Hover BlueROV PPO-Energy 181 .2 ± 38 .5 −0.185 ± 0.103 – 157 .7 ± 36 .8 1935 .0 ± 173 .6 72.0% Hover BlueROV PPO-Lag (ours) 183 .6 ± 37 .3 −0.145 ± 0.107 – 153 .4 ± 35 .9 1636 .1 ± 342 .9 79.0% Hover BlueROV-Heavy PPO 215 .1 ± 29 .5 −0.081 ± 0.059 – 95 .4 ± 24 .5 1611 .6 ± 329 .0 100.0% Hover BlueROV-Heavy PPO-Energy 206 .6 ± 33 .4 −0.129 ± 0.105 – 107 .2 ± 28 .8 1544 .2 ± 271 .7 99.0% Hover BlueROV-Heavy PPO-Lag (ours) 211 .6 ± 30 .1 −0.021 ± 0.005 – 98 .2 ± 24 .0 1103 .0 ± 276 .8 100.0% Hover HAUV PPO 184 .0 ± 44 .9 −0.495 ± 0.166 – 155 .4 ± 40 .8 1908 .3 ± 257 .8 71.0% Hover HAUV PPO-Energy 150 .3 ± 49 .2 −0.472 ± 0.201 – 191 .3 ± 23 .1 2028 .6 ± 303 .0 18.0% Hover HAUV PPO-Lag (ours) 171 .0 ± 49 .3 −0.171 ± 0.114 – 168 .6 ± 35 .6 750 .8 ± 202 .9 56.0% Track-Lemniscate BlueROV PPO 425 .7 ± 65 .5 −0.145 ± 0.089 0.383 ± 0.559 – 2054 .1 ± 170 .8 71.0% Track-Lemniscate BlueROV PPO-Energy 425 .8 ± 41 .3 −0.113 ± 0.063 0.407 ± 0.709 – 2027 .1 ± 132 .4 72.0% Track-Lemniscate BlueROV PPO-Lag (ours) 456 .8 ± 47 .8 −0.091 ± 0.029 0.241 ± 0.452 – 1664 .4 ± 164 .1 92.0% Track-Lemniscate BlueROV-Heavy PPO 554 .1 ± 10 .1 −0.200 ± 0.074 0.060 ± 0.056 – 1893 .2 ± 154 .8 100.0% Track-Lemniscate BlueROV-Heavy PPO-Energy 540 .8 ± 10 .1 −0.131 ± 0.052 0.089 ± 0.050 – 2165 .2 ± 139 .2 100.0% Track-Lemniscate BlueROV-Heavy PPO-Lag (ours) 548 .4 ± 13 .2 −0.158 ± 0.054 0.090 ± 0.070 – 1448 .2 ± 142 .4 100.0% Track-Lemniscate HAUV PPO 493 .4 ± 41 .1 −0.223 ± 0.111 0.305 ± 1.636 – 2049 .0 ± 108 .1 96.0% Track-Lemniscate HAUV PPO-Energy 491 .7 ± 27 .2 −0.207 ± 0.081 0.174 ± 0.081 – 2061 .4 ± 100 .8 98.0% Track-Lemniscate HAUV PPO-Lag (ours) 495 .8 ± 40 .5 −0.152 ± 0.087 0.309 ± 1.565 – 1040 .6 ± 93 .3 99.0% Track-Circle BlueROV PPO 242 .0 ± 168 .9 −0.049 ± 0.048 3.027 ± 2.345 – 2255 .4 ± 210 .6 35.0% Track-Circle BlueROV PPO-Energy 310 .2 ± 152 .2 −0.068 ± 0.055 1.542 ± 1.636 – 2120 .9 ± 227 .2 48.0% Track-Circle BlueROV PPO-Lag (ours) 304 .5 ± 155 .1 −0.047 ± 0.039 1.533 ± 1.620 – 1746 .2 ± 343 .9 45.0% Track-Circle BlueROV-Heavy PPO 555 .1 ± 66 .3 −0.179 ± 0.079 0.349 ± 2.039 – 2117 .5 ± 175 .9 98.0% Track-Circle BlueROV-Heavy PPO-Energy 543 .2 ± 64 .9 −0.164 ± 0.075 0.371 ± 1.617 – 2315 .7 ± 157 .7 97.0% Track-Circle BlueROV-Heavy PPO-Lag (ours) 531 .5 ± 78 .3 −0.093 ± 0.046 0.469 ± 1.728 – 1720 .0 ± 177 .5 95.0% Track-Circle HAUV PPO 512 .0 ± 32 .4 −0.286 ± 0.111 0.128 ± 0.282 – 2340 .6 ± 70 .8 96.0% Track-Circle HAUV PPO-Energy 502 .5 ± 20 .3 −0.148 ± 0.105 0.078 ± 0.070 – 2264 .7 ± 207 .2 98.0% Track-Circle HAUV PPO-Lag (ours) 505 .7 ± 45 .7 −0.186 ± 0.074 0.138 ± 0.608 – 1091 .5 ± 82 .6 98.0% Track-Spiral BlueROV PPO 342 .7 ± 173 .8 −0.050 ± 0.046 1.778 ± 2.284 – 2140 .9 ± 217 .4 52.0% Track-Spiral BlueROV PPO-Energy 328 .7 ± 151 .3 −0.064 ± 0.054 1.546 ± 1.953 – 2212 .1 ± 177 .0 47.0% Track-Spiral BlueROV PPO-Lag (ours) 341 .3 ± 174 .7 −0.034 ± 0.031 1.835 ± 2.528 – 1558 .0 ± 395 .7 59.0% Track-Spiral BlueROV-Heavy PPO 566 .3 ± 45 .4 −0.220 ± 0.102 0.090 ± 0.448 – 1912 .0 ± 170 .3 99.0% Track-Spiral BlueROV-Heavy PPO-Energy 554 .7 ± 13 .2 −0.178 ± 0.108 0.104 ± 0.078 – 2243 .2 ± 125 .8 100.0% Track-Spiral BlueROV-Heavy PPO-Lag (ours) 548 .8 ± 12 .8 −0.079 ± 0.032 0.127 ± 0.129 – 1644 .6 ± 128 .3 100.0% Track-Spiral HAUV PPO 513 .4 ± 48 .2 −0.286 ± 0.084 0.183 ± 0.933 – 2377 .5 ± 126 .8 99.0% Track-Spiral HAUV PPO-Energy 497 .1 ± 63 .9 −0.234 ± 0.120 0.155 ± 0.539 – 2105 .1 ± 125 .3 97.0% Track-Spiral HAUV PPO-Lag (ours) 503 .8 ± 12 .8 −0.156 ± 0.054 0.072 ± 0.030 – 833 .8 ± 65 .4 100.0% 
+
+A. Q1: Training Dynamics 
+
+Figs. 2–5 show, for each task, the training curves of return, time-to-goal or tracking error, energy, action smoothness, and (for PPO-Lag) the Lagrange multiplier λ, with one column per vehicle. Three patterns recur. First, all three methods reach comparable task return, confirming that constraining energy does not prevent the policy from learning the task. Second, the energy curve of PPO-Lag (red) settles well below PPO (green) and PPO-Energy (blue), and the gap widens over training as the multiplier takes effect. Third, the λ curve rises during early-to-mid training as the policy initially overspends its power budget, then decreases and stabilizes once the policy has learned to operate within budget, the signature of a dual variable converging to a working value for the budget. This online adaptation is precisely what a fixed energy weight cannot provide. 
+
+B. Q2: Energy Efficiency 
+
+PPO-Lag attains the lowest mean power in all twelve 
+
+vehicle–task settings (Table II, bold entries). Relative to PPO, the reduction ranges from 14% (BlueROV-Heavy, spiral: 
+
+1644 .6 vs. 1912 .0 W) to 64 .9% (HAUV, spiral: 833 .8 vs. 
+
+2377 .5 W), with the largest savings consistently on the over-actuated HAUV, where PPO has the most actuation authority to squander (e.g., hover: 750 .8 vs. 1908 .3 W, a 60 .7% reduction). The per-rollout power profiles in Fig. 6 corroborate the table: PPO-Lag (red) draws the least power throughout the episode, separating clearly from the other two after the initial transient. Notably, PPO-Energy does not reliably reduce power. In several settings it draws more power than PPO, for example HAUV hover ( 2028 .6 vs. 1908 .3 W) and BlueROV-Heavy lemniscate ( 2165 .2 vs. 1893 .2 W). Two factors explain this: the effort reward acts on action magnitude rather than measured power, so reducing it need not reduce watts; and a single fixed weight cannot match the differing power–accuracy trade-offs across vehicles and tasks. PPO-Lag, by contrast, uses less power than both alternatives in every setting, the central empirical result of this paper. 
+
+C. Q3: Control Smoothness 
+
+Lower power is accompanied by smoother actuation. PPO-Lag achieves the best (closest-to-zero) smoothness score in ten of the twelve settings (Table II), with the largest improve-ments on hover: BlueROV-Heavy hover reaches −0.021 from IEEE TRANSACTIONS, JUNE 2026 6
+
+Fig. 2: Training curves for the Hover task. Columns: BlueROV, BlueROV-Heavy, HAUV. Rows: return, time-to-goal, energy, action smoothness, and the Lagrange multiplier 
+
+λ. Curves: PPO (green), PPO-Energy (blue), and PPO-Lag (red, ours). 
+
+−0.081 (PPO) and −0.129 (PPO-Energy), and HAUV hover reaches −0.171 from −0.495 and −0.472 . The two settings where PPO-Energy is marginally smoother (BlueROV-Heavy lemniscate and HAUV circle) are close calls in which PPO-Lag ranks a near second. The per-rollout smoothness traces in Fig. 7 show the same ordering. Smoother commands are operationally valuable underwater: they reduce thruster wear, mechanical fatigue, and acoustic signature. 
+
+D. Q4: Task Quality and Trajectories 
+
+The energy and smoothness gains do not come at the expense of task quality. On the well-actuated BlueROV-Heavy and HAUV, PPO-Lag matches the baselines on success (near 
+
+95 –100% ) and tracking error across all tracking tasks, and in several settings improves them; for example, HAUV spiral reaches 100% success with the lowest tracking error ( 0.072 m) 
+
+and the lowest power. On the lightly actuated BlueROV, where all methods find the curved-trajectory tasks hard, PPO-Lag still attains the best or tied-best success (e.g., 92% on the lemniscate vs. 71 –72% , and 59% on the spiral vs. 47 –52% ). 
+
+Fig. 3: Training curves for the Track-Lemniscate task. Layout and legend as in Fig. 2, with tracking-error RMSE replacing time-to-goal in the second row. The tracking-error rollouts in Fig. 9 confirm that PPO-Lag tracks the reference as closely as the baselines. The one clear trade-off appears on HAUV hover , where PPO-Lag lowers power by 60 .7% but reaches only 56% suc-cess versus 71% for PPO. Here the tight power budget removes the high-authority corrective actuation that the baseline uses to hold the setpoint precisely, illustrating that the budget d is a knob the operator can set according to whether endurance or station-keeping precision is the priority. Crucially, this trade-off is set explicitly by a power budget in physical units, rather than buried in a reward weight. Fig. 8 shows the executed 3-D trajectories for all three vehicles and four tasks, with the three policies overlaid. For tracking, every policy follows the reference closely; for hover, the trajectories converge from randomized initial poses to the central setpoint. The visual similarity of the trajectories across policies, despite the large power differences in Table II, is the qualitative counterpart of the main finding: comparable motion is achieved at substantially lower energy. 
+
+E. On-board Resource Cost 
+
+All three policies share the same compact network and run in real time on an embedded NVIDIA Jetson Orin Nano IEEE TRANSACTIONS, JUNE 2026 7
+
+Fig. 4: Training curves for the Track-Circle task. Layout and legend as in Fig. 3. (8GB). Table III and Fig. 10 report their on-board resource cost, namely parameter count, inference latency, processor and memory use, and board-level power, measured for each task and vehicle. Because the methods differ only in how energy enters the objective, their compute footprints are essentially identical, and the energy-constrained policy adds no inference-time overhead; the savings reported above are thruster power, achieved without extra on-board computation. 
+
+F. Discussion 
+
+Three conclusions follow from the evidence. First, how 
+
+energy enters the objective matters more than whether it does: adding an action-effort reward is unreliable, whereas constraining measured power is consistently effective. Second, the benefit comes from adaptivity, since the dual variable 
+
+λ discovers a per-vehicle, per-task multiplier that a single fixed weight cannot. Third, the formulation generalizes across embodiments and task geometries, with the largest gains where the baseline is most wasteful (the over-actuated HAUV). The remaining limitation is that energy and accuracy genuinely conflict in some regimes (HAUV hover); the constrained formulation does not eliminate this conflict but exposes it through an explicit power budget that the operator sets. These 
+
+Fig. 5: Training curves for the Track-Spiral task. Layout and legend as in Fig. 3. results are obtained in simulation; closing the sim-to-real gap on physical hardware is the natural next step. VI. C ONCLUSION 
+
+This paper studied energy-efficient underwater vehicle con-trol through constrained reinforcement learning. By formulat-ing control as a constrained MDP with an explicit average-power budget and solving it with a PPO-Lagrangian algorithm, we obtained a controller that meets an explicit power budget through an adaptive dual variable rather than a hand-tuned reward weight. Across three vehicles and four tasks in Marine-Gym, the energy-constrained policy attained the lowest power in all twelve settings (14–65% reduction over the task-only baseline, up to 64.9% on HAUV) and the smoothest actuation in ten of twelve, while preserving task success and tracking accuracy; a fixed-weight action-effort reward, by contrast, was inconsistent and at times increased power. Treating energy as a constraint thus provides a tuning-free route to energy-efficient underwater control that needs no per-vehicle, per-task weight search. Future work includes deployment on physical vehicles to assess the sim-to-real gap, joint constraints on energy and additional resources (e.g., thermal or thrust limits), online adaptation of the power budget to mission state, and extension to multi-vehicle and disturbance-rich settings. IEEE TRANSACTIONS, JUNE 2026 8
+
+TABLE III: On-board computation resource cost on an NVIDIA Jetson Orin Nano for each task, vehicle, and policy: parameter count, inference latency (ms), processor and memory use, GPU utilization and memory, and board-level power (W). Algorithms: 
+
+PPO (task-only), PPO-Energy (energy-reward), and PPO-Lag (PPO-Lagrangian, ours). 
+
+Task Robot Algorithm Params Inf. ms CPU avg CPU pk RAM avg RAM pk GPU avg GPU pk GPU mem avg GPU mem pk Pwr avg Pwr pk Hover BlueROV PPO 143,116 0.9328 99.6 99.7 637.3 637.3 7.3 24.8 104.2 105.6 4.53 5.70 Hover BlueROV PPO-Energy 143,116 0.9505 99.2 109.6 637.0 638.1 15.0 26.5 104.8 105.6 4.62 5.70 Hover BlueROV PPO-Lag 143,116 0.9362 99.9 109.5 643.5 644.6 10.5 26.1 104.4 105.6 4.60 5.81 Hover BlueROVHeavy PPO 144,144 0.9429 99.8 109.4 641.1 644.3 13.8 23.9 104.8 105.6 4.71 5.77 Hover BlueROVHeavy PPO-Energy 144,144 0.9406 99.5 109.6 643.7 644.8 11.9 21.9 104.7 105.6 4.69 5.74 Hover BlueROVHeavy PPO-Lag 144,144 0.9258 99.9 109.6 643.3 644.6 8.9 23.9 104.3 105.6 4.57 5.58 Hover HAUV PPO 144,144 0.9198 99.9 109.6 643.9 644.8 13.4 24.1 104.7 105.6 4.72 5.85 Hover HAUV PPO-Energy 144,144 0.9267 100.5 109.4 643.8 644.8 11.7 24.2 104.5 105.6 4.67 5.81 Hover HAUV PPO-Lag 144,144 0.9258 100.2 109.4 644.0 647.3 6.5 22.1 104.2 105.6 4.55 5.70 Track-Lemniscate BlueROV PPO 144,652 0.9459 99.8 108.6 646.5 647.3 15.0 25.0 104.8 105.6 4.61 5.74 Track-Lemniscate BlueROV PPO-Energy 144,652 0.9316 99.6 109.6 644.6 645.3 15.1 25.7 104.8 105.6 4.66 5.77 Track-Lemniscate BlueROV PPO-Lag 144,652 0.9408 99.9 109.6 644.3 647.3 10.7 27.6 104.4 105.6 4.63 5.85 Track-Lemniscate BlueROVHeavy PPO 145,680 0.9456 99.2 109.5 643.4 644.6 12.4 23.6 104.6 105.6 4.67 5.77 Track-Lemniscate BlueROVHeavy PPO-Energy 145,680 0.9291 99.9 109.6 643.4 644.1 12.2 23.9 104.6 105.6 4.69 5.81 Track-Lemniscate BlueROVHeavy PPO-Lag 145,680 0.9357 99.6 109.6 645.3 645.3 7.8 23.4 104.2 105.6 4.53 5.62 Track-Lemniscate HAUV PPO 145,680 0.9308 100.3 109.6 643.0 644.1 10.0 22.5 104.5 105.6 4.64 5.85 Track-Lemniscate HAUV PPO-Energy 145,680 0.9466 99.5 109.5 643.0 644.4 9.2 23.4 104.4 105.6 4.60 5.81 Track-Lemniscate HAUV PPO-Lag 145,680 0.9240 99.9 109.5 644.5 645.2 18.5 30.7 104.9 105.6 4.56 5.70 Track-Circle BlueROV PPO 144,652 0.9391 99.9 109.5 644.4 645.2 14.6 24.3 104.8 105.6 4.67 5.77 Track-Circle BlueROV PPO-Energy 144,652 0.9321 100.3 109.6 644.0 644.6 15.5 31.9 104.7 105.6 4.66 5.77 Track-Circle BlueROV PPO-Lag 144,652 0.9423 99.6 109.5 643.7 645.4 7.9 24.7 104.2 105.6 4.56 5.70 Track-Circle BlueROVHeavy PPO 145,680 0.9446 99.8 109.4 643.8 644.9 13.2 22.5 104.6 105.6 4.71 5.81 Track-Circle BlueROVHeavy PPO-Energy 145,680 0.9320 99.9 109.6 643.8 644.9 11.3 23.8 104.5 105.6 4.64 5.81 Track-Circle BlueROVHeavy PPO-Lag 145,680 0.9183 99.9 109.6 644.2 644.6 24.8 48.9 104.9 105.6 4.62 5.74 Track-Circle HAUV PPO 145,680 0.9337 99.9 109.5 643.8 644.9 12.8 29.8 104.5 105.6 4.64 5.81 Track-Circle HAUV PPO-Energy 145,680 0.9309 99.8 109.4 643.6 644.9 9.5 25.7 104.3 105.6 4.57 5.58 Track-Circle HAUV PPO-Lag 145,680 0.9285 99.9 109.5 644.3 645.4 15.1 24.1 104.8 105.6 4.62 5.77 Track-Spiral BlueROV PPO 144,652 0.9506 99.6 109.6 644.5 645.4 13.2 25.6 104.6 105.6 4.67 5.77 Track-Spiral BlueROV PPO-Energy 144,652 0.9335 99.9 109.4 643.9 644.4 12.6 24.7 104.6 105.6 4.71 5.77 Track-Spiral BlueROV PPO-Lag 144,652 0.9421 99.5 109.5 643.5 644.7 8.0 24.8 104.2 105.6 4.52 5.67 Track-Spiral BlueROVHeavy PPO 145,680 0.9460 99.2 109.5 643.6 644.9 11.1 23.9 104.5 105.6 4.67 5.81 Track-Spiral BlueROVHeavy PPO-Energy 145,680 0.9385 99.2 109.6 643.8 644.9 10.6 25.3 104.4 105.6 4.66 5.81 Track-Spiral BlueROVHeavy PPO-Lag 145,680 0.9267 99.9 109.6 643.7 645.4 7.1 23.8 104.2 105.6 4.55 5.70 Track-Spiral HAUV PPO 145,680 0.9456 99.5 109.6 643.8 644.9 10.2 23.8 104.4 105.6 4.64 5.81 Track-Spiral HAUV PPO-Energy 145,680 0.9261 100.3 109.6 643.6 644.9 8.6 23.2 104.3 105.6 4.57 5.58 Track-Spiral HAUV PPO-Lag 145,680 0.9318 100.3 109.6 644.4 645.2 13.2 23.6 104.8 105.6 4.59 5.77 
+
+REFERENCES [1] T. I. Fossen, Handbook of Marine Craft Hydrodynamics and Motion Control . John Wiley & Sons, 2011. [2] I. Carlucho, M. De Paula, S. Wang, Y. Petillot, and G. G. Acosta, “Adaptive low-level control of autonomous underwater vehicles using deep reinforcement learning,” Robotics and Autonomous Systems , vol. 107, pp. 71–86, 2018. [3] K. B. Knudsen et al. , “Deep reinforcement learning for energy-efficient motion control of underwater vehicles,” in Proceedings of the OCEANS Conference , 2019. [4] E. Altman, Constrained Markov Decision Processes . Chapman and Hall/CRC, 1999. [5] J. Schulman, F. Wolski, P. Dhariwal, A. Radford, and O. Klimov, “Prox-imal policy optimization algorithms,” arXiv preprint arXiv:1707.06347 ,2017. [6] A. Ray, J. Achiam, and D. Amodei, “Benchmarking safe exploration in deep reinforcement learning,” arXiv preprint arXiv:1910.01708 , 2019. [7] A. Stooke, J. Achiam, and P. Abbeel, “Responsive safety in reinforce-ment learning by pid lagrangian methods,” in International Conference on Machine Learning (ICML) , 2020, pp. 9133–9143. [8] MarineGym Contributors, “MarineGym: A gpu-accelerated reinforce-ment learning platform for underwater robotics,” https://github.com/ advanced-ai-research/MarineGym, 2024. [9] V. Makoviychuk, L. Wawrzyniak, Y. Guo, M. Lu, K. Storey, M. Macklin, D. Hoeller, N. Rudin, A. Allshire, A. Handa, and G. State, “Isaac gym: High performance gpu-based physics simulation for robot learning,” 
+
+arXiv preprint arXiv:2108.10470 , 2021. [10] J. Achiam, D. Held, A. Tamar, and P. Abbeel, “Constrained policy op-timization,” in International Conference on Machine Learning (ICML) ,2017, pp. 22–31. IEEE TRANSACTIONS, JUNE 2026 9
+
+(a) Track-Lemniscate 
+
+(b) Track-Circle 
+
+(c) Track-Spiral 
+
+(d) Hover 
+
+Fig. 6: Mean thruster power over an evaluation episode, per vehicle (columns), for the PPO (green), PPO-Energy (blue), and PPO-Lag (red) policies; each curve is the mean over 10 evaluation episodes per policy, and shaded bands denote ±1
+
+standard deviation across those episodes. 
+
+(a) Track-Lemniscate 
+
+(b) Track-Circle 
+
+(c) Track-Spiral 
+
+(d) Hover 
+
+Fig. 7: Action smoothness over an evaluation episode, per vehicle (columns), for the PPO (green), PPO-Energy (blue), and PPO-Lag (red) policies; each curve is the mean over 10 evaluation episodes per policy. IEEE TRANSACTIONS, JUNE 2026 10 
+
+BlueROV BlueROV-Heavy HAUV Hover Track-Lemniscate Track-Circle Track-Spiral 
+
+Fig. 8: Executed 3-D trajectories for every vehicle (columns) and task (rows), with the PPO, PPO-Energy, and PPO-Lag policies overlaid. On the tracking tasks the policies follow the reference; on hover they converge to the setpoint from randomized initial poses. 
+
+> (a) Track-Lemniscate
+> (b) Track-Circle
+> (c) Track-Spiral
+
+Fig. 9: Tracking error over an evaluation episode, per vehicle (columns), for the PPO (green), PPO-Energy (blue), and PPO-Lag (red) policies; each curve is the mean over 10 evaluation episodes per policy. 
+
+Fig. 10: On-board resource utilization on an NVIDIA Jetson Orin Nano during deployment: overall load (top-left), GPU (top-right), CPU (bottom-left), and memory (bottom-right), for the three policies.
