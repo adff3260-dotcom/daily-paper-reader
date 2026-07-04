@@ -1,0 +1,24 @@
+{
+  "label": "2026-07-04",
+  "date": "2026-07-04",
+  "generated_at": "2026-07-04T21:20:07",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202607/04/2606.31487v1-energy-optimal-spatial-iterative-learning-within-a-virtual-tube",
+      "section": "deep",
+      "title_en": "Energy-Optimal Spatial Iterative Learning within a Virtual Tube",
+      "authors": "Chen Min, Shuli Lv, Pengda Mao, Huixin Cao, Li Hong, Quan Quan",
+      "date": "2026-06-30",
+      "pdf": "https://arxiv.org/pdf/2606.31487v1",
+      "score": "8.0",
+      "evidence": "通过免模型迭代学习最小化无人机能耗",
+      "tldr": "无人机续航受限于电池能量，传统节能轨迹优化依赖精确模型且计算代价高。本文提出一种无模型在线迭代学习框架，在虚拟管内进行空间层面的能量最优迭代规划，单次迭代复杂度为O(n)。仿真与实飞实验表明，该方法较IPOPT基准加速50-60倍，显著降低计算耗时，并成功部署于多种无人机平台，为资源受限系统提供了高效节能的实用方案。",
+      "tags": "query:uav",
+      "abstract_en": "Due to the limited endurance of embedded energy sources such as lithium-polymer (LiPo) batteries, the flight duration and operational range of unmanned aerial vehicles (UAVs) are severely constrained. Although energy-efficient trajectory planning and control have been widely studied, most existing approaches rely on accurate system models and computationally expensive optimization procedures. This paper proposes a model-free online iterative learning (IL) framework to minimize energy consumption. Without requiring explicit models of UAV dynamics or energy consumption, the proposed method improves energy efficiency while maintaining a low computational cost. The per-iteration computational complexity is O(n), where n denotes the number of path points. In the tested cases, the proposed method is approximately 50--60 times faster than the model-based IPOPT benchmark. Simulation results and real-world flight experiments across multiple UAV platforms validate the effectiveness, computational efficiency, and practical applicability of the proposed approach.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

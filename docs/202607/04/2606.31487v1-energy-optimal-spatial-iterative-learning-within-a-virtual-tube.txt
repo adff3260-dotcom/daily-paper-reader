@@ -1,0 +1,870 @@
+Title: Energy-Optimal Spatial Iterative Learning within a Virtual Tube
+
+URL Source: https://arxiv.org/pdf/2606.31487v1
+
+Published Time: Wed, 01 Jul 2026 00:58:22 GMT
+
+Number of Pages: 9
+
+Markdown Content:
+> 1
+
+# Energy-Optimal Spatial Iterative Learning within a Virtual Tube 
+
+Chen Min, Shuli Lv, Pengda Mao, Huixin Cao, Li Hong, and Quan Quan 
+
+Abstract —Due to the limited endurance of embedded energy sources such as lithium-polymer (LiPo) batteries, the flight dura-tion and operational range of unmanned aerial vehicles (UAVs) are severely constrained. Although energy-efficient trajectory planning and control have been widely studied, most existing approaches rely on accurate system models and computationally expensive optimization procedures. This paper proposes a model-free online iterative learning (IL) framework to minimize energy consumption. Without requiring explicit models of UAV dynamics or energy consumption, the proposed method improves energy efficiency while maintaining a low computational cost. The per-iteration computational complexity is O(n), where n denotes the number of path points. In the tested cases, the proposed method is approximately 50–60 times faster than the model-based IPOPT benchmark. Simulation results and real-world flight experiments across multiple UAV platforms validate the effectiveness, computational efficiency, and practical applicability of the proposed approach. 
+
+Index Terms —Iterative Learning (IL), Energy optimization, Model-free. 
+
+I. I NTRODUCTION 
+
+# IN recent years, robots have been widely deployed in appli-cations such as delivery, photography, and rescue missions [1]. Their success largely relies on autonomous navigation, namely the ability to reach target locations efficiently using onboard sensing and computation [2]. However, the endurance of unmanned aerial vehicles (UAVs) remains fundamentally constrained by onboard energy storage. Most UAVs rely on lithium-polymer (LiPo) batteries, whose limited energy density typically restricts flight time to less than one hour, significantly limiting mission range and duration. Due to the strict payload and size constraints of UAV platforms, improving energy efficiency has become a critical design objective [3], [4]. Existing approaches to alleviating en-durance limitations can be broadly categorized into improving battery technology or enhancing energy utilization efficiency through algorithmic optimization [5]. While lightweight struc-tures and high-energy-density batteries (e.g., lithium–sulfur batteries [6]) have been explored, these solutions have yet to achieve substantial breakthroughs or widespread adoption [7]. As a result, energy-aware planning and control methods based on existing platforms have attracted increasing attention.   
+
+> Chen Min, Shuli Lv, Pengda Mao, Huixin Cao, and Li Hong are with the School of Automation Science and Electrical Engineering, Beihang University, Beijing 100191, China.
+
+email:min_chen@buaa.edu.cn, lvshuli@buaa.edu.cn, maopengda@buaa.edu.cn, caohuixin@buaa.edu.cn, hongli@buaa.edu.cn .Quan Quan (Corresponding author) is with the School of Automation Science and Electrical Engineering, Beihang University, Beijing 100191, China, and with Tianmushan Laboratory, Beihang University, Hangzhou, 311115. email:qq_buaa@buaa.edu.cn .This work has been submitted to the IEEE for possible publication. Copyright may be transferred without notice, after which this version may no longer be accessible. Virtual tube Final iteration : 9799J First iteration : 20788J Velocity [m/s]  
+
+> 1
+> 2
+> 3
+> 4
+> 5
+> 6
+> 7
+> 8
+> 9
+> 10
+> Fig. 1. Outdoor experiments under lifting-wing multicopter platform.
+
+Most existing energy-optimal UAV planning methods rely on explicit energy or dynamic models. One representative class formulates an energy-related objective function and solves an optimal control problem using mathematical opti-mization techniques [5], [8], [9], [10], [11]. Another class constructs empirical energy models for basic flight modes and decomposes complex trajectories into motion primitives [12]. Although these methods can incorporate realistic energy characteristics, they are often restricted to predefined path geometries and remain sensitive to modeling inaccuracies. Moreover, there is currently no unified UAV energy modeling standard, and different models may yield substantially different energy estimates for identical missions [13]. In aviation, the maximum range cruise speed is defined as the velocity that minimizes energy consumption per unit distance traveled [14]. While this concept provides a corner-stone for long-endurance missions under steady straight-line flight assumptions, its applicability is limited in robotic UAV applications. Modern UAVs often operate along non-linear trajectories with frequent maneuvers. the energy-optimal speed profile in such cases depends on a complex interplay between velocity, path curvature, and the vehicle’s inherent dynamics. These challenges are further compounded by the complexity of UAV systems. Accurate modeling of UAV dynamics and energy consumption is demanding and often impractical, lim-iting model-based optimization [13]. Model-free methods offer a practical compromise, where conventional temporal-domain iterative learning control suits repetitive tasks well [15], [16]. However, these time-indexed frameworks focus on tracking ac-curacy and may suffer from severe time-alignment mismatches when velocity varies dynamically for energy optimization, as in trial-varying path-following tasks [17], [18]. To overcome this, this paper proposes a model-free energy-optimal spatial iterative learning (IL) method based on power– velocity gradient estimation. By indexing the learning law 
+
+> arXiv:2606.31487v1 [cs.RO] 30 Jun 2026 2
+
+over the invariant spatial domain rather than time, this ap-proach completely decouples the optimization process from velocity-induced temporal fluctuations [19]. A virtual tube [20] enforces spatial constraints, and the spatial IL strategy itera-tively adjusts the tangential velocity command along curved trajectories. Without explicit models, the proposed method implicitly and robustly guides the UAV toward an energy-efficient cruising regime. The main contributions of this work are summarized as follows:  
+
+> •
+
+A novel model-free UAV energy optimization method based on power–velocity gradient estimation is proposed, eliminating the dependence on accurate dynamic and energy models.  
+
+> •
+
+The proposed algorithm achieves a computational com-plexity of O(k∗n), where k∗ is the maximum number of iterations and n is the number of waypoints, while exhibiting near-optimal energy performance.  
+
+> •
+
+This work extends the application scope of iterative learning control by addressing energy-optimal trajectory tracking through controller-structure innovation. II. PRELIMINARY AND PROBLEM FORMULATION This section presents a simplified UAV control model as the basis for subsequent analysis. A virtually bounded tube is then defined for tracking a static path, followed by a demonstration of the existence of an energy-optimal velocity. Finally, the problem is formulated as an energy-optimal control problem that minimizes energy consumption within the tube. 
+
+A. UAV Model 
+
+The full dynamics of a UAV involve aerodynamic effects, attitude coupling, and rotational inertia. To enable tractable analysis and control design, the UAV is modeled as a planar point mass, and only its translational motion and energy-related behavior are considered. The resulting model in R2
+
+is given by ( ˙p(t) = v(t),
+
+˙v(t) = a(t), (1) where p(t), v(t), a(t) ∈ R2 denote the position, velocity, and acceleration, respectively. Instead of explicitly modeling atti-tude dynamics, the closed-loop translational behavior induced by the inner-loop controller is approximated by a first-order velocity tracking model with respect to a commanded velocity 
+
+vc(t) [17]: ( ˙p(t) = v(t),
+
+˙v(t) = −τ  v(t) − vc(t), (2) where τ > 0 is a parameter determined by the UAV’s dynamics and inner-loop controller, identified empirically. The commanded velocity is constrained by actuator limits and is saturated as 
+
+vc = sat( v′
+
+> c
+
+, v max ) ≜
+
+
+
+v′
+
+> c
+
+, ∥v′
+
+> c
+
+∥ ≤ vmax ,vmax 
+
+v′
+
+> c
+
+∥v′
+
+> c
+
+∥ , ∥v′
+
+> c
+
+∥ > v max ,
+
+(3) where v′ 
+
+> c
+
+denotes the unconstrained command and vmax is the maximum allowable speed. To analyze motion along a given reference path, the model is reformulated in the spatial domain using the traveled distance 
+
+l as the independent variable. Let Dl = ddl denote the spatial derivative[21], [22]. By the chain rule, 
+
+Dt = v(l) D l, (4) where v(l) = dl 
+
+> dt
+
+> 0 is the traversal speed. Applying (4) to (2) yields the spatial-domain dynamics 
+
+
+
+Dlp(l) = 1
+
+v(l) v(l),
+
+Dlv(l) = − τv(l)
+
+ v(l) − vc(l),
+
+(5) where vc(l) inherits the saturation constraint in (3). Since 
+
+v(l) > 0, the mapping l(t) = R t 
+
+> 0
+
+v(s)d s is strictly increasing, ensuring the existence of a unique inverse t = f −1(l).Finally, the velocity tracking error is defined as 
+
+v(l) = vc(l) + δv(l), (6) which will be used for subsequent analysis in the spatial domain. 
+
+B. Virtual Tube for Navigation 
+
+The concept of a virtual tube provides a safe and obstacle-free operational region for robots [23]. By constraining the robot within such a region, motion planning and control are simplified while maintaining safety. This work builds on our previous studies on virtual-tube-based trajectory planning and pass-through control [23], [24], [20]. A virtual tube is a regular curved tube designed on a two-dimensional plane, as shown in Fig. 2. A specific position p
+
+within the virtual tube can be parametrically expressed as: 
+
+T (l, θ, ρ ) = γ(l) + ρr t(l)n(l) cos θ, (7) where θ ∈ { 0, π }, l ∈ [0 , L ], and ρ ∈ [0 , 1] . The curve γ(l)
+
+is the generating curve of the virtual tube. The vector n(l)
+
+represents the unit normal vector of the generating curve, and 
+
+r(l) is a continuous real-valued function with respect to l,which represents the local width (or radius) of the virtual tube. The variable l represents the arc length of the generating curve from the starting point γ(0) , and γ(l) is the position with the arc length l along the generating curve. The constant 
+
+L > 0 represents the total length of the generating curve. The boundary of T is denoted by ∂T . The generation and construction of virtual tubes have been investigated in existing studies on UAV motion planning [23]. In this work, the virtual tube is adopted as a predefined safe boundary for motion planning. For any p ∈ T , its projection onto the reference path is defined by 
+
+m(p) = arg min  
+
+> s∈[0 ,L ]
+
+∥γ(s) − p∥2. (8) The corresponding tangential direction tc = D l m(p) defines the motion direction inside the virtual tube, as illustrated in Fig. 3. 3( )
+
+> 0
+> 
+
+( )
+
+> L
+> l
+
+( ) 
+
+> ln
+
+( )  
+
+> trl
+
+( ) ( ) 
+
+## ( )  
+
+> ll
+> =m p 
+
+( )   
+
+> pl
+> Fig. 2. An example of virtual tubes on a two-dimensional plane.
+
+C. Existence of the Optimal Energy-Consuming Velocity 
+
+In the time domain, the energy consumption rate of a UAV equals its instantaneous electrical power consumption, namely, 
+
+DtE(t) = P (t), (9) where E(t) denotes the accumulated energy over [0 , t ] and 
+
+P (t) > 0 denotes the instantaneous electrical power consump-tion. The total energy consumption is given by 
+
+E =
+
+Z T
+
+> 0
+
+P (t) d t, (10) where T = R L 
+
+> 01
+> v(l)
+
+dl is the total traversal time along a path of fixed length L.Consider a UAV traveling along a fixed reference path γ of length L. Using the time–space transformation in (4), the total energy consumption can be expressed in the spatial domain as 
+
+E =
+
+Z L
+
+> 0
+
+P (v(l)) 
+
+v(l) dl =
+
+Z L
+
+> 0
+
+P (l, v ) d l, (11) where v(l) = d l/ dt > 0 denotes the translational speed along the path, and P (l, v ) ≜ P (v(l)) /v (l) explicitly characterizes the spatial energy consumption rate depending on the local speed. To analyze the existence of an energy-optimal velocity, we partition the path into sufficiently small spatial segments. Within a small segment [li, l i + ∆ l], the velocity variation is negligible and can be approximated as a constant vi. The energy consumed in this segment can then be approximated as 
+
+Ei(vi) ≈ ∆l · P (li, v i). (12) Thus, minimizing the local energy consumption is equivalent to minimizing P (li, v i) over the admissible speed interval 
+
+[vmin , v max ].In practical UAV propulsion systems, the instantaneous power P (v) primarily comprises a constant baseline power and an aerodynamic drag term that increases smoothly with 
+
+v. This ensures P (v) is continuous and strictly positive on any compact interval [vmin , v max ] with 0 < v min < v max < ∞.Consequently, both P (v) and 1/v are continuous on this interval, rendering the spatial rate P (l, v ) continuous as well. By the Weierstrass extreme value theorem [25], P (l, v ) attains a global minimum within [vmin , v max ].
+
+D. Problem Formulation 
+
+The objective of this study is to enable a UAV to pass through a virtual tube safely while minimizing total energy consumption. Unlike conventional trajectory-tracking prob-lems, the focus here is on energy-optimal motion generation under safety and dynamic constraints. Furthermore, because aerodynamic drag typically manifests as a polynomial function of velocity (often involving cubic terms), the power model is inherently smooth without non-differentiable points within the physical flight envelope. Based on the analysis in Subsection II-C , we make the following assumption: 
+
+Assumption 1. The spatial energy consumption rate P (l, v )
+
+is twice continuously differentiable with respect to v, i.e., 
+
+P (l, v ) ∈ C 2 in v.The energy-optimal navigation problem is then formulated as min  
+
+> vc(l)∈R2
+
+E
+
+s.t. (5) ,
+
+∥vc(l)∥ ≤ vmax ,
+
+p(l) ∈ T .
+
+(13) The goal is to solve (13) using a spatial IL framework, which fundamentally differs from classical IL approaches that primarily focus on trajectory tracking. III. ENERGY-OPTIMAL SPATIAL IL This section first presents the design rationale and specific formulation of the control law. Based on this foundation, the energy-optimal spatial IL method tailored for the virtual tube is developed, accompanied by its convergence proof. Finally, the algorithmic complexity of the spatial IL is analyzed. 
+
+A. Control Law Design 
+
+The energy-optimal spatial IL iteratively regulates velocity to achieve an optimal trade-off between energy consumption reduction and path tracking accuracy, thereby deriving a ve-locity allocation strategy based on spatial coordinates. As shown in Fig.3, based on the initial path γ and the virtual tube obtained from the path planner, the corresponding IL structure is designed as follows: 
+
+v′
+
+> c,k
+
+(l) = vh,k (l) + vp,k (l), (14) where v′
+
+> c,k
+
+(l) denotes the original control command in the k-th iteration, with 0 < k ≤ k∗ and k ∈ N + (k∗ is the maximum iteration number). In this command, vh,k (l) is used for the tangential component and vp,k (l) is used for path convergence, namely helping the UAV track the path γ.
+
+B. Convergence Control 
+
+Since the UAV has a closest point on the initial path, the error vector of the UAV from the initial path is defined as 
+
+ep,k (l) = m(pk(l)) − pk(l). (15) 4Lh, kvp, kvsaturation c, kvc, kvtrControl Signals Iteration Spatial Mapping Plant Fitted gradient curve nA nFtuvntcc i a i tio o( )   
+
+> +−011k−kIteration Spatial Mapping 011k−kct
+
+( )
+
+> m p
+
+ 
+
+> Fig. 3. IL decomposition.
+
+In addition, the size of the error is defined as 
+
+ep,k (l) = ∥ep,k (l)∥. (16) The designed convergence control term is error-based to ensure that the robot follows the tracking path. To achieve smooth and swift lateral convergence, a constant proportional-derivative control law is deployed in this paper as 
+
+vp,k (l) = 
+
+
+
+kpep,k (l) + kdDlep,k (l) ep,k (l)
+
+ep,k (l)
+
+
+
+v∗
+
+> k
+
+(l), (17) where v∗
+
+> k
+
+(l) denotes the velocity adjustment term for ILC, which will be elaborated later; ep,k (l) is the path tracking error, and Dlep,k (l) represents its spatial derivative. The control parameters kp > 0 and kd > 0 are preset constant tracking gains. 
+
+Remark 1. To ensure the UAV remains within the virtual tube, a control input based on the Barrier Lyapunov Function (BLF) can also be designed as: 
+
+vp,k (l) = −k1(l) ep,k (l)
+
+r2 
+
+> t
+
+(l) − e2p,k (l) , (18) where k1(l) > 0 determines the corrective intensity of the BLF-based feedback term. Both (17) and (18) generate cor-rective velocities for reducing the path tracking error, with different gain structures. The former uses preset constant gains, while the latter uses a state-dependent gain near the tube boundary. In this paper, (17) is used in the simulations and experiments. 
+
+C. Model-free Energy Learning 
+
+To adjust the tangential traversal pace, the pace controller is designed as 
+
+vh,k (l) = v∗
+
+> k
+
+(l)tc, (19) where v∗
+
+> k
+
+(l) is consistent with that in (17), and tc indicates the unit tangent direction at the location l.As demonstrated in Section II , the optimization energy objective for the planned path is transformed from the time domain to the spatial domain, converting the original variable-upper-limit integral problem into a fixed-integral formulation. Consequently, the extremum condition of the objective func-tion can be derived based on the core Euler-Lagrange equation of the variational method [26], namely, 
+
+ddl
+
+ ∂(P (l, v )) 
+
+∂(D lv)
+
+
+
+− ∂(P (l, v )) 
+
+∂v = 0 . (20) For cruising-dominated trajectories with moderate velocity variations, acceleration-induced energy is treated as secondary, and the spatial energy rate is approximated by P (l, v ) rather than P (l, v, Dlv). Thus, 
+
+∂(P (l, v )) 
+
+∂(D lv) = 0 , (21) which yields the pointwise optimality condition 
+
+∂(P (l, v )) 
+
+∂v = 0 . (22) For aggressive maneuvers, a higher-order model including Dlv
+
+would be required. During the flight, variations in velocity and energy are observed in real time, enabling the estimation of the instanta-neous power derivative with respect to velocity. Based on the above ideas, the learning law of v∗ 
+
+> k
+
+was designed in the form of spatial IL: 
+
+v∗
+
+> k+1
+
+(l) = v∗ 
+
+> k
+
+(l) − χ
+
+
+
+∂P (l, v )/∂v v=vk
+
+
+
+, (23) especially used for adjusting the contribution of vk(l) in (14), 
+
+k indicates the iteration number and χ is a function which satisfies 
+
+χ(x) = kχ(x)x, 0 < α ≤ kχ(x) ≤ β. (24) Following the IL principle, the framework estimates the energy-consumption-rate gradient from experimental data to iteratively optimize the velocity command within the virtual tube. As illustrated in Fig. 4, if ∂P (l, v )/∂v |∗ v = vk < 0, the velocity command is increased to reduce energy consumption; otherwise, it is decreased. The nonlinear mapping limits the correction amount of v∗
+
+> k
+
+(l) between two adjacent iterations, preventing abrupt speed variations and improving convergence. 
+
+Remark 2. A bounded activation function χ(x) can be constructed using a scaled sigmoid function, e.g., χ(x) = 
+
+a  1/(1 + e−bx ) − 1/2 . More generally, any bounded Lip-schitz continuous function satisfies the design requirements. For analytical convenience, χ(x) is assumed to be linear with constant slope kχ in the subsequent analysis. 
+
+Remark 3. The proposed method updates the control com-mand using directly measured data, including instantaneous power, velocity, and position information. It does not require explicit system dynamics, model parameters (e.g., τ in (5)), or the energy model. The parameter τ is used only for analysis and simulation validation, rather than for the practical learning 5
+
+update. Model uncertainties are handled implicitly through the iterative update process. Therefore, the method is data-driven and model-free in implementation. x( )        
+
+> x
+> 0Activation *1kv+Output ()
+> ,/P l v vFitted gradient curve l0
+> Fig. 4. The fitted gradient curve of the energy consumption rate, after being processed by the activation function χ, is applied to update the velocity command v∗
+> k+1 .
+
+Theorem 1. Suppose the UAV model satisfies (5), the con-troller is designed as (14), (17), and (19), and M denotes an upper bound of ∂2P (l, v )/∂v 2. With the IL law (23), if 
+
+δv ≡ 0 and kχ satisfies kχ < 2/M , then the term v∗
+
+> k
+
+(l)
+
+is uniformly ultimately bounded as k → ∞ and there exists 
+
+lim k→∞ E = E∗.
+
+Proof. See Appendix A .
+
+Corollary 1.1. Given the UAV model, controller, and learn-ing law in Theorem 1 , if velocity tracking error satisfies 
+
+max l∈[0 ,L ] μ = ( δv k+1 (l)−δv k(l)) /(vk+1 (l)−vk(l)) < 1 and 
+
+kχ < 2(1 − μ)/M , then the term v∗
+
+> k
+
+(l) is uniformly ultimately bounded as k → ∞ and there exists lim k→∞ E = E∗.
+
+Proof. See Appendix B .
+
+D. Time Complexity Analysis 
+
+Computational efficiency is determined by the complexity of the learning update. From (23), the proposed spatial IL update is performed pointwise along the reference path, yielding a per-iteration complexity of O(n), where n is the number of discrete path points. With a predefined maximum iteration number k∗, the total complexity is O(k∗n).By contrast, standard interior-point methods for constrained nonlinear optimization typically have a complexity of O(n3)
+
+with respect to the decision-variable dimension [27]. As the path discretization and constraints increase, this cubic scaling may hinder onboard real-time implementation, even though sparsity exploitation and parallel computation can reduce the practical burden [27], [28], [29]. 
+
+Remark 4. For quadrotors and lifting-wing multicopters, full model-based optimization involves high-dimensional dynam-ics and constraints. The proposed method avoids solving such nonlinear models by using measured power-gradient informa-tion to update only the velocity adjustment term v∗.IV. SIMULATIONS AND EXPERIMENTS This section presents simulations and experiments to eval-uate the performance and generalization capability of the pro-posed algorithm using directly observable energy and velocity data. In all simulations and experiments, the velocity adjust-ment term is updated once after each completed trajectory execution, and each update generates v∗ over n discrete path points. The measured time-domain velocity and power data are projected onto the fixed spatial grid by nearest-path-point registration, so different lap durations remain aligned by the same spatial index l. The number of spatial path points is selected according to the total path length and flight speed to ensure appropriate spatial resolution for gradient estimation. The learning process is terminated when the predefined maxi-mum number of trajectory executions is reached, and practical convergence is identified when the final energy values remain within a stable envelope. The results show that the proposed spatial IL method is model-free, computationally efficient, and applicable across different UAV platforms. 
+
+A. Numerical Comparison 
+
+In this subsection, the simulation utilizes a simplified power model P (t) = k5 + k6∥v(t)∥3 [13], where k5 = 50 W 
+
+and k6 = 0 .05 kg · m−1. The nonlinear mapping χ(x) = 1/(1 + e−10 x) − 1/2 is bounded within [−0.5, 0.5] , with 
+
+vmax = 20 .0 m /s and v∗ 
+
+> 1
+
+(l) = 4.0 m /s . This nonzero admissible initial speed is used to prevent calculation errors in P (l, v ).Crucially, both the parameter τ and the energy model remain unknown to the proposed IL method. To evaluate performance, the method is compared with two representative optimization baselines on the virtual-tube trajectory in Fig. 5(a). The first baseline is a model-free Sequential Quadratic Programming (SQP) method implemented using fmincon, where the velocity commands at the discrete path points are directly optimized through black-box numerical simulations. This baseline pro-vides a comparison with conventional model-free nonlinear optimization. The second baseline is a model-based optimiza-tion framework formulated in CasADi [30] and solved by the Interior Point OPTimizer (IPOPT) [31]. This baseline exploits the explicit simplified model, sparsity, and algorithmic differentiation, and therefore serves as a more competitive modern numerical optimization benchmark. Results in Fig. 5 and Table 1 confirm that the IL method achieves energy efficiency comparable to both benchmarks, with rapid convergence of trajectory energy. The velocity adjustment term v∗(l) in Fig. 5(c) evolves progressively over the discrete path points and becomes stable as the iteration proceeds, demonstrating convergence of the learned velocity profile. Notably, the SQP baseline is formulated as a black-box nonlinear program that optimizes the velocity commands over 10,000 spatial path points under velocity and virtual-tube constraints; under this setting, the model-free SQP requires approximately 4.1 hours, and the model-based IPOPT takes 30 to 40 seconds. In contrast, the proposed spatial IL method converges in approximately 0.6 to 0.7 s. This efficiency gain 6
+
+empirically supports the O(n) complexity of our framework, demonstrating that the proposed data-driven approach reduces the computational burden while preserving competitive energy performance. (a) (b)                                   
+
+> 0510 15 20
+> Iteration Number
+> 1400
+> 1600
+> 1800
+> 2000
+> 2200
+> 2400 = 1
+> = 3
+> = 5
+> = 10
+> = 20
+> Energy Co nsumption  [J]
+> X[m]
+> Y[m]
+> Energy Co nsumption  Rate  [J/m]
+> 010 20 30 40 50
+> -20
+> -15
+> -10
+> -5
+> 0
+> 5
+> 10
+> 15
+> 20
+> 9
+> 9.5
+> 10
+> 10.5
+> 11
+> 11.5
+> 12
+> 12.5
+> 13
+> (c)
+> 2000 4000 6000 8000 10000
+> Path Point Index
+> 0
+> 2
+> 4
+> 6
+> 8
+> 10
+> 12
+> 14 Iteration 1
+> Iteration 2
+> Iteration 3
+> Iteration 4
+> Iteration 5
+> Iteration 6
+> Iteration 7
+> Iteration 8
+> Iteration 9
+> Iteration 10
+> Iteration 11
+> Iteration 12
+> Iteration 13
+> Iteration 14
+> Iteration 15
+> Iteration 16
+> Iteration 17
+> Iteration 18
+> Iteration 19
+> Iteration 20
+> Velocity Adjustment Term  [m/s]
+
+Fig. 5. (a) Distribution of position and energy consumption rate for the IL method inside the tube using τ = 5. (b) The energy consumption varied with training iterations. (c) Evolution of the velocity adjustment term v∗ 
+
+> k
+
+(l) over iterations. TABLE I ENERGY CONSUMPTION AND OPTIMIZATION TIME OF DIFFERENT 
+
+ALGORITHMS 
+
+Energy consumption (J) Optimization Time (s) Model-free Model-based Model-free Model-based 
+
+τ SQP SIL IPOPT SQP SIL IPOPT 1 1650.59 1643.00 1556.50 9139.04 0.69 39.82 3 1592.64 1594.44 1555.55 4812.23 0.65 35.41 5 1574.58 1574.79 1555.36 5504.69 0.68 35.61 10 1566.22 1566.41 1555.22 6597.91 0.61 40.16 20 1558.46 1560.14 1555.15 5166.80 0.62 35.95 
+
+B. Simulation Flight Experiment 
+
+To validate energy-optimal IL under unknown UAV dynam-ics and energy models, software-in-the-loop (SITL) experi-ments are conducted using PX4 (v1.10) with Gazebo. The activation function in Eq. (24) is set to χ(x) = 1 /(1+ e−10 x)−
+
+1/2. The maximum iteration number is k∗ = 12 . In the first flight, the waypoint velocity command is 1.0 m /s, starting from zero velocity, with vmax = 10 .0 m /s.Results are shown in Fig. 6(a)–(d). The computation time for updating the next-flight velocity command ranges from 
+
+0.1×10 −4 to 1.2×10 −4 s. The energy consumption decreases from 901 .85 J and converges to approximately 238 J after nine iterations. These results verify the theoretical feasibility of the proposed IL framework in achieving significant energy reduc-tion (approx. 73.6%) while maintaining high computational efficiency. 
+
+C. Real-world Flight Experiment of a Quadcopter 
+
+To evaluate practical performance, outdoor autonomous flight experiments are conducted using the quadrotor platform shown in Fig. 7(a), equipped with an NVIDIA Jetson Orin and a Mid-360 LiDAR. Mapping and localization are achieved via Fast-LIO. Experiments are performed in a 30 m × 20 m × 5 m 
+
+workspace with all computations executed onboard in real time. The activation function remains χ(x) = 1 /(1+ e−10 x)−
+
+1/2, and the maximum iteration number is 10. The initial waypoint velocity is 1.0 m /s, and vmax = 4 .0 m /s. The next-flight command is updated solely from measured current, voltage, velocity, and position, without prior knowledge of UAV dynamics or energy models. As shown in Fig. 6(e)–(h), the onboard computation time ranges from 0.5 × 10 −4 to 1.2 × 10 −4 s. The energy con-sumption decreases from 23122 .37 J and converges to approx-imately 9700 J after seven iterations. The rapid convergence in real-world environments indicates that the algorithm is robust against external disturbances and measurement noise. Furthermore, the microsecond-level computation time ensures its suitability for real-time onboard optimization on resource-constrained platforms. 
+
+D. Real-world Flight Experiment of a Lifting-wing Multi-copter 
+
+To further demonstrate generalization, autonomous exper-iments are conducted on the lifting-wing multicopter shown in Fig. 7(b). Unlike conventional quadcopters , the lifting-wing multicopter can use its wing to share part of the lift during forward flight, while the aerodynamic drag also changes with velocity. Therefore, this platform provides a useful test case for evaluating whether the proposed algorithm can opti-mize energy consumption without explicitly modeling the lift-drag characteristics. The UAV is equipped with an NVIDIA Jetson Orin, with positioning achieved via GPS and a laser rangefinder. Flights are performed in a 70 m ×50 m ×30 m out-door workspace with full onboard real-time computation. The activation function is set to χ(x) = 4(1 /(1 + e−10 x) − 1/2) ,and the maximum iteration number is 10. The initial waypoint velocity is 2.0 m /s and vmax = 10 .0 m /s.As shown in Fig. 6(i)–(l), the computation time ranges from 0.5 × 10 −4 to 1.5 × 10 −4s. The energy consumption decreases from 20787 .86 J to approximately 9700 J after seven iterations. The learned velocity profile reflects the platform-dependent power-speed characteristics from measured data. Although the complete lift-drag transition is limited by the safety velocity bound, the results from the lifting-wing mul-ticopter suggest the model-free adaptability of the proposed energy-optimal IL framework. V. CONCLUSION This paper presents a model-free, energy-optimal spatial IL framework for UAV trajectory tracking without explicit energy or dynamic models. The main conclusions are: 1) Significant energy optimization is achieved under real-world constraints, validating the model-free spatial law. 2) The computational cost is only 1.52%–1.92% of IPOPT, enabling resource-constrained embedded deployment. 3) Rapid convergence across quadcopter and lifting-wing platforms demonstrates feasibility. 7iteration                                                                                                           
+
+> (e) (g) (h)
+> iteration
+> (i) (k) (l)
+> -10 010 20 30 40 50
+> -40
+> -30
+> -20
+> -10
+> 0
+> X (m)
+> Y (m)Y (m)
+> (c) (d) (a)
+> iteration
+> Energy Consumption (J) Energy Consumption (J)
+> iteration
+> iteration
+> Energy Consumption (J)
+> iteration
+> Calculation Time ( μs)
+> -50510 15 20 25
+> -15
+> -10
+> -5
+> 0
+> X (m)
+> Y (m)Y (m)
+> Quadcopter Simulation Quadcopter Lift ing -wing  Multicopter
+> 0510 15
+> X (m)
+> -10
+> -8
+> -6
+> -4
+> 0
+> Y (m)Y (m)
+> -2
+> 2
+> 10 4
+> 12345678910 11
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> 120
+> 140
+> 12345678910 11 12
+> 200
+> 400
+> 600
+> 800
+> 1000
+> Calculation Time ( μs)
+> 12345678910
+> 40
+> 60
+> 80
+> 100
+> 120
+> 12345678910
+> 10 4
+> 12345678910
+> 40
+> 60
+> 80
+> 100
+> 120
+> 140
+> 160
+> Calculation Time ( μs)
+> 12345678910
+> 0.8
+> 1
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2
+> 2.2
+> 0.8
+> 1
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2
+> 2.2
+> 2.4
+> Iteration 1
+> Iteration 2
+> Iteration 3
+> Iteration 4
+> Iteration 5
+> Iteration 6
+> Iteration 7
+> Iteration 8
+> Iteration 9
+> Iteration 10
+> Iteration 1
+> Iteration 2
+> Iteration 3
+> Iteration 4
+> Iteration 5
+> Iteration 6
+> Iteration 7
+> Iteration 8
+> Iteration 9
+> Iteration 10
+> Iteration 1
+> Iteration 2
+> Iteration 3
+> Iteration 4
+> Iteration 5
+> Iteration 6
+> Iteration 7
+> Iteration 8
+> Iteration 9
+> Iteration 10
+> Iteration 11
+> Iteration 12
+> 12
+> 0
+> 0.5
+> 1
+> 1.5
+> 2
+> 2.5
+> 0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1
+> 1.2
+> 1.4
+> 0
+> 0.5
+> 1
+> 1.5
+> 2
+> 2.5
+> 3
+> 3.5
+> 4
+> 4.5
+> 5
+> Tracking Error (m)
+> iteration
+> 12345678910
+> 12345678910
+> 12345678910
+> Tracking Error (m) Tracking Error (m)
+> (f)
+> (j)
+> (b) Tube Radius
+> Tube Radius
+> Tube Radius
+> iteration
+> iteration
+
+Fig. 6. Performance of the proposed algorithm in simulation and real flight. (a) Flight trajectory in simulation. (b) Tracking-error distribution in simulation. (c) Computation time for calculating the next-iteration velocity command in simulation. (d) Energy consumption for a single simulated flight. (e) Flight trajectory of the quadcopter. (f) Tracking-error distribution of the quadcopter. (g) Computation time for calculating the next-iteration velocity command of the quadcopter. (h) Energy consumption for a single quadcopter flight. (i) Flight trajectory of the lifting-wing multicopter. (j) Tracking-error distribution of the lifting-wing multicopter. (k) Computation time for calculating the next-iteration velocity command of the lifting-wing multicopter. (l) Energy consumption for a single lifting-wing multicopter flight. (a) 
+
+(b) NVIDIA Jetson Orin 
+
+Livox Mid -360 
+
+CUAV V5 NANO 
+
+550 mm 
+
+> Sensing and localization
+> Planning
+> Flight control
+
+CUAV V5 NANO  
+
+> Planning
+> Flight control
+
+NVIDIA Jetson Orin 
+
+350 mm 
+
+Fig. 7. The different experimental platforms employed to verify the general-ization capability of the proposed algorithm. (a) A quadcopter platform. (b) A lifting-wing multicopter platform. 
+
+Operational limitations include intentionally trading track-ing performance for global systemic energy efficiency within the virtual tube, and requiring actual flight iterations to opti-mize brand-new trajectories. The current framework is simple, but additional control objectives (e.g., stricter centerline track-ing or obstacle avoidance) can be incorporated. Future work will focus on eliminating these limitations and extending the framework to multi-objective or tighter-path constraints. APPENDIX APROOF OF THEOREM 1The Taylor expansion of the performance function P (l, v )
+
+at the iteration point vk is given by 
+
+P (l, v k+1 ) = P (l, v k) + ∂P (l, v )/∂v v=vk
+
+(vk+1 − vk)+ 12 ∂2P (l, v )/∂v 2
+
+v=vk
+
+(vk+1 − vk)2 + · · · . (25) Applying the mean value theorem, (25) can be rewritten as 
+
+P (l, v k+1 ) = P (l, v k) + ∂P (l, v )/∂v v=vk
+
+(vk+1 − vk)+ 12 ∂2P (l, v )/∂v 2
+
+v=ξ (vk+1 − vk)2, (26) where ξ ∈ [vk, v k+1 ] (assuming vk < v k+1 ). According to Assumption 1 , the second-order derivative 
+
+∂2P (l, v )/∂v 2 is continuous on the compact set [vmin , v max ].By the Weierstrass extreme value theorem [25], there exists a constant M > 0 such that 
+
+∂2P (l, v )/∂v 2 ≤ M. (27) 8
+
+Combining (23), (24), (26) and (27), we obtain 
+
+P (l, v k+1 ) ≤ P (l, v k) + ∂P (l, v )/∂v v=vk
+
+(vk+1 − vk)+ M/ 2( vk+1 − vk)2. (28) Substituting the learning law into (28) yields 
+
+P (l, v k+1 ) ≤ P (l, v k) +  M k 2
+
+> χ
+
+/2 − kχ
+
+ 
+
+∂P (l, v )/∂v v=vk
+
+2
+
+.
+
+(29) When kχ < 2/M , the coefficient in (29) is strictly negative, i.e., 
+
+ M k 2
+
+> χ
+
+/2 − kχ
+
+ 
+
+∂P (l, v )/∂v v=vk
+
+2
+
+≤ 0. (30) Therefore, P (l, v ) decreases monotonically with respect to the iteration index k. Since P (l, v ) is bounded below on a compact domain, it necessarily converges. Thus, as k → ∞ , there exist 
+
+
+
+lim  
+
+> k→∞
+
+vk(l) = v∗(l),
+
+lim  
+
+> k→∞
+
+P (l, v k) = P (l, v ∗),
+
+lim  
+
+> k→∞
+
+Ek = E∗,
+
+(31) where v∗(l) represents the optimal magnitude of tangential velocity command at position l, P (l, v ∗) represents the optimal energy consumption at position l, E∗ represents the optimal energy consumption. APPENDIX BPROOF OF COROLLARY 1.1 For the error form (6), according to eq. (19), perform the k-th iteration projection in the tangential direction 
+
+vk(l) = v∗
+
+> k
+
+(l) + δv k(l). (32) With Corollary 1, there exists 
+
+δv k+1 (l) − δv k(l)
+
+vk+1 (l) − vk(l) ≤ μ, (33) where μ < 1 is a constant. With (23), (24), (28), (27) and (33), we obtain 
+
+P (l, v k+1 ) ≤ P (l, v k) + ∂P (l, v )
+
+∂v v=vk
+
+(vk+1 − vk)= P (l, v k) + kχ
+
+1 − μ
+
+ M k χ
+
+2(1 − μ) − 1
+
+ ∂P (l, v )
+
+∂v v=vk
+
+!2
+
+,
+
+(34) when M k χ 
+
+> 2(1 −μ)
+
+− 1 < 0, namely kχ < 2(1 −μ) 
+
+> M
+
+, there always has 
+
+kχ
+
+1 − μ
+
+ M k χ
+
+2(1 − μ) − 1
+
+ ∂P (l, v )
+
+∂v v=vk
+
+!2
+
+≤ 0. (35) Therefore, under kχ < 2(1 − μ)/M , the same monotone-convergence argument as in Appendix A applies, and the limiting relations in(31) hold. REFERENCES [1] Q. Quan, Introduction to Multicopter Design and Control . Singapore: Springer Nature, 2017. [2] R. Siegwart, I. R. Nourbakhsh, and D. Scaramuzza, Introduction to Autonomous Mobile Robots , 2nd ed. MIT Press, 2011. [3] A. Censi, “A class of co-design problems with cyclic constraints and their solution,” IEEE Robotics and Automation Letters , vol. 2, no. 1, pp. 96–103, 2017. [4] D. Datsko, F. Nekovar, R. Penicka, and M. Saska, “Energy-aware multi-uav coverage mission planning with optimal speed of flight,” IEEE Robotics and Automation Letters , vol. 9, no. 3, pp. 2893–2900, 2024. [5] K. Karydis and V. Kumar, “Energetics in robotic flight at small scales,” 
+
+Interface Focus , vol. 7, no. 1, p. 20160088, 2017. [6] Z. W. Seh, Y. Sun, Q. Zhang, and Y. Cui, “Designing high-energy lithium–sulfur batteries,” Chemical Society Reviews , vol. 45, no. 20, pp. 5605–5634, 2016. [7] F. Morbidi, R. Cano, and D. Lara, “Minimum-energy path generation for a quadrotor UAV,” in 2016 IEEE International Conference on Robotics and Automation (ICRA) , 2016. [8] D. Jones and G. A. Hollinger, “Planning energy-efficient trajectories in strong disturbances,” IEEE Robotics and Automation Letters , vol. 2, no. 4, pp. 2080–2087, 2017. [9] M. Ryll, H. H. B¨ ulthoff, and P. R. Giordano, “A novel overactuated quadrotor unmanned aerial vehicle: Modeling, control, and experimental validation,” IEEE Transactions on Control Systems Technology , vol. 23, no. 2, pp. 540–556, 2015. [10] E. Dyer, S. Sirouspour, and M. Jafarinasab, “Energy optimal control allocation in a redundantly actuated omnidirectional uav,” in 2019 International Conference on Robotics and Automation (ICRA) , 2019, pp. 5316–5322. [11] L. Zhai, X. Zhu, and C. Cheng, “Energy efficient data evacuation path for multi-uav system based on multi-objective optimization method,” IEEE Transactions on Vehicular Technology , vol. 74, no. 5, pp. 7364–7377, 2025. [12] K. Dorling, J. Heinrichs, G. G. Messier, and S. Magierowski, “Vehicle routing problems for drone delivery,” IEEE Transactions on Systems, Man, and Cybernetics: Systems , vol. 47, no. 1, pp. 70–85, 2017. [13] J. Zhang, J. F. Campbell, D. C. Sweeney II, and A. C. Hupman, “Energy consumption models for delivery drones: A comparison and assessment,” 
+
+Transportation Research Part D: Transport and Environment , vol. 90, p. 102668, 2021. [14] J. D. Anderson, Aircraft Performance and Design . New York: McGraw-Hill Education, 1999. [15] D. A. Bristow, M. Tharayil, and A. G. Alleyne, “A survey of iterative learning control,” IEEE Control Systems Magazine , vol. 26, no. 3, pp. 96–114, 2006. [16] Y. Wang, F. Gao, and F. J. Doyle, “Survey on iterative learning control, repetitive control, and run-to-run control,” Journal of Process Control ,vol. 19, no. 10, pp. 1589–1600, 2009. [17] S. Lv, Y. Gao, and Q. Quan, “High-efficiency vector field by time-optimal spatial iterative learning,” IEEE Transactions on Robotics ,vol. 41, pp. 5624–5644, 2025. [18] Y. Chen, B. Chu, and C. T. Freeman, “Iterative learning control for robotic path following with trial-varying motion profiles,” IEEE/ASME Transactions on Mechatronics , vol. 27, no. 6, pp. 4697–4706, 2022. [19] L. Yang, Y. Li, D. Huang, J. Xia, and X. Zhou, “Spatial iterative learning control for robotic path learning,” IEEE Transactions on Cybernetics ,vol. 52, no. 7, pp. 5789–5798, 2022. [20] Q. Quan, Y. Gao, and C. Bai, “Distributed control for a robotic swarm to pass through a curve virtual tube,” Robotics and Autonomous Systems ,vol. 162, p. 104368, 2023. [21] J.-X. Xu and D. Huang, “Spatial periodic adaptive control for rotary machine systems,” IEEE Transactions on Automatic Control , 2008. [22] Z. Li, C. Yin, H. Ji, and Z. Hou, “Constrained spatial adaptive iterative learning control for trajectory tracking of high speed train,” IEEE Transactions on Intelligent Transportation Systems , 2022. [23] P. Mao and Q. Quan, “Making robotics swarm flow more smoothly: A regular virtual tube model,” in 2022 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) , 2022. [24] Y. Gao, C. Bai, L. Zhang, and Q. Quan, “Multi-UAV cooperative target encirclement within an annular virtual tube,” Aerospace Science and Technology , vol. 129, p. 107800, 2022. [25] J. E. Mart´ ınez-Legaz, “On weierstrass extreme value theorem,” Opti-mization Letters , vol. 8, no. 1, pp. 391–393, 2014. [26] S. K. Berberian, Introduction to Hilbert space . American Mathematical Soc., 1999, vol. 287. 9
+
+[27] S. Boyd and L. Vandenberghe, Convex Optimization . Cambridge, U.K.: Cambridge University Press, 2004. [28] F. A. Potra and S. J. Wright, “Interior-point methods,” Journal of Computational and Applied Mathematics , vol. 124, no. 1, pp. 281–302, 2000. [29] J. Nocedal and S. J. Wright, Numerical Optimization , 2nd ed. New York, NY, USA: Springer, 2006. [30] J. A. E. Andersson, J. Gillis, G. Horn, J. B. Rawashdeh, and M. Diehl, “CasADi: a software framework for nonlinear optimization and optimal control,” Mathematical Programming Computation , vol. 11, no. 1, pp. 1–36, 2019. [31] A. W¨ achter and L. T. Biegler, “On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming,” 
+
+Mathematical Programming , vol. 106, no. 1, pp. 25–57, 2006.

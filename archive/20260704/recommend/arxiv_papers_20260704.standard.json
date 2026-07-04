@@ -1,0 +1,56 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-04T21:18:05.309649+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 1,
+    "deep_cap": 6,
+    "deep_selected": 1,
+    "quick_candidates": 0,
+    "quick_skim_target": 11,
+    "quick_selected": 0
+  },
+  "deep_dive": [
+    {
+      "id": "2606.31487v1",
+      "source": "arxiv",
+      "title": "Energy-Optimal Spatial Iterative Learning within a Virtual Tube",
+      "abstract": "Due to the limited endurance of embedded energy sources such as lithium-polymer (LiPo) batteries, the flight duration and operational range of unmanned aerial vehicles (UAVs) are severely constrained. Although energy-efficient trajectory planning and control have been widely studied, most existing approaches rely on accurate system models and computationally expensive optimization procedures. This paper proposes a model-free online iterative learning (IL) framework to minimize energy consumption. Without requiring explicit models of UAV dynamics or energy consumption, the proposed method improves energy efficiency while maintaining a low computational cost. The per-iteration computational complexity is O(n), where n denotes the number of path points. In the tested cases, the proposed method is approximately 50--60 times faster than the model-based IPOPT benchmark. Simulation results and real-world flight experiments across multiple UAV platforms validate the effectiveness, computational efficiency, and practical applicability of the proposed approach.",
+      "authors": [
+        "Chen Min",
+        "Shuli Lv",
+        "Pengda Mao",
+        "Huixin Cao",
+        "Li Hong",
+        "Quan Quan"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-06-30T11:01:06+00:00",
+      "link": "https://arxiv.org/pdf/2606.31487v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "minimizes UAV energy consumption with model-free iterative learning",
+      "llm_evidence_cn": "通过免模型迭代学习最小化无人机能耗",
+      "llm_evidence": "通过免模型迭代学习最小化无人机能耗",
+      "canonical_evidence": "通过免模型迭代学习最小化无人机能耗",
+      "llm_tldr_en": "Addresses UAV flight endurance limitations by proposing a model-free online iterative learning method that minimizes energy consumption without requiring system models, achieving O(n) complexity.",
+      "llm_tldr_cn": "针对无人机嵌入式电池续航受限问题，提出一种免模型在线迭代学习框架，在虚拟管内最小化飞行能耗。该方法无需无人机动力学或能耗模型，每步计算复杂度为O(n)，实验表明能有效提升能量效率并延长飞行时间。该工作为功率受限的无人机提供了一种实用且低成本的能源优化控制方案。",
+      "llm_tldr": "针对无人机嵌入式电池续航受限问题，提出一种免模型在线迭代学习框架，在虚拟管内最小化飞行能耗。该方法无需无人机动力学或能耗模型，每步计算复杂度为O(n)，实验表明能有效提升能量效率并延长飞行时间。该工作为功率受限的无人机提供了一种实用且低成本的能源优化控制方案。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "UAV power management",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": []
+}
