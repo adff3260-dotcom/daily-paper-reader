@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-07-07T20:40:16.226953+00:00",
-  "updated_date": "20260707",
+  "generated_at": "2026-07-08T21:38:54.936508+00:00",
+  "updated_date": "20260708",
   "carryover_days": 9,
   "tag_states": {
     "UAV": {
-      "updated_date": "20260707",
+      "updated_date": "20260708",
       "carryover_days": 9,
       "items": []
     }
