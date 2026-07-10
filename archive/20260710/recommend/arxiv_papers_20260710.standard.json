@@ -1,0 +1,95 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-10T20:02:17.272281+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 2,
+    "quick_skim_target": 11,
+    "quick_selected": 2
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.06791v1",
+      "source": "arxiv",
+      "title": "Machine Learning-Based Battery State-of-health Prediction for Unmanned Aerial Vehicles Predictive Maintenance",
+      "abstract": "Battery state-of-health (SoH) prediction aims to estimate the remaining capacity by modeling battery degradation through its life cycle. Machine learning (ML)-based SoH models can accurately predict the battery remaining capacity based on voltage, current, and temperature. Battery SoH prediction for unmanned aerial vehicles (UAVs) is a crucial yet overlooked domain with data scarcity and high variability. Accurate battery SoH information contributes to efficient predictive maintenance, enhancing UAV profitability and flight safety. However, UAVs are compatible with a variety of batteries and the available data for each type of battery are scarce. Furthermore, the available input features from UAV batteries are limited to the built-in sensors because of the lightweight requirements. This research aims to develop an ML pipeline for UAV battery SoH prediction while mitigating data scarcity using knowledge transfer. 342 and 289 flight experiments have been conducted to collect operational data from lithium polymer batteries of 2200 mAh and 1100 mAh, respectively. Voltage, current, and throttle are selected as the input features of the ML model according to the existing literature and sensor availability. The remaining capacity is measured at every 10th experiment to label the dataset. To address data scarcity, the time-series data acquired from the experiments are transformed into images to utilize the image feature extraction capability of a pretrained ResNet-50. Finally, accurate SoH prediction models were obtained using transfer learning between two battery types.",
+      "authors": [
+        "Jiarui Xie",
+        "Lingchen Kong",
+        "Mohamed Rami Latreche",
+        "Sean Smith",
+        "Elaine Mosconi",
+        "Yaoyao Fiona Zhao"
+      ],
+      "primary_category": "cs.CE",
+      "categories": [
+        "cs.CE"
+      ],
+      "published": "2026-07-07T20:37:38+00:00",
+      "link": "https://arxiv.org/pdf/2607.06791v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Battery state-of-health prediction for UAVs, contributing to predictive maintenance and power management",
+      "llm_evidence_cn": "无人机电池健康状态预测，有助于预测性维护和功率管理",
+      "llm_evidence": "无人机电池健康状态预测，有助于预测性维护和功率管理",
+      "canonical_evidence": "无人机电池健康状态预测，有助于预测性维护和功率管理",
+      "llm_tldr_en": "This paper addresses data scarcity in UAV battery SoH prediction by using machine learning models to estimate remaining capacity from limited voltage, current, temperature features, enabling predictive maintenance and enhancing flight safety.",
+      "llm_tldr_cn": "针对无人机电池健康状态预测中数据稀缺和高度可变的问题，本文利用机器学习方法从有限的电压、电流和温度特征中估计剩余容量，实现预测性维护，从而提高无人机盈利能力和飞行安全性。",
+      "llm_tldr": "针对无人机电池健康状态预测中数据稀缺和高度可变的问题，本文利用机器学习方法从有限的电压、电流和温度特征中估计剩余容量，实现预测性维护，从而提高无人机盈利能力和飞行安全性。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "UAV power management",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.07594v1",
+      "source": "arxiv",
+      "title": "Koopman Spectral Analysis of Lithium-Ion Battery Dynamics: State of Charge as a Marginally Stable Observable",
+      "abstract": "Accurate state-of-charge (SOC) estimation remains a fundamental challenge in lithium-ion battery management systems because battery dynamics are highly nonlinear, operating-condition dependent, and sensitive to parameter variations caused by aging and temperature. Conventional model-based estimators, such as equivalent circuit model (ECM) and Kalman-filter-based approaches, rely heavily on repeated parameter identification and accurate electrochemical modeling, whereas purely data-driven methods often sacrifice physical interpretability.   This work proposes a Koopman-theoretic, data-driven framework for SOC estimation using Dynamic Mode Decomposition with control (DMDc) combined with Hankel time-delay embedding. Instead of explicitly identifying ECM parameters, the proposed approach reconstructs a lifted dynamical state space directly from measured terminal voltage and current obtained through Hybrid Pulse Power Characterization (HPPC) testing. Spectral decomposition of the identified DMDc operator reveals intrinsic battery dynamics in terms of Koopman modes and eigenvalues. The SOC dynamics naturally emerge as the slowest marginally stable mode whose eigenvalue lies closest to the unit circle, consistent with the integrator-type behavior of charge conservation. The corresponding modal coordinate is subsequently utilized as an SOC-sensitive observable.",
+      "authors": [
+        "Bakhtiar Nafis",
+        "Khalid Mahmud Labib",
+        "Saad Waheed",
+        "Shabbir Ahmed"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-07-08T16:13:20+00:00",
+      "link": "https://arxiv.org/pdf/2607.07594v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "SOC estimation for lithium-ion batteries using Koopman operator",
+      "llm_evidence_cn": "利用库普曼算子实现锂离子电池SOC估计",
+      "llm_evidence": "利用库普曼算子实现锂离子电池SOC估计",
+      "canonical_evidence": "利用库普曼算子实现锂离子电池SOC估计",
+      "llm_tldr_en": "Proposes a Koopman-based data-driven framework for accurate SOC estimation in Li-ion batteries under nonlinearities and aging, offering a physically interpretable method useful for UAV battery management.",
+      "llm_tldr_cn": "针对锂离子电池荷电状态(SOC)估计难题，提出基于库普曼算子的数据驱动框架，结合动态模式分解与汉克尔时延嵌入，在非线性、老化和温度影响下实现高精度SOC估计。该方法为电动无人机电池管理提供了物理可解释的估计手段，有助于提升能量管理策略的可靠性。",
+      "llm_tldr": "针对锂离子电池荷电状态(SOC)估计难题，提出基于库普曼算子的数据驱动框架，结合动态模式分解与汉克尔时延嵌入，在非线性、老化和温度影响下实现高精度SOC估计。该方法为电动无人机电池管理提供了物理可解释的估计手段，有助于提升能量管理策略的可靠性。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "What are the unsolved problems in hybrid UAV energy management, such as SOC control, fuel consumption, generator transients, and mission adaptation?",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

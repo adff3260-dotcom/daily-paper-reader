@@ -1,0 +1,39 @@
+{
+  "label": "2026-07-10",
+  "date": "2026-07-10",
+  "generated_at": "2026-07-10T20:04:59",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202607/10/2607.06791v1-machine-learning-based-battery-state-of-health-prediction-for-unmanned-aerial-vehicles-predictive-maintenance",
+      "section": "quick",
+      "title_en": "Machine Learning-Based Battery State-of-health Prediction for Unmanned Aerial Vehicles Predictive Maintenance",
+      "authors": "Jiarui Xie, Lingchen Kong, Mohamed Rami Latreche, Sean Smith, Elaine Mosconi, Yaoyao Fiona Zhao",
+      "date": "2026-07-07",
+      "pdf": "https://arxiv.org/pdf/2607.06791v1",
+      "score": "7.0",
+      "evidence": "无人机电池健康状态预测，有助于预测性维护和功率管理",
+      "tldr": "针对无人机电池数据稀缺问题，提出将时序数据转为图像并利用预训练ResNet-50的迁移学习方法。在2200mAh和1100mAh锂聚合物电池上分别进行342和289次飞行实验，以电压、电流、油门为输入特征，每10次实验测量剩余容量。通过两种电池间的知识迁移，获得准确的SoH预测模型，为无人机预测性维护奠定基础。",
+      "tags": "query:uav",
+      "abstract_en": "Battery state-of-health (SoH) prediction aims to estimate the remaining capacity by modeling battery degradation through its life cycle. Machine learning (ML)-based SoH models can accurately predict the battery remaining capacity based on voltage, current, and temperature. Battery SoH prediction for unmanned aerial vehicles (UAVs) is a crucial yet overlooked domain with data scarcity and high variability. Accurate battery SoH information contributes to efficient predictive maintenance, enhancing UAV profitability and flight safety. However, UAVs are compatible with a variety of batteries and the available data for each type of battery are scarce. Furthermore, the available input features from UAV batteries are limited to the built-in sensors because of the lightweight requirements. This research aims to develop an ML pipeline for UAV battery SoH prediction while mitigating data scarcity using knowledge transfer. 342 and 289 flight experiments have been conducted to collect operational data from lithium polymer batteries of 2200 mAh and 1100 mAh, respectively. Voltage, current, and throttle are selected as the input features of the ML model according to the existing literature and sensor availability. The remaining capacity is measured at every 10th experiment to label the dataset. To address data scarcity, the time-series data acquired from the experiments are transformed into images to utilize the image feature extraction capability of a pretrained ResNet-50. Finally, accurate SoH prediction models were obtained using transfer learning between two battery types.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202607/10/2607.07594v1-koopman-spectral-analysis-of-lithium-ion-battery-dynamics-state-of-charge-as-a-marginally-stable-observable",
+      "section": "quick",
+      "title_en": "Koopman Spectral Analysis of Lithium-Ion Battery Dynamics: State of Charge as a Marginally Stable Observable",
+      "authors": "Bakhtiar Nafis, Khalid Mahmud Labib, Saad Waheed, Shabbir Ahmed",
+      "date": "2026-07-08",
+      "pdf": "https://arxiv.org/pdf/2607.07594v1",
+      "score": "6.0",
+      "evidence": "利用库普曼算子实现锂离子电池SOC估计",
+      "tldr": "锂离子电池SOC估计面临高度非线性与工况依赖性，传统模型需重复参数辨识。本研究提出基于Koopman算子的数据驱动框架，利用DMDc与Hankel时间延迟嵌入，从HPPC测试的电压电流数据重建提升动态系统。谱分解揭示SOC对应最慢的边界稳定模态，其模态坐标可直接作为SOC敏感观测量。该方法避免显式参数辨识，增强了物理可解释性。",
+      "tags": "query:uav",
+      "abstract_en": "Accurate state-of-charge (SOC) estimation remains a fundamental challenge in lithium-ion battery management systems because battery dynamics are highly nonlinear, operating-condition dependent, and sensitive to parameter variations caused by aging and temperature. Conventional model-based estimators, such as equivalent circuit model (ECM) and Kalman-filter-based approaches, rely heavily on repeated parameter identification and accurate electrochemical modeling, whereas purely data-driven methods often sacrifice physical interpretability.   This work proposes a Koopman-theoretic, data-driven framework for SOC estimation using Dynamic Mode Decomposition with control (DMDc) combined with Hankel time-delay embedding. Instead of explicitly identifying ECM parameters, the proposed approach reconstructs a lifted dynamical state space directly from measured terminal voltage and current obtained through Hybrid Pulse Power Characterization (HPPC) testing. Spectral decomposition of the identified DMDc operator reveals intrinsic battery dynamics in terms of Koopman modes and eigenvalues. The SOC dynamics naturally emerge as the slowest marginally stable mode whose eigenvalue lies closest to the unit circle, consistent with the integrator-type behavior of charge conservation. The corresponding modal coordinate is subsequently utilized as an SOC-sensitive observable.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
