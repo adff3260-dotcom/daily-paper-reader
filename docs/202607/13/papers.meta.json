@@ -1,0 +1,24 @@
+{
+  "label": "2026-07-13",
+  "date": "2026-07-13",
+  "generated_at": "2026-07-13T20:28:12",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202607/13/2607.07350v1-towards-reliable-aerial-ground-vehicle-collaboration-an-integrated-planning-and-autonomy-framework-for-field-deployment",
+      "section": "deep",
+      "title_en": "Towards Reliable Aerial Ground Vehicle Collaboration: An Integrated Planning and Autonomy Framework for Field Deployment",
+      "authors": "Md Safwan Mondal, Luca Russo, James D. Humann, James M. Dotterweich, Pranav Bhounsule",
+      "date": "2026-07-07",
+      "pdf": "https://arxiv.org/pdf/2607.07350v1",
+      "score": "8.0",
+      "evidence": "无人机通过地面车辆移动充电协调实现能量管理，解决续航与功率问题",
+      "tldr": "长航时无人机的任务范围受限于有限的飞行时间，与无人车协同进行移动充电是扩展航程的有效途径，但这带来了无人机路由、无人车道路约束、能量管理和会合调度紧密耦合的协同规划难题。为此，本文提出一个集成规划与自主框架，核心采用深度强化学习规划器联合优化无人机访问兴趣点序列和无人车会合位置，并构建双层YAML标准化使命API及基于PX4/MAVSDK和ROS2/Nav2的完整自主软件栈。针对环境不确定性，设计了在线轻量级会合感知重规划器，显著将能量裕度违规从83.33%降至20%。户外实地实验包括搜救场景，验证了系统的鲁棒协同导航和动态适应能力。该框架弥合了规划与执行的鸿沟，为可靠空地协作野外部署提供了解决方案。",
+      "tags": "query:uav",
+      "abstract_en": "Limited flight endurance significantly restricts the operational range of unmanned aerial vehicles (UAVs) in long duration missions such as surveillance and inspection, where multiple spatially distributed Areas of Interest (AOIs) must be visited. These tasks require efficient routing determining the sequence of visits which directly impacts mission time, energy consumption, and overall feasibility. Pairing UAVs with unmanned ground vehicles (UGVs) for mobile recharging offers a promising solution, but introduces a tightly coupled cooperative routing problem involving UAV route planning, UGV road constrained movement, energy management, and rendezvous scheduling under uncertainty. In this work, we present an integrated planning and autonomy framework for reliable field deployment. We formulate the problem as an energy constrained cooperative routing task and solve it using a Deep Reinforcement Learning (DRL) based planner that jointly optimizes the UAV visitation sequence and rendezvous locations with the UGV, outperforming baseline heuristics in minimizing total mission time. To bridge the gap between planning and execution, we introduce a standardized two layer YAML based mission API that captures environment states and structures lightweight, synchronized action sequences. This framework is supported by a complete autonomy stack using PX4/MAVSDK for UAV control and ROS 2/Nav2 for UGV navigation. Furthermore, we propose a lightweight Rendezvous Aware Replanner (RARP) that operates online to handle environmental uncertainties, reducing energy margin violations from 83.33% to 20.00%. The full system is validated through outdoor field experiments, demonstrating robust cooperative navigation and adaptability in dynamic tasks, including a search and rescue scenario with vision language model (VLM) based hazard detection",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
