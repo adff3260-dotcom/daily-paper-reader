@@ -1,0 +1,186 @@
+Title: Koopman Spectral Analysis of Lithium-Ion Battery Dynamics: State of Charge as a Marginally Stable Observable
+
+URL Source: https://arxiv.org/pdf/2607.07594v2
+
+Published Time: Fri, 10 Jul 2026 01:06:47 GMT
+
+Number of Pages: 14
+
+Markdown Content:
+# Koopman Spectral Analysis of Lithium-Ion Battery Dynamics: State of Charge as a Marginally Stable Observable 
+
+Bakhtiar Nafis 1, Khalid Mahmud Labib 1, Saad Waheed 1, and Shabbir Ahmed 1, ∗
+
+> 1
+
+Dynamical Systems and Signals Lab (DSSL), Department of Mechanical Engineering, South Dakota State University, Brookings, SD 
+
+> ∗
+
+Corresponding author: shabbir.ahmed@sdstate.edu 
+
+Abstract 
+
+Accurate state-of-charge (SOC) estimation in lithium-ion batteries remains a challenge due to its strongly nonlinear electrochemical dynamics, operating-condition-dependent parameters, and aging-induced model drift. Conventional equivalent circuit model (ECM) and Kalman-filter-based estimators require repeated parameter identification, while purely data-driven methods sacrifice physical interpretability. We propose a Koopman operator theoretic SOC estimation framework that leverages dynamic mode decomposition with control (DMDc) and Hankel time-delay embedding to identify a linear representation of battery dynamics from input-output measurements. Terminal voltage and current measurements from hybrid pulse power charac-terization (HPPC) tests are lifted into a high-dimensional observable space via Hankel embed-ding, enabling linear approximation of the underlying nonlinear dynamics. DMDc identifies the state-transition operator directly from data, and eigen-decomposition of this operator re-veals the intrinsic Koopman spectral structure of the battery. The SOC dynamics emerge as the slowest marginally stable mode, with eigenvalue nearest to the unit circle, consistent with the integrator-type pole implied by charge conservation. The corresponding modal coordinate provides a physically grounded SOC-sensitive observable, extracted without any explicit cir-cuit parameter identification. The proposed framework reconstructs terminal voltage with an RMSE of 0.0131 V and estimates SOC with an RMSE of 0.0043%, outperforming both Coulomb counting and the extended Kalman filter. 
+
+Keywords: Lithium-ion batteries, State of Charge estimation, Dynamic Mode Decomposi-tion with control, Koopman operator, Hankel embedding, Battery Management System 
+
+1arXiv:2607.07594v2 [eess.SY] 9 Jul 2026 1 Introduction 
+
+Lithium-ion batteries have become the dominant energy storage technology across a broad range of modern applications owing to their high energy density, long cycle life, low self-discharge rate, and superior power capability [1–3]. They are extensively deployed in electric vehicles (EVs), portable electronics, grid-scale renewable energy storage systems, aerospace platforms, and emerging smart-grid infrastructures [4–6]. The safe and efficient operation of these systems depends critically on advanced battery management systems (BMS), which monitor and estimate key internal states including state of charge (SOC), state of health (SOH), and state of power (SOP). [1–3]. Among the various internal battery states, the state of charge (SOC) is one of the most funda-mental and operationally significant quantities. From an electrochemical perspective, SOC reflects the normalized concentration of lithium ions stored within the active electrode materials and is therefore directly related to the degree of lithium intercalation and deintercalation. Equivalently, it represents the fraction of electrochemically available charge remaining relative to the fully charged state. Accurate SOC estimation is essential for preventing overcharge and deep discharge, max-imizing battery utilization, extending service life, and enabling reliable driving-range prediction in EVs [4, 6–8]. Since SOC cannot be directly measured by any sensor, it must be inferred from externally accessible signals such as terminal voltage and applied current, making it an inherently challenging state estimation problem [7, 8]. Numerous SOC estimation approaches have been proposed in the literature. Coulomb counting, which integrates the measured current over time, remains one of the simplest and most widely implemented methods because of its low computational burden [7, 8]. However, it suffers from cumulative integration error, sensor drift, uncertainty in Coulombic efficiency, and sensitivity to the initial SOC value [7, 9]. These limitations motivate the development of more sophisticated estimation frameworks. Model-based approaches, particularly those employing equivalent circuit models (ECMs), have become widely adopted because they provide a computationally efficient representation of bat-tery dynamics suitable for real-time implementation [10–12]. In these approaches, the battery is represented using combinations of resistors and capacitors that capture the instantaneous ohmic response and polarization dynamics [10, 13]. Observer-based estimation algorithms such as the ex-tended Kalman filter (EKF), unscented Kalman filter (UKF), sigma-point Kalman filter (SPKF), and adaptive Kalman filtering techniques are commonly combined with ECMs to estimate SOC in real time [14–18]. Although these approaches often provide good estimation accuracy, their performance depends strongly on accurate identification of model parameters, including ohmic re-sistance, polarization resistances, and capacitances [10, 11, 13]. These parameters vary significantly with temperature, current rate, aging condition, and SOC, necessitating periodic recalibration and increasing modeling uncertainty [11, 18]. Physics-based electrochemical models offer an alternative framework by explicitly describing lithium-ion transport, charge-transfer reactions, electrolyte diffusion, and solid-state diffusion within battery electrodes [19–21]. Among these, the Doyle–Fuller–Newman (DFN) pseudo-two-dimensional model is widely regarded as the benchmark electrochemical model because of its high predictive fidelity [19,20]. Reduced-order electrochemical models have also been proposed to improve compu-tational efficiency while retaining essential physical behavior [21, 22]. Nevertheless, the complexity of these coupled partial differential equation systems often renders them computationally expensive for embedded real-time BMS applications [18, 22]. More recently, data-driven approaches have attracted significant attention because they avoid explicit physical modeling and instead learn battery behavior directly from measurement data. Machine learning techniques including artificial neural networks, support vector machines, deep 2neural networks, and long short-term memory (LSTM) networks have demonstrated promising SOC estimation performance [23–26]. Despite their predictive capabilities, these approaches generally require large quantities of labeled training data and often suffer from limited interpretability and reduced generalization across battery chemistries, operating conditions, and aging states [7, 23, 24]. To address these limitations, this work proposes a state-of-charge estimation framework based on Dynamic Mode Decomposition with control (DMDc). Dynamic Mode Decomposition (DMD), originally introduced by Schmid [27], is a data-driven technique that extracts coherent dynamical structures and spectral information directly from sequential measurements. Subsequent theoretical developments established deep connections between DMD and Koopman operator theory, provid-ing a rigorous framework for representing nonlinear systems through linear operators acting on observables [28–31]. Proctor et al. [32] extended classical DMD to systems influenced by external inputs, yielding DMDc, which identifies linear state-space models directly from input-output data without requiring prior knowledge of governing equations. The theoretical foundation of DMDc is particularly attractive for battery applications because the applied current naturally acts as an external forcing input, while the measured terminal volt-age serves as an observable of the underlying electrochemical dynamics. Furthermore, recent de-velopments in Koopman theory have demonstrated that nonlinear dynamics can be represented approximately linearly in suitably chosen observable spaces [30, 33–35]. Time-delay embedding techniques based on Takens’ embedding theorem provide a practical means of constructing such observable spaces directly from measured signals [36]. The connection between Hankel delay em-beddings, Koopman invariant subspaces, and DMD has been rigorously established in several recent studies [37–41]. In this work, time-delay (Hankel) embedding is applied to terminal voltage measurements ob-tained from hybrid pulse power characterization (HPPC) testing [42, 43]. The resulting lifted state representation enables DMDc to identify the dominant battery dynamics directly from measured voltage and current data. Eigen-decomposition of the identified system matrix reveals a hierarchy of dynamic modes associated with intrinsic battery processes. Notably, the SOC dynamics emerge naturally as the mode whose eigenvalue lies closest to unity, consistent with the integrator structure implied by charge conservation [7, 14, 44]. A distinguishing advantage of the proposed framework is that it bypasses explicit parameter identification of equivalent circuit models while still recovering physically interpretable dynamical information. Consequently, the proposed approach provides a computationally efficient pathway toward data-driven SOC estimation. The remainder of this paper is organized as follows. Section 2 presents the theoretical framework, including the equivalent circuit model, Extended Kalman Fil-ter formulation, Hankel time-delay embedding, and Dynamic Mode Decomposition with control (DMDc), along with the experimental methodology and SOC initialization procedure. Section 3 presents the voltage reconstruction results, Koopman spectral interpretation of battery dynamics, and comparative SOC estimation performance analysis. The limitations of the present approach and future research directions are also discussed. Finally, Section 4 summarizes the major findings and contributions of this work. 32 Methodology 
+
+2.1 Battery Voltage Dynamics as a Forced Nonlinear System 
+
+A lithium-ion battery can be regarded as a forced dynamical system in which the terminal voltage 
+
+Vt evolves under the influence of an external input, the applied current I:
+
+dV t
+
+dt = f (Vt, I ). (1) Because the relationship between terminal voltage, internal electrochemical states, and applied current is strongly nonlinear, f (·) in Eq. 1 cannot, in general, be reduced to a linear differential equation. To enable a linear data-driven treatment of this nonlinear system, the voltage and current measurements are lifted into a higher-dimensional observable space in which the dynamics behave approximately linearly. This is achieved through Hankel time-delay embedding, a procedure that is closely connected to Koopman operator theory [38, 39]. 
+
+2.2 Hankel Time-Delay Embedding 
+
+Time-delay embedding reconstructs a higher-dimensional state space from a scalar time series by stacking successive delayed measurements into a Hankel matrix. Given a discrete voltage sequence [v(1) , v (2) , . . . , v (N )] sampled at N time points with embedding dimension d, the Hankel matrix is constructed as 
+
+Hv =
+
+
+
+v(1) v(2) · · · v(n)
+
+v(2) v(3) · · · v(n + 1) ... ... . . . ...
+
+v(d) v(d + 1) · · · v(N )
+
+ , (2) where n = N − d + 1 and Hv ∈ Rd×n. This procedure raises the dimensionality of the original scalar voltage signal from one to d. The additional rows of Hv encode temporal correlations that are otherwise inaccessible from a single instantaneous voltage measurement, allowing the stacked observable to capture hidden internal states of the battery, such as the state of charge (SOC) and polarization voltages, that are not directly measurable [38]. 
+
+2.3 Dynamic Mode Decomposition with Control 
+
+Once the Hankel matrix of voltage is formed, Dynamic Mode Decomposition with control (DMDc) [32], an extension of the original DMD algorithm [27], is applied to identify a linear state-space model relating the lifted voltage states to the applied current input. The embedded state is assumed to evolve as 
+
+xk+1 = Ax k + Bu k, (3) where xk is the kth column of the Hankel-embedded voltage state, uk is the corresponding applied current, A is the state-transition matrix, and B is the input matrix. Collecting snapshots into the data matrices X = [ x1, . . . , x n−1], X′ = [ x2, . . . , x n], and U = [ u1, . . . , u n−1], the relationship in Eq. 3 can be written as X′ ≈ AX +BU . Stacking X and U into the augmented matrix Ω = [ X U ]T
+
+and defining G = [ A B ], the best-fit operators are obtained via the least-squares solution 
+
+G ≈ X′ Ω†, (4) where Ω † denotes the Moore–Penrose pseudoinverse, computed using a truncated singular value decomposition for numerical robustness. The resulting matrix A governs the intrinsic voltage dynamics, while B captures the influence of the applied current. 42.4 Eigen-Decomposition and Mode Identification 
+
+The system matrix A identified from Eq. 4 captures the full dynamics of the lifted voltage state. To extract the internal dynamical structure, eigen-decomposition is applied to A,
+
+AΦ = ΦΛ , (5) where Λ = diag( λ1, . . . , λ r) contains the discrete-time eigenvalues and Φ = [ ϕ1, . . . , ϕ r] contains the corresponding eigenvectors, or dynamic modes. Each eigenvalue λi governs the temporal evolution of its associated mode, so that the full set of eigenvalues collectively represents the time motion of the distinct internal states and dynamical processes contributing to the measured voltage. 
+
+2.5 SOC Mode Identification 
+
+The continuous-time evolution of SOC under Coulomb counting is given by 
+
+z(t) = z0 − 1
+
+Q
+
+Z t
+
+> 0
+
+η i (τ ) dτ, (6) where Q is the cell capacity and η is the Coulombic efficiency. Taking the Laplace transform of Eq. 6 and neglecting the initial-condition term yields the transfer function 
+
+Z(s)
+
+I(s) = − ηQs . (7) The transfer function in Eq. 7 has a pole at the origin ( s = 0), which corresponds to a continuous-time eigenvalue λc = 0. Continuous-time and discrete-time eigenvalues are related through the standard sampling relation 
+
+λd = eλc ∆t, (8) where ∆ t is the sampling interval. Substituting λc = 0 into Eq. 8 gives λd = 1. The SOC dynamics therefore correspond, in discrete time, to a Koopman eigenvalue equal to unity, reflecting the marginally stable, integrator-type nature of charge conservation. Consistent with Eq. 8, the slow, non-oscillatory SOC dynamics correspond to a discrete-time eigenvalue λd = 1, equivalent to a continuous-time eigenvalue λc = 0. The OCV, being a monotonic function of SOC, evolves on a much slower timescale governed by the integrator dynamics derived above. Since this eigenvalue has no imaginary component, it is consistent with the non-oscillatory character of the OCV mode; and since its continuous-time real part is also zero, the corresponding dynamics neither grow nor decay, but instead evolve quasi-statically. To decouple the contribution of each internal dynamical process from the measured terminal voltage, the voltage Hankel matrix is projected onto the identified mode matrix, 
+
+Y = Φ −1Hv. (9) The row of Y corresponding to the SOC eigenvalue ( λd ≈ 1) yields the raw SOC-sensitive modal coordinate. After Min–Max Normalization of this raw coordinate over the operating SOC range, the resulting signal provides the DMDc-based SOC estimate. 5Figure 1: Workflow of the proposed DMDc-based SOC estimation framework. HPPC current and voltage measurements are first arranged using Hankel time-delay embedding. DMDc is then applied to identify the lifted linear operator. Koopman eigenvalues, modes, and modal coordinates are subsequently extracted through spectral decomposition. The modal coordinate associated with the eigenvalue closest to the unit circle is identified as the SOC-sensitive observable and used for SOC estimation. 
+
+2.6 State-Space Battery Model and Extended Kalman Filter 
+
+An Extended Kalman Filter (EKF) based on the 2RC ECM was implemented as a benchmark. The battery state vector is defined as 
+
+xk = zk V1,k V2,k 
+
+T , (10) where zk is the SOC and V1,k , V2,k are the polarization voltages of the two RC branches. The state equations governing their discrete-time evolution are 
+
+zk+1 = zk − ηI k∆tQ , (11) 
+
+Vj,k +1 = e−∆t/τ j Vj,k + Rj
+
+
+
+1 − e−∆t/τ j
+
+
+
+Ik, j = 1 , 2, (12) where Q is the nominal capacity, η is the Coulombic efficiency, ∆ t is the sampling interval, and 
+
+τj = Rj Cj is the time constant of the jth RC branch. The terminal voltage measurement equation is 
+
+Vt,k = OCV (zk) − IkR0 − V1,k − V2,k , (13) where OCV (zk) is the nonlinear open-circuit voltage function and R0 is the ohmic resistance. Because Eq. 13 is nonlinear in zk, the EKF linearizes the measurement model about the current state estimate via the Jacobian ∂OCV /∂z at each correction step. The filter then alternates between propagating the state forward using the current input and correcting the estimate using the voltage innovation, weighted by the Kalman gain. 63 Results and Discussion 
+
+3.1 Experimental Data 
+
+The HPPC test was employed to generate a rich excitation profile containing charge pulses, dis-charge pulses, and relaxation intervals, thereby enabling the concurrent observation of both tran-sient and long-timescale battery dynamics. The applied current and measured voltage profiles are presented in Fig. 2A. These experimental measurements were subsequently utilized for equivalent circuit model (ECM) parameter identification, extended Kalman filter (EKF) implementation, and dynamic mode decomposition with control (DMDc)-based data-driven modeling. 
+
+3.2 ECM Parameter Variation and EKF Implementation 
+
+The identified 2RC ECM parameters exhibit substantial variation across different state-of-charge (SOC) regions, indicating the strongly nonlinear and operating-condition-dependent nature of lithium-ion battery dynamics. In particular, the polarization resistances and capacitances do not remain constant over the SOC range; rather, their values are significantly influenced by the prevail-ing battery operating condition. As a result, such variability introduces non-negligible modeling uncertainty into ECM-based estimators and necessitates repeated parameter identification proce-dures for different operating conditions, which in turn limits the practical applicability of purely model-based approaches. In order to provide a rigorous comparison with the proposed data-driven framework, an EKF based on the identified 2RC ECM was implemented. The EKF utilized the following initial covari-ance and noise covariance matrices: 
+
+Pinit = diag  0.05 2, 0.01 2, 0.01 2 ,Qnoise = diag  10 −6, 10 −3, 10 −3 ,Rnoise = 10 −4.
+
+(14) It should be noted that the initial covariance matrix Pinit reflects comparatively larger uncer-tainty in the initial SOC estimate relative to the polarization voltages. The process-noise covariance 
+
+Qnoise is employed to account for model uncertainty associated with unmodeled battery dynamics and parameter variations across operating conditions, whereas the measurement-noise covariance 
+
+Rnoise reflects the inherent uncertainty in the voltage sensor measurements. 
+
+3.3 Voltage Reconstruction Accuracy 
+
+In the context of the proposed framework, the DMDc model was trained using approximately 75% of the measured voltage and current data. A Hankel time-delay embedding dimension of 2000 was employed in order to reconstruct the lifted observable space and to retain sufficient temporal information associated with the internal electrochemical dynamics. It can be observed from Fig. 2B that the identified DMDc model demonstrates strong voltage reconstruction capability over the complete test cycle. The predicted response accurately captures both the rapid transient voltage variations induced by high-rate current pulses and the slow relaxation behavior observed during the rest intervals. It should be mentioned here that the Hankel-DMDc framework was evaluated exclusively on the held-out portion of the data, thereby confirming its generalization capability beyond the training window. Fig. 2B shows the comparison between the experimentally measured terminal voltage, EKF and the DMDc-predicted response over the complete test cycle. 7Fig. 2C provides a zoomed view of a representative transient segment, confirming accurate phase and amplitude tracking during high-rate current pulses. The pointwise voltage prediction error across the full HPPC test cycle is shown in Fig. 2D. The residuals remain bounded throughout the cycle, including during high-rate pulse transients. Furthermore, it can be observed from Table 1 that the DMDc framework achieves a substantially lower voltage prediction RMSE of 0.0131 V compared to the EKF value of 0.0439 V, indicating that the delay-embedded Koopman representation more effectively captures both transient and long-timescale battery dynamics directly from measurement data, without reliance on a parameterized physics model. Table 1: Voltage prediction accuracy comparison Method RMSE (V) MAE (V) DMDc 0.0131 0.0100 EKF 0.0439 0.0007 
+
+3.4 Koopman Spectral Interpretation of Battery Dynamics 
+
+Following DMDc identification, eigen-decomposition of the learned state-transition matrix was performed, revealing a collection of dynamic modes associated with distinct temporal behaviors of the battery system. Among the identified eigenvalues, the mode whose eigenvalue lies closest to the unit circle was identified as the SOC-sensitive Koopman mode; this spectral identification constitutes the foundation of the proposed estimation strategy. It can be observed from Fig. 3A that, from the 2000 identified modes, the dominant SOC-associated mode corresponds to mode number 457 with eigenvalue λSOC = 1 .000001. This eigen-value lies approximately on the unit circle with nearly zero oscillatory frequency, which is consistent with the integrator-type dynamics of SOC derived from charge conservation. Since SOC evolves through cumulative charge accumulation rather than exponential decay, its corresponding Koop-man dynamics remain marginally stable over time. Due to lifting of voltage, some spurious modes also evolve. This spectral interpretation demonstrates that the DMDc framework naturally separates battery dynamics according to their intrinsic temporal scales without requiring explicit electrochemical pa-rameterization, which constitutes a significant advantage over physics-based estimation approaches. 
+
+3.5 SOC Estimation Performance 
+
+The modal coordinate associated with the slowest Koopman mode was extracted and interpreted as the SOC-sensitive observable. After min–max normalization, the extracted modal coordinate provides the DMDc-based SOC estimate. Fig. 3B presents the comparison of DMDc-based SOC estimation against EKF, Coulomb-counting estimation, and the reference SOC derived from exper-imental discharge capacity data across the full HPPC cycle. The DMDc estimator tracks both the slow discharge trend and the fast pulse-induced transients accurately. Fig. 3C shows a zoomed view of a representative SOC segment during high-rate current pulses, where Coulomb counting begins to accumulate drift while the DMDc estimate remains closely aligned with the reference. Fig. 3D presents the pointwise SOC estimation error for all three methods across the full cycle. The SOC estimation accuracy was evaluated using the root-mean-square error (RMSE) and mean absolute error (MAE) computed relative to the reference SOC. The results are summarized in Tables 2. 8A HPPC test voltage and current profile B Measured vs. predicted terminal voltage 
+
+C Zoomed view of voltage transient region D Pointwise voltage prediction error 
+
+Figure 2: DMDc-based terminal voltage prediction evaluated on the full HPPC test cycle. ( A) Hy-brid Pulse Power Characterization (HPPC) test profile showing the measured terminal voltage and applied current excitation, including charge-sustaining rest periods and symmetric charge/discharge pulses across the full SOC range. ( B) Comparison between experimentally measured terminal volt-age and the DMDc-predicted response over the complete test cycle. The DMDc model, driven solely by the measured current input, accurately reconstructs both the quasi-static OCV trajectory and the fast pulse-induced voltage transients. ( C ) Zoomed view of a representative segment of the voltage response, highlighting the model’s ability to capture sharp voltage transitions during high-rate current pulses with minimal phase and amplitude error. ( D) Pointwise voltage prediction error across the full HPPC test, demonstrating bounded residuals throughout the cycle and confirming the generalization capability of the Hankel-DMDc framework beyond the training window. Table 2: SOC estimation performance comparison Method RMSE (%) MAE (%) Coulomb counting 0.0047 0.0045 EKF (2RC ECM) 0.0078 0.0065 DMDc 0.0043 0.0041 It can be observed from Table 2 that the DMDc-based approach achieves the lowest SOC estimation error among all compared methods, with an RMSE of 0.0043% and an MAE of 0.0041%. Although Coulomb counting provides comparatively accurate short-duration SOC estimation, it remains sensitive to cumulative integration drift and initialization uncertainty, which in turn limits its reliability over extended operating cycles. The EKF performance is additionally influenced by parameter mismatch and model uncertainty arising from variations in ECM parameters across 9A Eigenvalue spectrum in the complex plane B SOC estimation across full HPPC cycle 
+
+C Zoomed view of SOC transient region D Pointwise SOC estimation error 
+
+Figure 3: Koopman-theoretic analysis of Li-ion battery dynamics via DMDc. ( A) Eigenvalues of the learned DMDc operator plotted in the complex plane against the unit circle. Eigenvalues near the unit circle correspond to slowly decaying dynamic modes; the SOC-sensitive mode (highlighted) exhibits the smallest decay rate, confirming its role in governing long-timescale capacity fade be-havior. ( B ) Comparison of DMDc-based SOC estimation against Coulomb-counting SOC and the reference SOC derived from experimental discharge capacity data across the full HPPC test cycle. The DMDc estimator accurately tracks both slow discharge trends and fast pulse-induced tran-sients. ( C ) Zoomed view of a representative SOC segment highlighting transient tracking fidelity during high-rate current pulses, where Coulomb-counting accumulates drift and the reference SOC exhibits stepwise changes. ( D) Pointwise SOC estimation error for all three methods, demonstrat-ing that the DMDc-based approach maintains consistently lower error magnitude with bounded deviation from the experimental reference. different SOC regions, as previously discussed. 
+
+# 4 Conclusion 
+
+The proposed framework demonstrates that Koopman spectral analysis provides a physically mean-ingful decomposition of lithium-ion battery dynamics without requiring explicit electrochemical parameterization. In this context, it is of paramount importance to note that the marginally stable mode with eigenvalue closest to unity directly encodes charge-conservation dynamics. As a result, the Hankel-DMDc formulation effectively achieves a data-driven separation of dynamic timescales that is physically interpretable and consistent with established electrochemical theory. Although the proposed framework successfully identifies physically interpretable battery dy-10 namics and demonstrates accurate SOC trend estimation, some limitations remain and may be addressed in future investigations. In the first instance, it should be mentioned that the extracted SOC-sensitive modal coordinate does not directly provide quantitatively calibrated SOC values in physical units; min–max normalization is required to map the modal evolution into the SOC oper-ating range. A more rigorous quantitative mapping between Koopman coordinates and physically measurable SOC constitutes an open problem that warrants further investigation. In addition, the present DMDc formulation assumes a globally linear approximation within the lifted observable space. However, lithium-ion batteries exhibit strongly nonlinear behavior influ-enced by SOC and temperature variation, current rate, hysteresis, and degradation level. As a result, significant battery aging may alter the underlying electrochemical dynamics and shift the Koopman spectral structure, potentially reducing some estimation accuracy if the model is not up-dated or retrained accordingly. Furthermore, it should also be noted that multiple electrochemical processes may contribute jointly to a single Koopman mode — a phenomenon commonly referred to as mode mixing — which limits direct one-to-one correspondence between DMDc modes and exact electrochemical states. Upon consideration of these factors, future research may focus on advanced Koopman-based decomposition techniques in order to improve spectral separation of closely coupled electrochemical processes. Nonlinear observable lifting strategies and adaptive Koopman representations capable of maintaining robustness under battery aging and temperature variation can also be investigated. Extension toward state-of-health (SOH) estimation and degradation diagnostics represents another important direction, since long-term spectral changes in Koopman eigenvalues may provide valuable indicators of capacity fade and internal resistance growth. Finally, real-time implementation within embedded battery management systems (BMS), and extension to different battery chemistries, battery packs, and other electrochemical energy-storage technologies, may be pursued. This work paves the way for the development of a thorough Koopman-theoretic framework for comprehensive battery state estimation and health monitoring. 
+
+# Acknowledgments 
+
+This work is supported by National Science Foundation (NSF), United States, Award Number: 2501703 and CRG grant from South Dakota Board of Regents (SDBOR). 
+
+# References 
+
+[1] Xiong, Rui, Li, Linlin and Tian, Jinpeng. “Towards a smarter battery management system: A critical review on battery state of health monitoring methods.” Journal of Power Sources 
+
+Vol. 405 (2018): pp. 18–29. DOI 10.1016/j.jpowsour.2018.10.019. [2] Wang, Y et al. “Review of battery management systems.” Applied Energy Vol. 228 (2017): pp. 1512–1525. [3] Feng, X et al. “Review of battery management systems.” Renewable and Sustainable Energy Reviews Vol. 103 (2019): pp. 60–75. [4] He, Hongwen et al. “State-of-charge estimation of lithium-ion batteries.” Energies Vol. 4 No. 4 (2011): pp. 582–598. [5] Berecibar, M et al. “Critical review of state of health estimation methods.” Renewable and Sustainable Energy Reviews Vol. 56 (2016): pp. 572–587. 11 [6] Zheng, Y et al. “State estimation techniques for lithium-ion batteries.” Energies Vol. 11 (2018): p. 1822. [7] Movassagh, Koosha, Raihan, Ahmed, Bhattacharya, Bhaskar and Pattipati, Krishna. “A Critical Look at Coulomb Counting Approach for State of Charge Estimation in Batteries.” 
+
+Energies Vol. 14 No. 14 (2021): p. 4074. DOI 10.3390/en14144074. [8] Piller, S et al. “Methods for state-of-charge determination.” Journal of Power Sources Vol. 96 (2001): pp. 113–120. [9] Ng, K et al. “Enhanced coulomb counting method.” Applied Energy Vol. 86 (2011): pp. 1506–1511. [10] Hu, Xiaosong, Li, Shengbo and Peng, Huei. “A comparative study of equivalent circuit models for Li-ion batteries.” Journal of Power Sources Vol. 198 (2012): pp. 359–367. DOI 10.1016/j. jpowsour.2011.10.013. [11] Lai, Xin, Zheng, Yuejiu and Sun, Tao. “A comparative study of different equivalent circuit models for estimating state-of-charge of lithium-ion batteries.” Electrochimica Acta Vol. 259 (2018): pp. 566–577. DOI 10.1016/j.electacta.2017.10.153. [12] Zhang, S. “Review on battery modeling methods.” Renewable and Sustainable Energy Reviews 
+
+Vol. 15 (2011): pp. 3126–3131. [13] Barai, A et al. “Identification of battery model parameters.” Journal of Power Sources Vol. 280 (2015): pp. 74–80. [14] Plett, Gregory L. “Extended Kalman filtering for battery management systems of LiPB-based HEV battery packs: Part 1. Background.” Journal of Power Sources Vol. 134 No. 2 (2004): pp. 252–261. DOI 10.1016/j.jpowsour.2004.02.031. [15] Plett, Gregory L. “Unscented Kalman filtering for battery management systems.” Journal of Power Sources Vol. 134 (2004): pp. 277–292. [16] Plett, Gregory L. “Sigma-point Kalman filtering for battery management systems.” Journal of Power Sources Vol. 161 (2004): pp. 1354–1368. [17] Sun, Fengchun et al. “Adaptive EKF for lithium-ion battery SOC estimation.” Energy Vol. 36 (2011): pp. 3531–3540. [18] Wei, Meng, Ye, Min, Li, Jian-Bo, Wang, Qiao and Xu, Xueqiang. “A Comparative Study of SOC Estimation Based on Equivalent Circuit Models.” Frontiers in Energy Research Vol. 10 (2022): p. 914291. DOI 10.3389/fenrg.2022.914291. [19] Doyle, Marc, Fuller, Thomas F. and Newman, John. “Modeling of galvanostatic charge and discharge of the lithium/polymer/insertion cell.” Journal of the Electrochemical Society Vol. 140 No. 6 (1993): pp. 1526–1533. DOI 10.1149/1.2221597. [20] Newman, John and Thomas-Alyea, Karen. “Modeling of lithium-ion batteries.” Electrochem-ical Systems (2004). [21] Santhanagopalan, S and White, R. “Review of models for predicting battery performance.” 
+
+Journal of Power Sources Vol. 156 (2006): pp. 620–628. 12 [22] Smith, K and Wang, C. “Control oriented battery models.” Journal of Power Sources Vol. 160 (2007): pp. 662–673. [23] Chemali, Ephrem, Kollmeyer, Phillip J., Preindl, Matthias, Ahmed, Ryan and Emadi, Ali. “Long short-term memory networks for accurate state-of-charge estimation of Li-ion batteries.” 
+
+IEEE Transactions on Industrial Electronics Vol. 65 No. 8 (2018): pp. 6730–6739. DOI 10.1109/TIE.2017.2787586. [24] Li, Y et al. “Deep learning based battery state estimation.” Applied Energy Vol. 250 (2019): pp. 983–993. [25] Yang, F et al. “State estimation using deep neural networks.” Energy Vol. 201 (2020): p. 117664. [26] Sehgal, A et al. “Battery health prediction using machine learning.” Applied Energy Vol. 250 (2019): pp. 1110–1121. [27] Schmid, Peter J. “Dynamic mode decomposition of numerical and experimental data.” Journal of Fluid Mechanics Vol. 656 (2010): pp. 5–28. DOI 10.1017/S0022112010001217. [28] Rowley, Clarence et al. “Spectral analysis of nonlinear flows.” Journal of Fluid Mechanics 
+
+Vol. 641 (2009): pp. 115–127. [29] Mezic, Igor. “Spectral properties of dynamical systems.” Nonlinear Dynamics Vol. 41 (2005): pp. 309–325. [30] Mezic, Igor. “Analysis of fluid flows via Koopman operator.” Annual Review of Fluid Me-chanics Vol. 45 (2013): pp. 357–378. [31] Tu, Jonathan H et al. “On dynamic mode decomposition.” Journal of Computational Dynamics 
+
+Vol. 1 (2014): pp. 391–421. [32] Proctor, Joshua L., Brunton, Steven L. and Kutz, J. Nathan. “Dynamic Mode Decomposition with Control.” SIAM Journal on Applied Dynamical Systems Vol. 15 No. 1 (2016): pp. 142– 161. DOI 10.1137/15M1013857. [33] Mauroy, Alexandre et al. The Koopman Operator in Systems and Control . Springer (2020). [34] Peitz, Sebastian and Klus, Stefan. “Koopman operator based model reduction.” Automatica 
+
+Vol. 106 (2019): pp. 184–192. [35] Surana, Amit and Banaszuk, Andrzej. “Linear observer synthesis via Koopman operator.” 
+
+IFAC Vol. 49 (2016): pp. 716–723. [36] Takens, Floris. “Detecting strange attractors in turbulence.” Lecture Notes in Mathematics 
+
+Vol. 898 (1981): pp. 366–381. [37] Arbabi, Hassan and Mezic, Igor. “Ergodic theory, Koopman analysis and computation.” SIAM Journal on Applied Dynamical Systems Vol. 16 (2017): pp. 2096–2126. [38] Brunton, Bingni W., Proctor, Joshua L. and Kutz, J. Nathan. “Chaos as an inter-mittently forced linear system.” Nature Communications Vol. 8 (2017): p. 19. DOI 10.1038/s41467-017-00030-8. 13 [39] Kamb, Mason, Kaiser, Eurika, Brunton, Steven L. and Kutz, J. Nathan. “Time-Delay Observ-ables for Koopman: Theory and Applications.” SIAM Journal on Applied Dynamical Systems 
+
+Vol. 19 No. 2 (2020): pp. 886–917. DOI 10.1137/18M1216572. [40] Kutz, Nathan et al. Dynamic Mode Decomposition . SIAM (2016). [41] Brunton, Steven and Kutz, Nathan. Data-Driven Science and Engineering , 2nd ed. Cambridge University Press (2022). [42] Smith, K et al. “Pulse power characterization of lithium-ion batteries.” Journal of Power Sources Vol. 196 (2010): pp. 8723–8731. [43] Dubarry, M and Liaw, B. “Evaluation of commercial lithium-ion cells.” Journal of Power Sources Vol. 195 (2010): pp. 5415–5425. [44] Labib, Khalid Mahmud and Ahmed, Shabbir. “Modeling of Non-linear Dynamics of Lithium-ion Batteries via Delay-Embedded Dynamic Mode Decomposition.” arXiv preprint arXiv:2601.22403 (2026)URL https://arxiv.org/abs/2601.22403 .14
