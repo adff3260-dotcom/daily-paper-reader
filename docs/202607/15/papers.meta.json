@@ -1,0 +1,24 @@
+{
+  "label": "2026-07-15",
+  "date": "2026-07-15",
+  "generated_at": "2026-07-15T20:20:47",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202607/15/2607.05683v1-deep-reinforcement-learning-for-dynamic-battery-management-of-autonomous-order-pickers",
+      "section": "quick",
+      "title_en": "Deep Reinforcement Learning for Dynamic Battery Management of Autonomous Order Pickers",
+      "authors": "Taniya Shaji, Abhay Sobhanan, Christof Defryn",
+      "date": "2026-07-06",
+      "pdf": "https://arxiv.org/pdf/2607.05683v1",
+      "score": "7.0",
+      "evidence": "深度强化学习用于自主移动机器人动态电池充电管理，解决类似荷电状态控制问题",
+      "tldr": "仓库中自主移动机器人的电池充电管理直接影响订单处理效率与吞吐量，但动态随机订单环境下，固定规则启发式方法常导致资源利用低效。本文提出基于近端策略优化（PPO）的深度强化学习框架，在多区块固定充电站场景下，动态学习充电站选择与最佳充电时长，并显式考虑充电站排队等待时间。数值实验表明，所提模型相比最强基线将订单完成率提升高达6%，同时显著减少充电总时间，且在不同仓库配置与到达率下保持鲁棒。该策略为协调多机器人充电提供了可解释的运营洞察，超越传统基准。",
+      "tags": "query:uav",
+      "abstract_en": "Battery charging of Autonomous Mobile Robots (AMRs) in warehouses is a critical operational challenge that heavily impacts both order processing times and throughput. In this study, we address the dynamic AMR charging problem under stochastic order arrivals, where robots must learn optimal charging decisions. Traditional fixed-rule heuristics often prove suboptimal in dynamic environments and fail to account for multi-AMR coordination, leading to severe resource inefficiencies. To overcome these limitations, we propose a Proximal Policy Optimization (PPO)-based Deep Reinforcement Learning (DRL) framework designed for multi-block warehouses with fixed charging stations. Our model dynamically learns two key decisions: charging station selection and optimal charging duration, explicitly accounting for anticipated queuing times at the stations. Extensive numerical experiments benchmark the proposed model against state-of-the-art DRL and traditional heuristic approaches. Results demonstrate that our PPO framework increases order-completion rates by up to 6\\% compared to the strongest baseline, while significantly reducing the total time dedicated to recharging operations. Furthermore, we validate the model's robustness across diverse warehouse configurations and stochastic arrival rates. Finally, we interpret the learned DRL policy, offering valuable operational insights into its superiority over standard benchmarks.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

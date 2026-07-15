@@ -1,0 +1,945 @@
+Title: Deep Reinforcement Learning for Dynamic Battery Management of Autonomous Order Pickers
+
+URL Source: https://arxiv.org/pdf/2607.05683v1
+
+Published Time: Wed, 08 Jul 2026 00:16:43 GMT
+
+Number of Pages: 35
+
+Markdown Content:
+# Deep Reinforcement Learning for Dynamic Battery Management of Autonomous Order Pickers 
+
+Taniya Shaji 1, Abhay Sobhanan ∗1, and Christof Defryn 21Indian Institute of Management Bangalore, Bannerghatta Road, Bengaluru 560076, Karnataka, India 
+
+> 2
+
+University of Antwerp, Prinsstraat 13, Antwerp 2000, Belgium 
+
+Abstract 
+
+Battery charging of Autonomous Mobile Robots (AMRs) in warehouses is a critical opera-tional challenge that heavily impacts both order processing times and throughput. In this study, we address the dynamic AMR charging problem under stochastic order arrivals, where robots must learn optimal charging decisions. Traditional fixed-rule heuristics often prove suboptimal in dynamic environments and fail to account for multi-AMR coordination, leading to severe re-source inefficiencies. To overcome these limitations, we propose a Proximal Policy Optimization (PPO)-based Deep Reinforcement Learning (DRL) framework designed for multi-block ware-houses with fixed charging stations. Our model dynamically learns two key decisions: charging station selection and optimal charging duration, explicitly accounting for anticipated queuing times at the stations. Extensive numerical experiments benchmark the proposed model against state-of-the-art DRL and traditional heuristic approaches. Results demonstrate that our PPO framework increases order-completion rates by up to 6% compared to the strongest baseline, while significantly reducing the total time dedicated to recharging operations. Furthermore, we validate the model’s robustness across diverse warehouse configurations and stochastic arrival rates. Finally, we interpret the learned DRL policy, offering valuable operational insights into its superiority over standard benchmarks. 
+
+Keywords: Warehouse logistics, Deep reinforcement learning, Battery Charging, Autonomous Mobile Robots, Machine learning 
+
+## 1 Introduction 
+
+Modern fulfillment centers increasingly rely on Autonomous Mobile Robots (AMRs) to automate intra-logistics operations such as the storage, retrieval, and transportation of inventory. To maintain high throughput in these structured warehouse environments, centralized planning software assigns tasks to these robots, which must be executed efficiently under strict time, energy, and capacity 
+
+> ∗
+
+Corresponding author. Email: abhay.sobhanan@iimb.ac.in 
+
+1arXiv:2607.05683v1 [cs.LG] 6 Jul 2026 constraints. The scale of these operations is expanding rapidly; for instance, in 2025, Amazon deployed its one-millionth robotic unit (Dresser, 2025). Their models, such as Titan and Proteus, navigate the warehouse floor, retrieving orders from specific storage locations and transporting them to designated drop-off points, all strictly coordinated by a centralized control system (Greenawalt, 2025). The continuous operation of these AMRs is fundamentally constrained by their limited battery capacities. To maintain power, robots must periodically interrupt their assigned tasks and travel to fixed and often inductive or wireless charging stations (Wiferion). Commercially used lithium-iron-phosphate batteries require significant downtime. For instance, they average 2.7 hours for a full charge (McNulty et al., 2022), while modern models like KUKA’s KMP 1500P take approximately one hour to replenish from 20% to 80% (KUKA AG). Consequently, charging protocols critically impact warehouse efficiency. In dense warehouse environments with multiple AMRs and limited charging infrastructure, this creates a complex resource allocation problem. Without coordinated scheduling, multiple robots may seek to charge simultaneously, leading to severe bottlenecks, queu-ing delays, and an unbalanced utilization of charging stations that ultimately degrades overall system throughput. The complexity of this charging problem is further amplified in dynamic environments where orders arrive stochastically. In a typical zonal routing setup where individual AMRs are assigned to specific warehouse blocks and must navigate between storage aisles, a central depot, and peripheral charging stations, decision-making is highly interdependent. An AMR must continuously evaluate order selection, depot return timing, and its current state of charge against both immediate charging station availability and anticipated future demand. Traditionally, industry practice has relied on simple rule-based heuristics, such as routing a robot to charge only when its battery falls below a fixed threshold. However, these myopic approaches fail to account for the stochastic nature of order arrivals and the real-time congestion at charging stations, leading to suboptimal fleet coordination. To address these limitations, we propose a Deep Reinforcement Learning (DRL) framework that empowers AMRs to make dynamic, environment-aware decisions. DRL is well-suited to this task as it effectively manages high-dimensional state spaces and maps complex real-time inputs directly to efficient policies (Mnih et al., 2015; Panzer and Bender, 2022). By capturing the underlying dynamics of the warehouse, our model enables robots to maximize the order fulfillment rate while intelligently balancing battery levels and charging queues. The main contributions of this study are as follows: 
+
+• We develop a multi-agent DRL framework utilizing Proximal Policy Optimization (PPO) to jointly optimize routing and charging operations for AMRs in a multi-block warehouse with fixed charging infrastructure. 
+
+• We design a comprehensive action space for charging decisions that dictates three critical components: when to initiate recharging, which charging station to use, and how long to spend recharging. 
+
+• We incorporate a dynamic drop-off decision model, allowing AMRs to learn when to return 2picked orders to the depot, thereby minimizing unnecessary travel time. 
+
+• We explicitly model the stochastic arrival of orders and the queuing dynamics at charging stations, yielding a coordinated policy that minimizes both overall operational time and unproductive time spent over-charging or waiting. To validate our approach, we benchmark the proposed DRL model against traditional heuristic methods and alternative DRL baselines, evaluating performance based on order completion rates. The remainder of this paper is organized as follows. Section 2 reviews the relevant literature, discusses the areas where different DRL techniques are used to improve warehouse operations, and identifies the research gap. In section 3, we describe the problem, the environment, the experimental setup, assumptions, and parameters. In section 4, we formalize the problem statement as a Markov Decision Process (MDP) formulation that will be used to build the DRL framework. In section 5, the methodology and working of the algorithm used for the DRL model is explained. In section 6, we discuss the DRL training results, the policy learned, and evaluate it against other algorithms. In section 7, we perform additional sensitivity analyses to further assess the robustness of the model. 
+
+## 2 Literature Review 
+
+Reinforcement Learning (RL) based approaches have gained increasing attention in warehouse operations, as they enable agents to make real-time decisions and continuously improve performance through interaction with the environment. Kuhnle et al. (2019) discuss a methodical approach to implementing RL algorithms for order dispatching tasks. Recent developments that go beyond traditional manufacturing setups, such as cloud manufacturing, benefit from the deployment of DRL techniques for scheduling tasks (Dong et al., 2020). In this section, we discuss some of the existing literature that uses DRL for warehouse operations. For battery charging operations, we additionally discuss traditional algorithmic approaches alongside DRL frameworks. 
+
+2.1 Agent routing and order picking 
+
+Mahmoudinazlou et al. (2025) address the dynamic order picking problem, where order arrivals are stochastic and efficient picker routing is crucial, proposing a DRL framework to dynamically opti-mize picker routes for single-block warehouses. Similarly, Cals et al. (2021) propose a PPO-based order batching and picking framework that reduces the number of late orders, while Beeks et al. (2022) incorporate an additional objective to minimize picking costs. In a related path-planning study, Bai et al. (2024) develop an improved Double Deep Q-Network (DDQN) model to generate safer and shorter global paths in unknown environments. To tackle the complexities of dynamic environments, several studies integrate advanced neural architectures with DRL. Xiao et al. (2024) integrate a Graph Neural Network (GNN) with PPO to facilitate a multi-agent collaborative navi-gation system. Similarly, using Amazon’s Kiva system warehouse layout, Shen et al. (2021) propose a multi-agent Asynchronous Advantage Actor-Critic algorithm combined with an attention mech-anism for path planning, while Li et al. (2019) propose a DQN-based dispatching algorithm that 3mitigates vehicle traffic while minimizing travel time. Furthermore, Yang et al. (2020) integrate prior knowledge of collision-free paths with a DQN framework to address slow convergence and excessive randomness in a multi-robot warehouse. For hierarchical task allocation, Pal et al. (2025) employ a PPO framework to train two agents: a planner that selects tasks from a queue and an ex-ecutor that assigns the most suitable robot based on its current state, thereby minimizing operation time and execution delays. 
+
+2.2 Supply chain inventory management 
+
+DRL has also been applied to inventory management problems, where learning-based approaches optimize storage, replenishment, and production decisions under uncertain demand. To tackle the storage assignment problem, Teck et al. (2025) employ PPO to dynamically reposition storage racks for fast-moving consumer goods, reducing cycle time and congestion at the replenishment station, while He et al. (2023) apply DRL to retrieve requested orders from a dense puzzle-based storage system. Addressing inventory replenishment and demand forecasting problems, Tian et al. (2024) combine DRL with Gated Recurrent Unit and multi-head attention to capture demand seasonality and trend from historical observations. Similarly Chien et al. (2020) adopt a DQN model to dynamically select the optimal demand forecast model. Furthermore, in determining order quantity, Stranieri et al. (2024) show that PPO outperforms other DRL algorithms in determining the quantity of products to produce and ship. Although these studies address inventory related optimization problems, they do not consider battery charging decisions for AMRs operating under shared charging constraints. 
+
+2.3 Battery charging 
+
+The optimal scheduling of battery charging for mobile robots has been studied in prior literature, although most existing work only partially aligns with the complexities of multi-block warehouse environments, and many rely on mobile chargers that travel to robots (Drenner et al., 2009). Carli et al. (2020) employ an integer programming framework to learn a battery-charging schedule, while Fu et al. (2021) use mobile chargers that serve robots with low battery, minimizing their meeting time. In a largely stationary environment where robots have less agency, Zou et al. (2018) compare battery recovery strategies: plug-in battery charging, inductive battery charging, and battery swapping, while Tomy et al. (2020) frame the charging decision as a multi-objective decision-making problem, minimizing battery usage cost and maximizing task completion reward. 
+
+2.3.1 Deep reinforcement learning for battery charging 
+
+Focusing on charging duration, Bischoff et al. (2026) propose a PPO model that decides the discrete battery level up to which an agent charges at the nearest charging station, while Lin et al. (2023) employs the SARSA algorithm to determine the charging schedule. Studies focusing on agent behavior show that Zellner et al. (2023) employ a DQN framework to maximize area coverage while 4minimizing the number of battery constraint violations by agents, and Deng et al. (2020) develop a framework that selects the number of agents with the lowest battery that need to charge, along with an upper limit at which agents stop charging. In a related study, Zhang et al. (2023) model vehicle scheduling and battery replacement decisions as a bi-objective optimization problem using a Dueling Deep Double Q-network, while Yoshida et al. (2021) learn charging decisions in electric railway trains for improved power utilization. 
+
+2.4 Research Gap 
+
+The reviewed literature highlights the applications of DRL in warehouse optimization, particularly in routing, order picking, and inventory management. However, charging decisions for AMRs re-main relatively underexplored in environments where charging resources are shared among multiple AMRs. Existing approaches generally fail to jointly account for charging station selection, charg-ing duration beyond fixed rules, congestion at charging stations, and dynamic task execution. To address these limitations, this study proposes a novel DRL framework designed to maximize order fulfillment rates. Within this framework, AMRs operating in a multi-block warehouse dynamically learn optimal charging strategies while navigating continuous battery depletion, real-time order arrivals, and shared charging infrastructure. 
+
+## 3 Problem Description 
+
+In this section, we formulate a customized warehouse environment to train and evaluate the pro-posed DRL model. The physical facility is discretized into a coordinate grid to facilitate precise spatial tracking of the AMRs. Hereafter, we refer to an AMR simply as an “agent”. Consider the warehouse layout illustrated in Figure 1. The warehouse comprises N distinct rectangular blocks, with each block exclusively serviced by a single agent. Customer orders arrive dynamically follow-ing a Poisson process with a rate of μ orders per second. Upon arrival, each order is immediately assigned to the agent responsible for the corresponding block. The facility includes a depot lo-cated at the bottom-left corner for order drop-off, alongside M fixed charging stations distributed evenly along the top and bottom boundaries, where N > M . Additionally, each agent has a finite order-carrying capacity, denoted by K.
+
+3.1 Warehouse Environment 
+
+Let the current position of an agent be denoted by the spatial coordinates ( X, Y ). For the following movements, we define sufficient charge as having a battery level equal to the minimum battery threshold bmin plus the energy required to travel to the next position. While an agent has pending orders to pick up from a storage location, it may perform the following movements based on the current state of the environment: 1. Within its block, provided the agent has sufficient charge, it can navigate to a storage location 5Charging Station (CS)    
+
+> Depot
+> AMR
+> Order Item Block Boundary
+> Storage locations within storage racks
+> CS1
+> CS2
+> Block 1 Block 2
+> Block 3 Block 4
+
+Figure 1: Layout for a warehouse with 4 blocks, 3 aisles per block, 3 storage locations per rack and 2 charging stations (if it has available carrying capacity), any charging station (CS), or the depot (if it is currently carrying items). 2. If the agent has reached its maximum carrying capacity, it may travel to the depot, provided it has sufficient charge. 3. At any point in time, if the agent lacks sufficient charge to reach its intended destination (depot or CS) or if its battery level falls below the predefined minimum threshold bmin , it must travel to a CS. 4. While at a CS, the agent may begin charging (provided it is at the front of the queue), wait in the queue behind other agents, or stop charging and return to its previous position (provided it has sufficient charge to complete the return trip). During periods of zero demand, when the order queue is empty, the agent remains idle at its current location to conserve energy. Charging and depot decisions are deferred until new orders arrive. 
+
+3.2 Parameters 
+
+The parameters governing the operational environment, the agents, and the order dynamics are summarized in Table 1, Table 2, and Table 3, respectively. 6Table 1: Charging station related parameters. 
+
+Parameter Description 
+
+M Number of charging stations (CS) 
+
+M Set of M CS, individually denoted as CS m (e.g., CS 1, CS 2 for M = 2) 
+
+Qmt Set of agents waiting in queue at the mth CS at time tqmt = |Qmt | Queue length of mth CS at time t
+
+Table 2: Agent related parameters. 
+
+Parameter Description 
+
+Static parameters 
+
+N Number of agents with their individual blocks 
+
+Naisle Number of aisles per block 
+
+Nslot Number of storage locations on either side of an aisle 
+
+N Set of N agents, individually denoted as An (e.g., A1, A2, A3, A4 for N = 4) 
+
+K Maximum carrying capacity of an agent 
+
+bmax Maximum battery level (unit) 
+
+bmin Minimum battery threshold (unit) 
+
+η Battery depletion rate (unit/sec) 
+
+β Battery re-charge rate (unit/sec) 
+
+V Velocity of the agent (unit/sec) 
+
+dmax (Naisle + Nslot ) × 2; Hyperparameter used for normalizing distances 
+
+Dynamic parameters at time step t
+
+(xnt , y nt ) Current location (aisle, storage location) of agent ndn,o t Normalized Euclidean distance from agent n to its next order; −1 if no next order available 
+
+dn, 1 
+
+> t
+
+, . . . , d n,M t Normalized Euclidean distances from agent n to M charging stations 
+
+dn,d t Normalized Euclidean distance from agent n to the depot 
+
+di,j t Normalized Euclidean distance from agent i to agent jknt Current carrying capacity of agent nbnt Current battery charge of agent n (unit) 
+
+σnt Service mode of agent n; equals m if at mth CS, else 0 
+
+3.3 Assumptions 
+
+To balance model complexity with practical relevance, we adopt the following simplifying assump-tions: 
+
+• All blocks, agents and charging stations are homogeneous sharing identical physical specifica-tions, differing only in their spatial locations, dynamic agent behaviors, and real-time queue lengths. 
+
+• Battery depletion occurs only during transit. Energy consumption during idle periods (e.g., waiting in a charging queue, charging, or remaining stationary due to a lack of orders) is 7Table 3: Order related parameters. 
+
+Parameter Description 
+
+oi = ( ni, x i, y i, k i, p i, i ) Representation of the requested order ini Block index associated with the requested order ixi, y i Aisle and storage location position of the requested order iκi Number of items requested from position xi, y i
+
+pi ∈ { 0, 1} Binary indicator: 1 if order i is picked, otherwise 0 
+
+i Order index 
+
+μ Order arrival rate that follows a poisson process considered negligible. 
+
+• The minimum battery threshold bmin is sufficient to ensure that any agent can reach the near-est CS from any location within its operational range, thereby preventing complete battery depletion during operations. 
+
+• Constant battery depletion rate η is assumed for simplicity and to facilitate benchmarking with existing studies. 
+
+• Agents navigating to common destinations are assumed to be collision-free. 
+
+## 4 Markov Decision Process Formulation 
+
+To capture the sequential and stochastic nature of dynamic charging for order pickers, we formulate the problem as a Markov Decision Process (MDP). An MDP provides a rigorous mathematical framework for modeling decision-making under uncertainty. Formally, the MDP is defined by a tuple ( S, A, P, R, γ ), where S represents the set of environment states and A denotes the action space available to the agent. The state transition probability P denotes the probability of moving to the next state given the current state and action, R is the immediate reward function indicating the reward received for taking an action in the current state, and γ is the discount factor that takes a value between 0 and 1. A higher value of γ corresponds to prioritizing long-term goals. 
+
+State: The local observation snt of agent n at time step t consists of three components: the agent’s own state, the CS queue state, and the states of all other agents. Knowing the state of the neighboring agents aids in better coordination. The agent n’s own state includes its distances to its next order to pick, all charging stations, and depot ( dn,o t , d n, 1 
+
+> t
+
+, . . . , d n,M t , d n,d t ), normalized battery level bnt /b max , capacity level knt /K and service mode σnt /M . For the remaining agents, we include their normalized battery levels, capacities, and service modes, alongside their normalized Euclidean distance di,j t from agent n. In addition, the state includes the queue length qmt at charging station 
+
+m, for all charging stations. 
+
+Action: At each decision point, an agent n selects an action ant from a finite action set A,where |A| = M + 6. Table 4 provides detailed descriptions of the various actions available to the agents. 8Table 4: Action space A for each agent. 
+
+Action Name Description 
+
+go pick Go to the next order and pick it. 
+
+go to CS Go to charging station m, ∀m ∈ M .
+
+stop charging Stop charging and return; available only when the agent is first in queue at CS. 
+
+go to depot Go to depot to replenish capacity and mandatorily return to the departure position; available when knt < K .
+
+wait in queue Enforced by the environment while the agent is not first in queue at a CS. 
+
+keep charging Enforced by the environment when agent is at CS and stop charging action is not taken. 
+
+travelling Enforced by the environment during travel. To ensure operational feasibility and prevent agents from executing illegal actions, the choice is constrained by a binary action mask mnt ∈ { 0, 1}|A| . This mask is dynamically computed by the environment at each decision step and enforces the following rule set: 
+
+• If an agent is en route to a location, only the travelling action is permitted. 
+
+• If the agent has sufficient capacity and battery energy to service the next order, it can choose among go pick , go to CS , or go to depot .
+
+• If the battery level falls below a minimum threshold, or is insufficient to reach the next task location, only go to CS actions are allowed. 
+
+• When the agent is first in the queue at a CS and bnt < b max , it can either stop charging or 
+
+keep charging .
+
+• When bnt = bmax , only the stop charging action is permitted. 
+
+• When the agent is at a charging station but not first in the queue, only the wait in queue 
+
+action is permitted. These hard constraints substantially reduce the effective action space at most decision points, allowing the policy to focus on non-trivial decisions: when to initiate charging, which station to select, when to terminate charging, and when to pick orders or return to the depot. 
+
+Reward: The per-agent reward at each time step is designed to maximize order throughput while minimizing non-productive time. Formally, the reward Rnt for agent n at time step t is defined as follows: 
+
+• Pick initiation reward Rpick : An intermediate reward of +20 is allocated when an agent initiates a pick action. Because the primary objective of order completion is observed only sparsely, this reward-shaping term provides an immediate feedback signal to guide the agent toward productive order-picking behaviors. 
+
+• Per-step penalty Rstep : A penalty of −1 is applied at every time step, regardless of the action taken. This encourages the agent to minimize the overall time required to fulfill orders, including unnecessary waiting, prolonged charging and inefficient travel. We do not enforce explicit charging-threshold rewards or depot-utilization bonuses, expecting 9the agent to discover the optimal charging timing, charging duration, and depot batching policy entirely from the interplay between the per-step opportunity cost and the order-completion signal. Our preliminary experiments explored more complex reward formulations by accounting for time spent charging, operational time lost, completed orders, items delivered, and queue lengths to ex-plicitly guide these trade-offs, minimize delays, and penalize premature visits. However, numerical results demonstrated that the simpler reward structure achieved superior sample efficiency and policy performance. 
+
+State Transitions: State transitions are evaluated at every global time step t. Each agent 
+
+n ∈ N maintains a countdown timer tracking the duration of its current travel segment. During this period, the agent is locked out of new decisions; once it completes this segment, it is free to select its next action. 
+
+Agent position During travel, the position of agent n is updated by linear interpolation: 
+
+xnt = xorig + τt (xdest − xorig ) , ynt = yorig + τt (ydest − yorig ) , (1) where ( xorig , y orig ) and ( xdest , y dest ) denote the spatial coordinates of the agent’s origin and destina-tion, respectively. τt = ( Ttotal − Trem )/T total represents the portion of the journey completed, with 
+
+Ttotal being the total travel time to the next location and Trem the remaining travel time. Depot trips follow a two-phase interpolation: the position moves toward the depot for the first half of the allotted time and returns from the depot during the second half. Hence, a depot trip begins when an agent decides to travel to the depot and ends after all the items carried have been unloaded and the agent has returned to its departure location. Only then is the agent allowed to make the next decision. 
+
+Battery The battery depletes strictly during travel, proportional to distance traveled as follows: 
+
+bnt+1 = bnt − η · ∆dnt , (2) where η is the depletion rate and ∆ dnt is the Euclidean distance traversed in the current step; however, when the agent is first in queue and executes keep charging , the battery updates as: 
+
+bnt+1 = min( bmax , b nt + β) , (3) where β is the recharge rate per step. The battery does not deplete while idle, queuing, or charging. 
+
+Capacity and order completion Upon arrival at an order location, the order is marked as complete, the agent’s carrying capacity decreases by the order’s demand κi, and the order is removed from the active list. Upon completion of a depot round trip, the agent’s carrying capacity is fully restored to its maximum, K.10 CS queue When an agent arrives at charging station m, it joins the station’s queue Qm, and the total queue length qm increments by one. Only the agent at the front of the queue is permitted to charge. Upon executing the stop charging action, the agent is dequeued, and qm decrements by one. 
+
+Order arrivals Orders arrive according to a Poisson process with rate μ, and each new order is uniformly assigned to one of the N operational blocks. 
+
+## 5 Methodology 
+
+We formulate the warehouse order fulfillment process as a Multi-Agent Reinforcement Learning (MARL) problem and solve it using Independent Proximal Policy Optimization (IPPO) with a shared actor and per-agent independent critics. At each time step t, agent n observes a local state 
+
+snt , selects an action ant , and receives a scalar reward rnt .In IPPO, each agent learns its own policy and value function using only local observations. We follow the standard MARL convention, in which “local observation” denotes that the observation is agent-specific and computed without global coordination, not that it is restricted to own-agent features. Including neighboring agents’ battery levels, capacities, and relative distances in local observations is analogous to an agent perceiving its environment through onboard sensors: the information is available locally at execution time without any centralized aggregation. Unlike centralized-training approaches (e.g., MAPPO with a joint critic), IPPO maintains full decentral-ization: no agent conditions its critic on the joint observation [ s1 
+
+> t
+
+, . . . , s Nt ]. All agents share a single actor network that maps local observations to action probabilities, while each agent maintains an independent critic network that inputs the agent’s local observations and estimates the value of its current state. Value of a state gives information regarding how much cumulative reward an agent can be expected to collect if the agent starts from the current state and progresses forward in time under the current policy. During each episode, agents interact with the environment, collect states, actions, and rewards. At the end of each episode, Temporal-Difference (TD) errors are computed for every state visited. The TD error at each state measures whether the reward received at that state plus the critic’s estimate of the next state (the state resulting from the action taken) was higher or lower than the critic’s estimate of the current state. A positive TD error indicates the outcome was better than the critic’s expectation; a negative TD error indicates otherwise. For all states, TD errors of the current and subsequent time steps are accumulated using the Generalized Advantage Estimation (GAE) framework to produce advantages, which reflect the long-term consequences of each action and inform whether the action taken at each state led to a better-than-expected outcome. These advantage values, when added to the critic’s current estimate, give a better estimate of the returns that can be obtained from a state. The returns thus obtained are used to calculate the critic loss. For the actor network, PPO computes the ratio of the new policy’s probability of taking an action to the old policy’s probability; this ratio is clipped to prevent 11 drastic changes, and multiplied by the advantage, thereby providing the magnitude and direction of the policy update. The following subsections explain each component of the IPPO model in detail. 
+
+5.1 Average Reward Formulation 
+
+A key design choice in our framework is the use of an average reward formulation in place of the standard discounted return. Standard PPO relies on a discount factor γ < 1, which geometrically downweights future rewards: 
+
+Jγ = Eπ
+
+" ∞X
+
+> t=0
+
+γtrt
+
+#
+
+. (4) In long-horizon or continuing tasks, this causes the agent to heavily discount rewards that occur far later in the episode. However, in our warehouse environment, every order arrival is equally important to fulfill. Mu et al. (2022) demonstrated that in a warehouse AMR battery manage-ment task, discounted-reward algorithms plateaued below a 90% order completion rate, while their average-reward counterpart consistently exceeded 95%. We observe similar trends for our problem, as shown in Figure 2. Order Completion Rate 010 20 30 40 50 60 70 80 90 100 average reward discounted reward overall A1 A2 A3 A4 
+
+Figure 2: Order completion rate when using average reward versus discounted reward in a repre-sentative environment Consequently, we maximize the long-run average reward per timestep under a policy π:
+
+ρnπ = lim  
+
+> T→∞
+
+1
+
+T Eπ
+
+"T −1X
+
+> t=0
+
+rnt
+
+#
+
+, (5) where rnt is the reward received by agent n at timestep t under policy π. By adopting this formu-lation, we remove γ as a hyperparameter and ensure a uniform weighting of all time steps. Without a discount factor, cumulative returns in continuing tasks grow to infinity. To stabilize training, we maintain a baseline ¯ rn, which serves as a running estimate of the long-term average reward ρnπ for each agent n. This estimate is updated at the end of each episode e via an exponential 12 moving average: ¯rne = (1 − α¯r)¯ rne−1 + α¯r · 1
+
+T 
+
+> T−1
+
+X
+
+> t=0
+
+rnt , (6) where T is the episode duration, α¯r is the update rate, and the sum represents the total reward accumulated by agent n during episode e. Initialized at ¯ rn 
+
+> 0
+
+= 0, this formulation provides a smooth, adaptive baseline. After updating, this baseline ¯ rn is subtracted from the immediate rewards to compute the TD error in Eq. (8). 
+
+5.2 Network Architecture 
+
+Shared Actor Network: All agents share a single actor network parameterized by θ. To allow agent-specific policies, the local observation snt is concatenated with a one-hot encoding of the agent identity un ∈ { 0, 1}N before being passed through the network. The actor maps ( snt , u n) to action logits, from which the action distribution πθ(a | snt , u n) is derived by softmax. At each decision point, infeasible actions (determined by action mask mnt ) are masked by setting their logits to −10 9
+
+before the softmax. During training, actions are sampled from this masked distribution; during evaluation, the argmax of the masked logits is used. Table 5: Shared actor network architecture. All N agents use the same network weights. 
+
+Layer Specification 
+
+Input Local obs. ⊕ agent one-hot Hidden 1 FC: Input → 512, ReLU, LayerNorm Hidden 2 FC: 512 → 512, ReLU, LayerNorm Hidden 3 FC: 512 → 256, ReLU Output FC: 256 → Action logits 
+
+Independent Local Critics: Each agent n maintains a separate critic network Vϕn with parameters ϕn that are trained independently. The network approximates the differential state value function from the agent’s local observation: 
+
+Vϕn (snt ) ≈ V nπ (snt ) := Eπ
+
+" ∞X 
+
+> τ=t
+
+(rnτ − ρnπ) snt
+
+#
+
+, (7) which measures the expected cumulative deviation from the agent’s long-run average reward ρnπ.This defines the differential value function, which reflects the expected relative performance of state 
+
+snt compared to the stationary average reward baseline. Each critic takes the local observation as input and outputs a scalar value. 13 Table 6: Local critic network architecture. Each of the N agents maintains a separate independent critic. 
+
+Layer Specification 
+
+Input Local obs. Hidden 1 FC: Input → 256, ReLU, LayerNorm Hidden 2 FC: 256 → 256, ReLU, LayerNorm Hidden 3 FC: 256 → 128, ReLU Output FC: 128 → 1 scalar 
+
+5.3 Advantage Estimation via Differential GAE 
+
+Under the average-reward formulation, the TD error at timestep t for agent n is defined as: 
+
+δnt = rnt − ¯rn + Vϕn (snt+1 ) − Vϕn (snt ). (8) Eq. (8) captures the one-step prediction error relative to the running average baseline ¯ rn. This is the average-reward analog of the standard discounted TD error rt + γV (st+1 ) − V (st) with γ = 1. To reduce variance, we compute advantages using Differential GAE, which accumulates TD errors backward in time with exponential decay parameter λ:ˆAnt = 
+
+> T−t−1
+
+X
+
+> ℓ=0
+
+λℓδnt+ℓ. (9) This exponentially weights recent TD errors more heavily, with λ providing a balance between bias and variance. The corresponding return target for critic training is: 
+
+Gnt = ˆAnt + Vϕn (snt ). (10) Finally, to stabilize the actor network updates, the estimated advantages are normalized per agent to maintain a zero mean and unit variance across the episode. 
+
+5.4 PPO Objectives 
+
+Actor Loss: The actor is updated using the PPO clipped surrogate objective. Let ratio nt (θ) denote the importance sampling ratio: ratio nt (θ) = πθ(ant | snt , u n)
+
+πθold (ant | snt , u n) , (11) where πθ(ant | snt , u n) denotes the probability assigned by the current policy to action ant given the agent’s local observation snt and one-hot encoding of the agent identity un ∈ { 0, 1}N . The observation and identity encoding are concatenated and passed as input to the the actor network. Here, θold are the actor parameters from the previous policy. The sampling ratio measures how 14 much the current policy has changed relative to the old policy for the specific action taken. The actor loss which is a clipped objective with entropy regularization is: 
+
+Lactor (θ) = −E
+
+h
+
+min 
+
+
+
+ratio nt · ˆAnt , clip(ratio nt , 1 − ε, 1 + ε) ˆAnt
+
+i 
+
+− αH · H[πθ], (12) The loss is negated because the goal is to maximize the expected return whereas optimizers (Adam Optimizer) perform gradient descent which minimizes it. The first term ensures that when the action taken was better than expected, leading to a positive advantage Ant , an increase in the prob-ability of that action ratio nt is encouraged, and when the advantage is negative it is discouraged. However, if the sampling ratio is allowed to change without a bound, a single update could change the policy drastically causing instability in the policy. To prevent this, the ratio is restricted to stay within the clipping threshold of [1 − ε, 1 + ε]. Taking a minimum of the clipped and un-clipped objectives prevents potentially harmful updates. In the second term, the policy entropy 
+
+H[πθ] = − P 
+
+> a
+
+πθ(a | snt , u n) log πθ(a | snt , u n) measures the randomness of the action distribution. A higher value means actions are assigned a more uniform probabilities and a lower entropy means actions are more deterministic. Since the loss subtracts αH · H[πθ], minimizing the loss is equiva-lent to maximizing the entropy, encouraging diverse action probabilities and thus preventing early convergence. To balance exploration early in training and exploitation later, the entropy coefficient 
+
+αH decays linearly as: 
+
+αH = max 
+
+
+
+0.01 , H 0 ·
+
+
+
+1 − e
+
+7000 
+
+ 
+
+, (13) where e is the episode number and H0 is the starting entropy coefficient. This encourages ex-ploration early in training and exploitation later. The value of 7000 was chosen empirically to maintain exploration during the majority of training, approximately 70% of the 10,000 training episodes, before gradually shifting toward exploitation during the final training episodes. The ac-tor is updated for Nactor update epochs per episode using randomly shuffled mini-batches of size 512, drawing samples from all agents jointly. All agent samples within a mini-batch are processed in a single forward pass through the shared actor. 
+
+Critic Loss: Each critic is trained independently to minimize the Huber loss between predicted values Vϕn (snt ) and return targets Gnt computed from Eq. (10): 
+
+Lcritic (ϕn) = E [Lδ (Vϕn (snt ), G nt )] , (14) where Lδ is the Huber loss. Unlike Mean Squared Error (MSE) which squares large errors that occur during initial training, Huber loss transitions from quadratic to linear behavior beyond a prediction error threshold δ:
+
+Lδ(y, ˆy) = 
+
+ 
+
+> 12
+
+(y − ˆy)2 if |y − ˆy| ≤ δ, δ · (|y − ˆy| − 12 δ) otherwise .
+
+(15) where y = Gnt is the return target, ˆ y = Vϕn (snt ) is the critic’s prediction, and δ = 1 .0 is the 15 threshold that determines where the transition from quadratic to linear occurs. Each critic is updated for Ncritic update epochs per episode. For each mini-batch, agent samples are extracted via an agent-index mask, and each critic is updated independently on its own samples only. 
+
+5.5 Training Procedure 
+
+Algorithm 1 outlines the complete training process, where each episode consists of five distinct phases: 1. Rollout collection: At each timestep t, each agent n computes snt from the environment observation, computes its action mask mnt , and samples an action ant ∼ πθ(· | snt , u n) ⊙ mnt .The tuple ( snt , a nt , log πθ(ant ), r nt , mnt ) is appended to a rollout buffer D of capacity T × N
+
+(episode length times number of agents). Inter-agent communications do not occur during the rollout. 2. Advantage computation: Upon episode completion, each agent’s critic evaluates its col-lected trajectory to produce value estimates {Vϕn (snt )}T −1 
+
+> t=0
+
+. We then apply Differential GAE (Eq. 9), followed by per-agent advantage normalization. Finally, the return targets Gnt are computed for the upcoming critic training (Eq. 10). 3. Critic updates: The buffer D is flattened into T × N samples. Over Ncritic update epochs, these samples are shuffled and divided into mini-batches of size 512. Within each mini-batch, each independent critic is updated using only the subset of samples belonging to its agent. Gradient norms are clipped to 0.5 before each parameter update. 4. Actor updates: The same flattened and shuffled buffer is reused for the policy updates. Over Nactor update epochs, mini-batches of size 512 are drawn. All samples within a mini-batch are passed through the shared actor network in a single forward pass, yielding updated log-probabilities and entropies. As with the critic, gradient norms are clipped to 0.5 before parameter updates. 5. Baseline updates: Following the network parameter updates, the per-agent average reward baselines ¯ rn are updated via Eq. 6, using the mean reward of the current episode. We adopt the following key design choices. The critic network undergoes more update epochs than the actor to ensure robust value estimates for advantage computation while preventing the actor from overfitting to stale rollout trajectories. Furthermore, layer normalization is applied after each hidden layer in both networks to stabilize training across heterogeneous state inputs (e.g., normalized distances, battery ratios, and integer queue lengths) that span different scales. To avoid distortions in gradient signal, normalizing advantages independently for every agent preserves individual reward scales preventing agents experiencing high-variance episodes from dominating the global gradient signal. Processing samples simultaneously from all agents in a single forward pass per mini-batch also ensures that balanced gradient signals from all agents are received by the shared actor network. In addition, gradients of both networks are clipped to a maximum ℓ2 norm of 0.5. This mitigates training instability caused by excessively large policy updates when immediate rewards fluctuate significantly. 16 Algorithm 1 IPPO Training Loop  
+
+> 1:
+
+Initialize: Actor πθ, critics {Vϕn }Nn=1 , baselines {¯rn = 0 }Nn=1  
+
+> 2:
+
+for episode e = 1 , 2, . . . , E do Phase 1: Rollout Collection  
+
+> 3:
+
+Reset environment; initialise buffer D ← ∅  
+
+> 4:
+
+for t = 0 to T − 1 do  
+
+> 5:
+
+for agent n = 1 to N do  
+
+> 6:
+
+Observe snt ; compute action mask mnt 
+
+> 7:
+
+Sample ant ∼ πθ(· | snt , u n) ⊙ mnt ; store log πθ(ant ) 
+
+> 8:
+
+end for  
+
+> 9:
+
+Execute joint action; observe rewards {rnt }; append to D 
+
+> 10:
+
+end for Phase 2: Advantage Computation  
+
+> 11:
+
+for agent n = 1 to N do  
+
+> 12:
+
+Forward pass: {Vϕn (snt )}T −1 
+
+> t=0
+> 13:
+
+Compute { ˆAnt } via Eqs. (8)–(9); normalise per-agent  
+
+> 14:
+
+Compute returns: Gnt = ˆAnt + Vϕn (snt ) 
+
+> 15:
+
+end for Phase 3: Critic Update ( Ncritic epochs)  
+
+> 16:
+
+for epoch 1 to Ncritic do  
+
+> 17:
+
+Shuffle D; partition into mini-batches  
+
+> 18:
+
+for each mini-batch do  
+
+> 19:
+
+for agent n = 1 to N do  
+
+> 20:
+
+Extract agent-n samples; compute Eq. (14); clip gradients; update ϕn 
+
+> 21:
+
+end for  
+
+> 22:
+
+end for  
+
+> 23:
+
+end for Phase 4: Actor Update ( Nactor epochs)  
+
+> 24:
+
+for epoch 1 to Nactor do  
+
+> 25:
+
+Shuffle D; partition into mini-batches  
+
+> 26:
+
+for each mini-batch do  
+
+> 27:
+
+Forward pass all samples through shared actor  
+
+> 28:
+
+Compute Eq. (12) on samples; clip gradients; update θ 
+
+> 29:
+
+end for  
+
+> 30:
+
+end for Phase 5: Baseline Update  
+
+> 31:
+
+for agent n = 1 to N do  
+
+> 32:
+
+¯rnk ← (1 − α¯r)¯ rnk−1 + α¯r · 1
+
+> T
+
+P 
+
+> t
+
+rnt 
+
+> 33:
+
+end for  
+
+> 34:
+
+end for 
+
+## 6 Experiments 
+
+We conduct experiments using two different setups, where the primary difference is their spa-tial scale: Environment E-I represents a 4-block warehouse, whereas E-II represents a 6-block warehouse. Training was conducted over 10,000 episodes during a 4-hour simulation, while test-17 ing was conducted in an 8-hour simulation. The source code is available on GitHub: https: //github.com/taniya-0/dynamic-battery-drl/. Hyperparameter tuning was performed using Bayesian optimization via the Optuna framework (Akiba et al., 2019), which leverages the Tree-structured Parzen Estimator (TPE) sampler. Rather than exhaustively searching for all combinations of the parameter, TPE iteratively focuses sampling on promising regions of the search space based on the results of previous outcomes. Table 7 reports the environment parameters, hyperparameter search range and final tuned values used in our experiments. Figure 3 summarizes the hyperparameter tuning results in E-I environment. 
+
+Figure 3: Hyperparameter tuning results performed in E-I environment 
+
+6.1 Training Results 
+
+Figure 4 illustrates the actor and critic losses over the course of training. The actor loss is defined as the negative of the PPO clipped surrogate objective given in Eq. (12). The first term of this objective quantifies the degree of policy improvement, while the second term measures the policy’s exploration. At the onset of training, substantial policy improvements and high exploration rates drive the actor loss to be strongly negative. As the policy converges, the importance sampling ratio approaches 1 .0 and the entropy coefficient decays, effectively driving the actor loss towards zero. The critic loss, given in Eq. (14), measures the difference between predicted and actual returns. The high initial value reflects the large scale of these returns within the warehouse environment: because agents receive a Rstep = −1 penalty per step for non-productive actions and a Rpick = +20 reward 18 Table 7: Overview of experiment settings 
+
+(a) Environment Configurations 
+
+Parameter E-I E-II 
+
+N 4 6
+
+M 2 2
+
+Naisle 4 4
+
+Nslot 8 8
+
+K 10 10 
+
+bmax 100 100 
+
+bmin 15 20 
+
+η 1 1
+
+β 2 2
+
+V 1 1
+
+γ 0.50, 0.60 0.75, 0.90 
+
+κi 1 1
+
+(b) Model Hyperparameters 
+
+Parameter Search Range Value 
+
+Optimiser 
+
+lr actor [10 −4, 5 × 10 −4] 1.20 × 10 −4
+
+lr critic [10 −4, 10 −3] 4.86 × 10 −4
+
+PPO & GAE 
+
+Nactor update {1, 2, 3, 4} 2
+
+Ncritic update {1, . . . , 10 } 3Mini-batch size - 512 Gradient clip - 0.5 
+
+ε [0 .1, 0.3] 0.208 
+
+λ [0 .90 , 0.99] 0.98 
+
+α¯r [0 .01 , 0.1] 0.0117 
+
+H0 [0 .05 , 0.20] 0.164 
+
+Training 
+
+Episodes E - 10000 
+
+T - 14400 s for order picking, randomly initialized critics inherently produce substantial prediction errors. The loss decreases as the critic learns the value function. 0 2000 4000 6000 8000 10000     
+
+> Episode
+> 0.0150
+> 0.0125
+> 0.0100
+> 0.0075
+> 0.0050
+> 0.0025
+> 0.0000
+> 0.0025
+> Actor Loss
+> E-I: =0.50
+> E-I: =0.60
+> E-II: =0.75
+> E-II: =0.90
+
+(a) Actor Loss 0 2000 4000 6000 8000 10000      
+
+> Episode
+> 12
+> 14
+> 16
+> 18
+> 20
+> 22
+> Critic Loss
+> E-I: =0.50
+> E-I: =0.60
+> E-II: =0.75
+> E-II: =0.90
+
+(b) Critic Loss 
+
+Figure 4: Propagation of actor and critic losses during training under different scenarios. The reward, entropy, and the number of orders completed per agent during training are shown in Figure 5. The order completion rate varies between agents due to their different distances from the depot. Agents operating further from the depot spend a greater proportion of their time traveling to it, which reduces their overall order completion rate. We empirically verified this spatial dependency by relocating the depot to the center of the warehouse in E-I and retraining the model, which resulted in a uniform completion rate between agents as shown in Figure 6. 19 0 2000 4000 6000 8000 10000     
+
+> Episode
+> 20000
+> 10000
+> 0
+> 10000
+> 20000
+> 30000
+> 40000
+> Reward
+> E-I: =0.50
+> E-I: =0.60
+> E-II: =0.75
+> E-II: =0.90
+
+(a) Reward 0 2000 4000 6000 8000 10000      
+
+> Episode
+> 0.00
+> 0.01
+> 0.02
+> 0.03
+> 0.04
+> 0.05
+> 0.06
+> 0.07
+> 0.08
+> Entropy
+> E-I: =0.50
+> E-I: =0.60
+> E-II: =0.75
+> E-II: =0.90
+
+(b) Entropy 0 2000 4000 6000 8000 10000  
+
+> Episode
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> 90
+> 100
+> Order Completion Rate
+> E-I: =0.5
+> A1
+> A2
+> A3
+> A4
+
+(c) Order completion rate across agents in E-I environment with μ = 0 .50 0 2000 4000 6000 8000 10000  
+
+> Episode
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> 90
+> Order Completion Rate
+> E-I: =0.6
+> A1
+> A2
+> A3
+> A4
+
+(d) Order completion rate across agents in E-I environment with μ = 0 .60 0 2000 4000 6000 8000 10000  
+
+> Episode
+> 20
+> 40
+> 60
+> 80
+> 100
+> Order Completion Rate
+> E-II: =0.75
+> A1
+> A2
+> A3
+> A4
+> A5
+> A6
+
+(e) Order completion rate across agents in E-II environment with μ = 0 .75 0 2000 4000 6000 8000 10000  
+
+> Episode
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> 90
+> Order Completion Rate
+> E-II: =0.9
+> A1
+> A2
+> A3
+> A4
+> A5
+> A6
+
+(f) Order completion rate across agents in E-II environment with μ = 0 .90 
+
+Figure 5: Reward, entropy, and order completion rates under different scenarios. 
+
+6.2 Benchmarking 
+
+As discussed in section 2, DQN is a prevalent and highly effective MARL algorithm in warehouse operations. To evaluate our approach, we benchmark our model against a DQN baseline and a centralized training decentralized execution (CTDE) PPO model. To benchmark against existing research, we adopt the DRL framework implemented by Bischoff et al. (2026). The study considers a single block warehouse where AMRs make a charging decision 20 0 2000 4000 6000 8000 10000  
+
+> Episode
+> 40
+> 50
+> 60
+> 70
+> 80
+> 90
+> 100
+> Order Completion Rate
+> E-I: =0.6
+> A1
+> A2
+> A3
+> A4
+
+Figure 6: Order completion rate across agents in E-I environment with μ = 0 .60 and depot at the center post completion of transport tasks which can be retrieval or delivery. The state space comprises scaled battery level, distance to the charging stations, the number of pending charging events and a lane-wise entropy. The action specifies the battery level up to which an agent charges. Actions correspond to either not charging (action = 0) or charging up to a specified battery level. The charging threshold is a design choice where two options are proposed. A full , where the agent can choose action 0 or an integer multiple of 10 and A binary where it can choose action 0 or 100. Action masks are used to prevent illegal actions. A minimum battery threshold is enforced, below which charging is mandatory. Multiple reward functions are proposed that consider service time, queued orders, availability of free AMRs, explicit penalties and incentives for charging decisions. An interrupt strategy is further employed, whereby if retrieval orders are pending and no AMR is available, charging for any AMR whose battery level exceeds 50% is halted. For re-charging, the nearest CS is given the first preference, followed by the CS with shortest queue length. The framework employs the masked PPO algorithm from Raffin et al. (2021). We adapt their proposed framework to a multi-block environment by including only retrieval operations and introducing dynamic order arrivals. We utilize the same masked PPO network, number of training steps, buffer size, batch size and network parameters, action space, action masks and CS selection rules. Consistent with their framework, the state space includes the number of AMRs in different conditions, such as free to move, charging, and idle; the battery levels of working and charging AMRs, distance to CS, queue length at CS, and time. We also adopt their shaped 
+
+reward function: +1 if the agent chooses to charge while free CSs are available, and −1 otherwise. Similarly, charging when retrieval orders are pending yields a reward of −1, otherwise +1. Depot travel is restricted to instances when carrying capacity is fully exhausted. For this experiment, the best results were generated with the interrupt strategy disabled and A full as the battery charging design. The framework is further compared with heuristic strategies such as the FixedThreshold 
+
+strategy where a lower and upper threshold for the battery is fixed and HighLow strategy where the upper threshold is varied depending on the retrieval order queue length. In our implementation, this quantity is represented by the percentage of remaining orders. 21 IPPO outperformed all benchmark algorithms as shown in Figure 7, Table 8, and Table 9. As the complexity increases ( μ = 0 .6), IPPO achieves a higher order completion rate than the best performing benchmark. Among the benchmarking algorithms, FixedThreshold achieves the best performance when the lower threshold is minimized and the upper threshold is maximized. For example, in E-I with μ = 0 .50, Fixed 100 15 which corresponds to FixedThreshold strategy with lower threshold 15 and upper threshold 100 is the best performing benchmark. Order Completion Rate 010 20 30 40 50 60 70 80 90 100 IPPO Bischoff DQN CTDE PPO Fixed 100_15 Fixed 100_30 Fixed 85_15 Fixed 85_30 High Low overall A1 A2 A3 A4 
+
+(a) E-I environment with μ = 0.50 Order Completion Rate 010 20 30 40 50 60 70 80 90 100 IPPO Bischoff DQN CTDE PPO Fixed 100_15 Fixed 100_30 Fixed 85_15 Fixed 85_30 High Low overall A1 A2 A3 A4 (b) E-I environment with μ = 0.60 Order Completion Rate 010 20 30 40 50 60 70 80 90 100 IPPO Bischoff DQN CTDE PPO Fixed 100_20 Fixed 100_35 Fixed 85_20 Fixed 85_35 High Low overall A1 A2 A3 A4 A5 A6 
+
+(c) E-II environment with μ = 0.75 Order Completion Rate 010 20 30 40 50 60 70 80 90 100 IPPO Bischoff DQN CTDE PPO Fixed 100_20 Fixed 100_35 Fixed 85_20 Fixed 85_35 High Low overall A1 A2 A3 A4 A5 A6 (d) E-II environment with μ = 0.90 
+
+Figure 7: Performance across different benchmarking algorithms Table 8: Order Completion Rate (%) under different algorithms in E-I settings 
+
+μ Algo. IPPO Bischoff DQN CTDE PPO Fixed 100 15 Fixed 100 30 Fixed 85 15 Fixed 85 30 High Low 0.6 overall 76 68 65 69 70 68 69 66 53 A1 94 82 80 85 85 82 83 79 58 A2 80 71 70 74 74 71 72 69 55 A3 66 60 61 62 63 60 60 59 50 A4 64 58 49 57 57 59 60 55 48 0.5 overall 87 82 78 82 83 82 82 78 55 A1 100 99 95 99 100 98 99 94 61 A2 93 87 83 87 89 85 86 83 57 A3 78 73 73 73 76 72 72 70 52 A4 75 69 61 68 69 71 71 66 49 Among all benchmark algorithms, IPPO achieves the lowest average waiting time at charging stations and lowest time spent charging per order completed as shown in Figures 8 and 9. 22 Table 9: Order Completion Rate (%) under different algorithms in E-II settings 
+
+μ Algo. IPPO Bischoff DQN CTDE PPO Fixed 100 20 Fixed 100 35 Fixed 85 20 Fixed 85 35 High Low 0.9 overall 60 52 39 45 55 51 51 48 39 A1 87 74 55 65 78 74 75 72 52 A2 74 63 45 57 68 64 65 64 50 A3 53 47 36 40 47 46 46 40 37 A4 49 45 34 38 45 42 43 38 36 A5 48 41 33 36 46 40 41 38 31 A6 47 39 30 35 44 38 39 38 29 0.75 overall 71 65 46 51 65 61 62 58 41 A1 100 91 79 70 93 91 90 86 56 A2 89 79 7 62 81 77 77 76 52 A3 62 57 53 45 56 54 55 48 39 A4 60 55 47 43 54 51 52 45 37 A5 58 53 48 42 54 48 49 47 31 A6 57 52 43 42 53 46 47 46 30 Percentage of Total Simulation Time 010 20 30 40 IPPO Bischoff DQN CTDE PPO Fixed 100_15 Fixed 100_30 Fixed 85_15 Fixed 85_30 High Low % Charging time % Wait in queue time 
+
+(a) E-I environment with μ = 0.60 Percentage of Total Simulation Time 010 20 30 40 IPPO Bischoff DQN CTDE PPO Fixed 100_20 Fixed 100_35 Fixed 85_20 Fixed 85_35 High Low % Charging time % Wait in queue time (b) E-II environment with μ = 0.90 
+
+Figure 8: Percentage of time spent charging and waiting in queue at CS in different scenarios Time 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 IPPO Bischoff DQN CTDE PPO Fixed 100_15 Fixed 100_30 Fixed 85_15 Fixed 85_30 High Low 
+
+(a) E-I environment with μ = 0.60 Time 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 IPPO Bischoff DQN CTDE PPO Fixed 100_20 Fixed 100_35 Fixed 85_20 Fixed 85_35 High Low (b) E-II environment with μ = 0.90 
+
+Figure 9: Time spent charging for per completed order in different scenarios 
+
+6.3 Explainability and Policy Analysis 
+
+To characterize the policies learned by the model, the battery level at which agents make charging decisions, capacity level when they go to depot and queue length at CS are analyzed in environments E-I and E-II with μ = 0 .6 and μ = 0 .9 respectively. Figures 10 and 11 present the distributions 23 of battery levels at charging decisions, capacity level at deport decisions, and the queue lengths at charging stations. In both environments, agents most frequently go to the depot when their carrying capacity reaches its minimum and initiate charging when the battery level is low. In E-II, agents predominantly terminate charging after reaching full battery capacity, whereas in E-I they frequently stop charging at battery levels between 75% and 95%. The low frequency of longer queue lengths indicates that the learned policy effectively mitigates congestion at CS.   
+
+> (a) Battery when agents decide to go to CS (b) Battery when agents decide to stop charging
+> (c) Capacity when agents decide to go to depot (d) Queue length at CS
+
+Figure 10: Policy learned in E-I environment with μ = 0 .60 
+
+6.3.1 SHAP Value Analysis 
+
+A policy analysis is conducted using SHapley Additive exPlanations (SHAP) (Lundberg and Lee, 2017). SHAP identifies the state features in the observation space that most strongly influence the agent’s action selection. It measures the change in action probability assigned by the actor network when a feature is absent, averaged over all possible feature combinations. Features that consistently influence the prediction receive larger SHAP values, whereas features with little influence receive values close to zero. Decision states are collected from 10 test episodes for both the E-I ( μ = 0 .6) and E-II ( μ = 0 .9) environments, retaining only time steps where the action mask permits more than one valid action to filter out mid-travel states. Further restrictions are placed since certain actions are available 24 (a) Battery when agents decide to go to CS (b) Battery when agents decide to stop charging  
+
+> (c) Capacity when agents decide to go to depot (d) Queue length at CS
+
+Figure 11: Policy learnt in E-II environment with μ = 0 .90 only under specific environmental conditions. For example, stop charging is available only when the agent is at a CS and first in the queue. To characterize the average policy behavior, 100 state observations are sampled as the background reference and used to explain 300 state observations. For representation, the five most influential features, ranked by their mean absolute SHAP value are reported in Figure 12 for E-I environment. Based on the SHAP values, we can summarize the learned policy for all actions as follows: 
+
+• go pick: Battery, capacity and distance to the next order are the most influential. Red dots for battery appear on the right, confirming that agents pick orders when battery is sufficient, whereas blue dots for distance to the next order appear on the right, indicating that agents prefer picking when the order is close. Features related to neighboring agents have near-zero SHAP values, indicating picking decisions are primarily self-interested. 
+
+• go to CS: Battery is the most influential feature, with low battery levels strongly promoting the charging decision. Queue lengths at CS also influences the decision. Agents exhibit a preference for the nearest CS. In the six-block environment (E-II), among the mid-row agents, Agent 3 primarily uses CS1, and Agent 4 uses CS2. 
+
+• stop charging: Battery is the dominant feature, with higher battery levels promoting the action. For the four-block environment (E-I), the battery levels of nearby agents and the queue 25 (a) SHAP values for action go to pick 
+
+> (b) SHAP values for action go to CS1
+> (c) SHAP values for action go to CS2
+> (d) SHAP values for action stop charging
+> (e) SHAP values for action go to depot
+
+Figure 12: SHAP values for different actions based on policy learned for E-I environment with 
+
+μ = 0 .60. Each dot in the beeswarm plot represents one decision instance. The horizontal position gives the SHAP value: dots to the right indicate this feature increased the probability of the action in that instance; dots to the left indicate it decreased it. The color encodes the raw feature value: red indicates a high feature value (e.g. high battery), blue indicates a low value (e.g. low battery). 26 length are influential. For the six-block environment (E-II), the service mode of neighboring agents also contribute to the decision, reflecting congestion at charging stations. 
+
+• go to depot. Capacity, distance to depot and distance to next order are the most influential features, indicating that the agents consider the travel cost. 
+
+6.3.2 Decision Rule Analysis 
+
+Table 10: Mean of state features at the moment each action is chosen. Battery and capacity shown in absolute units. Queue lengths are number of agents waiting. Partner battery shown for the most relevant block neighbor. 
+
+Agent Action Battery Capacity Queue CS1 Queue CS2 Partner battery 
+
+Agent 1 go pick 62.6 6.1 0.5 0.6 A2: 63.2 go to cs1 25.4 7.2 0.0 0.6 A2: 74.2 stop charging 99.0 7.2 1.1 0.7 A2: 37.5 go to depot 57.9 1.4 0.5 0.6 A2: 65.4 Agent 2 go pick 64.2 5.8 0.5 0.6 A1: 55.4 go to cs1 25.9 6.6 0.1 0.7 A1: 83.0 stop charging 99.9 6.6 1.0 0.6 A1: 48.3 go to depot 62.8 0.7 0.5 0.6 A1: 55.5 Agent 3 go pick 58.7 5.7 0.6 0.4 A4: 49.3 go to cs2 26.1 6.6 0.6 0.2 A4: 68.8 stop charging 81.9 6.6 0.6 1.1 A4: 43.0 go to depot 58.9 0.4 0.6 0.5 A4: 47.9 Agent 4 go pick 60.1 5.6 0.6 0.4 A3: 49.5 go to cs2 25.2 6.9 0.6 0.1 A3: 64.0 stop charging 85.3 6.8 0.6 1.1 A3: 36.3 go to depot 60.7 0.2 0.6 0.6 A3: 52.3 Tables 10 and 11 summarize the mean feature values associated with each action across 10 test episodes in the E-I ( μ = 0 .6) and E-II ( μ = 0 .9) environments, respectively. Based on these observed mean values, we analyze the operational rationale behind each learned action below. 
+
+go pick : Agents typically initiate order picking when battery levels are moderate and carrying capacity is approximately half of the maximum. In E-II the gradual increase in battery level during order picking from bottom-row to top-row agents (A1: 61%, A6: 67%) reflects the longer travel distances to the depot for top-row agents, prompting battery conservation. 
+
+go to cs : Agents initiate charging at battery levels of approximately 24%–28%, thereby pre-venting mid-travel battery depletion, and preferentially select the nearest charging station. In Environment E-II, the mid-row agents (Agents 3 and 4) exhibit queue-aware switching between both charging stations. Furthermore, agents appear to coordinate their charging trips by initiating charging when the horizontally adjacent agent has a high battery level, thereby reducing congestion at charging stations. 27 Table 11: Mean of state features at the moment each action is chosen in the six-block environment. Battery and capacity in absolute units. Queue lengths are number of agents waiting. Partner battery shown for the most relevant block neighbor. 
+
+Agent Action Battery Capacity Queue CS1 Queue CS2 Partner battery 
+
+Agent 1 go pick 60.9 6.3 1.0 1.1 A2: 64.5 go to cs1 23.7 6.2 0.7 1.1 A2: 65.7 stop charging 100.0 6.2 1.6 1.1 A2: 29.1 go to depot 60.1 1.9 0.9 1.1 A2: 65.5 Agent 2 go pick 60.2 5.8 0.9 1.1 A1: 49.4 go to cs1 24.5 4.7 0.9 1.1 A1: 78.8 stop charging 100.0 4.7 1.4 1.1 A3: 35.1 go to depot 67.8 0.7 0.9 1.1 A1: 46.8 Agent 3 go pick 57.7 5.8 1.0 1.1 A4: 57.1 go to cs1 25.7 5.0 0.8 1.1 A4: 58.9 go to cs2 31.1 3.4 1.1 0.9 A4: 64.1 stop charging 100.0 4.7 1.4 1.2 A1: 35.6 go to depot 69.5 0.7 1.0 1.1 A4: 56.1 Agent 4 go pick 62.4 5.6 1.0 1.1 A3: 55.5 go to cs2 28.0 6.2 1.1 0.9 A3: 57.9 go to cs1 27.2 5.9 0.8 1.3 A3: 66.9 stop charging 100.0 6.1 1.1 1.6 A5: 38.4 go to depot 67.4 0.4 1.0 1.1 A3: 56.5 Agent 5 go pick 65.1 5.6 1.0 1.0 A6: 55.8 go to cs2 25.8 5.9 1.0 0.9 A6: 69.7 stop charging 99.8 5.9 1.0 1.6 A6: 36.3 go to depot 76.9 0.2 1.0 1.0 A6: 55.9 Agent 6 go pick 67.2 5.6 1.0 1.0 A5: 52.8 go to cs2 26.3 6.4 1.0 0.9 A5: 73.8 stop charging 99.9 6.4 1.1 1.5 A4: 37.4 go to depot 75.9 0.2 1.0 1.1 A5: 47.8 
+
+stop charging : In E-I, a spatial asymmetry in charging termination thresholds is observed. Agents 1 and 2 that are located near CS1 and closer to the depot, charge to higher battery levels, whereas Agents 3 and 4 located further away terminate charging earlier. Since Agents 3 and 4 travel longer distances during each order cycle, they trade off charging duration against order throughput more aggressively. In E-II, Agents typically terminate charging after the battery reaches approxi-mately 100%. In both E-I and E-II, when agents terminate charging, the battery level of neighboring agents emerges as an important factor. In E-I environment, agents consistently terminate charging when their horizontally adjacent partner approaches a low-battery state. Specifically, Agent 1 stops when Agent 2’s battery is 37.5% and Agent 2 stops when Agent 1’s is 48.3%. Similarly, Agent 3 stops when Agent 4’s is 43.0%; Agent 4 stops when Agent 3’s is 36.3%. In E-II environment, coor-28 dination extends beyond horizontally adjacent agents to those that predominantly share the same charging station. Agent 1’s decision is influenced by Agent 2’s low battery, Agent 2’s by Agent 3’s low battery, and Agent 3’s by Agent 1’s low battery. Similarly Agent 4 is influenced by Agent 5’s low battery, Agent 5 by Agent 6’s low battery, and Agent 6 by Agent 4’s low battery as shown in Table 11. This behavior is consistent with the SHAP analysis, which showed that in E-II, Agents 1–3 primarily use CS1, whereas Agents 4–6 primarily use CS2. These findings suggest that agents coordinate their charging decisions to accommodate neighboring agents approaching low-battery states. 
+
+go to depot : Agents go to the depot when carrying capacity is nearly exhausted, maximizing the items delivered per depot trip. The states of neighboring agents fail to exhibit a consistent pattern, indicating that depot decisions are driven primarily by the agent’s own carrying capacity. 
+
+## 7 Sensitivity 
+
+Real warehouses are highly dynamic, and to implement a DRL framework, it is necessary to ensure the model’s robustness. Hence, we performed additional experiments under different settings. 
+
+7.1 Sensitivity to training and testing durations 
+
+To evaluate whether training duration significantly affects testing performance, models were trained using 4-hour and 8-hour simulations in the E-II environment (with μ = 0 .75) and subsequently evaluated over simulation horizons of 4, 8, 12, and 24 hours. As illustrated in Figure 13, all configurations achieve comparable total order completion rates. This behavior can be attributed to the repetitive and stationary nature of warehouse operations, where agents experience similar battery utilization and consistent travel patterns regardless of the simulation horizon. Consequently, no significant gain in performance metrics is achievable by training over a longer time period. Order Completion Rate 010 20 30 40 50 60 70 80 4hr 8hr 12hr 24hr 4hr train 8hr train 
+
+Figure 13: Order completion rate at different training and testing time in E-II environment 29 7.2 Dynamic order arrival rate 
+
+In practice, orders rarely arrive at a constant rate. To simulate this real-world scenario, the model was trained on dynamic order arrival rate. The order arrival process follows a piecewise-constant Poisson Process, with arrival rates derived from empirical B2C e-commerce order data collected in 2-hour intervals from a real distribution center (Leung et al., 2019). The source data reports order volume in kg for every 2-hour slot over a four-week period (all seven days), as shown in Figure 14. To derive a time-varying arrival schedule, the mean arrival volume in kg per 2-hour slot was computed by averaging all 28 daily observations (4 weeks × 7 days). Each slot mean is then expressed as a ratio relative to the overall daily mean, yielding 12 relative weights that capture the intra-day arrival pattern. Since the source data reports order volume in kg rather than order count, we apply these relative weights directly to our simulation mean of μ = 0 .5 orders/timestep, producing a piecewise-constant arrival schedule as shown in Table 12. Table 12: Intra-day order arrival profile 
+
+Slot Period (h) Avg volume (kg) Ratio ri μi (orders/s) 
+
+0 00:00–02:00 62.8 1.189 0.5946 1 02:00–04:00 43.9 0.832 0.4158 2 04:00–06:00 27.6 0.523 0.2613 3 06:00–08:00 15.8 0.299 0.1494 4 08:00–10:00 28.6 0.541 0.2704 5 10:00–12:00 46.6 0.883 0.4415 6 12:00–14:00 56.5 1.070 0.5348 7 14:00–16:00 65.8 1.245 0.6223 8 16:00–18:00 72.4 1.371 0.6855 9 18:00–20:00 63.7 1.206 0.6030 10 20:00–22:00 73.5 1.391 0.6953 11 22:00–24:00 76.7 1.452 0.7261 
+
+Daily mean 52.8 1.000 0.5000 
+
+To evaluate the robustness of the proposed IPPO framework, the dynamic arrival schedule was applied to the IPPO model in the E-II environment with μ = 0.75 and to the best performing benchmark Fixed 100 20 . As shown in Figure 15, IPPO continues to outperform the benchmark, exhibiting only a marginal drop in order completion rate compared with the constant arrival rate scenario. 
+
+## 8 Conclusions 
+
+With the increasing dependence on automatic operation of warehouses and AMRs, this study investigates optimal charging strategies for AMRs operating in a multi-block warehouse. A PPO-30 Mon Tue Wed Thu Fri Sat Sun     
+
+> Interval (day)
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> Order arrival (kg)
+> Week 1 Week 2 Week 3 Week 4 4-week avg
+
+(a) Arrival volume in kg for a 4-week period in source data 0-2   
+
+> 2-4
+> 4-6
+> 6-8
+> 8-10
+> 10-12
+> 12-14
+> 14-16
+> 16-18
+> 18-20
+> 20-22
+> 22-24
+> 2-hour time slot
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> Arrival rate
+> Mean = 0.5
+
+(b) Derived arrival rate μ for a 24 hour period 
+
+Figure 14: Dynamic arrival rate Order Completion Rate 010 20 30 40 50 60 70 80 90 100 IPPO Dynamic γ Fixed 100_20 Dynamic γ IPPO Constant γ Fixed 100_20 Constant γ overall A1 A2 A3 A4 A5 A6 
+
+Figure 15: Effect of dynamic arrival rate based deep reinforcement learning framework is proposed to learn charging strategies instead of relying on fixed rules, which are currently dominant in the industry. The key decisions learned include deciding when to start and stop charging, which charging station to use to avoid congestion, and when to go to the depot, under dynamically arriving orders while continuously accounting for battery state and agent location of the AMRs in real time. The framework was evaluated under multiple environment configurations and under stochastic demands. Across all scenarios, the proposed approach achieved the highest order completion rate, lowest waiting time at charging stations and the lowest time spent charging per order. The results demonstrate the effectiveness and robustness of the proposed framework for dynamic battery management, thereby reducing energy consumption and operational costs. Based on the interpretability analysis, we propose practical decision rules for managing AMRs in operational warehouses: 
+
+• Direct AMRs to the nearest charging stations, and strategically position these stations to ensure uniform coverage across all agents. 
+
+• Position charging stations to grant easier access to agents operating farthest from the depot. 
+
+• Terminate charging cycles before reaching full capacity if the battery levels of nearby agents, 31 or those sharing the same station, fall below a critical threshold. 
+
+• Initiate depot visits after an agent’s carrying capacity has been fully utilized. To further enhance the fidelity and scalability of the proposed framework, multiple extensions can be explored in future research. First, agent movement is currently approximated using Eu-clidean distances under the assumption of collision-free operation; future work could incorporate explicit collision-avoidance mechanisms alongside optimal path-planning algorithms. Second, or-ders are currently fulfilled following a FIFO policy. Incorporating order batching and dynamic order-picking strategies could enable agents to select orders based on proximity as well as other operational factors. Finally, battery depletion is assumed to occur at a uniform rate. In practice, energy consumption depends heavily on the carried load; therefore, future directions could consider battery depletion and recharging as functions of the payload. 
+
+## Acknowledgments 
+
+This work was supported by a Research Seed Grant from the Indian Institute of Management Ban-galore. The authors also gratefully acknowledge the INFORMS TSL Cross-Regional Collaborative Grant 2025, which initiated this research project. 
+
+## References 
+
+Akiba, T., Sano, S., Yanase, T., Ohta, T., Koyama, M., 2019. Optuna: A next-generation hy-perparameter optimization framework, in: Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining, Association for Computing Machinery, New York, NY, USA. pp. 2623–2631. Bai, Z., Pang, H., He, Z., Zhao, B., Wang, T., 2024. Path planning of autonomous mobile robot in comprehensive unknown environment using deep reinforcement learning. IEEE Internet of Things Journal 11, 22153–22166. Beeks, M., Refaei Afshar, R., Zhang, Y., Dijkman, R., van Dorst, C., de Looijer, S., 2022. Deep reinforcement learning for a multi-objective online order batching problem, in: Proceedings of the International Conference on Automated Planning and Scheduling, pp. 435–443. Bischoff, J., Rinciog, A., Meyer, A., 2026. Reinforcement learning for AMR charging decisions: The impact of reward and action space design, in: Zhang, Y., Hladik, M., Moosaei, H. (Eds.), Learning and Intelligent Optimization, Springer Nature Switzerland, Cham. pp. 298–315. Cals, B., Zhang, Y., Dijkman, R., van Dorst, C., 2021. Solving the online batching problem using deep reinforcement learning. Computers & Industrial Engineering 156, 107221. 32 Carli, R., Digiesi, S., Dotoli, M., Facchini, F., 2020. A control strategy for smart energy charging of warehouse material Handling Equipment. Procedia Manufacturing 42, 503–510. International Conference on Industry 4.0 and Smart Manufacturing (ISM 2019). Chien, C.F., Lin, Y.S., Lin, S.K., 2020. Deep reinforcement learning for selecting demand fore-cast models to empower Industry 3.5 and an empirical study for a semiconductor component distributor. International Journal of Production Research 58, 2784–2804. Deng, Y., An, B., Qiu, Z., Li, L., Wang, Y., Xu, Y., 2020. Battery Management for Automated Warehouses via Deep Reinforcement Learning, in: Taylor, M.E., Yu, Y., Elkind, E., Gao, Y. (Eds.), Distributed Artificial Intelligence, Springer International Publishing, Cham. pp. 126–139. Dong, T., Xue, F., Xiao, C., Li, J., 2020. Task scheduling based on deep reinforcement learning in a cloud manufacturing environment. Concurrency and Computation: Practice and Experience 32, e5654. Drenner, A., Janssen, M., Papanikolopoulos, N., 2009. Coordinating recharging of large scale robotic teams, in: 2009 IEEE/RSJ International Conference on Intelligent Robots and Systems, pp. 1357–1362. Dresser, S., 2025. Amazon launches a new AI foundation model to power its robotic fleet and deploys its 1 millionth robot. About Amazon. URL: https://www.aboutamazon.com/news/ operations/amazon-million-robots-ai-foundation-model. accessed: 2026-03-05. Fu, X., Cheng, Z., Wang, J., 2021. Research on online scheduling and charging strategy of robots based on shortest path algorithm. Computers & Industrial Engineering 153, 107097. Greenawalt, T., 2025. Amazon has more than 1 million robots that sort, lift, and carry packages—see them in action. AboutAmazon. URL: https://www.aboutamazon.com/news/ operations/amazon-robotics-robots-fulfillment-center. accessed: 2026-03-05. He, J., Liu, X., Duan, Q., Chan, W.K.V., Qi, M., 2023. Reinforcement learning for multi-item retrieval in the puzzle-based storage system. European Journal of Operational Research 305, 820–837. Kuhnle, A., Sch¨ afer, L., Stricker, N., Lanza, G., 2019. Design, implementation and evaluation of reinforcement learning for an adaptive order dispatching in job shop manufacturing systems. Pro-cedia CIRP 81, 234–239. 52nd CIRP Conference on Manufacturing Systems (CMS), Ljubljana, Slovenia, June 12-14, 2019. KUKA AG, . KMP 1500P diffdrive – autonomous mobile robot platform. URL: https://www.kuka. com/en-de/products/amr-Autonomous-mobile-robotics/mobile-platforms/kmp-1500p-diffdrive. accessed: 2026-03-05. 33 Leung, K., Choy, K., Ho, G., Lee, C.K., Lam, H., Luk, C., 2019. Prediction of B2C e-commerce order arrival using hybrid autoregressive-adaptive neuro-fuzzy inference system (AR-ANFIS) for managing fluctuation of throughput in e-fulfilment centres. Expert Systems with Applications 134, 304–324. Li, A.M.P., Sankaran, P., Kuhl, M.E., Ptucha, R., Ganguly, A., Kwasinski, A., 2019. Task selection by autonomous mobile robots in a warehouse using deep reinforcement learning, in: 2019 Winter Simulation Conference (WSC), pp. 680–689. Lin, C.C., Chen, K.Y., Hsieh, L.T., 2023. Real-time charging scheduling of AGVs in cyber-physical smart factories using feature-based reinforcement learning. IEEE Transactions on Intelligent Transportation Systems 24, 4016–4026. Lundberg, S.M., Lee, S.I., 2017. A unified approach to interpreting model predictions, in: Pro-ceedings of the 31st International Conference on Neural Information Processing Systems, Curran Associates Inc., Red Hook, NY, USA. pp. 4768–4777. Mahmoudinazlou, S., Sobhanan, A., Charkhgard, H., Eshragh, A., Dunn, G., 2025. Deep rein-forcement learning for dynamic order picking in warehouse operations. Computers & Operations Research 182, 107112. McNulty, D., Hennessy, A., Li, M., Armstrong, E., Ryan, K.M., 2022. A review of Li-ion batteries for autonomous mobile robots: Perspectives and outlook for the future. Journal of Power Sources 545, 231943. Mnih, V., et al., 2015. Human-level control through deep reinforcement learning. Nature 518, 529–533. Mu, Y., Li, Y., Lin, K., Deng, K., Liu, Q., 2022. Battery management for warehouse robots via average-reward reinforcement learning, in: 2022 IEEE International Conference on Robotics and Biomimetics (ROBIO), pp. 253–258. Pal, A., Chauhan, A., Baranwal, M., 2025. Together we rise: Optimizing real-time multi-robot task allocation using coordinated heterogeneous plays, in: Proceedings of the 24th International Conference on Autonomous Agents and Multiagent Systems, International Foundation for Au-tonomous Agents and Multiagent Systems, Richland, SC. pp. 1586–1594. Panzer, M., Bender, B., 2022. Deep reinforcement learning in production systems: a systematic literature review. International Journal of Production Research 60, 4316–4341. Raffin, A., Hill, A., Gleave, A., Kanervisto, A., Ernestus, M., Dormann, N., 2021. Stable-Baselines3: Reliable reinforcement learning implementations. Journal of Machine Learning Research 22, 1–8. Shen, G., Ma, R., Tang, Z., Chang, L., 2021. A deep reinforcement learning algorithm for ware-housing multi-AGV path planning, in: 2021 International Conference on Networking, Commu-nications and Information Technology (NetCIT), pp. 421–429. 34 Stranieri, F., Stella, F., Kouki, C., 2024. Performance of deep reinforcement learning algorithms in two-echelon inventory control systems. International Journal of Production Research 62, 6211– 6226. Teck, S., Pha . m, T.S., Rousseau, L.M., Vansteenwegen, P., 2025. Deep reinforcement learning for the real-time inventory rack storage assignment and replenishment problem. European Journal of Operational Research 327, 606–622. Tian, R., Lu, M., Wang, H., Wang, B., Tang, Q., 2024. IACPPO: A deep reinforcement learning-based model for warehouse inventory replenishment. Computers & Industrial Engineering 187, 109829. Tomy, M., Lacerda, B., Hawes, N., Wyatt, J.L., 2020. Battery charge scheduling in long-life autonomous mobile robots via multi-objective decision making under uncertainty. Robotics and Autonomous Systems 133, 103629. Wiferion, . Installation for inductive charging: Charging station for indus-trial applications. Wiferion. URL: https://www.wiferion.com/en/products/ installation-for-inductive-charging-charging-station-in-industry/#in-ground. accessed: 2026-03-05. Xiao, Z., Li, P., Liu, C., Gao, H., Wang, X., 2024. MACNS: A generic graph neural network integrated deep reinforcement learning based multi-agent collaborative navigation system for dynamic trajectory planning. Information Fusion 105, 102250. Yang, Y., Juntao, L., Lingling, P., 2020. Multi-robot path planning based on a deep reinforcement learning DQN algorithm. CAAI Transactions on Intelligence Technology 5, 177–183. Yoshida, Y., Arai, S., Kobayashi, H., Kondo, K., 2021. Charge/discharge control of wayside bat-teries via reinforcement learning for energy-conservation in electrified railway systems. Electrical Engineering in Japan 214, e23319. Zellner, A., Dutta, A., Kulbaka, I., Sharma, G., 2023. Deep recurrent Q-learning for energy-constrained coverage with a mobile robot. Neural Comput. Appl. 35, 19087–19097. Zhang, L., Yan, Y., Hu, Y., 2023. Deep reinforcement learning for dynamic scheduling of energy-efficient automated guided vehicles. J. Intell. Manuf. 35, 3875–3888. Zou, B., Xu, X., Gong, Y.Y., De Koster, R., 2018. Evaluating battery charging and swapping strategies in a robotic mobile fulfillment system. European Journal of Operational Research 267, 733–753. 35

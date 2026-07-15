@@ -6,26 +6,26 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-14
-- 运行时间：2026-07-14 21:31:22 UTC
+- 最新运行日期：2026-07-15
+- 运行时间：2026-07-15 20:20:38 UTC
 - 运行状态：成功
 - 本次总论文数：1
 - 精读区：0
 - 速读区：1
 
 ### 今日简报（AI）
-今日速览锂离子电池动力学新视角，用库普曼谱分析揭示荷电状态的边际稳定特性。  
-核心结论：电池荷电状态被视为边际稳定观测量，其谱特征可能为状态估计提供新思路。  
-建议关注库普曼算子能否简化电池管理系统的可解释性设计，后续可对比不同工况验证。
-- 详情：[/202607/14/README](/202607/14/README)
+今日速读论文：用深度强化学习让仓库拣选机器人更聪明地管理电池，得分7.0  
+其方向在于动态调度电池充换电，能有效延长作业时间、降低能耗成本  
+下一步可关注如何将类似策略迁移至多机器人协同场景，提升整体仓储效率
+- 详情：[/202607/15/README](/202607/15/README)
 
 ### 精读区论文标签
 - 本次无精读推荐。
 
 ### 速读区论文标签
-1. [Koopman Spectral Analysis of Lithium-Ion Battery Dynamics: State of Charge as a Marginally Stable Observable](/202607/14/2607.07594v2-koopman-spectral-analysis-of-lithium-ion-battery-dynamics-state-of-charge-as-a-marginally-stable-observable)  
+1. [Deep Reinforcement Learning for Dynamic Battery Management of Autonomous Order Pickers](/202607/15/2607.05683v1-deep-reinforcement-learning-for-dynamic-battery-management-of-autonomous-order-pickers)  
    标签：评分：7.0/10、query:uav
-   evidence：电池SOC估计方法，与混合动力无人机能量管理中的SOC控制挑战直接相关
+   evidence：深度强化学习用于自主移动机器人动态电池充电管理，解决类似荷电状态控制问题
 
 
 <div class="dpr-home-promo-card">

@@ -1,0 +1,56 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-15T20:18:33.751664+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.05683v1",
+      "source": "arxiv",
+      "title": "Deep Reinforcement Learning for Dynamic Battery Management of Autonomous Order Pickers",
+      "abstract": "Battery charging of Autonomous Mobile Robots (AMRs) in warehouses is a critical operational challenge that heavily impacts both order processing times and throughput. In this study, we address the dynamic AMR charging problem under stochastic order arrivals, where robots must learn optimal charging decisions. Traditional fixed-rule heuristics often prove suboptimal in dynamic environments and fail to account for multi-AMR coordination, leading to severe resource inefficiencies. To overcome these limitations, we propose a Proximal Policy Optimization (PPO)-based Deep Reinforcement Learning (DRL) framework designed for multi-block warehouses with fixed charging stations. Our model dynamically learns two key decisions: charging station selection and optimal charging duration, explicitly accounting for anticipated queuing times at the stations. Extensive numerical experiments benchmark the proposed model against state-of-the-art DRL and traditional heuristic approaches. Results demonstrate that our PPO framework increases order-completion rates by up to 6\\% compared to the strongest baseline, while significantly reducing the total time dedicated to recharging operations. Furthermore, we validate the model's robustness across diverse warehouse configurations and stochastic arrival rates. Finally, we interpret the learned DRL policy, offering valuable operational insights into its superiority over standard benchmarks.",
+      "authors": [
+        "Taniya Shaji",
+        "Abhay Sobhanan",
+        "Christof Defryn"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.MA",
+        "math.OC"
+      ],
+      "published": "2026-07-06T22:52:47+00:00",
+      "link": "https://arxiv.org/pdf/2607.05683v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "DRL for dynamic battery charging management in AMRs, addressing SOC-like control",
+      "llm_evidence_cn": "深度强化学习用于自主移动机器人动态电池充电管理，解决类似荷电状态控制问题",
+      "llm_evidence": "深度强化学习用于自主移动机器人动态电池充电管理，解决类似荷电状态控制问题",
+      "canonical_evidence": "深度强化学习用于自主移动机器人动态电池充电管理，解决类似荷电状态控制问题",
+      "llm_tldr_en": "Addressing dynamic battery charging of AMRs in warehouses, this paper proposes a PPO-based DRL framework that learns optimal charging decisions under stochastic arrivals. It outperforms heuristics and offers a transferable approach for battery management, relevant to UAV energy management.",
+      "llm_tldr_cn": "针对仓库中自主移动机器人随机订单到达下的动态电池充电问题，本文提出一种基于PPO的深度强化学习框架。该模型动态学习充电站选择和充电时长，优化订单处理效率与能耗。实验表明该方法优于传统启发式规则，为无人机能量管理提供了一种可迁移的强化学习解决方案。",
+      "llm_tldr": "针对仓库中自主移动机器人随机订单到达下的动态电池充电问题，本文提出一种基于PPO的深度强化学习框架。该模型动态学习充电站选择和充电时长，优化订单处理效率与能耗。实验表明该方法优于传统启发式规则，为无人机能量管理提供了一种可迁移的强化学习解决方案。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "What are the unsolved problems in hybrid UAV energy management, such as SOC control, fuel consumption, generator transients, and mission adaptation?",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
