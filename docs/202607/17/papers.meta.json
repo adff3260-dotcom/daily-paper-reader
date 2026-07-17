@@ -1,0 +1,24 @@
+{
+  "label": "2026-07-17",
+  "date": "2026-07-17",
+  "generated_at": "2026-07-17T21:27:02",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202607/17/2607.14640v1-tide-trustworthy-and-interpretable-battery-degradation-estimation-with-contextual-learning-and-symbolic-distillation",
+      "section": "quick",
+      "title_en": "TIDE: Trustworthy and Interpretable Battery Degradation Estimation with Contextual Learning and Symbolic Distillation",
+      "authors": "Wen Yang Tan, Jiawei Li, Fang Liu, Wei Zhang, Sumei Sun, Peng Cheng Wang, Elisa Y. M. Ang",
+      "date": "2026-07-16",
+      "pdf": "https://arxiv.org/pdf/2607.14640v1",
+      "score": "6.0",
+      "evidence": "电池退化估计解决电池老化问题，对无人机能量管理至关重要",
+      "tldr": "电池健康估计对智能互联系统至关重要，误差会跨设备传播影响下游决策。本文提出TIDE，通过知识引导先验、单调残差建模和上下文学习联合提升精度、可信度与可解释性，并蒸馏为符号公式。实验表明估计保真度平均提升19.7%，老化一致性违规显著减少。该方法为大规模电池健康监测与可靠决策提供了兼顾性能与解释性的实用方案。",
+      "tags": "query:uav",
+      "abstract_en": "Battery health estimation is fundamental for battery management in battery-powered systems, where inaccurate health states may affect control, maintenance, and service life. It becomes even more critical in intelligent connected systems, where estimation errors can propagate across interconnected devices and downstream decisions. In this paper, we propose TIDE, a trustworthy and interpretable battery degradation estimator for reliable battery health estimation. TIDE jointly considers accuracy, trustworthiness, and interpretability, which are all essential for practical deployment and downstream decision making. To realize these objectives, TIDE combines battery-domain knowledge with operational measurements in a three-component backbone. A knowledge-guided degradation prior promotes trustworthy estimation, a monotone residual component provides interpretable aging-consistent refinement, and a contextual learning component captures battery-specific operational effects for improved accuracy. The trained backbone is then distilled into a compact symbolic surrogate that provides a concise model-level interpretation of its learned estimation logic. Experiments show that TIDE achieves strong estimation accuracy, improving overall estimation fidelity by an average of 19.7% over representative baselines. Its knowledge-guided prior and monotone residual modelling substantially reduce aging-consistency violations, supporting trustworthy estimation. Meanwhile, the backbone enables component-level interpretation, while symbolic distillation provides a compact model-level representation of the learned estimation logic. These results support the practical use of TIDE for battery health monitoring and decision support in intelligent connected systems.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

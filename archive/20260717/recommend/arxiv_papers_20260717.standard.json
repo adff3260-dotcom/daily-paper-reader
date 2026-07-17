@@ -1,0 +1,58 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-17T21:22:09.194569+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.14640v1",
+      "source": "arxiv",
+      "title": "TIDE: Trustworthy and Interpretable Battery Degradation Estimation with Contextual Learning and Symbolic Distillation",
+      "abstract": "Battery health estimation is fundamental for battery management in battery-powered systems, where inaccurate health states may affect control, maintenance, and service life. It becomes even more critical in intelligent connected systems, where estimation errors can propagate across interconnected devices and downstream decisions. In this paper, we propose TIDE, a trustworthy and interpretable battery degradation estimator for reliable battery health estimation. TIDE jointly considers accuracy, trustworthiness, and interpretability, which are all essential for practical deployment and downstream decision making. To realize these objectives, TIDE combines battery-domain knowledge with operational measurements in a three-component backbone. A knowledge-guided degradation prior promotes trustworthy estimation, a monotone residual component provides interpretable aging-consistent refinement, and a contextual learning component captures battery-specific operational effects for improved accuracy. The trained backbone is then distilled into a compact symbolic surrogate that provides a concise model-level interpretation of its learned estimation logic. Experiments show that TIDE achieves strong estimation accuracy, improving overall estimation fidelity by an average of 19.7% over representative baselines. Its knowledge-guided prior and monotone residual modelling substantially reduce aging-consistency violations, supporting trustworthy estimation. Meanwhile, the backbone enables component-level interpretation, while symbolic distillation provides a compact model-level representation of the learned estimation logic. These results support the practical use of TIDE for battery health monitoring and decision support in intelligent connected systems.",
+      "authors": [
+        "Wen Yang Tan",
+        "Jiawei Li",
+        "Fang Liu",
+        "Wei Zhang",
+        "Sumei Sun",
+        "Peng Cheng Wang",
+        "Elisa Y. M. Ang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-07-16T07:08:23+00:00",
+      "link": "https://arxiv.org/pdf/2607.14640v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "battery degradation estimation addressing battery aging, crucial for UAV energy management",
+      "llm_evidence_cn": "电池退化估计解决电池老化问题，对无人机能量管理至关重要",
+      "llm_evidence": "电池退化估计解决电池老化问题，对无人机能量管理至关重要",
+      "canonical_evidence": "电池退化估计解决电池老化问题，对无人机能量管理至关重要",
+      "llm_tldr_en": "TIDE combines domain knowledge and contextual learning to estimate battery health accurately and interpretably, crucial for SOC control and aging management in UAV power systems.",
+      "llm_tldr_cn": "电池健康状态估计对电池管理系统至关重要，但现有方法在准确性和可解释性上存在不足。TIDE方法结合电池领域知识和操作测量，通过上下文学习与符号蒸馏，实现了可信且可解释的电池退化估计。在公开数据集上的测试显示，其估计误差低于传统方法，并能提供直观的健康指标，有助于无人机等电池供电设备实现更可靠的SOC维持和老化管理，从而延长使用寿命和提升安全性。",
+      "llm_tldr": "电池健康状态估计对电池管理系统至关重要，但现有方法在准确性和可解释性上存在不足。TIDE方法结合电池领域知识和操作测量，通过上下文学习与符号蒸馏，实现了可信且可解释的电池退化估计。在公开数据集上的测试显示，其估计误差低于传统方法，并能提供直观的健康指标，有助于无人机等电池供电设备实现更可靠的SOC维持和老化管理，从而延长使用寿命和提升安全性。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "What are the unsolved problems in hybrid UAV energy management, such as SOC control, fuel consumption, generator transients, and mission adaptation?",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

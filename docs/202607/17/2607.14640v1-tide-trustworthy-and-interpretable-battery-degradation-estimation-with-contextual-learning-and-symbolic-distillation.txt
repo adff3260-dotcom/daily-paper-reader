@@ -1,0 +1,394 @@
+Title: TIDE: Trustworthy and Interpretable Battery Degradation Estimation with Contextual Learning and Symbolic Distillation
+
+URL Source: https://arxiv.org/pdf/2607.14640v1
+
+Published Time: Fri, 17 Jul 2026 01:04:06 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# TIDE : Trustworthy and Interpretable Battery Degradation Estimation with Contextual Learning and Symbolic Distillation 
+
+Wen Yang Tan 1, Jiawei Li 1, Fang Liu 2, Wei Zhang 1,* , Sumei Sun 1, Peng Cheng Wang 1, Elisa Y. M. Ang 1
+
+> 1
+
+Singapore Institute of Technology (SIT), Singapore 828608 
+
+> 2
+
+Singapore University of Social Sciences (SUSS), Singapore 599494 Emails: wenyang.tan@singaporetech.edu.sg, jiawei009@e.ntu.edu.sg, liufang@suss.edu.sg, wei.zhang@singaporetech.edu.sg, sumei.sun@singaporetech.edu.sg, victor.wang@singaporetech.edu.sg, elisa.ang@singaporetech.edu.sg 
+
+Abstract —Battery health estimation is fundamental for bat-tery management in battery-powered systems, where inaccurate health states may affect control, maintenance, and service life. It becomes even more critical in intelligent connected systems, where estimation errors can propagate across interconnected devices and downstream decisions. In this paper, we propose TIDE , a trustworthy and interpretable battery degradation estimator for reliable battery health estimation. T IDE jointly considers accuracy, trustworthiness, and interpretability, which are all essential for practical deployment and downstream decision making. To realize these objectives, TIDE combines battery-domain knowledge with operational measurements in a three-component backbone. A knowledge-guided degradation prior promotes trustworthy estimation, a monotone residual component provides interpretable aging-consistent refinement, and a contextual learning component captures battery-specific operational effects for improved accuracy. The trained backbone is then distilled into a compact symbolic surrogate that provides a concise model-level interpretation of its learned estimation logic. Experiments show that T IDE achieves strong estimation accuracy, improving overall estimation fidelity by an average of 19.7% over representative baselines. Its knowledge-guided prior and mono-tone residual modelling substantially reduce aging-consistency violations, supporting trustworthy estimation. Meanwhile, the backbone enables component-level interpretation, while symbolic distillation provides a compact model-level representation of the learned estimation logic. These results support the practical use of T IDE for battery health monitoring and decision support in intelligent connected systems. 
+
+Index Terms —Battery health, applied AI, trustworthy, inter-pretability, Kolmogorov-Arnold networks, symbolic distillation 
+
+I. INTRODUCTION 
+
+Rechargeable batteries have become a fundamental energy source for a wide range of battery-powered systems such as electric vehicles and renewable energy storage systems, and such systems are increasingly deployed in Web-of-Things (WoT) environments [1]. As their adoption continues to ex-pand, understanding battery health has become increasingly important for ensuring safe, reliable, and efficient operation 
+
+This research is supported by A*STAR under its MTC Individual Re-search Grants (IRG) (Award M23M6c0113), MTC Programmatic (Award M23L9b0052), and the Shanghai Sci-tech Co-research Program (Award 25HB2702600). ( Corresponding author: Wei Zhang )
+
+throughout the battery lifetime. Without reliable battery health assessment, batteries may experience accelerated degradation, unexpected failures, and even safety hazards. Battery state of health (SoH), commonly defined as the percentage of remaining capacity relative to the battery’s initial capacity, has become a standard indicator of battery health. For example, a new battery typically has an SoH of 100%, while an SoH of 80% is commonly used as an end-of-life (EoL) threshold. Modern battery management systems (BMSs) continuously monitor various SoH-related measurements and estimate bat-tery SoH to support charging control, maintenance planning, and operational decision-making [2]. Considerable research efforts have been devoted to battery SoH, with the majority of existing studies formulating abattery health prognostics problem that predicts the future SoH of a battery from its historical degradation trajectory [3]. Early studies mainly relied on traditional approaches such as equivalent circuit models [4]. As battery sensing data became increasingly available, data-driven machine learning (ML) and deep learning methods gradually became the dominant paradigm by directly learning degradation patterns from oper-ational measurements [5]–[8]. More recently, physics-guided and knowledge-informed learning have further improved ro-bustness by incorporating knowledge into the learning process [9]–[11]. To facilitate deployment in resource-constrained sys-tems, lightweight and edge battery models have also developed with model compression and knowledge distillation [12]. Despite these advances, battery SoH forecasting generally assumes that ground-truth SoH values are already available, for example from the BMS, as inputs for future prediction. However, accurate SoH calculation requires detailed capacity measurements over a complete charge or discharge cycle, from fully depleted to fully charged or vice versa. In practice, complete charging or discharging processes are uncommon. Even when such measurements are available, deriving accu-rate SoH remains challenging because the measured capacity can be affected by operating conditions and measurement uncertainties. Consequently, recent studies have begun to in-vestigate battery SoH estimation or modelling, which infers arXiv:2607.14640v1 [cs.LG] 16 Jul 2026 the current SoH from BMS signals collected during normal battery operation [13]. Promising estimation performance has been reported. Their broader suitability for practical battery systems, however, remains insufficiently examined. Accuracy alone is insufficient. In real-world scenarios, degradation modelling should jointly consider accuracy, trust-worthiness, and interpretability. While most existing stud-ies remain accuracy-driven, trustworthiness requires estimated SoH trajectories to remain consistent with physically plausible aging behavior, whereas interpretability supports transparent verification and diagnosis. Early attempts have explored intrin-sically interpretable models, including Kolmogorov–Arnold Networks (KANs), which learn explicit functional relation-ships that can be inspected and represented symbolically [14]. However, directly applying KANs alone does not fully address SoH estimation, as accuracy may be compromised, the overall process remains difficult to interpret, and direct symbolic regression often produces overly complex expressions [15]. In this paper, we argue that no single information or model component is sufficient. Operational data capture battery-specific conditions but offer limited guidance on overall degra-dation, whereas degradation knowledge provides global aging constraints but cannot fully represent contextual variations. We combine these complementary measurement data with the knowledge model, and assign accuracy, trustworthiness, and interpretability to distinct ML components. We propose T IDE , a trustworthy and interpretable battery degradation estimator for battery SoH estimation. Rather than relying on a single estimation model, T IDE addresses dif-ferent objectives through complementary components. It first integrates battery-domain knowledge with operational sens-ing measurements to construct a structured three-component backbone estimator. A knowledge-guided prior is introduced to provide a physically meaningful estimation foundation for accuracy and trustworthiness. Building upon this foundation, a monotone residual component refines the estimation while preserving the expected battery aging behavior. A contextual residual component then captures battery-specific operational variations that cannot be explained by the preceding com-ponents, further improving estimation accuracy. While this backbone already supports component-level interpretation, its complete estimation logic remains relatively complex. We therefore further apply symbolic distillation to derive a com-pact symbolic surrogate from the trained backbone. The sur-rogate summarizes the overall estimation process in a concise mathematical form, enabling easier model-level interpretation. Extensive experiments are conducted to evaluate T IDE . We first compare T IDE with representative SoH estimation meth-ods in terms of estimation accuracy and trustworthiness, and then examine different T IDE variants to assess the contribution of each component. The results show that T IDE achieves high estimation fidelity, improving accuracy by an average of 19.7% over the benchmarking methods. Beyond accuracy, TIDE eliminates aging-consistency violations, whereas repre-sentative ML baselines exhibit noticeable violations. Its struc-tured backbone and symbolic surrogate further provide com-plementary component-level and model-level interpretations of the estimation process. Together, these results demonstrate that T IDE offers an accurate, trustworthy, and interpretable solution for battery health estimation. More broadly, its design philosophy may inform future ML models for intelligent WoT systems that require reliable and transparent decision-making. The rest of the paper is organized as follows. We present the technical details of T IDE in Section II. In Section III, we conduct an experimental study and present the experiment results. Finally, we conclude this paper in Section IV. II. T IDE FRAMEWORK 
+
+In this section, we first formulate the SoH estimation problem and then present the proposed T IDE framework. 
+
+A. Problem Formulation 
+
+In practical battery systems, a BMS operates as a separate monitoring and control module that collects operational mea-surements, such as voltage, current, and temperature. These measurements provide partial observations of battery condition but do not directly reveal SoH. Battery SoH estimation is therefore formulated as a learning problem that infers the current health state from available operational features and, where applicable, complementary information like degradation knowledge. Formally, let xi ∈ Rd denote the input feature vector available at the i-th charging/discharging cycle or es-timation instance. After optional preprocessing, the processed feature vector ¯xi is fed into an SoH estimator f (·) to estimate the current SoH, 
+
+ˆyi = f (¯ xi), ˆyi ∈ [0 , 1] , (1) where ˆyi as a percentage denotes the predicted SoH. In the ML context, f (·) denotes the estimation model and focuses on estimation accuracy. Each estimation instance is processed independently, allowing the current SoH to be inferred from the available measurements and knowledge without requiring complete charge-discharge processes, historical data, or fu-ture observations. Accuracy is the primary objective of most existing studies. However, practical battery health estimation also requires trustworthiness and interpretability. A model may achieve low estimation error while producing unreasonable SoH increases during battery aging, which undermines con-fidence in its estimates. Similarly, opaque estimation logic makes the results difficult to verify, diagnose, and deploy in practical battery management systems. Therefore, this work jointly targets accuracy, trustworthiness, and interpretability. 
+
+B. Framework Overview 
+
+Fig. 1 illustrates the overall architecture of the proposed TIDE framework. Rather than directly mapping BMS sensing features to an ML model, T IDE first extends the input space by introducing multimodal information sources. As shown in the first layer of the figure, empirical degradation knowledge provides global guidance on battery degradation patterns, while BMS sensing features characterize battery-specific op-erating conditions. While multimodal inputs provide richer Multimodal    
+
+> Inputs
+> Empirical Knowledge BMS Sensing Features
+> Backbone
+> Estimator
+> C1:
+> Knowledge
+> Prior
+> C2:
+> Monotone
+> Residual
+> C3:
+> KAN
+> Residual
+> Symbolic
+> Surrogate
+> Teacher Student Distillation
+> TIDE  System Framework  …
+
+Fig. 1: Overview of the proposed T IDE framework. Degra-dation knowledge and BMS sensing features are jointly pro-cessed by a structured three-component backbone, followed by symbolic distillation to obtain a compact symbolic surrogate. information, they do not by themselves guarantee accurate, trustworthy, and interpretable estimation. To this end, we in the second layer introduce a structured backbone estimator consisting of three complementary components. The knowl-edge prior component C1 first establishes a coarse estimation foundation from empirical battery knowledge, providing a physically meaningful starting point for estimation. Since this foundation alone cannot capture the fine-grained degradation process, the monotone residual component C2 progressively refines the estimate while preserving the expected aging be-havior. Component C3 for contextual KAN residual further models the remaining battery-specific contextual effects to improve accuracy. Together, the components progressively construct a structured SoH estimator backbone with functional representations that facilitate component-level interpretation. However, understanding the overall behavior of the backbone remains challenging due to the complexity and interaction among the components. This motivates the subsequent sym-bolic distillation to obtain a compact model-level interpreta-tion. For distillation, the trained backbone estimator serves as the teacher model, while a compact symbolic surrogate is itera-tively optimized to approximate its estimation behavior under a trade-off between accuracy and complexity. The resulting symbolic model summarizes the overall estimation logic into an explicit mathematical expression, providing an interpretable representation of the complete estimation process. 
+
+C. TIDE Backbone: High-Capacity Battery Health Estimator 
+
+The backbone estimator is the core of the proposed T IDE 
+
+framework. This subsection presents its technical details. 
+
+1) Trustworthy Knowledge Prior: The first component, C1,establishes a trustworthy knowledge prior by incorporating empirical degradation knowledge into the estimation process. 
+
+C1 first constructs a coarse degradation baseline that captures the overall aging trend. To construct this prior, we adopt the cycle index i and internal resistance ri of the cycle, two of the most widely recognized battery aging indicators available in BMS. We first simulate the battery degradation based on an exponential function which captures a smooth nonlinear approximation of the dominant battery aging trend with increasing i. r captures the gradual increase in battery resistance caused by electrochemical aging. These aging indi-cators therefore provide a physically meaningful basis as, 
+
+C1(c, r i) = a exp( −bi ) − dr i, (2) where a, b, and d are trainable coefficients learned from the training data. Note that accuracy is not the only focus of 
+
+C1(·), which also serves as a trustworthy degradation prior that guides the subsequent learning process. Let yi denote the ground-truth SoH of the i-th cycle. The remaining estimation error is delegated to the residual components as, 
+
+δi = yi − C1(c, r i), (3) which will be further refined by components C2 and C3.
+
+2) Interpretable Monotone Residual: The residual estima-tion error left by C1 consists of two parts. The first is associ-ated with degradation-related characteristics that is expected to be monotonic and follow the battery aging trend. The second captures battery-specific operational and contextual effects that do not necessarily exhibit monotonic behavior. Here, the monotone residual component C2 is designed to model the former part using an empirically selected subset of degradation-related features such as cycle index and resistance. With these features as the input, a monotonic mapping can be imposed to ensure that the component remains consistent with the expected aging behavior. Formally, the component is, 
+
+C2(˜ xmon  
+
+> i
+
+) = −
+
+> P
+
+X
+
+> p=1
+> H
+
+X
+
+> h=1
+
+αph softplus  βph ˜xmon  
+
+> ip
+
++ γph 
+
+ + β0,
+
+(4) where xmon  
+
+> i
+
+⊂ xi denotes the selected features and ˜xmon 
+
+> i
+
+is the corresponding standardized feature vector. Here, P is the number of selected features and H is the number of hidden units associated with each feature. The softplus( ·)
+
+function is adopted as a smooth non-decreasing activation. The effective weights are constrained to be non-negative by 
+
+αph = softplus(˜ αph ) ≥ 0 and βph = softplus( ˜βph ) ≥ 0,where ˜αph and ˜βph are unconstrained learnable parameters. The parameters αph and βph control the contribution and sensitivity of each hidden unit, respectively, while γph and 
+
+β0 denote the activation shift and component bias. Since 
+
+softplus( ·) is non-decreasing, the effective weights are non-negative, and Eq. (4) adopts a leading negative sign, so 
+
+C2 is guaranteed to be non-increasing with respect to each selected feature. Consequently, C2 learns a degradation-aware residual that refines the coarse prior while preserving the expected monotonic aging behavior. Its explicit functional formulation also provides a transparent representation of the learned degradation relationship. 3) Accurate and Interpretable KAN Residual: The second part of the residual is associated with the battery-specific contextual information that does not necessarily follow the expected aging trend. Therefore, the third component, C3, is designed to model this contextual residual using the remaining features. No monotonic constraint is imposed on C3, allowing it to flexibly capture complex nonlinear operational character-istics. Formally, let xctx  
+
+> i
+
+= xi \ xmon  
+
+> i
+
+denote the remaining features after removing the monotonic degradation features used by C2. The contextual residual component is imple-mented using the latest MultKAN architecture [14]. Compared with conventional ML algorithms, MultKAN provides greater flexibility in modeling complex nonlinear contextual effects while preserving an explicit functional representation. Overall, 
+
+C3 is introduced to provide a flexible nonlinear residual correction that further improves estimation accuracy. 
+
+4) Backbone Integration and Learning: The proposed back-bone integrates the three complementary components into a unified end-to-end learning framework. Specifically, C1
+
+establishes a coarse degradation prior, C2 learns a knowledge-guided monotonic correction, and C3 captures the remaining contextual correction. Given residual δi, the correction is standardized as ˜δi = T (δi) to improve optimization stability. Thus, the final SoH estimation is then obtained by, 
+
+ˆyi = C1(i, r i) + T −1 C2(˜ xmon  
+
+> i
+
+) + C3(˜ xctx  
+
+> i
+
+), (5) where T −1(·) denotes the inverse standardization transform that maps the predicted degradation correction back to the original SoH scale. All three components are jointly trained in an end-to-end manner, allowing the backbone to balance degradation consistency with contextual flexibility. The back-bone is trained by minimizing the loss function, 
+
+L = Lpred +λcyc Lcyc +λir Lir +λrange Lrange +λaux Laux , (6) where Lpred minimizes the prediction error of the standard-ized degradation correction, Lcyc and Lir enforce degradation consistency with respect to feature cycle index and internal resistance, respectively, Lrange constrains the predicted SoH within the feasible operating range, and Laux regularizes the magnitude of the learned correction. The weighting coeffi-cients λcyc , λir , λrange , and λaux balance the corresponding objectives during joint training. This unified design enables the proposed estimator to simultaneously achieve accurate, trustworthy, and interpretable battery SoH estimation. 
+
+D. TIDE Symbolic Surrogate 
+
+The proposed backbone estimator provides a certain degree of interpretability through its component-wise design. How-ever, after integrating all components into a unified backbone, the overall estimation process remains difficult to understand due to the interactions among multiple nonlinear functions. To further improve model interpretability, T IDE then introduces a symbolic surrogate that approximates the learned behavior of the backbone using an explicit mathematical expression. The surrogate preserves the overall estimation characteristics of the backbone while providing a concise and human-readable representation. Specifically, the trained T IDE backbone serves as the teacher model, while symbolic distillation learns a com-pact symbolic surrogate that approximates its SoH estimation behavior. Formally, the surrogate satisfies S(x) ≈ fTide (x)
+
+where fTide (·) denotes the trained backbone. S(·) is the symbolic surrogate that is more lightweight compared to the backbone and provides an explicit mathematical representa-tion of the overall estimation process. To improve symbolic learning efficiency, a compact set of deployment-safe features is selected based on feature importance analysis and expert knowledge. Symbolic regression is then performed, e.g., using PySR [15], which iteratively searches for candidate expres-sions with varying fidelity and complexity. The final surrogate is selected to achieve the best balance between approximating the backbone and retaining a compact mathematical form. III. E XPERIMENTS 
+
+This section presents a comprehensive evaluation of the proposed T IDE framework. We first describe the experimental setup, followed by quantitative and qualitative analyses to assess its estimation performance. 
+
+A. Experimental Setup 
+
+Experiments are conducted on the public MIT-Stanford fast-charging lithium-ion battery cycle-life dataset [16], which contains operational measurements collected throughout the battery aging process. Following feature engineering and data cleaning, the dataset contains 140 batteries with 114,738 cycle-level records. The battery SoH is only used for performance evaluation and is computed as the ratio between the current discharge capacity and the initial rated capacity. To evaluate generalization to previously unseen batteries, a battery-disjoint split of 70%, 15%, and 15% is adopted for training, validation, and testing, respectively. A total of 34 deployment-safe opera-tional sensing features are extracted from the BMS, including cycle index, internal resistance, charging policy, temperature, voltage/current statistics, and derived interactions. All target-derived variables, such as SoH, degradation indicators, remain-ing useful life, capacity-retention ratios, and future battery information, are excluded to prevent information leakage. The proposed T IDE framework is implemented in Python using PyTorch, pykan, and PySR. The backbone is trained end-to-end using the Adam optimizer with an initial learning rate of 
+
+0.001 , a batch size of 2, 048 , and early stopping based on the validation loss. The contextual KAN residual component em-ploys the standard MultKAN architecture with a hidden width of 24 , a grid size of 3, and cubic B-spline basis functions. All experiments are conducted on a Windows 11 workstation equipped with an Intel x64 CPU, 16 GB RAM, and an NVIDIA GeForce MX450 GPU with 2GB memory. Performance is evaluated using Root Mean Squared Error (RMSE) and the coefficient of determination ( R2). Both metrics are computed separately for each of the test batteries and reported as average values. The standard deviation (STD) of the per-battery RMSE is additionally reported to evaluate estimation consistency and robustness across unseen batteries. TABLE I: SoH estimation performance of the compared algorithms. Lower RMSE and STD and higher R2 indicate better performance. T IDE ’s improvement over each baseline is reported as the percentage increase in R2.                                     
+
+> Category Model RMSE R2STD Improv.
+> −TIDE (ours) 0.0081 0.964 0.0047 −
+> Hybrid CNN-BiGRU [13] 0.0080 0.955 0.0056 0.94 CNN-BiLSTM [17] 0.0085 0.950 0.0074 1.47 Sequence GRU 0.0136 0.867 0.0118 11.19 LSTM 0.0129 0.845 0.0136 14.08 TCN 0.0166 0.792 0.0132 21.72 KAN Vanilla KAN [18] 0.0318 0.572 0.0113 68.53
+
+B. Results and Analysis 
+
+We evaluate T IDE framework from complementary perspec-tives, which are accuracy, trustworthiness, and interpretability. 
+
+1) TIDE Backbone SoH Estimation Accuracy: We first eval-uate the SoH estimation accuracy of the T IDE backbone. The comparison includes representative state-of-the-art SoH esti-mation methods and forecasting models reconfigured for the same-cycle estimation task. Table I shows that T IDE achieves highly competitive performance while providing the best over-all goodness-of-fit and estimation consistency. Although CNN-BiGRU attains a marginally lower RMSE ( 0.0080 vs. 0.0081 ), TIDE achieves the highest R2 of 0.964 together with the lowest STD of 0.0047 , corresponding to a 0.94% improvement in 
+
+R2 over the strongest competing method. These results indi-cate that the proposed knowledge-guided backbone captures battery degradation characteristics more comprehensively and generalizes more consistently across different batteries. Among the baselines, the two hybrid models, CNN-BiGRU and CNN-BiLSTM, substantially outperform the conventional sequence models, confirming the benefit of combining convo-lutional feature extraction with temporal learning. In contrast, the vanilla KAN baseline achieves an R2 of only 0.572 ,despite its benefit of explicit functional representations. This suggests that KAN alone does not provide accurate estimation without incorporating degradation knowledge. Overall, the TIDE backbone demonstrates that improving trustworthiness and interpretability does not compromise estimation accuracy. Table II further evaluates the contribution of each backbone component. Using the knowledge prior C1 alone yields only a coarse degradation estimate with an R2 of 0.318 . Adding the monotone residual component C2 alone helps minimize the estimation error but further reduces the R2 to 0.194 .Incorporating the contextual KAN residual component C3
+
+increases the R2 substantially to 0.896 and reduces the error significantly over the C1 baseline. This demonstrates that modelling battery-specific operational conditions is a critical source of estimation accuracy, since battery health is jointly determined by long-term degradation and dynamic operating conditions that cannot be adequately captured by a coarse degradation prior alone. More importantly, integrating both residual components further improves the R2 from 0.896 
+
+TABLE II: Ablation study of T IDE and its variants. Lower RMSE and STD and higher R2 indicate better performance. TIDE ’s improvement over each variant is reported as the percentage increase in R2.                           
+
+> Category Model RMSE R2STD Improv.
+> −TIDE (ours) 0.0081 0.964 0.0047 −
+> Variant
+> C10.0397 0.318 0.0133 203.1
+> C1+C20.0356 0.194 0.0179 396.9
+> C1+C30.0136 0.896 0.0089 7.59
+
+to 0.964 while reducing the estimation STD from 0.0089 
+
+to 0.0047 . Although the additional R2 improvement is only 
+
+7.59% , it confirms that the monotone residual component com-plements rather than competes with the contextual component. By combining trustworthy degradation modelling with flexible contextual learning, the complete T IDE backbone with all three components achieves the best overall estimation performance. 
+
+2) Trustworthy Aging-Consistent Behavior: Accurate esti-mation alone is insufficient for practical battery health mon-itoring, and models that are accurate may not be trustworthy enough. In this part, we evaluate the trustworthiness of T IDE 
+
+and comparison models. Trustworthiness can be evaluated from multiple aspects. Here, we adopt aging consistency as a representative diagnostic based on well-established battery degradation knowledge. Specifically, the cycle index i and internal resistance ri are two of the most widely recognized indicators of battery aging and investigated here. In general, battery health is expected to decline as either quantity in-creases. So, we evaluate the Monotonic Violation Rate (MVR), which measures the proportion of perturbations for which the predicted SoH increases when either i or ri is increased while the remaining input features are held fixed. Lower MVR values indicate better adherence to the expected degradation behavior, and an MVR of 0% indicates no observed monotonicity violation under this representative evaluation protocol. Table III presents the trustworthiness evaluation of T IDE 
+
+and comparison models. T IDE achieves zero MVR for both 
+
+i and ri, resulting in an overall MVR of 0.0% . In con-trast, although hybrid models achieve competitive estimation accuracy, they exhibit overall MVR values of 61 .69% and 
+
+31 .94% , respectively. This indicates that conventional ML models may learn highly accurate mappings from data while still violating the expected battery degradation behavior, as no explicit aging-consistency constraints are imposed during learning. The vanilla KAN baseline achieves a much lower MVR of 1.53% , suggesting that its explicit functional repre-sentation naturally preserves certain monotonic characteristics. However, its estimation accuracy is much lower than T IDE ,demonstrating that interpretable model structures alone are insufficient for both accuracy and trustworthy. The ablation study further reveals the contribution of each backbone component to trustworthy behavior. Both C1 and 
+
+C1 + C2 maintain zero MVR, confirming that the trustwor-thy knowledge prior and the monotone residual component TABLE III: Trustworthiness evaluation of T IDE , comparison models, and T IDE variants using MVR for cycle index i and resistance ri. Lower MVR values indicate better adherence to the expected battery aging behavior.                                    
+
+> Category Model iMVR (%) riMVR (%) Average (%)
+> −TIDE (ours) 0.00 0.00 0.00
+> Hybrid CNN-BiGRU 31.48 91.90 61.69 CNN-BiLSTM 27.34 36.53 31.94 KAN Vanilla KAN 0.25 2.80 1.53 Variant
+> C10.0 0.0 0.0
+> C1+C20.0 0.0 0.0
+> C1+C30.0 3.01 1.51
+
+consistently preserve the expected aging direction. When the contextual KAN residual component C3 is used without the monotone component C2, the overall MVR increases to 
+
+1.51% , indicating that unconstrained contextual modelling can introduce violations despite its modelling flexibility. By integrating all components, T IDE restores the MVR to 0.0% .Together, the components achieve trustworthy aging-consistent behavior while retaining the strong estimation capability. 
+
+3) Interpretable Backbone: Having demonstrated the esti-mation accuracy and trustworthiness of the proposed T IDE 
+
+framework, we next investigate its interpretability through the learned backbone structure. Since the knowledge prior C1 is explicitly defined by the analytical formulation in Eq. (2), its estimation logic can be directly understood without additional visualization. For the contextual component C3, it adopts a KAN architecture, whose learned activation structure can be visualized using the KAN visualization toolkit [18]. Following the same visualization scheme, we also represent the mono-tone component C2 as a KAN structure, where the learned edge functions reveal how the degradation-related inputs are transformed and aggregated to produce the residual correction. Together, these structural visualizations are presented in Fig. 2 to provide an intuitive high-level structural interpretation of how different features contribute to the backbone components. As shown in Fig. 2a, the learned structure of C2 is visualized as a tree, where the cycle index i and internal resistance ri
+
+are transformed from the leaf nodes and aggregated at the root output, i.e., C2. The pathways associated with either indicator alone are relatively weak, while the dominant path-way combines information from both indicators. This suggests that C2 primarily learns the aging-related residual correction from their combined degradation information rather than from either indicator independently. Fig. 2b shows that the con-textual component C3 distributes its attention across multiple operational features, with the strongest activation pathways concentrated on resistance-related group features (solid lines) and their interactions, while the remaining contextual fea-tures contribute through secondary pathways. These structures demonstrate that T IDE automatically organizes degradation and contextual information into distinct functional compo-nents, providing an intuitive structural interpretation of how Cycle index Internal resistance 
+
+C2      
+
+> (a) Monotone Residual Component C2Charge
+> rate ... Charge
+> level Voltage
+> hold Voltage
+> pattern Resistance
+> change
+
+C3 
+
+> (b) Contextual Residual Component C3
+
+Fig. 2: Learned activation structures of the T IDE backbone. Curve blocks denote learned KAN edge functions. Fig. 2a: C2
+
+combines cycle index and internal resistance for aging-related correction. Fig. 2b: C3 models multiple operational features. Solid (dashed) paths indicate stronger (weaker) contributions. heterogeneous features contribute to its backbone. To further understand the quantitative influence of individual features, Fig. 3 visualizes how representative input features affect the outputs of different backbone components. The horizontal axis represents the range of the selected feature, while the vertical axis denotes the corresponding component contribution to the residual in Eq. (3) with all remaining input features fixed at reference operating values. Negative values indicate that the component further decreases the SoH estimate relative to the coarse degradation prior in C1, whereas positive values indicate a positive residual correction. As shown in Figs. 3a and 3b, the degradation-aware C2 becomes increasingly negative as the cycle index i and the inter-nal resistance ri increase, indicating progressively stronger degradation penalties. The steeper responses at higher values further suggest that accumulated cycling and resistance growth become increasingly influential during later-life operation, highlighting the importance of continuous health monitoring as batteries age. Figs. 3c and 3d show that the contextual KAN component C3 provides positive residual corrections that compensate for conservative degradation estimates under different operating conditions. The cycle-resistance interaction exhibits the strongest nonlinear response, suggesting that the combined effect of accumulated cycling and resistance growth provides different contextual evidence than either indicator alone, particularly near the EoL stage. Meanwhile, rolling internal resistance exhibits a non-uniform nonlinear response, with a relatively flat intermediate region followed by a stronger change at higher levels. Since this feature summarizes recent 0 250 500 750 1000 
+
+> Cycle Index
+> -0.42
+> -0.36
+> -0.30
+> -0.24
+> C2 Contribution
+
+(a) Cycle Index 0.015 0.017 0.018  
+
+> Internal Resistance
+> -0.35
+> -0.30
+> -0.25
+> -0.20
+> C2 Contribution
+
+(b) Internal Resistance 0 6 12 18  
+
+> Cycle-Resistance Interaction
+> 0.24
+> 0.26
+> 0.28
+> 0.30
+> C3 Contribution
+
+(c) Cycle-resistance Interaction 0.015 0.017 0.018  
+
+> Rolling Internal Resistance
+> 0.24
+> 0.25
+> 0.26
+> 0.27
+> C3 Contribution
+
+(d) Rolling Internal Resistance 
+
+Fig. 3: Representative learned response curves of T IDE . Figs. 3a and 3b illustrate the monotone degradation responses learned by the degradation-aware component C2, while Figs. 3c and 3d illustrate representative contextual responses learned by the contextual component C3. The vertical axis denotes the contribution of each component to the SoH correction. TABLE IV: Distillation performance from different teacher models to symbolic surrogates. Teacher, surrogate, and their gap RMSE measure SoH estimation error, while fidelity RMSE measures the approximation error between each surro-gate and its teacher. Lower values indicate better performance.                                  
+
+> Category Teacher Model Teacher Surrogate Gap Fidelity
+> −TIDE (ours) 0.0081 0.0129 +0.0048 0.0141 Hybrid CNN-BiGRU 0.0080 0.0142 +0.0062 0.0143 CNN-BiLSTM 0.0085 0.0141 +0.0056 0.0152 Variant C1+C20.0356 0.0428 +0.0072 0.0017
+> C1+C30.0136 0.0188 +0.0052 0.0199
+
+resistance measurements, the pattern suggests that the model responds more strongly when elevated resistance persists. Together, these responses show how T IDE separates global degradation from contextual correction while retaining inter-pretable insights for battery health monitoring. 
+
+4) Symbolic Surrogate: The above-presented backbone-level interpretations remain insufficient to explain how T IDE 
+
+produces the final SoH estimation due to the backbone’s complexity and scale. The symbolic surrogate complements by approximating the T IDE backbone with a single compact mathematical expression. We use the trained backbone as the teacher, and PySR searches for candidate expressions that balance approximation fidelity and expression complexity. We evaluate each surrogate from two perspectives, including its SoH estimation error against the ground truth and its fidelity error against the corresponding teacher predictions. We also compare surrogates distilled from different teacher models. Seen from Table IV, the TIDE backbone is the most suitable teacher for symbolic distillation, achieving the lowest surrogate RMSE of 0.0129. Although hybrid models achieve accuracies comparable to T IDE , their distilled symbolic equa-tions exhibit higher RMSE compared with the surrogate of TIDE , where the error gap from teacher to student widens by 29% and 17%, respectively. This indicates that high teacher accuracy alone does not guarantee an accurate symbolic surrogate. This is likely because the latent representations learned by comparison models that are neural network based are highly entangled, making them difficult to approximate using compact symbolic expressions. Instead, the structured TIDE backbone produces representations that are better suited to symbolic approximation. Among the T IDE variants, the monotone variant C1 + C2 can be well reproduced by the symbolic surrogate with the lowest fidelity error; however, its estimation capability is limited and the surrogate error for SoH estimation is high. The contextual variant C1 + C3 is considerably more difficult to approximate symbolically, with a fidelity error approximately one order of magnitude higher than that of the monotone variant. These results demonstrate that a well-designed teacher backbone is essential for obtaining an accurate and compact symbolic surrogate. The final selected symbolic surrogate is derived from the T IDE backbone as, 
+
+ˆS =
+
+q
+
+G(sv , x ir , ¯r) + pA(i, ¯v),
+
+A(i, ¯v) = 0 .9006 − 0.0739( c + ¯ v),
+
+G(sv , x ir , ¯r) = sv (−0.00794 xir − 0.02017¯ r − 0.04988) ,
+
+(7) besides the cycle index i and internal resistance r, ¯v de-notes the mean voltage, sv the voltage variability, ¯r the rolling internal-resistance mean, and xir the cycle-resistance interaction. The surrogate in Eq. (7) serves as a compact representation that summarizes the behavior of the TIDE 
+
+backbone. It can be understood through three complementary symbolic terms. The aging term A(i, ¯v) captures the global degradation trend from cumulative cycling and voltage context, while the interaction term G(sv , x ir , ¯r) summarizes contextual corrections arising from voltage variability, cycle-resistance coupling, and rolling internal resistance. Finally, the nested square-root provides a compact nonlinear transformation that integrates these effects into the final SoH estimate while preserving the overall behavior of the teacher model. Unlike the backbone, which distributes these behaviors across multi-ple interacting components, the surrogate unifies them into a single compact mathematical expression, providing an intuitive model-level interpretation of the complete estimation process. Fig. 4 further demonstrates that the compact symbolic surrogate provides physically meaningful insights. As shown in Fig. 4a, the cycle-aging fingerprint reveals distinct aging trajectories for batteries with different lifespans. Batteries with shorter lifespans accumulate aging stress more rapidly throughout the degradation process, whereas longer-life batter-ies exhibit more gradual increases before entering accelerated 0 200 400 600 800 1000 
+
+> Cycle Index
+> 0
+> 5
+> 10
+> 15
+> 20
+> 25
+> 30
+> 35
+> Cycle-Resistance
+> Short (337)
+> Short (471)
+> Medium (857)
+> Long (1044)
+> Long (1044)
+> 86
+> 90
+> 94
+> 98
+> SoH (%)
+
+(a) Cycle-Aging Fingerprint 0.017 0.019 0.021  
+
+> Internal Resistance
+> 0
+> 5
+> 10
+> 15
+> 20
+> 25
+> 30
+> 35
+> Cycle-Resistance
+> Short (337)
+> Short (471)
+> Medium (857)
+> Long (1044)
+> Long (1044)
+> 86
+> 90
+> 94
+> 98
+> SoH (%)
+
+(b) Cycle-Resistance Fingerprint 85 90 95 100  
+
+> SoH (%)
+> 0.50
+> 0.52
+> 0.54
+> 0.56
+> 0.58
+> 0.60
+> Voltage Variability
+> Short (337)
+> Short (471)
+> Medium (857)
+> Long (1044)
+> Long (1044)
+
+(c) Voltage-Variability 0.10 0.30 0.50 0.70 0.90  
+
+> Normalized Cycle Progress
+> 0.80
+> 0.85
+> 0.90
+> 0.95
+> 1.00
+> SoH
+> Compounding
+> region
+> Symbolic Surrogate
+> Measured SoH
+
+(d) Late-Life Compounding 
+
+Fig. 4: Representative physical insights revealed by the symbolic surrogate. Fig. 4a: Cycle-aging patterns across batteries with different lifespans. Fig. 4b: Relationship between internal resistance and the cycle–resistance interaction. Fig. 4c: Voltage-variability trajectories throughout battery degradation. Fig. 4d: Transition from gradual aging to accelerated late-life degradation. degradation near the EoL. Fig. 4b further illustrate how the cycle-resistance interaction evolves across internal resistances. Batteries with shorter lifespans enter higher interaction-stress regions earlier, whereas longer-life batteries follow more grad-ual trajectories, indicating that the coupled effect of cycle accumulation and resistance growth provides a interpretable aging fingerprint. Fig. 4c further reveals that voltage variability exhibits distinct evolution patterns. Compared with shorter-life batteries, longer-life batteries sustain higher levels of voltage variability over a broader SoH range while maintaining gradually changed trajectories during the early aging stage. This suggests that voltage variability captures battery-specific operational characteristics beyond conventional indicators such as the raw voltage readings. Finally, Fig. 4d reveals that the symbolic surrogate quantitatively characterizes the transition from gradual to accelerated degradation. The highlighted late-life compounding region corresponds to the near EoL stage degradation, beginning around the knee point of the degradation curve to emphasize the transition from gradual to accelerated SoH decline. Before this region, the predicted SoH decreases by around 2.5% only. Once the battery enters this compounding region, the SoH drops significantly. This sub-stantial SoH loss indicates that cumulative aging mechanisms progressively accelerate battery deterioration, and the symbolic surrogate can provide a mathematical characterization. IV. C ONCLUSION 
+
+This paper presented T IDE , a trustworthy and interpretable framework for battery SoH estimation. It integrates degrada-tion knowledge with operational sensing features through a three-component backbone comprising a knowledge prior, a monotone residual and a contextual component. Compared with representative baselines, T IDE improves estimation accu-racy by an average of 19.7%, achieves the highest R2 of 0.964. It also produces the lowest monotonicity violations for cycle index and internal resistance, whereas the competitive hybrid baselines exhibit violation rates above 30%. The T IDE back-bone provides component-level interpretations, while symbolic distillation yields a compact surrogate that summarizes the complete estimation process and reveals and quantifies patterns such as cycle-resistance coupling and late-stage degradation. Overall, T IDE jointly advances accuracy, trustworthiness, and interpretability for practical battery analytics. REFERENCES [1] IEA, “Iea global ev outlook 2025,” https://www.iea.org/reports/ global-ev-outlook-2025, 2025, accessed: 2026-01-29. [2] S. K. Pradhan and B. Chakraborty, “Battery management strategies: An essential review for battery state of health monitoring techniques,” 
+
+Journal of energy storage , vol. 51, p. 104427, 2022. [3] Z. Kwan, W. Zhang, A. B. Ng et al. , “Knowdiff: Knowledge-regulated dual-stream diffusion for robust battery prognostics,” Available at SSRN 5871665 , 2025. [4] M. Berecibar, I. Gandiaga, I. Villarreal et al. , “Critical review of state of health estimation methods of li-ion batteries for real applications,” 
+
+Renewable and Sustainable Energy Reviews , vol. 56, pp. 572–587, 2016. [5] L. Wang, W. Zhang, W. Li et al. , “Dgat: Dynamic graph attention-transformer network for battery state of health multi-step prediction,” 
+
+Energy , vol. 330, p. 136876, 2025. [6] T. Bai and H. Wang, “Convolutional transformer-based multiview in-formation perception framework for lithium-ion battery state-of-health estimation,” IEEE Transactions on Instrumentation and Measurement ,vol. 72, pp. 1–12, 2023. [7] K. Q. Zhou, Y. Qin, and C. Yuen, “Graph neural network-based lithium-ion battery state of health estimation using partial discharging curve,” 
+
+Journal of Energy Storage , vol. 100, p. 113502, 2024. [8] T. Tao, C. Ji, J. Dai et al. , “Data-based health indicator extraction for battery soh estimation via deep learning,” Journal of Energy Storage ,vol. 78, p. 109982, 2024. [9] V. B. Pamshetti, W. Zhang, S. Sun et al. , “Knowledge-aware modeling with frequency adaptive learning for battery health prognostics,” IEEE Internet of Things Journal , 2026. [10] S. Navidi, A. Thelen, T. Li et al. , “Physics-informed machine learning for battery degradation diagnostics: A comparison of state-of-the-art methods,” Energy Storage Materials , vol. 68, p. 103343, 2024. [11] F. Wang, Z. Wu, Z. Zhao et al. , “Physical knowledge guided state of health estimation of lithium-ion battery with limited segment data,” 
+
+Reliability Engineering & System Safety , vol. 251, p. 110325, 2024. [12] D. Dharshini Kannan, W. Li, W. Zhang et al. , “When smaller wins: Dual-stage distillation and pareto-guided compression of liquid neural networks for edge battery prognostics,” arXiv e-prints , pp. arXiv–2601, 2026. [13] Z. Liu, Y. Liu, Y. Zhang et al. , “Data-driven lithium-ion battery soh prediction: A novel shmm-transformer-bigru hybrid neural network method,” Measurement , p. 118579, 2025. [14] Z. Liu, P. Ma, Y. Wang et al. , “Kolmogorov-arnold networks meet science,” Physical Review X , vol. 15, p. 041051, 2025. [15] M. Cranmer, W. Xu, P. Battaglia et al. , “Discovering symbolic mod-els from deep learning with inductive biases,” Nature Computational Science , vol. 3, no. 12, pp. 1036–1050, 2023. [16] K. A. Severson, P. M. Attia, N. Jin et al. , “Data-driven prediction of battery cycle life before capacity degradation,” Nature energy , vol. 4, no. 5, pp. 383–391, 2019. [17] L. T. M. Lien, V. Q. Anh, N. D. Tuyen et al. , “Prediction of state-of-health and remaining-useful-life of battery based on hybrid neural network model,” IEEE Access , vol. 12, pp. 129 022–129 039, 2024. [18] Z. Liu, Y. Wang, S. Vaidya et al. , “Kan: Kolmogorov–arnold networks,” in International conference on learning representations , vol. 2025, 2025, pp. 70 367–70 413.
