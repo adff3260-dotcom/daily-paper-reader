@@ -1,0 +1,699 @@
+Title: Reinforcement Learning for Delivery Drone-Based Participatory Sensing in Dynamic Environments
+
+URL Source: https://arxiv.org/pdf/2607.18874v1
+
+Published Time: Wed, 22 Jul 2026 00:54:55 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# Reinforcement Learning for Delivery Drone-Based Participatory Sensing in Dynamic Environments 
+
+# Xin Ouyang 
+
+The Hong Kong University of Science and Technology (Guangzhou) Guangzhou, China xouyang755@connect.hkust-gz.edu.cn 
+
+# Songxin Lei 
+
+The Hong Kong University of Science and Technology (Guangzhou) Guangzhou, China slei924@connect.hkust-gz.edu.cn 
+
+# Xusen Guo 
+
+The Hong Kong University of Science and Technology (Guangzhou) Guangzhou, China xgou796@connect.hkust-gz.edu.cn 
+
+# Yutian Jiang 
+
+The Hong Kong University of Science and Technology (Guangzhou) Guangzhou, China yjiang194@connect.hkust-gz.edu.cn 
+
+# Sijie Ruan 
+
+Beijing Institute of Technology Beijing, China sjruan@bit.edu.cn 
+
+# Yuxuan Liang ∗
+
+The Hong Kong University of Science and Technology (Guangzhou) Guangzhou, China yuxliang@outlook.com 
+
+## Abstract 
+
+Using Unmanned Aerial Vehicle (UAV) for urban sensing has emerged as a powerful paradigm to monitor the status of the city, e.g., air quality and noise levels, through agile aerial crowdsourcing. De-spite this potential, existing UAV-based sensing approaches over-look environmental disturbances like wind that drastically impact drone velocity and energy efficiency. Consequently, directly apply-ing existing methods to this joint delivery and sensing paradigm in dynamic environments faces two severe challenges: (1) scalability bottlenecks as fleet sizes expand; and (2) multi-timescale decision heterogeneity between macro task dispatching and micro veloc-ity control. To tackle these, we formalize the problem as SensUAV and propose a Two TimeScale Reinforcement Learning framework (TSRL ). Specifically, TSRL separates decision-making into two co-operative layers. At the macro level, a task-embedding sensing dis-patcher handles scalability by separately encoding distinct task fea-tures and sequentially evaluating UAV suitability before task selec-tion. At the micro level, a wind-aware velocity controller learns fine-grained velocity scheduling to adapt to dynamic environmen-tal variations. Extensive experiments on real-world datasets demon-strate that TSRL significantly outperforms baselines, achieving av-erage system profit improvements of 20.1% in Hangzhou and 46.6% in Shanghai. 
+
+## Keywords 
+
+Urban Sensing, Spatial Crowdsourcing, Reinforcement Learning, Urban Computing, Spatio-temporal Data Mining 
+
+## 1 Introduction 
+
+Urban sensing plays a fundamental role in smart-city systems by continuously collecting spatial and temporal information for traf-fic monitoring, environmental surveillance, emergency response, and public service optimization [5, 38]. Traditional ground-based participatory sensing relies on mobile users, vehicles, or fixed in-frastructures to collect urban data [10, 12, 27]. Although effective in many scenarios, ground-based sensing is inherently constrained    
+
+> ∗Corresponding author. Depot
+> Platform
+> Delivery Drones Information Sensing Dispatcher & Velocity Controller
+> Recruited
+> UAVs
+> Environment
+> disturbance
+> Delivery
+> Route
+> UAVs Sensing
+> Location
+> Delivery
+> task s
+> Velocity Sensing
+> Detour
+
+Figure 1: Participatory Sensing for Delivery Drones 
+
+by road networks, uneven participant distribution, limited spatial coverage, and delayed response to emerging sensing demands. Recent advances in unmanned aerial vehicles (UAVs) provide a promising alternative for large-scale urban sensing. Compared with ground-based platforms, UAVs can actively move toward sens-ing hotspots, cover wider areas, bypass road congestion, and sup-port flexible deployment in complex urban environments [28]. Mean-while, the rapid development of low-altitude logistics is creating large fleets of delivery drones that routinely travel across urban ar-eas. As sensing participants, delivery drones are less constrained by road topology than ground participants, and they can piggy-back sensing tasks on existing logistics operations instead of re-quiring dedicated sensing-only UAV flights, thereby reducing the additional operational cost of urban data collection. Therefore, par-ticipatory sensing for delivery drones is expected to become a key component of future urban data acquisition systems [5, 17]. Early research on UAV-based urban sensing has made steady progress through heuristic-based static optimization and reinforce-ment learning approaches [5, 17, 33], which typically focus on solv-ing combinatorial deployment problems or dynamically optimiz-ing decisions regarding sensing assignment. However, many works assume fixed flight speed and distance-based travel cost [6, 15, 33], which overlook the fact that UAV velocity is strongly affected by environmental disturbances (wind conditions) and the distance to arXiv:2607.18874v1 [cs.LG] 21 Jul 2026 Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Ouyang et al. 
+
+the target point. In practice, wind changes the effective flight speed and power consumption of a UAV, causing the same sensing de-tour to incur different travel times and energy costs under dif-ferent weather conditions. In this paper, we therefore study the problem of Participatory Sensing for Delivery Drones ( SensUAV )in dynamic urban environments, where wind conditions continu-ously affect UAV flight speed and energy consumption. This allows existing delivery drones to be utilized as mobile sensing carriers without being separated from their primary delivery service. More specifically, as illustrated in Figure 1, delivery drones first receive delivery tasks from the depot, and the platform coordinates suit-able UAVs to complete sensing tasks during delivery. The platform then jointly determines sensing detours and UAV velocities with the goal of maximizing overall system profit. The incorporation of sensing dispatching and velocity schedul-ing transforms SensUAV into a challenging online mixed-integer sequential optimization task [3]. Conventional exact optimization methods can provide high-quality or even optimal solutions for a given deterministic instance, but they are difficult to deploy di-rectly in SensUAV. The system state is continuously updated by online order arrivals, expiring sensing tasks, changing UAV avail-ability, and stochastic weather conditions; consequently, an exact solver would need to repeatedly solve a large mixed-integer se-quential optimization problem under strict real-time constraints [26, 29, 30]. Meanwhile, Heuristic and meta-heuristic methods improve online efficiency, but they often rely on hand-crafted rules or short-horizon search, making them less effective in capturing the long-term effects of dispatch and velocity decisions [4]. Interacting with the dynamic environment, reinforcement learning provides a prac-tical alternative by learning an offline policy that optimizes long-term discounted system profit and produces fast online decisions via a single forward pass. However, directly applying existing RL methods faces two chal-lenges to tackle this SensUAV problem: 
+
+Scalability bottleneck as the UAV fleet size expands. In large-scale crowdsensing, the rapid expansion of UAVs and heteroge-neous tasks introduces severe computational bottlenecks. Conven-tional Multi-Agent RL paradigms struggle with joint state-space explosion and heavy communication overhead required to avoid task collisions. Alternatively, models combining GNNs with Pointer Networks rely on autoregressive decoding, which forces strictly se-quential execution rather than parallel processing[27, 29]. Conse-quently, both approaches often incur significant inference latency that severely hinders their real-time deployment. 
+
+Multi-timescale decision heterogeneity between dispatch and velocity control. Sensing dispatch is a relatively persistent high-level decision, whereas velocity control is a fast execution-level decision that should adapt frequently to wind, battery status, dead-lines, and target distance. Treating these two decisions at the same temporal resolution either makes dispatch overly reactive or makes velocity control too coarse, while generic hybrid-action RL couples discrete dispatch and continuous speed control in a single mixed action space, leading to noisy credit assignment [7]. Although hi-erarchical RL provides a natural abstraction, jointly learning the dispatcher and the controller makes the macro-level transition dy-namics non-stationary, because the low-level execution policy keeps changing during upper-level training [11]. To tackle this challenges, we proposed a framework called Two TimeScale Reinforcement Learning framework ( TSRL ). To address the first challenge, TSRL employs specific sensing dispatcher. In-stead of directly scoring all UAV sensing pairs as unrelated actions, the dispatcher first evaluates UAV-level suitability and then selects a sensing task conditioned on the chosen UAV. This allows the policy to evaluate sensing decisions under the current delivery-service context rather than treating sensing tasks as standalone assignments. To address the second challenge, TSRL separates dis-patch and execution into two temporal layers. Velocity controller learns wind-aware velocity scheduling over micro steps, while the upper-level dispatcher acts only at macro decision epochs. Our main contributions are summarized as follows: 
+
+• To the best of our knowledge, we are the first to introduce a dynamic-environment-aware participatory sensing system for de-livery drones, featuring explicit modeling of wind-aware energy and velocity control. 
+
+• We introduce a two-timescale RL framework named TSRL that separates slow sensing assignment from fast motion control. To handle the scalability bottleneck, TSRL designs a specific task embedding sensing dispatcher that first evaluates UAV suitability and then selects a sensing task conditioned on the chosen UAV. To handle heterogeneous timescales, TSRL trains a wind-aware velocity controller at the micro scale. 
+
+• Extensive experiments on real-world Hangzhou and Shanghai datasets show that TSRL consistently outperforms representa-tive baselines in system profit. TSRL achieves average profit im-provements of 20.1% in Hangzhou and 46.6% in Shanghai over the strongest baseline, with the maximum gains reaching 25.2% 
+
+and 51.2% , respectively. 
+
+## 2 Preliminary 2.1 Definitions 
+
+Definition 1 (Delivery Task). A delivery task refers to transport-ing goods from an origin location to a destination location. Specif-ically, the origin for all delivery tasks is fixed at the central UAV depot within the area. Let the set of delivery tasks be denoted as 
+
+𝐷 = {𝑑 1, 𝑑 2, … , 𝑑 𝑛 }, where each delivery task 𝑑 𝑐 is represented as a tuple 𝑑 𝑐 = ⟨ lng 𝑐 , lat 𝑐 , 𝑒 𝑐 , 𝑙 𝑐 ⟩. (lng 𝑐 , lat 𝑐 ) specifies the geographical coordinates of the order’s destination. [𝑒 𝑐 , 𝑙 𝑐 ] represent the earliest and latest acceptable delivery times for the task, respectively. 
+
+Definition 2 (UAV Team). The UAV delivery team is denoted as 𝑈 = {𝑢 1, 𝑢 2, … , 𝑢 𝑚 }, where each UAV is represented as 𝑢 𝑖 =⟨lng 𝑖 , lat 𝑖 , 𝑣 𝑖 , 𝑒 𝑖 ⟩ . Here, lng 𝑖 , lat 𝑖 is the current location of UAV 𝑖 , 𝑣 𝑖 
+
+and 𝑒 𝑖 denote the flight velocity and remaining energy of UAV 𝑖 ,respectively. 
+
+Definition 3 (Sensing Task). An urban sensing task, such as en-vironmental monitoring or aerial photography, is represented as 
+
+𝑍 = {𝑧 1, 𝑧 2, … , 𝑧 𝑘 }. Each sensing task 𝑧 𝑗 = ⟨ lng 𝑗 , lat 𝑗 , tw 𝑠 , tw 𝑒 ⟩,where (lng 𝑗 , lat 𝑗 ) denotes the geographic coordinates of task 𝑗 , and 
+
+[tw 𝑠 , tw 𝑒 ] represents its valid time window. 
+
+Definition 4 (Hierarchical Entropy-based Data Coverage). In-spired by prior urban sensing studies [12], the sensing coverage metric is defined as a weighted combination of spatial entropy and Reinforcement Learning for Delivery Drone-Based Participatory Sensing in Dynamic Environments Conference acronym ’XX, June 03–05, 2018, Woodstock, NY 
+
+data quality: 
+
+𝜙(𝑍 ) = 𝛼𝐸(𝑍 ) + (1 − 𝛼) log 2 𝑄(𝑍 ), (1) where 𝑍 denotes the completed sensing task set, 𝜙(𝑍 ) represents the hierarchical coverage score, 𝛼 ∈ [0, 1] is the balancing param-eter, 𝐸(𝑍 ) denotes the spatial entropy, and 𝑄(𝑍 ) represents the collected data quality or quantity. In this work, we set 𝛼 = 0.5 ,following [10]. This entropy-based formulation is adopted to en-courage balanced spatial-temporal urban sensing coverage. 
+
+Definition 5 (Energy Consumption). In dynamic urban envi-ronments, UAV energy consumption is significantly affected by meteorological conditions such as wind. Inspired by prior studies on UAV energy modeling and control [8, 19, 37], we model the UAV power consumption using two components: blade profile energy and parasite energy. Let w𝑡 denote the wind velocity at time 𝑡 , and let v𝑖 denote the flight velocity of UAV 𝑖 . The power consumption per minute of UAV 
+
+𝑖 is modeled as 
+
+𝑃 𝑖 = 𝐾 1‖v𝑖 ‖2 + 𝐾 2‖v𝑖 − w𝑡 ‖3, (2) where the term 𝐾 1‖v𝑖 ‖2 represents the blade profile energy, while 
+
+𝐾 2‖v𝑖 − w𝑡 ‖3 corresponds to the parasite energy caused by aero-dynamic drag and wind resistance. The coefficients 𝐾 1 and 𝐾 2 are set as 10 −5 J ⋅ min 2/m2 and 10 −9 J ⋅ min 3/m3, respectively, follow-ing [8, 37]. Accordingly, the total energy consumption of UAV 𝑖 during time interval Δ𝑡 is defined as 𝐸 𝑖 = 𝑃 𝑖 Δ𝑡 . To satisfy safety return require-ments, a UAV is forced to return to the charging station once its remaining energy falls below 20% of the total battery capacity. 
+
+## 2.2 Problem Statement 
+
+Objective function. The SensUAV problem aims to jointly opti-mize sensing dispatch and velocity scheduling to maximize the overall system profit. Overall system profit is formulated as : 
+
+𝐽 = 𝑤 𝑧 𝜙(𝑍 ) + 𝑤 𝑜 𝑂 − 𝑤 𝑒 𝐸 (3) where 𝜙(𝑍 ) is the sensing entropy, 𝑂 is the number of completed delivery orders, and 𝐸 is the total UAV energy consumption. The coefficients 𝑤 𝑧 , 𝑤 𝑜 , and 𝑤 𝑒 are constant profit weights. In this work, we set 𝑤 𝑧 to 2000 cents per entropy advancement, which is approxi-mately equal to 500 cents per sensing task, 𝑤 𝑜 to 200 cents per com-pleted order, and 𝑤 𝑒 to 10 −5 cents per Joule, according to industry prices and expert knowledge [1, 4, 9]. 
+
+Problem formulation. We define two types of decision variables. The binary variable 𝜔 𝑖,𝑗,𝑡 ∈ {0, 1} indicates whether sensing task 𝑗 
+
+is inserted into the task list of UAV 𝑖 at time 𝑡 , and the continuous variable 𝑣 𝑖,𝑡 denotes the flight velocity of UAV 𝑖 at time 𝑡 . : max    
+
+> {𝜔 𝑖,𝑗,𝑡 ,𝑣 𝑖,𝑡 }
+
+𝐽 = 𝑤 𝑧 𝜙(𝑍 ) + 𝑤 𝑜 𝑂 − 𝑤 𝑒 𝐸 
+
+s.t. 𝐶 1 ∶ 𝜔 𝑖,𝑗,𝑡 ∈ {0, 1}, ∀𝑖 ∈ 𝑈 , 𝑗 ∈ 𝑍 , 𝑡, 𝐶 2 ∶ 0 ≤ ‖𝑣 𝑖,𝑡 ‖ ≤ 𝑣 max  
+
+> 𝑖
+
+, ∀𝑖 ∈ 𝑈 , 𝑡, 𝐶 3 ∶ 𝑒 𝑖,𝑡+1 = 𝑒 𝑖,𝑡 − 𝑃 𝑖 (𝑣 𝑖,𝑡 , 𝑤 𝑡 )Δ𝑡, ∀𝑖 ∈ 𝑈 , 𝑡, 𝐶 4 ∶ 𝑒 𝑖,𝑡 ≥ 𝑒 return  
+
+> 𝑖
+
+(𝑝 𝑖,𝑡 ), ∀𝑖 ∈ 𝑈 , 𝑡, 𝐶 5 ∶ ∑ 
+
+> 𝑖∈𝑈
+
+∑
+
+> 𝑡
+
+𝜔 𝑖,𝑗,𝑡 ≤ 1, ∀𝑗 ∈ 𝑍 . 
+
+(4) Here, 𝑣 max  
+
+> 𝑖
+
+is the maximum velocity of UAV 𝑖 , 𝑒 𝑖,𝑡 is its remaining energy at time 𝑡 , and 𝑒 return  
+
+> 𝑖
+
+(𝑝 𝑖,𝑡 ) denotes the minimum energy re-quired for UAV 𝑖 to safely return from its current position 𝑝 𝑖,𝑡 to the depot. 𝑃 𝑖 (𝑣 𝑖,𝑡 , 𝑤 𝑡 ) denotes the wind-aware power consumption of UAV 𝑖 under velocity 𝑣 𝑖,𝑡 and wind condition 𝑤 𝑡 , and Δ𝑡 is the duration of one micro control step. Constraint 𝐶 1 defines the bi-nary sensing-insertion decision, 𝐶 2 enforces the UAV speed limit, 
+
+𝐶 3 describes the wind-aware energy dynamics, and 𝐶 4 guarantees safe return to the depot. Constraint 𝐶 5 prevents duplicate sensing by ensuring that each sensing task is assigned at most once. 
+
+Lemma 1. The problem is 𝑁 𝑃 − ℎ𝑎𝑟𝑑 .
+
+Proof. We prove this by reducing this problem into a 0-1 knapsack problem, which is already known as a NP-hard problem. We first give the definition of 0-1 knapsack problem: Assume that there is a set of items with a weight and a value identically, and a knapsack. We need to determine which item should be put into the knapsack, so that the total weight can satisfy the constraint and the total value can be as large as possible. Here we can provide a special case of our SensUAV problem. Consider only a single UAV and a fixed delivery routedepot - des-tination - depot, and a fixed flight speed. The only remaining deci-sion is the sensing task should be inserted to which predetermined route. Here for this specific subset problem, we create a sensing task whose insertion causes an additional cost of energy. To solve this problem, we want to find an insertion policy to satisfy the en-ergy constraint meanwhile maximizing the sensing entropy. There-fore, selecting a feasible subset of sensing tasks with objective gain at least is a 0-1 knapsack problem. Therefore, this restricted prob-lem is NP-hard, and the general SensUAV problem is also NP-hard. 
+
+## 3 Method 3.1 Overview 
+
+we propose a two-stage reinforcement learning framework, termed 
+
+TSRL , to maximize the system profit through joint sensing-task dispatch and UAV motion control. As illustrated in Fig. 2, TSRL adopts a two-timescale framework to decouple two heterogeneous decisions, namely sensing-task dispatch and UAV velocity control. Specifically, the upper-level Sensing Task Dispatcher operates at the macro timescale and determines whether sensing tasks should be inserted into ongoing delivery routes, while the lower-level Ve-locity Controller operates at the micro timescale and continuously outputs UAV velocity actions under dynamic environmental con-ditions. During system execution, delivery orders dynamically arrive at depot stations and are inserted into a pending queue. At the end of each micro control step, the system checks whether a UAV has returned to a depot station. If the depot contains pending delivery orders and the UAV has sufficient remaining battery, the earliest pending order is assigned to the UAV for execution. Meanwhile, UAVs may opportunistically conduct sensing tasks during the de-livery process. One macro decision interval contains 𝐾 micro con-trol steps, enabling long-term sensing dispatch planning while pre-serving fine-grained motion adaptation. To improve training stabil-ity, we first train the low-level velocity controller, after which the high-level sensing dispatcher is optimized on top of the induced two-time-scale environment dynamics. Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Ouyang et al. Upper Layer: Sensing Dispatcher          
+
+> UAV states
+> Sensing tasks
+> Global text
+> Lower Layer: Velocity Controller
+> Frozen
+> Controller
+> 𝝅 𝒍
+> 𝑺 𝝉 𝑽 𝝉 𝑺 𝝉 +𝟏 𝑽 𝝉 +𝑲 −𝟏
+> step 1
+> K sequential control steps
+> Policy 𝝅 𝒉 Macro Action
+> 𝜏 =Kt
+> Sequential UAV
+> Selection →
+> Conditioned
+> Sensing Selection Sensing task
+> assignment
+> Rollout Buffer
+> （trajectories)
+
+1.Dynamic Task Environment  
+
+> UAV -based participatory sensing, sense
+> locations under wind and energy costs
+> start
+> state
+> action action
+> PPO Update
+> (Upper Layer)
+> Action
+> integration
+> Frozen
+> Controller
+> Reward per macro Step
+> System Profit
+
+2.TSRL Agent  3.Training Loop 
+
+> Reward Feed Back
+> Action
+> State
+> Sensing Location
+> Sensing Detour
+> Depot
+> UAV
+
+𝑎 𝑡 = (𝑈𝐴𝑉 𝑖 , 𝑍 𝑗 ) 
+
+> Order Delivery Route
+> Frozen
+> Controller
+> 𝝅 𝒍
+> step 2
+> Frozen
+> Controller
+> 𝝅 𝒍
+> step K
+
+…
+
+> State
+
+Figure 2: Framework for SensUAV 
+
+## 3.2 Sensing Task Dispatcher 
+
+3.2.1 MDP Formulation . We formulate the upper-layer sensing task dispatcher as a macro-level MDP: 
+
+ℳℎ = ( 𝒮 ℎ, 𝒜 ℎ, 𝒫 ℎ, ℛℎ, 𝛾 ), (5) where 𝒮 ℎ is the macro state space, 𝒜 ℎ is the macro action space, 𝒫 ℎ
+
+is the macro transition function, ℛℎ is the macro reward function, and 𝛾 ∈ (0, 1) is the discount factor. Different from a standard single-timescale MDP, the environ-ment evolves at the micro level, while the sensing task dispatcher acts once every 𝐾 micro steps. Since 𝐾 is fixed in our system, the upper-layer process remains a discrete-time MDP with fixed transi-tion intervals, for 𝐾 ’s value, we will discuss in the hyperparameter experiment part. 
+
+State Space . At macro step 𝑡 , the dispatcher observes the global system state 
+
+𝑆 ℎ𝑡 = (𝑈 𝑡 , 𝑍 𝑡 , 𝑊 𝑡 , 𝑔 𝑡 ), (6) where 𝑈 𝑡 denotes the current UAV fleet state, 𝑍 𝑡 denotes the set of currently available sensing tasks, and 𝑊 𝑡 denotes the weather condition, including wind speed and wind direction. The optional global context vector 𝑔 𝑡 summarizes system-level statistics such as current workload, remaining active sensing tasks, and fleet energy status. More concretely, the macro state augments the basic UAV at-tributes with runtime execution information. For each UAV, we use its current location, velocity, remaining energy, and task status, where the task status indicates whether the UAV is idle, assigned, delivering, returning, charging, or returning due to low battery. Each sensing task contains its spatial and temporal attributes, in-cluding task location and valid time window. 
+
+Action Space . At each macro step, the sensing task dispatcher se-lects a UAV–sensing pair 𝑎 ℎ𝑡 = (𝑢 𝑖 , 𝑧 𝑗 ), where 𝑢 𝑖 ∈ 𝑈 𝑡 , 𝑧 𝑗 ∈ 𝑍 𝑡 ∪{∅} .
+
+∅ denotes a null action, meaning that no new sensing task is as-signed at the current macro step. Thus, the dispatcher either as-signs sensing task 𝑧 𝑗 to UAV 𝑢 𝑖 , or skips assignment when no suit-able sensing action is beneficial. Equivalently, the action can be represented in index form as 𝑎 ℎ𝑡 = (𝑖, 𝑗) , where 𝑖 ∈ {1, … , 𝑀}, 𝑗 ∈ {0, 1, … , |𝑍 𝑡 |} . 𝑗 = 0 denotes the null action. Invalid UAVs and inac-tive sensing tasks are masked out during action sampling. 
+
+Transition Function . After the dispatcher outputs macro action 
+
+𝑎 𝐻 𝑡 , the environment first updates the task manager by commit-ting the selected sensing assignment. Then, the lower-layer veloc-ity controller executes 𝐾 consecutive micro control steps: 
+
+𝑎 𝑙 𝜏 = 𝑣 𝜏 = 𝜋 𝑙 (𝑠 𝑙 𝜏 ), 𝜏 = 𝑡𝐾 , … , (𝑡 + 1)𝐾 − 1, (7) where 𝜋 𝑙 denotes the low-level velocity controller and 𝑠 𝑙 𝜏 is the micro-level observation. During these 𝐾 micro steps, the simulator updates UAV posi-tions, battery levels, delivery progress, sensing completion, and weather-dependent flight dynamics. After the rollout finishes, the environment returns the next macro state 𝑠 ℎ𝑡+1 . Therefore, the macro transition is defined as 𝑠 ℎ𝑡+1 ∼ 𝒫 ℎ(⋅ ∣ 𝑠 ℎ𝑡 , 𝑎 ℎ𝑡 ), 𝒫 ℎ is induced by 𝐾 
+
+micro transitions under the velocity controller. 
+
+Reward Function . The macro reward is designed to reflect the overall system objective while alleviating sparse-reward issues. Specif-ically, the reward at macro step 𝑡 is defined as 
+
+𝑟 ℎ𝑡 = Δ𝐽 + 𝑟 timeout  
+
+> 𝑡
+
++ 𝑟 shape  
+
+> 𝑡
+
+, (8) Reinforcement Learning for Delivery Drone-Based Participatory Sensing in Dynamic Environments Conference acronym ’XX, June 03–05, 2018, Woodstock, NY 
+
+where 𝐽 = 𝑤 𝑧 𝜙(𝑍 )+𝑤 𝑜 𝑂−𝑤 𝑒 𝐸 denotes the system profit, 𝑟 timeout  
+
+> 𝑡
+
+is a timeout penalty introduced to encourage timely delivery comple-tion and improve learning toward the original objective, 𝑟 shape  
+
+> 𝑡
+
+is an intermediate shaping reward used to mitigate reward sparsity. Timeout penalty is additionally introduced because optimizing the original reward alone may not sufficiently enforce timely or-der completion during training. Shaping reward is used to provide denser feedback for intermediate decisions. We formulate shaping term as 
+
+𝑟 shape  
+
+> 𝑡
+
+= 𝜆 𝑠ℎ𝑎𝑝𝑒 ∑
+
+> 𝑖
+
+(𝑑 tar  
+
+> 𝑖,𝑡
+
+− 𝑑 tar 
+
+> 𝑖,𝑡+1
+
+) , (9) which rewards progress toward the current delivery target and mit-igates sparse delivery rewards. Importantly, 𝑟 timeout  
+
+> 𝑡
+
+and 𝑟 shape  
+
+> 𝑡
+
+are used only as training auxiliary signals. The final evaluation and comparison are based on Eq. (3) and the corresponding constraint-violation metrics, rather than the shaped training return.The upper-layer optimization objective is 𝑅(𝜋 ℎ) = 𝔼 𝜋 ℎ,𝜋 𝑙 [∑ 𝑇 −1 𝑡=0 𝛾 𝑡 𝑟 ℎ𝑡 ] . 
+
+3.2.2 Policy Network Design . The sensing task dispatcher is implemented as an actor–critic policy trained by PPO. Since the action is a structured UAV–sensing pair, we factorize the macro policy into two sequential categorical decisions to reduce action complexity and explicitly model UAV-task compatibility: 
+
+𝜋 ℎ(𝑎 ℎ𝑡 ∣ 𝑠 ℎ𝑡 ) = 𝜋 ℎ𝑢 (𝑢 𝑖 ∣ 𝑠 ℎ𝑡 ) 𝜋 ℎ𝑧 (𝑧 𝑗 ∣ 𝑠 ℎ𝑡 , 𝑢 𝑖 ). (10) To process the inputs, we first encode the individual UAV and sensing-task states using separate MLPs combined with the global state 𝑔 𝑡 .The actor network leverages a cross-attention module to extract environment-aware matching features between UAVs and tasks, alongside a permutation-invariant pooling layer to capture the global sensing summary. These fused features are fed into a UAV-selection head with masked softmax to sample the preferred UAV 𝑢 𝑖 ∼ 𝜋 ℎ𝑢 .Conditioned on this selection, the chosen UAV’s embedding is fur-ther concatenated with the fused sensing features and passed through a second actor head to sample the corresponding sensing task 𝑧 𝑗 ∼𝜋 ℎ𝑧 . Finally, the critic network evaluates the overall macro state value by processing the pooled embeddings of all current UAVs and tasks through an MLP value head, providing a centralized baseline to stabilize training. 
+
+## 3.3 Velocity Controller 
+
+The lower layer is a velocity controller operating at the micro timescale. It is also modeled as an MDP: 
+
+ℳ𝑙 = ( 𝒮 𝑙 , 𝒜 𝑙 , 𝒫 𝑙 , ℛ𝑙 , 𝛾 ), (11) where 𝒮 𝑙 is the micro state space, 𝒜 𝑙 is the micro action space, 𝒫 𝑙 
+
+is the micro transition function, and ℛ𝑙 is the micro reward. At each micro step 𝜏 , the velocity controller observes the local UAV state and environmental context, and outputs a continuous velocity command: 
+
+𝑎 𝑙 𝜏 = 𝑣 𝜏 = 𝜋 𝑙 (𝑠 𝑙 𝜏 ). (12) The micro observation includes local motion state, target informa-tion, battery status, wind speed and wind direction. The backbone of the low-level policy is a standard MLP-based actor–critic net-work. 
+
+Figure 3: Sensing Dispatcher Policy Architecture 
+
+The role of the velocity controller is to execute fine-grained flight control under dynamic urban conditions. In particular, once a way-point or task target is determined by the task manager, the lower layer is responsible for adjusting UAV speed continuously so as to balance task execution and energy consumption. 
+
+## 3.4 Training Process 
+
+As many stage-based RL frameworks did[34], we use two-stage training instead of jointly optimizing the sensing task dispatcher and the velocity controller because joint training would make the macro-level transition dynamics non-stationary. As the lower-layer policy changes, the environment perceived by the upper layer also keeps changing. This issue is particularly severe in our two-timescale setting, where high-level combinatorial dispatch and low-level con-tinuous control are tightly coupled. By freezing the trained veloc-ity controller, we obtain a stable macro-level learning process and improve convergence of the sensing task dispatcher. This design achieves potential optimality for improved training stability and scalability comparing to hybrid action RL [7], which is critical in complex UAV systems. 
+
+Stage I: Velocity Controller Training. We first train the lower-layer velocity controller 𝜋 𝐿 using PPO in the micro-level environ-ment. This stage focuses on learning stable continuous motion con-trol under dynamic weather and battery constraints. The low-level actor and critic both use standard MLP backbones. 
+
+Stage II: Sensing Task Dispatcher Training. At this stage, we train the high-level sensing dispatcher 𝜋 ℎ using PPO. The dispatcher Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Ouyang et al. 
+
+interacts with the environment through fixed 𝐾 -step executions of the velocity controller. This transforms the originally coupled macro-micro dynamics into a more stationary macro-level tran-sition process, which significantly improves training stability for high-level sensing decisions. Given a macro state 𝑠 ℎ𝑡 and dispatcher action 𝑎 ℎ𝑡 , the PPO im-portance ratio is defined as 𝜌 𝑡 (𝜃) = 𝜋 ℎ𝜃 (𝑎 ℎ𝑡 ∣𝑠 ℎ𝑡 )𝜋 ℎ𝜃 old (𝑎 ℎ𝑡 ∣𝑠 ℎ𝑡 ) . The clipped policy objective is 
+
+ℒℎ
+
+> clip
+
+(𝜃) = 𝔼 𝑡 [min (𝜌 𝑡 (𝜃)̂𝐴 ℎ𝑡 , clip (𝜌 𝑡 (𝜃), 1 − 𝜖, 1 + 𝜖)̂𝐴 ℎ𝑡 )] , (13) where ̂ 𝐴 ℎ𝑡 denotes the generalized advantage estimate.The critic is optimized with the value loss ℒℎ
+
+> value
+
+(𝜙) = 𝔼 𝑡 [(𝑉 ℎ𝜙 (𝑠 ℎ𝑡 ) −̂ 𝑅 ℎ𝑡 )2],where ̂ 𝑅 ℎ𝑡 is the empirical return. To encourage exploration under dynamic sensing demands, we further introduce an entropy regu-larizer, ℒℎ
+
+> ent
+
+(𝜃) = 𝔼 𝑡 [h(𝜋 ℎ𝜃 (⋅ ∣ 𝑠 ℎ𝑡 ))] . The final optimization objec-tive of the sensing dispatcher is 
+
+ℒℎ(𝜃, 𝜙) = − ℒℎ
+
+> clip
+
+(𝜃) + 𝑐 𝑣 ℒℎ
+
+> value
+
+(𝜙) − 𝑐 𝑒 ℒℎ
+
+> ent
+
+(𝜃), (14) where 𝑐 𝑣 and 𝑐 𝑒 balance value learning and exploration regulariza-tion, respectively. 
+
+## 4 Experiments 
+
+In this section, we conduct extensive experiments to evaluate TSRL’s performance in addressing SensUAV problem. Specifically, our ex-periments aim to answer the following research questions (RQs): 
+
+• RQ1 : How does TSRL perform compared to other baselines in terms of improving system profit? 
+
+• RQ2 : How do the key components of TSRL contribute to learn-ing effectiveness? 
+
+• RQ3 : How sensitive is TSRL to key hyperparameters, specifically the potential-based reward shaping coefficient ( 𝜆 shape ) and the two-timescale temporal abstraction scale ( 𝐾 )? 
+
+• RQ4 : What are the underlying operational behaviors and mech-anisms that enable TSRL to achieve high system profit? 
+
+## 4.1 Datasets 
+
+We preprocessed the LaDe datasets [31] in Hangzhou and Shang-hai, and utilized logistic orders for our proposed UAV sensing prob-lem. The information of two datasets is listed in Table 1. 
+
+Table 1: Shanghai Dataset vs. Hangzhou Dataset Parameter Hangzhou Shanghai    
+
+> Time Span 2022/05/01-2022/07/31 2022/08/01-2022/10/31 Spatial Range
+
+[30.11 ∘N, 30.44 ∘N]-
+
+[120.04 ∘E, 120.37 ∘E][30.93 ∘N, 31.27 ∘N]-
+
+[121.29 ∘E, 121.63 ∘E]    
+
+> Total Orders 22772 20707 Aver O-D Distance 7.72km 17.02km
+
+• Shanghai : Shanghai dataset includes 3 months of last-mile de-livery data from 2022/08/01 to 2022/10/31, and covers a delivery region within [30.93 ∘N, 31.27 ∘N], [121.29 ∘E, 121.63 ∘E] , this data includes 20707 logistic order information. We select 72 days as training dataset, 10 days as validation dataset and 10 days as test dataset. 
+
+Algorithm 1 Two-Stage Training Process of TSRL  
+
+> 1:
+
+Input : Environment 𝑒𝑛𝑣 ; macro rollout length 𝐵 ℎ; micro roll-out length 𝐵 𝑙 ; total steps 𝑇 ℎ𝑡𝑜𝑡𝑎𝑙 , 𝑇 𝑙 𝑡𝑜𝑡𝑎𝑙 ; micro horizon 𝐾 . 
+
+> 2:
+
+Output : Trained dispatcher 𝜋 ℎ𝜃 and velocity controller 𝜋 𝑙 𝜙 ./* Stage I: Train velocity controller */  
+
+> 3:
+
+Initialize 𝜋 𝑙 𝜙 ; 
+
+> 4:
+
+for 𝑢 = 1 to ⌊𝑇 𝑙 𝑡𝑜𝑡𝑎𝑙 /𝐵 𝑙 ⌋ do  
+
+> 5:
+
+Collect 𝐵 𝑙 micro transitions with 𝜋 𝑙 𝜙 ; 
+
+> 6:
+
+Update 𝜙 using PPO with GAE;  
+
+> 7:
+
+end for 
+
+/* Stage II: Train sensing dispatcher */  
+
+> 8:
+
+Initialize 𝜋 ℎ𝜃 and set 𝑠𝑡𝑒𝑝 ℎ ← 0 ; 
+
+> 9:
+
+while 𝑠𝑡𝑒𝑝 ℎ < 𝑇 ℎ𝑡𝑜𝑡𝑎𝑙 do  
+
+> 10:
+
+Empty macro buffer ℬℎ; 
+
+> 11:
+
+while |ℬℎ| < 𝐵 ℎ do  
+
+> 12:
+
+Observe macro state 𝑠 ℎ𝑡 and sample 𝑎 ℎ𝑡 ∼ 𝜋 ℎ𝜃 (⋅|𝑠 ℎ𝑡 ); 
+
+> 13:
+
+Apply 𝑎 ℎ𝑡 to update the sensing assignment;  
+
+> 14:
+
+𝑅 ℎ𝑡 ← 0 ; 
+
+> 15:
+
+for 𝑘 = 1 to 𝐾 do  
+
+> 16:
+
+Execute 𝑎 𝑙 𝑡,𝑘 ∼ 𝜋 𝑙 𝜙 (⋅|𝑠 𝑙 𝑡,𝑘 ); 
+
+> 17:
+
+Step 𝑒𝑛𝑣 to update state 𝑠 ℎ𝑡 ; 
+
+> 18:
+
+if episode terminates then  
+
+> 19:
+
+break ; 
+
+> 20:
+
+end if  
+
+> 21:
+
+end for  
+
+> 22:
+
+Observe 𝑠 ℎ𝑡+1 and compute 𝑅 ℎ𝑡 by Eq. (8);  
+
+> 23:
+
+Store (𝑠 ℎ𝑡 , 𝑎 ℎ𝑡 , 𝑅 ℎ𝑡 , 𝑠 ℎ𝑡+1 , 𝑑𝑜𝑛𝑒 ℎ𝑡 ) in ℬℎ; 
+
+> 24:
+
+𝑠𝑡𝑒𝑝 ℎ ← 𝑠𝑡𝑒𝑝 ℎ + 1 ; 
+
+> 25:
+
+if 𝑑𝑜𝑛𝑒 ℎ𝑡 then  
+
+> 26:
+
+Reset 𝑒𝑛𝑣 ; 
+
+> 27:
+
+end if  
+
+> 28:
+
+end while  
+
+> 29:
+
+Update 𝜃 using PPO with GAE on ℬℎ; 
+
+> 30:
+
+end while  
+
+> 31:
+
+return 𝜋 ℎ𝜃 , 𝜋 𝑙 𝜙 ;
+
+• Hangzhou : Hangzhou datasets includes 3 months of last-mile delivery data from 2022/05/01 to 2022/07/31, and covers a deliv-ery region within [30.11 ∘N, 30.44 ∘N], [120.04 ∘E, 120.37 ∘E], this data includes 22772 logistic order information. We select 72 days as training dataset, 10 days as validation dataset and 10 days as test dataset. 
+
+• Weather Dataset : We collect hourly 100m wind speed and wind direction data from Open-Meteo 1 with corresponding region and time mentioned above. Weather-related data is applied in simu-lation system. 
+
+## 4.2 Experimental Settings 
+
+Experiment Setup . To evaluate our system, we build a simulation environment based on real delivery orders and weather traces. ll Each UAV’s energy capacity is initialized as 1000𝑘𝐽 (≈ 278𝑊 ℎ) ,all UAVs depart from a depot and return to the depot for charging  
+
+> 1https://doi.org/10.5281/zenodo.14582479 Reinforcement Learning for Delivery Drone-Based Participatory Sensing in Dynamic Environments Conference acronym ’XX, June 03–05, 2018, Woodstock, NY
+
+Method Algorithms nums=20 nums=25 nums=30 Profit( ×10 4) ↑ Δ ↑ T (ms) ↓ Profit ( ×10 4) ↑ Δ ↑ T(ms) ↓ Profit( ×10 4) ↑ Δ ↑ T(ms) ↓
+
+> Hangzhou
+
+Heuristic Random 2.25 ± 0.16 -47.8% 0.04 2.32 ± 0.22 -46.1% 0.04 2.41 ± 0.17 -44.0% 0.04 DFG 2.78 ± 0.19 -35.4% 0.28 2.74 ± 0.23 -36.3% 0.37 2.73 ± 0.18 -36.5% 0.46 SFG 2.83 ± 0.19 -34.1% 0.83 2.80 ± 0.25 -35.0% 0.92 2.79 ± 0.18 -35.3% 1.00 RL SMORE 4.28 ± 0.04 -0.5% 4.41 4.04 ± 0.42 -6.2% 4.53 3.83 ± 0.48 -11.1% 4.65 DECO 4.30 ± 0.01 - 3.13 4.14 ± 0.28 -3.8% 3.27 4.31 ± 0.01 - 3.42 D2SN 3.87 ± 0.33 -10.0% 13.10 4.20 ± 0.34 -2.5% 21.38 2.74 ± 0.72 -36.3% 30.99 DyPS 4.15 ± 0.54 -3.4% 1.70 4.31 ± 0.01 - 1.76 3.80 ± 0.43 -11.8% 1.83 
+
+TSRL (ours) 5.07 ± 0.07 +17.9% 1.29 5.04 ± 0.04 +17.0% 1.31 5.40 ± 0.40 +25.2% 1.33 Shanghai 
+
+Heuristic Random 2.72 ± 0.01 -1.9% 0.04 2.73 ± 0.01 -1.8% 0.04 2.73 ± 0.01 -2.0% 0.04 DFG 2.77 ± 0.01 -0.0% 0.20 2.77 ± 0.01 -0.1% 0.26 2.78 ± 0.00 -0.0% 0.33 SFG 2.77 ± 0.00 - 0.94 2.78 ± 0.00 - 1.11 2.78 ± 0.01 - 1.23 RL SMORE 2.47 ± 0.43 -11.0% 4.40 2.76 ± 0.06 -0.6% 4.53 2.49 ± 0.45 -10.6% 4.64 DECO 2.73 ± 0.01 -1.5% 3.12 2.73 ± 0.02 -1.7% 3.24 2.73 ± 0.02 -2.0% 3.40 D2SN 2.37 ± 0.38 -14.4% 15.84 2.64 ± 0.16 -5.0% 21.46 2.47 ± 0.10 -11.4% 30.67 DyPS 2.49 ± 0.44 -10.4% 1.68 2.73 ± 0.01 -1.8% 1.75 2.48 ± 0.44 -11.0% 1.80 
+
+TSRL (ours) 3.82 ± 0.43 +37.5% 1.29 4.20 ± 0.03 +51.2% 1.31 4.20 ± 0.04 +50.9% 1.32 Table 2: Profit and run time comparison under different UAV fleet sizes ( 𝑛𝑢𝑚𝑠 = 20, 25, 30 ) on Hangzhou and Shanghai datasets. The Δ represents the profit improvements compared to the best baseline approach (underlined). Bold and underlined digits indicate the best performance and the second-best baseline values, respectively. 
+
+when their battery level is low; the depot location and operating region are determined from the order information in the selected delivery region. To evaluate the spatial balance of completed sens-ing tasks, the operating region is partitioned into a 20 × 20 grid. For each episode, we generate 20 sensing tasks as discrete sensing opportunities uniformly distributed within operating grid, and all compared methods share the same generated sensing task set un-der the same random seed. Each sensing task is associated with a time window randomly sampled from 10 to 15 hours. Each com-pleted sensing sample is mapped to grids according to its location and completion time. The sensing profit is then computed by a hi-erarchical entropy function over these completed samples, which captures both the spatial balance among available sensing oppor-tunities and the temporal balance of sensing completion events. 
+
+Baselines. Given the absence of existing literature on the hybrid-objective UAV sensing problem, we adapt several representative methods from closely related domains (e.g., order dispatching) as our baselines. These include both heuristic and reinforcement learn-ing approaches. 
+
+• Random : When UAV is available to sensing tasks, we dispatch the sensing task randomly. 
+
+• Sensing-First Greedy(SFG) : Sensing-first greedy baseline greed-ily chooses the UAV–sensing pair with the minimum travel cost, allowing limited delivery interruption to prioritize sensing op-portunities. 
+
+• Delivery-First Greedy(DFG) : Delivery-first greedy baseline greed-ily assigns sensing tasks only to non-busy UAVs, thus preserving ongoing delivery execution. Among admissible pairs, the nearest sensing task is selected. 
+
+• SMORE [27] : We adapt SMORE as a two-stage transformer-pointer baseline for high-level sensing dispatch. Specifically, SMORE first encodes UAVs and sensing tasks with separate multi-head Trans-former encoders, selects a UAV through a worker-level pointer module, and then selects a sensing target using a task-level pointer with a heuristic soft mask based on task utility and travel cost. 
+
+• D2SN [36] : This baseline directly scores candidate UAV–sensing pairs and selects one joint action at each decision step. In this way, it captures pairwise matching between UAV states and sens-ing demands within a unified encoder–decoder style architec-ture. This baseline serves as a learned joint-dispatch policy that contrasts with our hierarchical design. 
+
+• DECO [18] : We adapt DECO to our UAV sensing–delivery set-ting as a two-stage hierarchical dispatch policy. The first stage selects a UAV, and the second stage chooses a sensing task con-ditioned on the selected UAV, yielding a factorized macro action. This baseline preserves the core idea of hierarchical decomposi-tion in decision making, but applies it to UAV–sensing assign-ment in our system. It provides a strong hierarchical learning baseline for comparison with our method. 
+
+• DyPS [25] : This is a hierarchical MARL baseline that learns spatio-temporal resource allocation through dynamic parameter shar-ing. DyPS is used to learn the high-level sensing task dispatcher, while the low-level velocity controller is kept unchanged. This isolates the effect of replacing our policy with a role-modeling and group-sharing dispatcher, enabling a fair comparison on the task-allocation performance for which DyPS was originally de-signed. 
+
+Evaluation Metrics . The profit J in Equation 3 are used for evalu-ation. We also report runtime as an efficiency metric. Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Ouyang et al. 
+
+Training Details & Hyperparameters . For the Hangzhou dataset UAV max moving speed is 30km/h, for shanghai dataset, max mov-ing speed is set to 36km/h, the UAV numbers is explored from 20 to 30. The discount factor 𝛾 is set to 0.99, GAE 𝜆 is set to 0.95, clip 
+
+𝜖 is set to 0.2. The rollout batch size is set to 256, which is parti-tioned into 4 minibatches (minibatch size 64), the initial learning rate for both actor network and critic network is set to 0.0003, and the hidden size of all MLP blocks is set to 256 with token embed-ding dimension 128. Each micro time step is set to 5 minutes. 
+
+Implementations . We implement our algorithms in Python us-ing PyTorch 2.3.0. All experiments were conducted on the high-performance computing platform, equipped with NVIDIA RTX A40 and RTX A800 GPUs. 
+
+## 4.3 Overall Performance 
+
+Overall performance. Table 2 compares TSRL with representa-tive baselines under different UAV fleet sizes. TSRL consistently achieves the highest system profit across all six settings, showing its robustness under different urban scenarios and fleet scales. In Hangzhou, TSRL improves the profit over the strongest baseline by 
+
+17.9% , 17.0% , and 25.2% when the number of UAVs is 20 , 25 , and 
+
+30 , respectively, with an average improvement of 20.1% . The ad-vantage is even more pronounced in Shanghai, where TSRL outper-forms the best competing method by 37.5% , 51.2% , and 50.9% , yield-ing an average profit improvement of 46.6% . Shanghai has a much longer average OD distance (17.02 km vs. 7.72 km in Hangzhou), which reduces sensing insertion flexibility and makes sensing co-ordination substantially more difficult. Under such long-distance delivery scenarios, several RL baselines tend to converge toward delivery-dominant strategies that rarely activate sensing tasks, while TSRL maintains effective sensing assignment through execution-aware hierarchical coordination. These results demonstrate that TSRL can better coordinate sensing dispatch and velocity control under the unified system-profit objective, rather than relying on a fixed priority rule or a weakly coupled dispatch strategy. 
+
+Effect of fleet size. Increasing the fleet size introduces additional UAV resources and higher coordination complexity. In Hangzhou, TSRL achieves the highest profit with 30 UAVs, indicating that the proposed framework can effectively utilize additional mobility re-sources when sufficient sensing opportunities exist. By contrast, several baselines fail to consistently benefit from larger fleets, and D2SN even exhibits severe performance degradation at 30 UAVs, suggesting that flat RL policies become increasingly unstable as the joint action space expands. In Shanghai, most baselines remain concentrated around 27K profit regardless of fleet size, while TSRL continues to improve, indicating that the key bottleneck lies in co-ordination quality rather than UAV quantity itself. 
+
+Computational Efficiency. TSRL also achieves strong computa-tional efficiency during online inference, requiring only about 1.3 ms per decision step across all settings. Compared with other RL baselines such as D2SN and SMORE, TSRL significantly reduces runtime by decomposing the original combinatorial UAV-task de-cision into hierarchical conditional selections instead of exhaus-tive joint-action evaluation. Although heuristic methods exhibit lower latency, their myopic distance-based rules ignore long-term sensing-delivery coordination and therefore produce substantially 
+
+Figure 4: Ablation study on system profit. 
+
+lower system profit. Overall, TSRL provides a favorable trade-off between decision quality and inference efficiency, making it prac-tical for real-time UAV sensing systems. 
+
+## 4.4 Ablation Study 
+
+To assess the contribution of each component in TSRL, we conduct an ablation study by removing one design at a time. As shown in Figure 4, we compare TSRL with three variants: w/o SD , w/o VS ,and w/o SR .
+
+• w/o SD : We replace the proposed sensing dispatcher with a single-stage dispatcher, removing the structured UAV-task selection mech-anism. 
+
+• w/o VS : We remove the velocity controller and use a fixed UAV flying speed as the max speed for each city during execution. 
+
+• w/o SR : We remove the shaping reward during training and only use the environment reward, including system profit and time-out penalties. 
+
+Table 3: Ablation study on running time(ms) Dataset Method nums=20 nums=25 nums=30 
+
+Hangzhou TSRL (ours) 1.29 1.31 1.33 
+
+w/o SD 1.55 1.77 1.98 Shanghai TSRL (ours) 1.29 1.31 1.32 
+
+w/o SD 1.54 1.75 1.97 As shown in Figure 4, removing any component generally de-grades TSRL, confirming that the performance gain does not come from a single isolated module but from the joint design of struc-tured dispatch, velocity scheduling, and reward shaping. Among these variants, removing the velocity controller leads to the most severe profit drop in most cases, especially in Shanghai, where the profit collapses close to the level of rule-based baselines. This verifies that adaptive velocity control is crucial for reducing ex-ecution cost and improving the timing of task completion under dynamic urban conditions. Removing the sensing dispatcher also weakens performance because the policy can no longer explicitly model UAV–task compatibility. Removing reward shaping causes a smaller but still visible degradation, indicating that dense guid-ance helps stabilize training under sparse profit feedback. Over-all, the ablation results show that TSRL’s advantage comes from coupling high-level dispatch with low-level execution rather than optimizing them independently. Beyond profit improvements, Ta-ble 3 further reveals that our structured sensing dispatcher accel-erates online inference compared to the single-stage variant ( w/o SD ). This confirms that factorizing the combinatorial action space Reinforcement Learning for Delivery Drone-Based Participatory Sensing in Dynamic Environments Conference acronym ’XX, June 03–05, 2018, Woodstock, NY 
+
+Figure 5: Hyperparameter study on system profit. 
+
+not only captures UAV-task compatibility more accurately but also significantly reduces computational overhead. 
+
+## 4.5 Hyperparameter Study 
+
+Impact of 𝜆 shape . Figure 5(a) reports the sensitivity of TSRL to the shaping coefficient 𝜆 shape , which controls the strength of the potential-based shaping term. This parameter determines the rela-tive strength between the sparse system-profit signal and the dense geometric guidance toward unfinished sensing targets. When 𝜆 shape 
+
+is too small, the shaping signal is insufficient to guide high-level dispatch before task completion, resulting in weaker policy learn-ing. This explains the clear performance drop in Hangzhou at 𝜆 shape =10 −4 . As 𝜆 shape increases to 2 × 10 −4 , TSRL reaches its best profit, indicating that the shaping signal is well aligned with the system-profit objective. However, further increasing 𝜆 shape does not bring additional gains and slightly reduces profit, suggesting that an overly strong shaping term may bias the dispatcher toward local proxim-ity rather than global profit maximization. The milder variation in Shanghai indicates that its task dynamics are less sensitive to shaping strength. Therefore, we set 𝜆 shape = 2 × 10 −4 in the main experiments. 
+
+Impact of 𝐾 . Figure 5(b) studies the effect of 𝐾 , the number of low-level velocity-control steps executed between two consecu-tive high-level dispatch decisions. In TSRL, 𝐾 controls the effective holding time of a high-level UAV–task assignment and directly re-flects the two-timescale design. A small 𝐾 makes the dispatcher highly reactive, but it may revise assignments before the selected UAV has made meaningful progress toward the target. In contrast, an excessively large 𝐾 makes dispatch decisions stale, reducing the system’s ability to respond to newly arriving orders, changing wind conditions, and expiring sensing opportunities. The results show that 𝐾 = 5 achieves the best profit on both datasets, con-firming that TSRL benefits from an intermediate temporal abstrac-tion. The sharper degradation in Hangzhou when 𝐾 becomes large suggests that dense urban demands impose a stronger penalty on delayed dispatch updates, whereas Shanghai is less sensitive due to relatively smoother task dynamics. We therefore set 𝐾 = 5 for all main experiments. 
+
+## 4.6 System Behavior Analysis 
+
+To reveal the operational mechanisms of our model and verify how the maximum profit is attained, we evaluate TSRL against the best heuristic (Sensing-first Greedy) and reinforcement learning base-lines (DECO). The comparative results are presented in Figure 6. As shown in Figure 6, Sensing-first Greedy obtains relatively low net system profit because it overly prioritizes sensing task and 
+
+Figure 6: System behavior analysis. 
+
+consequently sacrifices delivery completion, leading to lower de-livery profit. In contrast, TSRL and DECO achieve higher delivery profit through more reasonable sensing dispatch, indicating that ef-fective sensing coordination should not come at the expense of de-livery service. The remaining profit gap between TSRL and DECO mainly comes from concurrent sensing allocation and lower-level energy efficiency. Specifically, TSRL demonstrates a substantial ad-vantage over the greedy baseline in sensing task assignment, vali-dating the superior scheduling capability of our sensing dispatcher. Meanwhile, by adaptively optimizing lower-level execution speeds, our velocity controller substantially reduces energy consumption compared to DECO. In summary, these behavioral insights con-firm that instead of improving sensing profit by sacrificing delivery tasks, the synergistic design of TSRL achieves high task through-put and efficient energy saving. 
+
+## 4.7 Case Study 
+
+To intuitively visualize how TSRL differs from the baselines in making dispatch decisions, we plot the trajectory of the same UAV under different methods, together with completed and unfinished sensing tasks. Figure 7 visualizes the fleet-level scheduling difference between TSRL and the baselines for UAV 20 on 2022/05/23. TSRL identifies Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Ouyang et al. 120.10  120.15  120.20          
+
+> Longitude
+> 30.20
+> 30.25
+> 30.30
+> 30.35
+> Latitude
+> TSRL (Ours)
+> #1
+> #2
+> #14
+> #17
+> #18
+> 120.10 120.15 120.20
+> Longitude
+> DECO
+> #1
+> #2
+> #14
+> #17
+> #18
+> 120.10 120.15 120.20
+> Longitude
+> SensingFirstGreedy
+> #1
+> #2
+> #14
+> #17
+> #18
+> UAV trajectory start → end direct window start window end
+> finished sensing task unfinished sensing task sensing point nearby
+
+Figure 7: Case study. 
+
+UAV 20 as free from delivery duties and dispatches it on a multi-stop sensing tour, completing five sensing tasks located at the spa-tial periphery of the depot. In contrast, DECO and SFG leave the same UAV stationary for most of the window, implicitly relying on UAVs already serving delivery orders to collect sensing data oppor-tunistically. This strategy may systematically fail to cover periph-eral sensing points that lie far from major delivery corridors. 
+
+## 5 Related Works 5.1 Participatory Sensing for Delivery Drones 
+
+UAVs equipped with cameras, LiDARs, or other sensors act as fly-ing base stations and data collectors, which greatly enhance sit-uational awareness in cities [22]. They can patrol areas to moni-tor traffic, detect incidents, and collect environmental data [7, 22]. UAV crowdsensing also enables flexible coverage for events or dis-asters, complementing ground sensor networks. The UAV deploy-ment problem is often split into static deploying hovering UAVs to cover fixed areas versus dynamic trajectory planning which rout-ing UAVs over time to follow moving phenomena [14]. Static place-ment fails to adapt when targets or demand areas move, so modern research emphasizes trajectory design. A key insight is that mobile UAVs can reduce their distance to sensing targets, improving data quality or reducing communication delays [20]. Optimization of UAV trajectories is inherently multi-objective. Typical goals include maximizing sensing coverage or utility while minimizing costs such as total mission time, energy consumption, or transmission power [7, 13]. For example, some formulations maximize the total amount of high-quality imagery collected sub-ject to UAV battery limits, while others minimize estimation error by servicing more ground sensors. Many works extend this for-mulation to joint delivery-and-sensing scenarios. Xiang et al. [33] reuse delivery drones during their flights, jointly optimizing route, and sensing duration to maximize combined utility, resulting in non-convex programs solved via approximation algorithms. However, most existing studies treat sensing as a standalone task assignment or route planning problem , tightly coupled with precom-puted trajectories. This overlooks real-world deployments where sensing is embedded within dynamic logistics processes. Moreover, simplified energy models with fixed flight speeds are commonly assumed, neglecting wind-induced variations in energy consump-tion. Consequently, UAV velocity is treated as a low-level execu-tion detail rather than a controllable decision variable, limiting ap-plicability in realistic urban settings. 
+
+## 5.2 Reinforcement Learning for UAV Scheduling 
+
+To overcome the limitations of traditional optimization, recent stud-ies formulate UAV scheduling as a sequential decision-making prob-lem and apply Reinforcement Learning to learn adaptive policies [7]. In an RL framework, UAVs interact with the environment modeled as a Markov decision process , where states encode positions, en-ergy levels, and task demands, and actions determine routing and service decisions. Deep RL methods such as DQN [24], DDPG [16], and PPO [23] have been widely used to handle continuous and high-dimensional control problems. For example, Qin et al. [21] in-corporate weather effects into an MDP formulation and optimize UAV trajectories under rain using Double Q-learning. Multi-agent RL further extends this paradigm to coordinated multi-UAV systems. A common approach is centralized training with decentralized execution [2]. Xu et al. [35] group UAV agents to share policies and improve scalability, while Dou et al. [7] propose a hybrid-action RL framework that jointly models discrete deci-sions and continuous controls. DeliverSense [6] and PathPool [32] demonstrate that RL can outperform heuristic baselines. Despite these advances, most RL-based methods adopt a flat decision-making structure , jointly optimizing sensing and routing within a single policy. This leads to large action spaces when incor-porating fine-grained controls such as velocity, resulting in unsta-ble training and poor scalability. Moreover, they rarely capture the 
+
+multi-timescale nature of UAV operations, where high-level task de-cisions evolve more slowly than motion dynamics. Although some works consider physics-aware models, velocity is treated implicitly rather than as a decision variable. These limitations motivate multi-stage frameworks that decouple high-level sensing from low-level control while incorporating wind-aware energy modeling. 
+
+## 6 Conclusion & Future Work 
+
+In this paper, we study participatory sensing for delivery drones in dynamic urban environments, where UAVs jointly serve deliv-ery orders and sensing tasks under wind-aware energy consump-tion. We formulate the SensUAV problem with discrete UAV-task assignment and continuous velocity scheduling, and prove its NP-hardness. We propose TSRL , a two-stage two-timescale reinforce-ment learning framework that combines a low-level velocity con-troller with a factorized high-level sensing dispatcher. Experiments on two real-world order datasets show that TSRL consistently out-performs heuristic and learning-based baselines in system profit and efficiency. Future work will incorporate finer-grained aerody-namic modeling, and real-world deployment constraints. 
+
+## GenAI Usage Disclosure 
+
+During the preparation of this work, the authors used Gemini 3.1 Pro in order to polish the English language, improve grammati-cal correctness, and refine the structural flow of the text. They were not used to generate the core ideas, experimental design, re-sults, analyses, or references. After utilizing this service, the au-thors thoroughly reviewed, verified, and edited the resulting con-tent as necessary. The authors take full responsibility for the sci-entific integrity and technical correctness of the final contents of this publication. Reinforcement Learning for Delivery Drone-Based Participatory Sensing in Dynamic Environments Conference acronym ’XX, June 03–05, 2018, Woodstock, NY 
+
+## References 
+
+[1] Abdulwahab Ali Almazroi and Nasir Ayub. 2023. Multi-task learning for elec-tricity price forecasting and resource management in cloud based industrial IoT systems. IEEE Access 11 (2023), 54280–54295. [2] Christopher Amato. 2024. An introduction to centralized training for decentral-ized execution in cooperative multi-agent reinforcement learning. arXiv preprint arXiv:2409.03052 (2024). [3] Dimitris Bertsimas and Bartolomeo Stellato. 2022. Online mixed-integer opti-mization in milliseconds. INFORMS Journal on Computing 34, 4 (2022), 2229– 2248. [4] Jinwen Chen, Hao Miao, Dazhuo Qiu, Jiannan Guo, Yawen Li, and Yan Zhao. 2025. Sustainability-Oriented Task Recommendation in Spatial Crowdsourc-ing. In 2025 IEEE 41st International Conference on Data Engineering (ICDE) . IEEE, 2712–2725. [5] Xuecheng Chen, Haoyang Wang, Yuhan Cheng, Haohao Fu, Yuxuan Liu, Fan Dang, Yunhao Liu, Jinqiang Cui, and Xinlei Chen. 2024. Ddl: Empowering de-livery drones with large-scale urban sensing capability. IEEE Journal of Selected Topics in Signal Processing (2024). [6] Xuecheng Chen, Haoyang Wang, Zuxin Li, Wenbo Ding, Fan Dang, Chengye Wu, and Xinlei Chen. 2022. Deliversense: Efficient delivery drone scheduling for crowdsensing with deep reinforcement learning. In Adjunct proceedings of the 2022 ACM international joint conference on pervasive and ubiquitous computing and the 2022 ACM international symposium on wearable computers . 403–408. [7] Jizhe Dou, Haotian Zhang, Yang Luo, and Guodong Sun. 2025. Scheduling drone and mobile charger via hybrid-action deep reinforcement learning. IEEE Trans-actions on Mobile Computing (2025). [8] Hao Gao, Wonjun Lee, Wuchen Li, Zhu Han, Stanley Osher, and H Vincent Poor. 2020. Energy-efficient velocity control for massive numbers of rotary-wing UAVs: A mean field game approach. In GLOBECOM 2020-2020 IEEE Global Communications Conference . IEEE, 1–6. [9] Bin Guo, Yan Liu, Leye Wang, Victor OK Li, Jacqueline CK Lam, and Zhiwen Yu. 2018. Task allocation in spatial crowdsourcing: Current state and future directions. IEEE Internet of Things Journal 5, 3 (2018), 1749–1764. [10] Xusen Guo, Mingxing Peng, Xixuan Hao, Xingchen Zou, Qiongyan Wang, Sijie Ruan, and Yuxuan Liang. 2026. AgentSense: LLMs empower generalizable and explainable web-based participatory urban sensing. In Proceedings of the ACM Web Conference 2026 . 5439–5450. [11] Matthias Hutsebaut-Buysse, Kevin Mets, and Steven Latré. 2022. Hierarchical re-inforcement learning: A survey and open research challenges. Machine Learning and Knowledge Extraction 4, 1 (2022), 172–221. [12] Shenggong Ji, Yu Zheng, and Tianrui Li. 2016. Urban sensing based on human mobility. In Proceedings of the 2016 ACM International Joint Conference on Perva-sive and Ubiquitous Computing . 1040–1051. [13] Wen Ji, Ke Han, and Tao Liu. 2023. A survey of urban drive-by sensing: An optimization perspective. Sustainable Cities and Society 99 (2023), 104874. [14] Zeqiang Lai, Ying Fu, and Jun Zhang. 2024. Hyperspectral image super resolu-tion with real unaligned RGB guidance. IEEE Transactions on Neural Networks and Learning Systems (2024). [15] Songxin Lei, Chunming Ma, Haomin Wen, Yexin Li, Lizhenghe Chen, Qianyu Yang, Fugee Tsung, Lei Chen, Sijie Ruan, and Yuxuan Liang. 2026. Hierarchical Reinforcement Learning for Cooperative Air-Ground Delivery in Urban System. 
+
+arXiv preprint arXiv:2602.12913 (2026). [16] Timothy P Lillicrap, Jonathan J Hunt, Alexander Pritzel, Nicolas Heess, Tom Erez, Yuval Tassa, David Silver, and Daan Wierstra. 2015. Continuous control with deep reinforcement learning. arXiv 2015. arXiv preprint arXiv:1509.02971 
+
+(2015). [17] Bin Liu, Wei Ni, Ren Ping Liu, Y Jay Guo, and Hongbo Zhu. 2025. Delay-Sensitive Goods Delivery and In-Situ Sensing Using a Multi-Task Drone. IEEE Transactions on Mobile Computing (2025). [18] Yao Lu, Shuai Wang, Yu Yang, Hai Wang, Baoshen Guo, Desheng Zhang, Shuai Wang, and Tian He. 2024. DECO: Cooperative order dispatching for on-demand delivery with real-time encounter detection. In Proceedings of the 33rd ACM In-ternational Conference on Information and Knowledge Management . 4734–4742. [19] Qun Ma, Yibo Wu, Muhammad Usman Shoukat, Yukai Yan, Jun Wang, Long Yang, Fuwu Yan, and Lirong Yan. 2024. Deep reinforcement learning-based wind disturbance rejection control strategy for uav. Drones 8, 11 (2024), 632. [20] Asad Mahmood, Thang X Vu, Wali Ullah Khan, Symeon Chatzinotas, and Björn Ottersten. 2025. UAV-Assisted 5G Networks: Mobility-Aware 3D Trajectory Op-timization and Resource Allocation for Dynamic Environments. In 2025 IEEE 102nd Vehicular Technology Conference (VTC2025-Fall) . IEEE, 1–7. [21] Hao Qin, Zhaozhou Wu, Yuanwei Liu, Xingqi Zhang, and Xinyue Zhang. 2025. Physics-Based Trajectory Design for Cellular-Connected UAV in Rainy Environ-ments Based on Deep Reinforcement Learning. IEEE Transactions on Intelligent Transportation Systems (2025). [22] Md Tahmid Rashid, Daniel Yue Zhang, and Dong Wang. 2020. Socialdrone: An in-tegrated social media and drone sensing system for reliable disaster response. In 
+
+IEEE INFOCOM 2020-IEEE Conference on Computer Communications . IEEE, 218– 227. [23] John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov. 2017. Proximal policy optimization algorithms. arXiv preprint arXiv:1707.06347 
+
+(2017). [24] Hado Van Hasselt, Arthur Guez, and David Silver. 2016. Deep reinforcement learning with double q-learning. In Proceedings of the AAAI conference on artifi-cial intelligence , Vol. 30. [25] Jingwei Wang, Qianyue Hao, Wenzhen Huang, Xiaochen Fan, Zhentao Tang, Bin Wang, Jianye Hao, and Yong Li. 2024. Dyps: Dynamic parameter sharing in multi-agent reinforcement learning for spatio-temporal resource allocation. In 
+
+Proceedings of the 30th ACM SIGKDD conference on knowledge discovery and data mining . 3128–3139. [26] Jie Wang, Zhihai Wang, Xijun Li, Yufei Kuang, Zhihao Shi, Fangzhou Zhu, Mingxuan Yuan, Jia Zeng, Yongdong Zhang, and Feng Wu. 2024. Learning to cut via hierarchical sequence/set model for efficient mixed-integer programming. 
+
+IEEE Transactions on Pattern Analysis and Machine Intelligence (2024). [27] Shuliang Wang, Song Tang, Sijie Ruan, Cheng Long, Yuxuan Liang, Qi Li, Ziqiang Yuan, Jie Bao, and Yu Zheng. 2024. Urban sensing for multi-destination workers via deep reinforcement learning. In 2024 IEEE 40th International Confer-ence on Data Engineering (ICDE) . IEEE, 4167–4179. [28] Yu Wang, Jingfei Wu, Xingyuan Hua, Chi Harold Liu, Guozheng Li, Jianxin Zhao, Ye Yuan, and Guoren Wang. 2023. Air-ground spatial crowdsourcing with UAV carriers by geometric graph convolutional multi-agent deep reinforcement learning. In 2023 IEEE 39th International Conference on Data Engineering (ICDE) .IEEE, 1790–1802. [29] Zhihai Wang, Xijun Li, Jie Wang, Yufei Kuang, Mingxuan Yuan, Jia Zeng, Yong-dong Zhang, and Feng Wu. 2023. Learning cut selection for mixed-integer linear programming via hierarchical sequence model. arXiv preprint arXiv:2302.00244 
+
+(2023). [30] Franz Wesselmann and Uwe Stuhl. 2012. Implementing cutting plane manage-ment and selection techniques. In Technical Report . University of Paderborn. [31] Lixia Wu, Haomin Wen, Haoyuan Hu, Xiaowei Mao, Yutong Xia, Ergang Shan, Jianbin Zheng, Junhong Lou, Yuxuan Liang, Liuqing Yang, et al. 2024. LaDe: The first comprehensive last-mile express dataset from industry. In Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining .5991–6002. [32] Chuankai Xiang, Yanfang Mo, Wei Liu, Zhibin Wu, and Lishuai Li. 2025. Path pool based transformer model in reinforcement framework for dynamic urban drone delivery problem. Transportation Research Part C: Emerging Technologies 
+
+177 (2025), 105165. [33] Chaocan Xiang, Yanlin Zhou, Haipeng Dai, Yuben Qu, Suining He, Chao Chen, and Panlong Yang. 2021. Reusing delivery drones for urban crowdsensing. IEEE Transactions on Mobile Computing 22, 5 (2021), 2972–2988. [34] Jing Xu, Fangwei Zhong, and Yizhou Wang. 2020. Learning multi-agent coordi-nation for enhancing target coverage in directional sensor networks. Advances in Neural Information Processing Systems 33 (2020), 10053–10064. [35] Yanggang Xu, Jirong Zha, Jiyuan Ren, Xintao Jiang, Hongfei Zhang, and Xin-lei Chen. 2024. Scalable multi-agent reinforcement learning for effective uav scheduling in multi-hop emergency networks. In Proceedings of the 30th Annual International Conference on Mobile Computing and Networking . 2028–2033. [36] Xinlang Yue, Yiran Liu, Fangzhou Shi, Sihong Luo, Chen Zhong, Min Lu, and Zhe Xu. 2024. An end-to-end reinforcement learning based approach for micro-view order-dispatching in ride-hailing. In Proceedings of the 33rd ACM international conference on information and knowledge management . 5054–5061. [37] Kuangyu Zheng, Zimo Ma, Mingyue Zhao, Zhuyang Zhou, Ziheng Zhang, and Yifeng Li. 2022. Joint efficient UAV trajectory and velocity optimization for IoT data collection using a new projection algorithm. Drones 6, 12 (2022), 376. [38] Yu Zheng. 2019. Urban computing . MIT Press. Conference acronym ’XX, June 03–05, 2018, Woodstock, NY Ouyang et al. 
+
+## A Real-World Deployment Visualization 
+
+Figure 8: Web Platform of SensUAV system 
+
+To better understand how TSRL behaves after deployment, we build a lightweight visualization platform using the LaDe test set. The platform places the replayed UAV trajectories on an Open-StreetMap background and shows how the agents move as sens-ing and delivery demands change over time. We use ten test days from LaDe, so that the replay covers different demand patterns and weather conditions. In each replay, the trained TSRL policy determines the UAV movements and task choices under the Sen-sUAV setting, where each UAV must coordinate delivery and sens-ing while respecting operational constraints such as battery usage and wind. The platform records the position of each UAV at every time step and visualizes its recent trajectory, remaining battery, and local wind condition. This gives a direct qualitative view of how TSRL handles the coupled sensing-and-delivery process, and complements the quantitative results by showing that the learned policy can produce coherent multi-UAV coordination on real geo-graphic data. Our source codes are available in the supplementary materials.

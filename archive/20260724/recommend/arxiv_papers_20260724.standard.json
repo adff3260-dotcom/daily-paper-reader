@@ -1,0 +1,58 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-24T20:53:57.861843+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.18874v1",
+      "source": "arxiv",
+      "title": "Reinforcement Learning for Delivery Drone-Based Participatory Sensing in Dynamic Environments",
+      "abstract": "Using Unmanned Aerial Vehicle (UAV) for urban sensing has emerged as a powerful paradigm to monitor the status of the city, e.g., air quality and noise levels, through agile aerial crowdsourcing. Despite this potential, existing UAV-based sensing approaches overlook environmental disturbances like wind that drastically impact drone velocity and energy efficiency. Consequently, directly applying existing methods to this joint delivery and sensing paradigm in dynamic environments faces two severe challenges: (1) scalability bottlenecks as fleet sizes expand; and (2) multi-timescale decision heterogeneity between macro task dispatching and micro velocity control. To tackle these, we formalize the problem as SensUAV and propose a Two TimeScale Reinforcement Learning framework (TSRL). Specifically, TSRL separates decision-making into two cooperative layers. At the macro level, a task-embedding sensing dispatcher handles scalability by separately encoding distinct task features and sequentially evaluating UAV suitability before task selection. At the micro level, a wind-aware velocity controller learns fine-grained velocity scheduling to adapt to dynamic environmental variations. Extensive experiments on real-world datasets demonstrate that TSRL significantly outperforms baselines, achieving average system profit improvements of 20.1% in Hangzhou and 46.6% in Shanghai.",
+      "authors": [
+        "Xin Ouyang",
+        "Songxin Lei",
+        "Xusen Guo",
+        "Yutian Jiang",
+        "Sijie Ruan",
+        "Yuxuan Liang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CY"
+      ],
+      "published": "2026-07-21T09:06:23+00:00",
+      "link": "https://arxiv.org/pdf/2607.18874v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "addresses energy efficiency of delivery drones via RL-based task dispatching and velocity control",
+      "llm_evidence_cn": "通过基于强化学习的任务调度和速度控制解决无人机能效问题",
+      "llm_evidence": "通过基于强化学习的任务调度和速度控制解决无人机能效问题",
+      "canonical_evidence": "通过基于强化学习的任务调度和速度控制解决无人机能效问题",
+      "llm_tldr_en": "Addresses energy efficiency and scalability in drone-based urban sensing by proposing a two-timescale RL method for joint task dispatching and velocity control.",
+      "llm_tldr_cn": "针对无人机城市感知中环境扰动（如风）严重影响能源效率的问题，本文将联合配送与感知任务形式化为SensUAV问题，并提出一种双时间尺度强化学习方法，分别处理宏观任务调度与微观速度控制。该方法在模拟实验中表现出更好的可扩展性与能效，为动态环境下无人机能源管理提供了新思路。",
+      "llm_tldr": "针对无人机城市感知中环境扰动（如风）严重影响能源效率的问题，本文将联合配送与感知任务形式化为SensUAV问题，并提出一种双时间尺度强化学习方法，分别处理宏观任务调度与微观速度控制。该方法在模拟实验中表现出更好的可扩展性与能效，为动态环境下无人机能源管理提供了新思路。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "UAV power management",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
