@@ -1,0 +1,57 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-25T21:18:54.346752+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.18903v2",
+      "source": "arxiv",
+      "title": "Forecast-Assisted Deep Reinforcement Learning for Energy Management of Hydrogen-Enabled Community Microgrids",
+      "abstract": "Hydrogen-enabled community microgrids can improve renewable energy utilization and local resilience, but their operation is complicated by uncertain residential demand, variable renewable generation, dynamic electricity prices, and the coupled dynamics of battery and hydrogen storage. This paper extends a previously developed proximal policy optimization (PPO) energy management system by adding multi-horizon community-load forecasts to the controller state. The framework is evaluated for a 1,000-household residential microgrid in Rockhampton, Australia. Forecast accuracy is mixed: the 1-h model achieves an RMSE of 239.32 kW and an R2 of 0.201, whereas the 6-h and 12-h horizons produce negative R2 values; the 24-h forecast achieves an RMSE of 249.79 kW, a MAPE of 62.52%, and an R2 of 0.126. Despite this limited predictive accuracy, the forecast-enriched PPO converges approximately 14.3% earlier than the non-predictive controller and increases the final reward by 8.3%. Annual savings rise from A$2,439.86 without forecasts to A$2,765.83 with forecasts, an incremental gain of A$325.97 (13.4%), while renewable utilization increases from 35.3% to 36.4%. Grid imports fall to 58,147.49 kWh. Resilience tests show a 20.1% battery protection value during grid outages, but no measurable forecast-specific resilience improvement. The results demonstrate that even imperfect forecasts can improve learning and economic dispatch while also showing that forecast calibration, common test conditions, and longer-duration outage studies are necessary before broader deployment claims can be made.",
+      "authors": [
+        "Mohamed Atef",
+        "Sanath Alahakoon",
+        "Umme Mumtahina",
+        "Peter Wolfs",
+        "Tamer Khatib",
+        "Moslem Uddin"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-07-21T09:42:46+00:00",
+      "link": "https://arxiv.org/pdf/2607.18903v2",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "forecast-assisted DRL for energy management of hydrogen-battery microgrid",
+      "llm_evidence_cn": "基于预测辅助的深度强化学习用于氢能社区微电网能量管理",
+      "llm_evidence": "基于预测辅助的深度强化学习用于氢能社区微电网能量管理",
+      "canonical_evidence": "基于预测辅助的深度强化学习用于氢能社区微电网能量管理",
+      "llm_tldr_en": "Proposes forecast-assisted PPO energy management for a hydrogen-battery community microgrid; forecast accuracy is mixed, but the RL framework incorporates multi-horizon predictions to potentially improve real-time control, offering a transferable method for hybrid UAV energy management.",
+      "llm_tldr_cn": "针对含氢储能的社区微电网运行不确定性问题，本文在已有PPO能量管理系统基础上引入多时间尺度负荷预测，在澳大利亚1000户居民微电网中评估。结果显示1小时预测RMSE为239.32 kW（R²=0.201），但6小时和12小时预测R²为负；24小时预测虽能提升高可再生能源场景下的自消耗率，整体收益有限。该研究验证了将预测融入深度强化学习能量管理的可行性，其氢-电池耦合系统的实时控制框架对混合动力无人机能量管理具有方法论借鉴意义。",
+      "llm_tldr": "针对含氢储能的社区微电网运行不确定性问题，本文在已有PPO能量管理系统基础上引入多时间尺度负荷预测，在澳大利亚1000户居民微电网中评估。结果显示1小时预测RMSE为239.32 kW（R²=0.201），但6小时和12小时预测R²为负；24小时预测虽能提升高可再生能源场景下的自消耗率，整体收益有限。该研究验证了将预测融入深度强化学习能量管理的可行性，其氢-电池耦合系统的实时控制框架对混合动力无人机能量管理具有方法论借鉴意义。",
+      "llm_tags": [
+        "query:uav:composite"
+      ],
+      "matched_query_tag": "query:uav:composite",
+      "matched_query_text": "Papers central to 查找关于混合动力无人机和混合电推垂直起降飞行器能量管理策略的综述论文和代表性研究。重点关注串联混合动力无人机、燃料电池/电池混合动力无人机、内燃机-发电机/电池混合动力无人机和混合电推垂直起降飞行器。总结主要的能量管理方法，包括基于规则控制、模糊逻辑控制、等效消耗最小化策略、自适应等效消耗最小化策略、动态规划、庞特里亚金极小值原理、模型预测控制和强化学习。优先考虑讨论系统建模、基于任务剖面的功率分配、电池荷电状态维持控制、降低油耗、发电机瞬态抑制、电池老化、实时实现以及实验或硬件验证的论文。识别当前局限性和潜在研究空白，以支持混合动力无人机能量管理的未来创新。, especially work that connects or combines: UAV power management; fuel cell battery UAV; hybrid-electric propulsion; energy management strategy for hybrid electric unmanned aerial vehicles; | English keyword            | 中文含义       | | -------------------------- | ---------- | | hybrid-powered UAV         | 混合动力无人机    | | energy management strategy | 能量管理策略     | | hybrid-electric propulsion | 混合电推进      | | series hybrid UAV          | 串联混动无人机    | | fuel cell battery UAV      | 燃料电池/电池无人机 | | UAV power management       | 无人机功率管理    |; equivalent consumption minimization strategy for hybrid electric vehicles; Which papers provide a clear taxonomy of rule based, fuzzy, ECMS, dynamic programming, PMP, MPC, and reinforcement learning methods?; What are the unsolved problems in hybrid UAV energy management, such as SOC control, fuel consumption, generator transients, and mission adaptation?; What are the main categories of energy management strategies for hybrid powered UAVs?; What are the current limitations and research gaps in hybrid UAV energy management?.",
+      "matched_requirement_id": "req-composite-uav",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

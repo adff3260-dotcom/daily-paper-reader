@@ -1,0 +1,24 @@
+{
+  "label": "2026-07-25",
+  "date": "2026-07-25",
+  "generated_at": "2026-07-25T21:21:23",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202607/25/2607.18903v2-forecast-assisted-deep-reinforcement-learning-for-energy-management-of-hydrogen-enabled-community-microgrids",
+      "section": "quick",
+      "title_en": "Forecast-Assisted Deep Reinforcement Learning for Energy Management of Hydrogen-Enabled Community Microgrids",
+      "authors": "Mohamed Atef, Sanath Alahakoon, Umme Mumtahina, Peter Wolfs, Tamer Khatib, Moslem Uddin",
+      "date": "2026-07-21",
+      "pdf": "https://arxiv.org/pdf/2607.18903v2",
+      "score": "6.0",
+      "evidence": "基于预测辅助的深度强化学习用于氢能社区微电网能量管理",
+      "tldr": "氢能社区微电网利用电池与氢气存储提升可再生能源消纳和韧性，但运行受居民负荷随机、光伏波动和动态电价等复杂因素影响。本研究在已有PPO能量管理器基础上，融入1h、6h、12h和24h社区总负荷预测作为状态，以澳大利亚罗克汉普顿1000户住宅为对象进行全年仿真。预测模型精度一般（1h RMSE 239.32kW，R²仅0.201；24h MAPE 62.52%，R² 0.126），但与无预测基准相比，训练收敛速度加快14.3%，最终奖励增8.3%，年节省额从A$2439.86提升至A$2765.83（增幅13.4%），可再生利用率从35.3%提高至36.4%，并减少电网购电量至58,147.49 kWh。停电弹性测试记录了20.1%的电池保护价值，但未发现预测带来的额外韧性提升。结果表明，即使预测不够精确，也能明显改善深度强化学习的经济调度表现，但部署前仍需重视预测校准和长时断电场景验证。",
+      "tags": "query:uav",
+      "abstract_en": "Hydrogen-enabled community microgrids can improve renewable energy utilization and local resilience, but their operation is complicated by uncertain residential demand, variable renewable generation, dynamic electricity prices, and the coupled dynamics of battery and hydrogen storage. This paper extends a previously developed proximal policy optimization (PPO) energy management system by adding multi-horizon community-load forecasts to the controller state. The framework is evaluated for a 1,000-household residential microgrid in Rockhampton, Australia. Forecast accuracy is mixed: the 1-h model achieves an RMSE of 239.32 kW and an R2 of 0.201, whereas the 6-h and 12-h horizons produce negative R2 values; the 24-h forecast achieves an RMSE of 249.79 kW, a MAPE of 62.52%, and an R2 of 0.126. Despite this limited predictive accuracy, the forecast-enriched PPO converges approximately 14.3% earlier than the non-predictive controller and increases the final reward by 8.3%. Annual savings rise from A$2,439.86 without forecasts to A$2,765.83 with forecasts, an incremental gain of A$325.97 (13.4%), while renewable utilization increases from 35.3% to 36.4%. Grid imports fall to 58,147.49 kWh. Resilience tests show a 20.1% battery protection value during grid outages, but no measurable forecast-specific resilience improvement. The results demonstrate that even imperfect forecasts can improve learning and economic dispatch while also showing that forecast calibration, common test conditions, and longer-duration outage studies are necessary before broader deployment claims can be made.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
