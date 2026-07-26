@@ -1,0 +1,97 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-26T21:08:29.016312+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 2,
+    "quick_skim_target": 11,
+    "quick_selected": 2
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.17248v1",
+      "source": "arxiv",
+      "title": "Deep Reinforcement Learning-Based Energy Management for Hydrogen-Enabled Community Microgrids Under Uncertainty",
+      "abstract": "Hydrogen-enabled community microgrids can improve renewable energy utilization and local resilience, but their operation is complicated by intermittent generation, uncertain residential demand, dynamic electricity prices, and the coupled dynamics of battery and hydrogen storage. This paper develops a proximal policy optimization (PPO)-based energy management system (EMS) for a grid-connected community microgrid integrating photovoltaic and wind generation, battery storage, an electrolyzer, hydrogen storage, a fuel cell, and diesel backup. The EMS is formulated as a Markov decision process with an 11-dimensional state and three continuous control actions for battery, diesel, and hydrogen dispatch; grid exchange is determined from the residual power balance. The framework is evaluated using 8,760 hourly observations for a 1,000-household community in Rockhampton, Australia. Under the normal operating scenario, the learned policy produced a net annual operating revenue of A$195,690.67, a renewable fraction of 91.2%, a carbon intensity of 0.085 kg CO2/kWh under the adopted accounting boundary, and 99.77% load satisfaction. With the hourly grid-outage probability increased from 1% to 5%, the policy retained A$169,892.21 in net operating revenue and supplied 98.79% of demand, supported by a 413% increase in battery discharge and a 429% increase in diesel generation. The results demonstrate the potential of PPO for coordinated battery-hydrogen dispatch while also highlighting sensitivity to renewable-profile variability, training stability, and the choice of evaluation boundary.",
+      "authors": [
+        "Mohamed Atef",
+        "Sanath Alahakoon",
+        "Umme Mumtahina",
+        "Peter Wolfs",
+        "Tamer Khatib",
+        "Moslem Uddin"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-07-19T13:38:17+00:00",
+      "link": "https://arxiv.org/pdf/2607.17248v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "develops RL-based EMS for hydrogen-battery microgrid, using PPO, relevant to RL methods and hybrid energy management",
+      "llm_evidence_cn": "开发基于PPO的氢能-电池微电网能量管理，涉及RL方法和混合能源管理",
+      "llm_evidence": "开发基于PPO的氢能-电池微电网能量管理，涉及RL方法和混合能源管理",
+      "canonical_evidence": "开发基于PPO的氢能-电池微电网能量管理，涉及RL方法和混合能源管理",
+      "llm_tldr_en": "Proposes a PPO-based EMS for a grid-connected community microgrid integrating PV, wind, battery, fuel cell, electrolyzer, and hydrogen storage, addressing multiple uncertainties.",
+      "llm_tldr_cn": "针对含光伏、风电、电池、燃料电池、电解槽和氢储的社区微电网，提出基于邻近策略优化（PPO）的深度强化学习能量管理系统，在发电、负荷和电价多重不确定性下实现经济调度，通过马尔可夫决策过程建模和连续动作空间控制提升运行韧性。",
+      "llm_tldr": "针对含光伏、风电、电池、燃料电池、电解槽和氢储的社区微电网，提出基于邻近策略优化（PPO）的深度强化学习能量管理系统，在发电、负荷和电价多重不确定性下实现经济调度，通过马尔可夫决策过程建模和连续动作空间控制提升运行韧性。",
+      "llm_tags": [
+        "query:uav:composite"
+      ],
+      "matched_query_tag": "query:uav:composite",
+      "matched_query_text": "Papers central to 查找关于混合动力无人机和混合电推垂直起降飞行器能量管理策略的综述论文和代表性研究。重点关注串联混合动力无人机、燃料电池/电池混合动力无人机、内燃机-发电机/电池混合动力无人机和混合电推垂直起降飞行器。总结主要的能量管理方法，包括基于规则控制、模糊逻辑控制、等效消耗最小化策略、自适应等效消耗最小化策略、动态规划、庞特里亚金极小值原理、模型预测控制和强化学习。优先考虑讨论系统建模、基于任务剖面的功率分配、电池荷电状态维持控制、降低油耗、发电机瞬态抑制、电池老化、实时实现以及实验或硬件验证的论文。识别当前局限性和潜在研究空白，以支持混合动力无人机能量管理的未来创新。, especially work that connects or combines: UAV power management; fuel cell battery UAV; hybrid-electric propulsion; energy management strategy for hybrid electric unmanned aerial vehicles; | English keyword            | 中文含义       | | -------------------------- | ---------- | | hybrid-powered UAV         | 混合动力无人机    | | energy management strategy | 能量管理策略     | | hybrid-electric propulsion | 混合电推进      | | series hybrid UAV          | 串联混动无人机    | | fuel cell battery UAV      | 燃料电池/电池无人机 | | UAV power management       | 无人机功率管理    |; equivalent consumption minimization strategy for hybrid electric vehicles; Which papers provide a clear taxonomy of rule based, fuzzy, ECMS, dynamic programming, PMP, MPC, and reinforcement learning methods?; What are the unsolved problems in hybrid UAV energy management, such as SOC control, fuel consumption, generator transients, and mission adaptation?; What are the main categories of energy management strategies for hybrid powered UAVs?; What are the current limitations and research gaps in hybrid UAV energy management?.",
+      "matched_requirement_id": "req-composite-uav",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2607.17248v2",
+      "source": "arxiv",
+      "title": "Deep Reinforcement Learning-Based Energy Management for Hydrogen-Enabled Community Microgrids Under Uncertainty",
+      "abstract": "Hydrogen-enabled community microgrids can improve renewable energy utilization and local resilience, but their operation is complicated by intermittent generation, uncertain residential demand, dynamic electricity prices, and the coupled dynamics of battery and hydrogen storage. This paper develops a proximal policy optimization (PPO)-based energy management system (EMS) for a grid-connected community microgrid integrating photovoltaic and wind generation, battery storage, an electrolyzer, hydrogen storage, a fuel cell, and diesel backup. The EMS is formulated as a Markov decision process with an 11-dimensional state and three continuous control actions for battery, diesel, and hydrogen dispatch; grid exchange is determined from the residual power balance. The framework is evaluated using 8,760 hourly observations for a 1,000-household community in Rockhampton, Australia. Under the normal operating scenario, the learned policy produced a net annual operating revenue of A$195,690.67, a renewable fraction of 91.2%, a carbon intensity of 0.085 kg CO2/kWh under the adopted accounting boundary, and 99.77% load satisfaction. With the hourly grid-outage probability increased from 1% to 5%, the policy retained A$169,892.21 in net operating revenue and supplied 98.79% of demand, supported by a 413% increase in battery discharge and a 429% increase in diesel generation. The results demonstrate the potential of PPO for coordinated battery-hydrogen dispatch while also highlighting sensitivity to renewable-profile variability, training stability, and the choice of evaluation boundary.",
+      "authors": [
+        "Mohamed Atef",
+        "Sanath Alahakoon",
+        "Umme Mumtahina",
+        "Peter Wolfs",
+        "Tamer Khatib",
+        "Moslem Uddin"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-07-19T13:38:17+00:00",
+      "link": "https://arxiv.org/pdf/2607.17248v2",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "RL-based energy management for fuel cell/battery microgrid",
+      "llm_evidence_cn": "基于强化学习的燃料电池/电池微电网能量管理",
+      "llm_evidence": "基于强化学习的燃料电池/电池微电网能量管理",
+      "canonical_evidence": "基于强化学习的燃料电池/电池微电网能量管理",
+      "llm_tldr_en": "Proposes a PPO-based energy management system for a community microgrid with battery and fuel cell, handling uncertainties. The method bridges to UAV hybrid power management.",
+      "llm_tldr_cn": "针对含电池和燃料电池的社区微电网，提出一种基于近端策略优化（PPO）的能量管理系统，处理发电与需求不确定性，实现多储能协调调度。该方法可迁移至混合动力无人机功率管理，为强化学习在无人机能量管理中的应用提供参考。",
+      "llm_tldr": "针对含电池和燃料电池的社区微电网，提出一种基于近端策略优化（PPO）的能量管理系统，处理发电与需求不确定性，实现多储能协调调度。该方法可迁移至混合动力无人机功率管理，为强化学习在无人机能量管理中的应用提供参考。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "Which papers provide a clear taxonomy of rule based, fuzzy, ECMS, dynamic programming, PMP, MPC, and reinforcement learning methods?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

@@ -1,0 +1,377 @@
+Title: Deep Reinforcement Learning-Based Energy Management for Hydrogen-Enabled Community Microgrids Under Uncertainty
+
+URL Source: https://arxiv.org/pdf/2607.17248v2
+
+Published Time: Wed, 22 Jul 2026 00:47:48 GMT
+
+Number of Pages: 29
+
+Markdown Content:
+# Deep Reinforcement Learning-Based Energy Management for Hydrogen-Enabled Community Microgrids Under Uncertainty 
+
+Mohamed Atef a, Sanath Alahakoon a, Umme Mumtahina b, Peter Wolfs b,Tamer Khatib c, Moslem Uddin d
+
+> a
+
+School of Engineering and Technology, Central Queensland University, Gladstone, QLD 4680, Australia 
+
+> b
+
+School of Engineering and Technology, Central Queensland University, Rockhampton, QLD 4680, Australia 
+
+> c
+
+Energy Engineering & Environment Dept., An-Najah National University, Nablus, West Bank 97300, Palestine 
+
+> d
+
+School of Engineering & Technology, The University of New South Wales, Canberra, ACT 2610, Australia 
+
+Abstract 
+
+Hydrogen-enabled community microgrids can improve renewable energy utilization and local resilience, but their operation is complicated by inter-mittent generation, uncertain residential demand, dynamic electricity prices, and the coupled dynamics of battery and hydrogen storage. This paper devel-ops a proximal policy optimization (PPO)-based energy management system (EMS) for a grid-connected community microgrid integrating photovoltaic and wind generation, battery storage, an electrolyzer, hydrogen storage, a fuel cell, and diesel backup. The EMS is formulated as a Markov decision process with an 11-dimensional state and three continuous control actions for battery, diesel, and hydrogen dispatch; grid exchange is determined from the residual power balance. The framework is evaluated using 8,760 hourly obser-vations for a 1,000-household community in Rockhampton, Australia. Under the normal operating scenario, the learned policy produced a net annual op-erating revenue of A$195,690.67, a renewable fraction of 91.2%, a carbon intensity of 0.085 kg CO 2/kWh under the adopted accounting boundary, and 99.77% load satisfaction. With the hourly grid-outage probability increased 
+
+Email address: Muhamed.Atef1408@gmail.com (Mohamed Atef) arXiv:2607.17248v2 [eess.SY] 21 Jul 2026 from 1% to 5%, the policy retained A$169,892.21 in net operating revenue and supplied 98.79% of demand, supported by a 413% increase in battery discharge and a 429% increase in diesel generation. The results demonstrate the potential of PPO for coordinated battery–hydrogen dispatch while also highlighting sensitivity to renewable-profile variability, training stability, and the choice of evaluation boundary. 
+
+Keywords: Deep Reinforcement Learning, Energy Management System, Hydrogen Microgrid, Community Microgrid, Proximal Policy Optimization, Renewable Energy, Battery Storage, Hydrogen Energy 
+
+1. Introduction 
+
+1.1. Background 
+
+Microgrids have emerged as an important architecture for decentralizing electricity supply, improving local reliability, and supporting the transition from conventional centralized grids toward low-carbon distributed energy sys-tems [1, 2, 3]. In residential and community applications, microgrids coor-dinate distributed energy resources (DERs), energy storage systems (ESSs), controllable loads, and grid exchange so that local renewable generation can be used more effectively while maintaining secure supply [4, 5]. Recent sec-toral reviews indicate that residential microgrids are no longer limited to small PV–battery installations; instead, they are evolving into multi-energy platforms that integrate solar PV, wind generation, battery energy storage systems (BESSs), electric vehicles, demand response, and hydrogen-based storage pathways [4, 6, 7]. Battery storage is widely used to smooth short-term mismatches between renewable generation and demand, support peak shaving, and improve self-consumption. However, battery-only solutions may be insufficient for pro-longed renewable shortages or seasonal energy shifting. Hydrogen technolo-gies therefore provide a complementary long-duration storage pathway, where surplus renewable electricity can be converted through electrolyzers, stored as hydrogen, and later reconverted to electricity through fuel cells [8, 9]. Recent studies further show that hydrogen-based storage can support sus-tainable and techno-economic operation of renewable-rich systems when its conversion losses and storage constraints are properly managed [10, 11]. This hybrid battery–hydrogen structure is particularly relevant for community mi-2crogrids because batteries can handle fast operational balancing, while hy-drogen storage can improve autonomy and resilience over longer time scales. The need for such coordinated storage is reinforced by the uncertainty inherent in renewable-rich community systems. Solar irradiance and wind speed fluctuate continuously, household demand varies with occupant be-havior, and electricity tariffs or grid conditions may change across operating intervals. These factors complicate real-time supply–demand balancing and make fixed dispatch rules less effective under dynamic conditions [12, 13, 14]. The related Australian residential studies further show that hybrid config-urations combining PV, wind, BESS, grid support, backup generation, and hydrogen technologies can reduce cost and emissions, but their benefits de-pend strongly on effective EMS coordination under time-varying operating conditions [15, 16, 17]. Therefore, hydrogen-enabled community microgrids require adaptive EMS frameworks capable of jointly managing renewable in-termittency, uncertain demand, short-duration battery operation, and long-duration hydrogen storage. 
+
+1.2. Motivation 
+
+Conventional EMS strategies are commonly based on rule-based control, deterministic scheduling, or offline optimization. Rule-based control is at-tractive because it is transparent and computationally simple, but fixed dis-patch priorities cannot fully respond to rapid changes in renewable output, load demand, electricity prices, or storage availability [18, 19, 20]. Determin-istic optimization and metaheuristic methods can improve dispatch quality by solving multi-objective cost-emission or cost-reliability problems, yet their performance depends heavily on forecast accuracy, scenario assumptions, and repeated computation whenever operating conditions change [21, 22, 23]. In renewable-rich community microgrids, these limitations become more pro-nounced because the EMS must simultaneously coordinate PV, wind, bat-teries, electrolyzers, hydrogen storage, fuel cells, grid exchange, and uncertain residential demand in near real time. Recent reviews emphasize that uncertainty-aware EMS methods, fore-casting, computational intelligence, and advanced scheduling controllers are becoming essential for microgrids with high renewable penetration and mul-tiple storage technologies [24, 25]. Broader reviews of computational intelli-gence and sustainable scheduling controllers also indicate that EMS research is moving toward adaptive controllers that can respond to renewable intermit-tency, storage dynamics, and demand variability [26, 27, 28]. The uploaded 3Australian real-time EMS study shows that PSO can outperform fixed RBC under time-varying operating conditions, but it remains an optimization pro-cedure that must be solved repeatedly and does not learn a reusable control policy from accumulated operational experience [17]. This motivates the use of deep reinforcement learning (DRL), where the EMS is formulated as an agent that interacts with the microgrid environment, observes system states, takes dispatch actions, and improves its policy through reward feedback. Recent DRL-based energy management studies demonstrate why learning-based controllers are suitable for complex sequential decisions. Expert-guided reinforcement learning has been used to improve data effi-ciency and reliability for electrified-vehicle EMSs, while MPC-assisted DRL has been proposed for fuel-cell/battery systems to improve adaptability, degradation-aware operation, and long-term decision quality [29, 30]. In demand-side and building applications, multi-agent DRL and safe DRL frameworks show how learning controllers can manage user comfort, demand response, safety, and energy efficiency under dynamic conditions [31, 32]. In port microgrids, two-layer DRL has been used to coordinate logistics–energy coupling and battery dispatch under uncertain ship arrivals [33]. In railway and urban rail applications, reward-based and PV-aware DRL methods have addressed regenerative braking, PV fluctuation, and train-load uncertainty [34, 35]. DRL has also been applied to MEC systems with distributed power sources, where task offloading and energy allocation must be coordinated with grid trading [36]. For hydrogen-enabled community microgrids, DRL is attractive because it can learn adaptive coordination among short-duration battery storage, long-duration hydrogen storage, renewable generation, and grid transactions while accounting for nonlinear device behavior and uncertain operating conditions [37, 6]. 
+
+1.3. Research Gap 
+
+Recent microgrid EMS reviews show that the field is moving from con-ventional rule-based and deterministic optimization methods toward data-driven, resilient, and uncertainty-aware control, but they also identify per-sistent gaps in scalability, uncertainty handling, sector-specific deployment, and integrated storage coordination [6, 4, 38]. Recent DRL applications further confirm the growing relevance of learning-based EMSs. However, expert-guided vehicle EMS and MPC–DRL fuel-cell/battery EMS studies mainly address mobility or standalone hybrid powertrain operation rather than residential community microgrids [29, 30]. Smart-home and building 4DRL studies address demand response, comfort, safety, and energy-efficiency objectives, but they do not model the coupled hydrogen-storage pathway considered here [31, 32]. Port and railway DRL studies address logistics cou-pling and regenerative braking energy storage, but they are not designed for residential hydrogen microgrids [33, 34]. MEC and urban rail DRL studies co-ordinate task offloading, distributed power, PV variability, and traction-load uncertainty; however, their constraints also differ from community micro-grids with battery, electrolyzer, hydrogen tank, fuel-cell, and grid-exchange decisions [36, 35]. The sectoral review further indicates that commercial, industrial, and residential microgrids have different operating priorities, yet many EMS studies still treat storage and demand flexibility through gener-alized formulations rather than community-scale residential operating condi-tions [4]. The related Australian residential planning study demonstrates the techno-economic and environmental value of PV, wind, battery, grid, diesel, and hydrogen configurations, but its focus is long-term sizing and scenario assessment rather than adaptive real-time control under uncertainty [15, 16]. The subsequent Australian real-time EMS study compares RBC and PSO dispatch for a hybrid residential microgrid with battery and hydrogen as-sets, showing improved cost-emission performance for PSO, while still rely-ing on predefined/metaheuristic optimization rather than a learning-based policy that can continuously adapt from interaction with uncertain operat-ing conditions [17]. Therefore, a clear research gap remains for a DRL-based EMS that jointly coordinates battery storage, electrolyzer operation, hydro-gen storage, fuel-cell dispatch, and grid exchange in a community microgrid while explicitly learning robust decisions under renewable, load, and price uncertainty. 
+
+1.4. Contributions 
+
+The main contributions of this paper are summarized as follows: 
+
+• A PPO-based EMS is developed for a hydrogen-enabled community mi-crogrid, enabling adaptive sequential decision-making under time-varying renewable generation, residential demand, electricity prices, and storage conditions. 
+
+• A coordinated battery–hydrogen framework is formulated in which the policy controls battery, diesel, electrolyzer, and fuel-cell dispatch, while grid exchange is determined from the residual power balance. 5• The operational environment is modeled using renewable generation, com-munity load, electricity tariff, battery state of charge, hydrogen storage level, and time-related information, allowing the DRL agent to learn dis-patch policies that account for uncertainty and device constraints. 
+
+• The proposed framework is evaluated using an Australian residential com-munity microgrid case study that extends the previous integrated techno-economic planning framework and real-time EMS studies toward learning-based operation of hybrid PV–wind–battery–hydrogen systems [15, 17]. 
+
+• Economic, operational, environmental, and resilience behavior is quantified under normal operation, renewable-variability, grid-outage, and hydrogen-cost stress scenarios. 
+
+1.5. Paper Organization 
+
+The remainder of this paper is organized as follows. Section 2 presents the microgrid architecture and component models. Section 3 formulates the MDP and PPO controller. Section 4 describes the Australian case study, data, parameters, and evaluation scenarios. Section 5 presents the train-ing, economic, operational, environmental, and resilience results. Section 6 discusses implications and limitations, and Section 7 concludes the paper. 
+
+2. System Description 
+
+This section defines the hydrogen-enabled community microgrid consid-ered in this study and formulates the component models required by the proposed energy management system. The system is represented through chronological power-flow relations so that renewable variability, storage dy-namics, conversion losses, and grid interactions can be captured at each op-erating interval. 
+
+2.1. Microgrid Architecture 
+
+The studied microgrid supplies an aggregated residential community and consists of renewable generation, short-term electrical storage, a hydrogen-based long-duration storage pathway, power-conditioning equipment, and an external grid connection. Solar photovoltaic (PV) arrays and wind turbines form the main renewable generation sources. A battery energy storage sys-tem (BESS) absorbs short-term renewable surplus and supports fast balanc-ing during load-generation mismatch. The hydrogen subsystem includes an 6electrolyzer, a hydrogen storage tank, and a fuel cell. When renewable gen-eration exceeds the immediate demand and battery-charging requirements, the electrolyzer can convert part of the surplus electrical energy into hy-drogen. During prolonged renewable shortages, the stored hydrogen can be reconverted into electricity through the fuel cell. The microgrid may also exchange power with the utility grid when the interconnection is available. Grid imports are used to cover residual deficits after local generation and storage dispatch, while grid exports allow unused renewable energy to be sold or transferred outside the community bound-ary. In this structure, the energy management system coordinates PV and wind generation, battery charging/discharging, electrolyzer operation, fuel-cell dispatch, and grid import/export decisions while respecting device limits and maintaining the power balance. 
+
+2.2. Mathematical Models 
+
+The following models describe the main conversion and storage processes over a discrete time interval ∆t. At time step t, the electrical load of the community is denoted by PL,t . If a representative household demand profile 
+
+ph,t is available, the community demand is obtained through the aggregation operator 
+
+PL,t =
+
+> Nh
+
+X
+
+> h=1
+
+ph,t = Nhph,t , (1) where Nh is the number of households and the second equality applies when all households are represented by the same normalized profile. For a base de-mand profile Pb,t corresponding to Nb households, the scaled community load is alternatively expressed through the demand-scaling factor αL = Nh/N b as 
+
+PL,t = αLPb,t , αL = Nh
+
+Nb
+
+. (2) These relations allow the case-study demand to be represented at the required community scale. 
+
+2.2.1. PV Model 
+
+The PV output is computed from the installed PV capacity, irradiance level, derating effects, and module temperature influence using the standard irradiance- and temperature-corrected PV representation [39, 14]: 
+
+PP V,t = P rated P V fP V Gt
+
+1 + γP V 
+
+ Tc,t − T ref c
+
+ , (3) 7where PP V,t is the PV power output, P rated P V is the installed PV capacity, fP V 
+
+is the PV derating factor, Gt = It/I ref is the normalized irradiance, γP V is the temperature coefficient of PV power, Tc,t is the cell temperature, and 
+
+T ref c is the reference cell temperature. The cell temperature is estimated from ambient temperature and irradiance using 
+
+Tc,t = Tamb,t +
+
+TN OCT − T N OCT amb 
+
+IN OCT 
+
+
+
+It, (4) where Tamb,t is the ambient temperature, TN OCT is the nominal operating cell temperature, T N OCT amb = 20 ◦C, and IN OCT = 800 W m −2.
+
+2.2.2. Wind Turbine Model 
+
+The wind turbine output is represented using the aerodynamic power relation, with practical dispatch limited by the turbine power curve and rated capacity [39]: 
+
+PW T,t = ρC pAs
+
+2 v3 
+
+> t
+
+, (5) where PW T,t is the wind power output, ρ is the air density, As is the swept rotor area, Cp is the power coefficient, and vt is the hub-height wind speed. In simulation, this expression is interpreted together with cut-in, rated, and cut-out wind-speed limits to avoid unrealistic operation outside the feasible turbine range. 
+
+2.2.3. Battery SOC Dynamics 
+
+The BESS state of charge evolves according to the charging and dis-charging power scheduled by the energy management system, following con-ventional storage energy-balance modeling [40]. A compact single-step ex-pression is 
+
+SOC t+1 = SOC t + ∆tErated B
+
+ηch P ch B,t − P dis B,t 
+
+ηdis 
+
+!
+
+, (6) where SOC t is the battery state of charge, P ch B,t and P dis B,t are the battery charging and discharging powers, ηch and ηdis are the charging and discharg-ing efficiencies, and Erated B is the rated battery energy capacity. The allowable operating range is constrained by 
+
+SOC ≤ SOC t ≤ SOC. (7) This constraint prevents excessive charging or deep discharging and preserves feasible battery operation. 82.2.4. Hydrogen Subsystem 
+
+The hydrogen subsystem converts surplus electricity into stored hydrogen and later reconverts it into electricity when needed, as commonly represented in integrated hydrogen energy storage models [8]. The hydrogen energy added by the electrolyzer over one time step is modeled as 
+
+Ein H,t = ηely Pely,t ∆t, (8) where Ein H,t is the hydrogen energy produced by the electrolyzer, ηely is the electrolyzer efficiency, and Pely,t is the electrolyzer input power. The stored hydrogen energy is updated as 
+
+EH,t +1 = EH,t + Ein H,t − Eout H,t , (9) where EH,t is the stored hydrogen energy and Eout H,t is the hydrogen energy withdrawn by the fuel cell. The fuel-cell electrical output is then obtained from 
+
+PF C,t = ηf c 
+
+Eout H,t 
+
+∆t , (10) where ηf c is the fuel-cell efficiency. The hydrogen tank must satisfy 
+
+EH ≤ EH,t ≤ EH , (11) where EH and EH are the lower and upper storage limits. These equations account for the main conversion losses and storage-capacity restrictions as-sociated with the electrolyzer–tank–fuel-cell pathway. 
+
+2.2.5. Power Balance Equation 
+
+For every time step, the sum of local generation, storage discharge, fuel-cell production, and grid import must equal the total electrical demand plus charging, hydrogen production, and grid export. The nodal balance is written as 
+
+PP V,t + PW T,t + PF C,t + P dis B,t + P buy grid,t − PL,t − P ch B,t − Pely,t − P sell grid,t = 0 ,
+
+(12) where P buy grid,t and P sell grid,t denote grid import and export powers, respectively. If a dispatchable backup generator is included in a given scenario, its output is added to the supply side of Eq. (12). This balance provides the physi-cal coupling between the renewable sources, battery, hydrogen subsystem, grid exchange, and community demand, and it forms the basis for the DRL environment described in the next section. 93. DRL-Based Energy Management Framework 
+
+This section formulates the hourly dispatch problem as a Markov decision process (MDP) and describes the state, action, reward, and PPO learning procedure. 
+
+3.1. DRL Formulation 
+
+The dispatch problem is represented by M = ( S, A, p, r, γ ). At each hour, the agent observes demand, renewable availability, prices, storage states, time, and grid availability; selects battery, diesel, and hydrogen commands; and receives the next state and reward after the environment balances resid-ual power. The policy πθ maximizes 
+
+J(θ) = Eπθ
+
+"T −1X
+
+> t=0
+
+γtrt
+
+#
+
+. (13) 
+
+3.2. State Space 
+
+The 11-dimensional observation is 
+
+st = SOC t, H t, τ t, sin(2 πτ t), cos(2 πτ t), ePP V,t , ePW T,t ,
+
+ePL,t , eπbuy t , eπsell t , G t
+
+⊤. (14) Here SOC t and Ht are normalized storage levels, τt is normalized hour of day, tildes denote min–max-normalized data, and Gt is the outage indicator. 
+
+3.3. Action Space 
+
+The continuous action vector is 
+
+at = [ aB,t , a DG,t , a H,t ]⊤, aB,t , a H,t ∈ [−1, 1] , aDG,t ∈ [0 , 1] . (15) The battery command is scaled by 530 kW ; positive values discharge and negative values charge. The diesel command is scaled by 180 kW and is active only during outages. Positive hydrogen actions operate the electrolyzer and negative actions dispatch the fuel cell. Grid exchange is calculated from residual power balance. 10 3.4. Reward Function 
+
+The hourly net operating cost and reward are 
+
+Ct = πbuy t P buy grid,t − πsell t P sell grid,t + 0 .01 |PB,t | + 0 .20 PDG,t 
+
++ 0 .40 mprod H,t + 2 .00 mcons H,t , (16) 
+
+rt = − Ct − 5P unmet t − 0.02 |SOC t − 0.5| − 0.01 |Ht − 0.5|. (17) Export revenue enters with a negative sign, while unmet load receives the dominant reliability penalty. 
+
+3.5. DRL Algorithm 
+
+The EMS uses PPO, an on-policy actor–critic method that limits exces-sive policy updates [41]. With probability ratio ρt = πθ(at|st)/π θold (at|st),PPO maximizes 
+
+Lclip = Et
+
+h
+
+min 
+
+
+
+ρt bAt, clip( ρt, 1 − ϵ, 1 + ϵ) bAt
+
+i 
+
+, (18) where bAt is the generalized advantage estimate and ϵ = 0 .25 . The Gaussian actor and value critic each use two 256-neuron ReLU layers. 
+
+3.6. Training Environment 
+
+Training used 300 episodes of 8,760 hourly steps. Initial storage levels were sampled between 20% and 80%. The discount factor was 0.995, GAE factor 0.95, experience horizon 4,096, update epochs 10, mini-batch size 256, entropy weight 0.001, and random seed 42. The annual chronology was reused across episodes; normal evaluation is therefore in-sample. 
+
+4. Case Study and Simulation Setup 
+
+This section describes the Australian residential community microgrid used to evaluate the proposed DRL-based EMS. The case study follows the same planning boundary and data workflow adopted in the previous Aus-tralian microgrid studies, but the operating problem is reformulated here for learning-based real-time dispatch. The model represents a 1000-household community rather than the smaller 100-household model used in earlier real-time dispatch testing. 11 4.1. Australian Community Case Study 
+
+The case study considers a grid-connected residential community micro-grid located in Rockhampton, Queensland, Australia. Rockhampton is se-lected because it represents a regional Australian community with strong solar potential, available wind resources, and practical interest in resilient distributed energy systems. The community is modeled as an aggregated residential load supplied by local renewable generation, short-duration bat-tery storage, long-duration hydrogen storage, dispatchable backup capabil-ity, and grid exchange. This boundary is consistent with the previous in-tegrated techno-economic planning framework, which evaluated hybrid PV– wind–battery–diesel–grid–hydrogen configurations for an Australian 1000-household residential community [15, 16]. To avoid ambiguity in the load scale, the present DRL study explicitly adopts the 1000-household model. If Phh,t denotes the representative per-household demand at time step t, the aggregated community demand is de-fined as 
+
+PL,t = Nhh Phh,t , Nhh = 1000 , (19) where PL,t is the total community electrical demand and Nhh is the number of households. When a base demand profile is available for a different household count Nbase , the profile is scaled as 
+
+PL,t =
+
+ 1000 
+
+Nbase 
+
+
+
+Pbase,t , (20) where Pbase,t is the base aggregated demand. This scaling preserves the chronological shape of residential demand while ensuring that all energy, storage, and grid-exchange quantities correspond to the 1000-household com-munity scale. The microgrid architecture includes photovoltaic generation, wind gener-ation, a battery energy storage system, an electrolyzer, hydrogen storage, a fuel cell, grid import/export, and optional backup generation. PV and wind units supply the community directly whenever renewable energy is available. The battery absorbs short-term renewable surplus and supplies rapid demand deficits. The electrolyzer converts excess electricity into hydrogen, the hy-drogen tank stores this energy for longer durations, and the fuel cell converts stored hydrogen back to electricity during renewable shortages or high-price periods. The grid interface allows imports when local generation and storage 12 are insufficient and exports when local surplus remains after storage deci-sions. This configuration provides a suitable testbed for evaluating whether a DRL controller can coordinate fast battery dynamics and slower hydrogen storage dynamics under uncertain renewable, demand, and tariff conditions. 
+
+4.2. Input Data 
+
+The dataset contains 8,760 hourly observations of community demand, available PV and wind power, grid purchase price, and export price. Annual demand is 4.106 GWh, equivalent to approximately 4,106 kWh per household. 
+
+> Table 1: Summary of the hourly input dataset.
+
+Variable Mean Maximum Annual total Community load (kW) 468.75 2,134.13 4,106,249.99 kWh PV availability (kW) 1,620.91 7,973.49 14,199,183.53 kWh Wind availability (kW) 18.27 60.00 160,045.69 kWh Grid purchase price (A$/kWh) 0.3060 0.4571 –Grid export price (A$/kWh) 0.0601 0.0601 –
+
+At each time step, the environment updates the available PV power, wind power, load demand, tariff values, battery state of charge, and hydrogen storage level. These variables form the core information stream used by the DRL agent. The use of chronological data also allows storage continuity to be represented correctly, because the battery state of charge and hydrogen storage level at one time step depend on previous charging, discharging, hydrogen-production, and fuel-cell decisions. This is particularly important for the proposed hybrid storage system because batteries and hydrogen tanks operate over different time scales. Exogenous variables are min–max normalized for the policy input, while raw values are retained for power balancing and cost calculation. 13 4.3. Model Parameters and Operating Constraints               
+
+> Table 2: Principal component parameters.
+> Subsystem Parameter Value Battery Capacity / rate / efficiency 5,300 kWh / 530 kW / 0.95 Diesel Maximum output 180 kW Hydrogen tank Capacity 1,370 kg Electrolyzer Maximum production / efficiency 3.90 kg/h / 0.65 Fuel cell Maximum withdrawal / efficiency 7.50 kg/h / 0.60 Grid Normal / stress outage probability 1% / 5% per hour
+
+4.4. Simulation Workflow 
+
+At each hour, the agent selects battery, diesel, and hydrogen actions. The environment determines residual grid exchange, updates storage, and returns cost and reliability penalties. Four annual PPO scenarios are evaluated: nor-mal operation, synthetic high variability, 5% hourly outages, and increased hydrogen cost. The synthetic case is not scale-matched; a 1,000-hour random policy is used only as an implementation diagnostic. 
+
+4.5. Hyperparameters 
+
+> Table 3: PPO training hyperparameters.
+
+Parameter Value Parameter Value Episodes 300 Steps/episode 8,760 Discount / GAE factor 0.995 / 0.95 Experience horizon 4,096 Epochs / mini-batch 10 / 256 Clip / entropy weight 0.25 / 0.001 Actor / critic 2 × 256 State / action size 11 / 3 
+
+4.6. Evaluation Scenarios 
+
+The outage stress case increases outage probability from 1% to 5%. The hydrogen-cost case raises production cost from A$0.40 to A$1.00/kg and storage/withdrawal cost from A$2.00 to A$10.00/kg. Reported economics exclude capital, replacement, and fixed O&M costs. 14 5. Results 
+
+This section presents PPO training and the economic, operational, en-vironmental, and resilience results. Negative operating cost denotes net revenue. The normal, outage, and hydrogen-cost cases use the 8,760-hour community dataset. The high-variability case is retained as a stress test but is not directly comparable because its synthetic load and generation scales differ from the 1,000-household dataset. 
+
+5.1. DRL Training Performance 
+
+The agent completed 300 annual episodes, corresponding to 2.628 mil-lion environment steps. Figure 1 shows rapid initial improvement and a best reward of −8,937 .58 at Episode 95. A sharp policy collapse occurred at Episode 97, when the reward decreased to −1,246 ,934 .13 , followed by a minimum of −1,400 ,100 .39 at Episode 115. Recovery became pronounced af-ter Episode 210, and the final reward reached −22 ,078 .98 . Thus, the policy returned to a stable operating regime but did not regain the best Episode 95 performance, supporting best-policy checkpointing rather than selection of the final training episode. 
+
+> Figure 1: PPO training performance over 300 annual episodes.
+
+15 Table 4: PPO training summary. 
+
+Metric Value Episodes / steps 300 / 2,628,000 Best reward −8,937 .58 (Episode 95) Final reward −22 ,078 .98 
+
+Final-window average −22 ,156 .79 
+
+Final initial-state value, Q0 −528 .27 
+
+> Table 5: Observed PPO degradation and recovery pattern.
+
+Episode range Reward development Interpretation 97–115 −1.25 to −1.40 million Policy degradation 116–150 −1.38 to −1.31 million Limited recovery 151–210 −1.38 to −0.78 million Progressive recovery 211–300 −0.65 to −0.022 million Rapid restabilization The reward standard deviation decreased from 294,847.28 over Episodes 1–96 to 3,847.62 over Episodes 211–300, while the reported coefficient of variation decreased from 3.18 to 0.17. The lower late-stage dispersion indicates improved stability after recovery. Nevertheless, the large collapse and the gap between the best and final rewards show that convergence quality remains sensitive to PPO update size, clipping, and stochastic annual trajectories. 
+
+5.2. Economic Performance 
+
+Normal operation produced A$195,690.67 in net annual operating revenue, primarily because 11.415 GWh was exported while 1.387 GWh was imported. Frequent outages retained A$169,892.21, correspond-ing to an economic resilience factor of 0.868 and an annual penalty of A$25,798.46 relative to normal operation. Increasing hydrogen produc-tion and storage/withdrawal prices reduced revenue to A$165,621.89, adecrease of A$30,068.78 or 15.4%. The synthetic high-variability case incurred A$93,532.30 in cost; however, this is not a community-scale annual comparison because the synthetic profile is not scale-matched. 16 Figure 2: Net operating balance across scenarios. Positive values denote net revenue. Table 6: Annual operating-cost breakdown (A$). 
+
+Scenario Net grid Battery Diesel Hydrogen Total cost Normal −205 ,062 .01 398.26 1,155.53 7,817.55 −195 ,690 .67 
+
+High variability 89,860.46 468.84 1,500.08 1,702.92 93,532.30 Frequent outages −186 ,563 .48 2,157.88 6,117.38 8,396.01 −169 ,892 .21 
+
+High H 2 cost −205 ,666 .79 557.95 1,151.39 38,335.56 −165 ,621 .89 
+
+The net-grid entries include import expenditure and export revenue with their physical signs; this is why they differ from the larger gross grid-transaction totals obtained by summing absolute hourly transactions. Under the hydrogen-cost case, hydrogen expenditure increased from A$7,817.55 to A$38,335.56. Electrolyzer input decreased from 182.01 to 160.13 MWh, whereas hydrogen consumption increased from 3,143.55 to 3,422.78 kg. These differences must not be interpreted as direct price-responsive control because hydrogen price is not included in the agent state and the policy was not retrained. The case therefore measures an accounting sensitivity under a separately seeded trajectory rather than an adaptive response to a visible hydrogen-price signal. 17 5.3. Operational Performance 
+
+Normal operation exported 11.415 GWh and curtailed 103.76 MWh, equivalent to approximately 0.72% of available PV and wind generation. Un-der frequent outages, battery discharge increased by 412.9%, battery charging by 471.6%, diesel generation by 429.4%, and hydrogen electrical output by 7.7%. The larger battery and diesel responses show that these resources car-ried most of the short-duration outage burden, whereas hydrogen supplied a smaller incremental contribution. 
+
+Figure 3: Storage and backup response to increased grid outages. Table 7: Operational energy balance (kWh).                          
+
+> Quantity Normal High variability Outages PV / wind 14,199,183.53 / 160,045.69 129,687.15 / 225,864.50 14,199,183.53 / 160,045.69 Battery discharge / charge 20,215.52 / 19,610.00 23,563.80 / 23,320.00 103,687.77 / 112,100.03 Diesel generation 5,777.66 7,500.39 30,586.90 Grid import / export 1,386,690.91 / 11,414,873.52 343,906.15 / 30,401.73 1,359,124.73 / 10,943,413.24 H2output / production input 57,574.17 / 182,013.41 15,086.38 / 6,598.96 61,981.06 / 193,576.18 Unmet load 9,254.04 1,242.85 49,585.27 Renewable curtailed 103,759.99 12.35 578,002.91
+
+18 Figure 4: Renewable curtailment under normal operation and the two stress scenarios. 
+
+Curtailment increased to 578.00 MWh in the outage case, 4.03% of annual PV and wind availability and 457% above normal operation. During grid-unavailable hours, surplus renewable energy cannot be exported, and finite charging and electrolyzer limits prevent complete absorption of that surplus. The battery discharge-to-charge ratio changed from 1.03 in normal operation to 0.925 during frequent outages. Because this ratio is affected by initial and final state of charge, it is interpreted as a utilization indicator rather than an exact equivalent-cycle count. 
+
+5.4. Environmental Performance 
+
+Under the reported gross-energy accounting boundary, normal operation achieved a 91.2% renewable fraction and 0.085 kg CO 2/kWh carbon inten-sity, 81.1% below the modeled grid factor of 0.45 kg CO 2/kWh. High vari-ability reduced the renewable fraction to 51.4% and increased intensity to 0.238 kg CO 2/kWh. Frequent outages had little effect on the aggregate re-newable fraction but increased diesel emissions from 4.62 to 24.47 t CO 2.19 Figure 5: Renewable fraction and carbon intensity by scenario. Table 8: Environmental performance and emission-source breakdown. 
+
+Metric Normal High variability Outages Grid emissions (kg CO 2) 624,010.91 154,757.77 611,606.13 Diesel emissions (kg CO 2) 4,622.13 6,000.31 24,469.52 PV lifecycle emissions (kg CO 2) 709,959.18 6,484.36 709,959.18 Wind lifecycle emissions (kg CO 2) 3,200.91 4,517.29 3,200.91 H2-production emissions (kg CO 2) 9,100.67 329.95 9,678.81 Total emissions (kg CO 2) 1,350,893.80 172,089.68 1,358,914.55 Avoided emissions (kg CO 2) 5,767,442.91 153,389.66 5,778,313.68 Carbon intensity (kg CO 2/kWh) 0.085 0.238 0.086 Renewable fraction (%) 91.2 51.4 91.2 
+
+20 Figure 6: Contribution of modeled emission sources to annual emissions. 
+
+PV lifecycle emissions contribute 52.6% of normal-case emissions, fol-lowed by imported grid electricity at 46.2%; diesel, wind, and hydrogen pro-duction collectively contribute approximately 1.2%. The model estimates 5.77 Mt CO 2 of avoided emissions in the normal and outage cases. This value uses the analysis script’s gross-energy counterfactual, which applies the grid factor to total modeled energy supply rather than only the 4.106 GWh community demand. It should therefore be interpreted within that account-ing boundary and not as a lifecycle avoided-emissions claim for electricity consumed exclusively by the community. 
+
+5.5. Resilience Analysis 
+
+At 5% hourly outage probability, unmet load increased from 9.25 to 49.59 MWh and load satisfaction decreased from 99.77% to 98.79%, where both percentages are calculated against the measured annual community de-mand of 4.106 GWh. The system retained 86.8% of normal net operating revenue. These corrected demand-based percentages replace the 99.83% and 99.07% values in the generated report, which used a different denominator. 21 Figure 7: Reliability and resource response under frequent outages. Table 9: Resilience metrics. 
+
+Metric Normal Outages Change Net operating revenue (A$) 195,690.67 169,892.21 −13 .2% 
+
+Unmet load (kWh) 9,254.04 49,585.27 +435 .8% 
+
+Load satisfaction (%) 99.77 98.79 −0.98 points Battery discharge (kWh) 20,215.52 103,687.77 +412 .9% 
+
+Battery charge (kWh) 19,610.00 112,100.03 +471 .6% 
+
+Diesel generation (kWh) 5,777.66 30,586.90 +429 .4% 
+
+H2 production input (kWh) 182,013.41 193,576.18 +6 .4% 
+
+H2 electrical output (kWh) 57,574.17 61,981.06 +7 .7% 
+
+Hydrogen consumed (kg) 3,143.55 3,384.17 +7 .7% 
+
+The 24.81 MWh increase in diesel generation provided the largest dis-patchable backup increment. Battery discharge increased by 83.47 MWh, while hydrogen electrical output increased by only 4.41 MWh. Consequently, the present outage experiment demonstrates effective short-event support from the battery and diesel generator but provides limited evidence for long-duration resilience from hydrogen. Multi-hour and multi-day outage sequences are required to quantify that role. 22 5.6. Comparative Analysis 
+
+Normal operation provides the strongest combined economic and envi-ronmental result among the scale-matched annual cases. Outages reduce revenue and reliability, while increased hydrogen prices reduce net revenue by 15.4%. The high-variability totals are interpreted only as stress indicators because that profile is not scale-matched. Accordingly, the ranking matrix in the generated report is not used as formal evidence because it ranks annual and 1,000-hour cases together. 
+
+Table 10: Consolidated scenario performance.                                  
+
+> Metric Normal High variability Outages High H 2cost Total operating cost (A$) −195 ,690 .67 93,532.30 −169 ,892 .21 −165 ,621 .89
+> Unmet load (kWh) 9,254.04 1,242.85 49,585.27 12,096.30 Diesel generation (kWh) 5,777.66 7,500.39 30,586.90 5,756.93 Hydrogen consumed (kg) 3,143.55 823.72 3,384.17 3,422.78 Net grid exchange (kWh) −10 ,028 ,182 .61 313,504.42 −9,584 ,288 .51 −10 ,028 ,182 .61
+> Renewable fraction (%) 91.2 51.4 91.2 91.2 Carbon intensity (kg CO 2/kWh) 0.085 0.238 0.086 –
+
+Table 11: Random-policy implementation diagnostic over the first 1,000 hours. 
+
+Metric Value Evaluation duration 1,000 h Operating cost A$17,440.08 Unmet load 5,237.97 kWh Load satisfaction 99.23% Diesel generation 965.82 kWh Hydrogen consumed 1,022.79 kg Renewable fraction 86.8% The random-policy run is included only as a software and environment diagnostic. Its 99.23% load satisfaction is calculated using 677.654 MWh of demand in the same 1,000-hour window. Because it covers neither a full year nor the same stochastic realization as the PPO cases, its cost and reli-ability values cannot establish PPO superiority. A valid benchmark requires annual RBC, optimization-based, and alternative-DRL controllers evaluated with identical profiles, initial storage states, outage traces, and accounting assumptions. 23 6. Discussion 
+
+The expanded results show that PPO coordinates battery, hydrogen, diesel, and grid exchange coherently, but the value of each resource depends on event duration and the accounting boundary. The battery and diesel generator dominate the response to independent hourly outages, whereas hydrogen output changes only modestly. Hydrogen may still support longer-duration balancing, but that proposition is not demonstrated by the present outage process. Similarly, the normal-case A$195,690.67 represents operat-ing revenue for an already installed system and is driven by large renewable exports; it is not a lifecycle profitability result because capital, replacement, fixed O&M, degradation beyond the simplified throughput charge, and grid-connection limits are excluded. The training record is important for interpreting performance. Although the policy recovers after the Episode 97 collapse, the best checkpoint remains substantially better than the final episode. More conservative clipping, ex-plicit optimizer learning rates, gradient clipping, checkpoint validation, and multiple random seeds should therefore be used in the next model revision. Evaluation should also separate training and testing years and preserve iden-tical initial states and outage traces across scenario comparisons. Several limitations constrain cross-scenario conclusions. The synthetic high-variability profile is not scaled to the 1,000-household case; the random policy spans only 1,000 hours; hydrogen cost is not observable by the policy; and environmental intensity and avoided-emissions calculations use a gross-energy denominator that includes exported energy. In addition, independent Bernoulli outages do not reproduce sustained grid failures, and no annual RBC, PSO, or alternative-DRL benchmark is currently available. Future work should address these limitations, impose realistic import/export limits, enforce preferred storage bands, include battery and fuel-cell degradation and startup dynamics, and integrate operational control with lifecycle planning [15]. 
+
+7. Conclusion 
+
+This paper developed a PPO-based EMS for a hydrogen-enabled micro-grid serving 1,000 households. Normal operation achieved A$195,690.67 in net operating revenue, a 91.2% renewable fraction, 0.085 kg CO 2/kWh carbon intensity under the adopted gross-energy boundary, and 99.77% demand sat-isfaction. At 5% hourly outage probability, revenue remained A$169,892.21 24 and demand satisfaction was 98.79%; battery discharge and diesel genera-tion increased by 412.9% and 429.4%, respectively, while hydrogen output increased by 7.7%. Outages also increased renewable curtailment from 103.76 to 578.00 MWh. The results demonstrate PPO’s potential for coordinated operation while motivating stabilized training, scale-matched uncertainty tests, annual controller benchmarks, multi-hour outage modeling, lifecycle economics, and real-time validation. 
+
+References 
+
+[1] M. Uddin, H. Mo, D. Dong, S. Elsawah, J. Zhu, J. M. Guerrero, Micro-grids: A review, outstanding issues and future trends, Energy Strategy Reviews 49 (2023) 101127. [2] S. L. Chartier, V. K. Venkiteswaran, S. S. Rangarajan, E. R. Collins, T. Senjyu, Microgrid emergence, integration, and influence on the future energy generation equilibrium—a review, Electronics 11 (5) (2022) 791. [3] R. Trivedi, S. Patra, Y. Sidqi, B. Bowler, F. Zimmermann, G. Deconinck, A. Papaemmanouil, S. Khadem, Community-based microgrids: Litera-ture review and pathways to decarbonise the local electricity network, Energies 15 (3) (2022) 918. [4] M. Atef, S. Alahakoon, P. Wolfs, U. Mumtahina, T. Khatib, M. Ud-din, Energy management in microgrids: Commercial, industrial, and residential perspectives, Energies 19 (2) (2026) 419. [5] A. R. Singh, R. S. Kumar, M. Bajaj, C. B. Khadse, I. Zaitsev, Ma-chine learning-based energy management and power forecasting in grid-connected microgrids with multiple distributed energy sources, Scientific Reports 14 (1) (2024). doi:10.1038/s41598-024-70336-3 .[6] M. Atef, S. Alahakoon, U. Mumtahina, P. Wolfs, T. Khatib, M. Uddin, A review of microgrid energy management systems: methods, challenges, and future directions, International Journal of Ambient Energy 47 (1) (2026) 2595117. [7] O. Sadeghian, A. M. Shotorbani, S. Ghassemzadeh, B. Mohammadi-Ivatloo, Energy management of hybrid fuel cell and renewable en-ergy based systems-a review, International Journal of Hydrogen Energy (2024). 25 [8] B. Modu, M. P. Abdullah, A. L. Bukar, M. F. Hamza, A systematic re-view of hybrid renewable energy systems with hydrogen storage: Sizing, optimization, and energy management strategy, International Journal of Hydrogen Energy (2023). [9] R. Elkhatib, T. Kaoutari, H. Louahlia, Green hydrogen energy source for a residential fuel cell micro-combined heat and power, Applied Thermal Engineering 248 (2024) 123194. [10] D. Das, I. Chakraborty, A. K. Bohre, P. Kumar, R. Agarwala, Sustain-able integration of green hydrogen in renewable energy systems for res-idential and ev applications, International Journal of Energy Research 2024 (1) (2024) 8258624. [11] R. Enaloui, S. Sharifi, B. Faridpak, A. Hammad, M. Al-Hussein, P. Musilek, Techno-economic assessment of a solar-powered green hydro-gen storage concept based on reversible solid oxide cells for residential micro-grid: A case study in calgary, Energy 319 (2025) 134981. [12] H.-H. Nguyen, V.-D. Le, A.-T. Phan, A new predictive energy man-agement system for microgrids, Journal of Energy Storage 46 (2022) 103768. [13] M. Uddin, H. Mo, D. Dong, Storage-based energy management for multi-energy community microgrid, in: 2024 IEEE Kansas Power and Energy Conference (KPEC), IEEE, 2024, pp. 1–5. [14] W. M. N. Witharama, K. Bandara, K. M. D. P. Bandara, M. I. Azeez, C. Wanigasekara, V. Logeeshan, Advanced genetic algorithm for opti-mal microgrid scheduling considering solar and load forecasting, battery degradation, and demand response dynamics, IEEE Access 12 (2024) 83269–83284. doi:10.1109/access.2024.3412914 .[15] M. Atef, S. Alahakoon, U. Mumtahina, P. Wolfs, T. Khatib, M. Uddin, An integrated techno-economic framework for optimal microgrid design: An australian case study, arXiv preprint arXiv:2606.03783 (2026). [16] M. Atef, S. Alahakoon, P. Wolfs, T. Khatib, U. Mumtahina, M. Ud-din, Techno-economic energy planning of residential microgrids: An aus-tralian case study, in: 2025 IEEE PES 35th Australasian Universities Power Engineering Conference (AUPEC), IEEE, 2025, pp. 1–5. 26 [17] M. Atef, S. Alahakoon, P. Wolfs, T. Khatib, U. Mumtahina, M. Uddin, Real-time energy management of residential microgrids: An australian case study, in: 2025 IEEE PES 35th Australasian Universities Power Engineering Conference (AUPEC), IEEE, 2025, pp. 1–5. [18] N. Houben, A. Cosic, M. Stadler, M. Mansoor, M. Zellinger, H. Auer, A. Ajanovic, R. Haas, Optimal dispatch of a multi-energy system mi-crogrid under uncertainty: A renewable energy community in austria, Applied Energy 337 (2023) 120913. doi:10.1016/j.apenergy.2023. 120913 .[19] M. A. Majeed, F. Asghar, U. Hussan, S. Phichaisawat, Optimal en-ergy management system for grid-tied microgrid: An improved adap-tive genetic algorithm, IEEE Access 11 (2023) 117351–117361. doi: 10.1109/access.2023.3326505 .[20] A. Niknami, M. Tolou Askari, M. Amir Ahmadi, M. Babaei Nik, M. Samiei Moghaddam, Resilient day-ahead microgrid energy manage-ment with uncertain demand, evs, storage, and renewables, Cleaner Engineering and Technology 20 (2024) 100763. doi:10.1016/j.clet. 2024.100763 .[21] W. Tang, L. Cao, Y. Chen, B. Chen, Y. Yue, Solving engineering opti-mization problems based on multi-strategy particle swarm optimization hybrid dandelion optimization algorithm, Biomimetics (Basel, Switzer-land) 9 (5) (2024) 298. doi:10.3390/biomimetics9050298 .[22] M. Asif, S. Razzaq, A. Amin, F. P. Mahdi, U. Ahmed, U. Jamil, A. Mah-mood, Combined emission economic dispatch using quantum-inspired particle swarm optimization and its variants, Energy Exploration & Ex-ploitation 42 (5) (2024) 1602–1644. doi:10.1177/01445987241235419 .[23] B. Bhuvaneshwarri, C. Kalaivanan, T. Kanth, P. Deepthi, M. Mah-eswari, V. Saravanan, Hybrid swarm intelligence-based neural frame-work for optimizing real-time computational models in engineering sys-tems, International Journal of Computational and Experimental Science and Engineering 11 (1) (2025). doi:10.22399/ijcesen.1001 .[24] A. Cabrera-Tobar, A. Massi Pavan, G. Petrone, G. Spagnuolo, A review of the optimization and control techniques in the presence of uncertain-27 ties for the energy management of microgrids, Energies 15 (23) (2022) 9114. [25] P. Sharma, H. D. Mathur, P. Mishra, R. C. Bansal, A critical and com-parative review of energy management strategies for microgrids, Applied Energy 327 (2022) 120028. [26] R. G. Allwyn, A. Al-Hinai, V. Margaret, A comprehensive review on energy management strategy of microgrids, Energy Reports 9 (2023) 5565–5591. [27] M. Bilal, A. A. Algethami, S. Hameed, et al., Review of computational intelligence approaches for microgrid energy management, IEEE Access (2024). [28] M. Mannan, M. Mansor, M. Reza, M. Roslan, P. J. Ker, M. Hannan, Recent development of grid-connected microgrid scheduling controllers for sustainable energy: A bibliometric analysis and future directions, IEEE Access (2024). [29] D. Hu, C. Huang, J. Wu, H. Wei, D. Pi, Enhancing data-driven energy management strategy via digital expert guidance for electrified vehicles, Applied Energy 381 (2025) 125138. [30] S. Liu, H. Cheng, S. Jung, Y.-B. Kim, Novel energy management strat-egy for fuel cell/battery hybrid energy systems combining mpc and deep reinforcement learning, Energy Conversion and Management 341 (2025) 120081. [31] H. N. Abishu, A. M. Seid, A. Erbad, S. Márquez-Sánchez, J. H. Fer-nandez, J. M. Corchado, Multi-agent drl-based demand response opti-mization for iot-based smart home energy management systems, IEEE Internet of Things Journal (2025). [32] X. Wang, P. Wang, R. Huang, X. Zhu, J. Arroyo, N. Li, Safe deep reinforcement learning for building energy management, Applied Energy 377 (2025) 124328. [33] T. Song, L. Fu, L. Zhong, Y. Fan, Q. Shang, Two-layer deep rein-forcement learning based port energy management strategy consider-ing transportation-energy coupling characteristics, Energy 318 (2025) 134659. 28 [34] J. Chen, Y. Zhao, M. Wang, K. Yang, Y. Ge, K. Wang, H. Lin, P. Pan, H. Hu, Z. He, et al., Multi-timescale reward-based drl energy manage-ment for regenerative braking energy storage system, IEEE Transactions on Transportation Electrification 11 (3) (2025) 7488–7500. [35] Q. Xu, W. Liu, X. Zhang, D. Xia, J. Zhang, Z. Tian, Drl energy man-agement for urt considering uncertainties of pv and train disturbance, IEEE Transactions on Smart Grid (2026). [36] C. Liu, J. Tao, W. Gao, W. Peng, S. Zhang, F. Shu, Data offloading and energy management in mec networks with distributed power source: A drl approach, IEEE Transactions on Green Communications and Net-working (2025). [37] S. Upadhyay, I. Ahmed, L. Mihet-Popa, Energy management system for an industrial microgrid using optimization algorithms-based reinforce-ment learning technique, Energies 17 (16) (2024) 3898. [38] G. Ma, J. Li, X.-P. Zhang, A review on optimal energy management of multimicrogrid system considering uncertainties, IEEE Access 10 (2022) 77081–77098. [39] M. F. Zia, M. Nasir, E. Elbouchikhi, M. Benbouzid, J. C. Vasquez, J. M. Guerrero, Energy management system for a hybrid pv-wind-tidal-battery-based islanded dc microgrid: Modeling and experimental vali-dation, Renewable and Sustainable Energy Reviews 159 (2022) 112093. [40] Y. Yang, S. Bremner, C. Menictas, M. Kay, Modelling and optimal energy management for battery energy storage systems in renewable energy systems: A review, Renewable and Sustainable Energy Reviews 167 (2022) 112671. [41] J. Schulman, F. Wolski, P. Dhariwal, A. Radford, O. Klimov, Proximal policy optimization algorithms, arXiv preprint arXiv:1707.06347 (2017). 29
