@@ -1,0 +1,24 @@
+{
+  "label": "2026-07-27",
+  "date": "2026-07-27",
+  "generated_at": "2026-07-27T21:33:17",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202607/27/2607.18903v1-forecast-assisted-deep-reinforcement-learning-for-energy-management-of-hydrogen-enabled-community-microgrids",
+      "section": "quick",
+      "title_en": "Forecast-Assisted Deep Reinforcement Learning for Energy Management of Hydrogen-Enabled Community Microgrids",
+      "authors": "Mohamed Atef, Sanath Alahakoon, Umme Mumtahina, Peter Wolfs, Tamer Khatib, Moslem Uddin",
+      "date": "2026-07-21",
+      "pdf": "https://arxiv.org/pdf/2607.18903v1",
+      "score": "7.0",
+      "evidence": "基于深度强化学习（PPO）的氢-电池微电网能量管理与燃料电池/电池无人机能量管理问题高度相似。",
+      "tldr": "氢能社区微电网运行受负荷不确定、可再生能源波动及储能耦合影响，优化困难。本研究在原有PPO能量管理框架中集成多时间尺度负荷预测，用于1000户住宅微电网。尽管预测模型精度有限，预测辅助PPO收敛提前约14.3%，最终奖励提升8.3%，年度电费节省从A$2439.86增至A$2765.83，可再生能源利用率从35.3%升至36.4%。结果表明即使不完美预测也能改善学习效率与经济调度，但预测校准与长时韧性仍需进一步研究。",
+      "tags": "query:uav",
+      "abstract_en": "Hydrogen-enabled community microgrids can improve renewable energy utilization and local resilience, but their operation is complicated by uncertain residential demand, variable renewable generation, dynamic electricity prices, and the coupled dynamics of battery and hydrogen storage. This paper extends a previously developed proximal policy optimization (PPO) energy management system by adding multi-horizon community-load forecasts to the controller state. The framework is evaluated for a 1,000-household residential microgrid in Rockhampton, Australia. Forecast accuracy is mixed: the 1-h model achieves an RMSE of 239.32 kW and an R2 of 0.201, whereas the 6-h and 12-h horizons produce negative R2 values; the 24-h forecast achieves an RMSE of 249.79 kW, a MAPE of 62.52%, and an R2 of 0.126. Despite this limited predictive accuracy, the forecast-enriched PPO converges approximately 14.3% earlier than the non-predictive controller and increases the final reward by 8.3%. Annual savings rise from A$2,439.86 without forecasts to A$2,765.83 with forecasts, an incremental gain of A$325.97 (13.4%), while renewable utilization increases from 35.3% to 36.4%. Grid imports fall to 58,147.49 kWh. Resilience tests show a 20.1% battery protection value during grid outages, but no measurable forecast-specific resilience improvement. The results demonstrate that even imperfect forecasts can improve learning and economic dispatch while also showing that forecast calibration, common test conditions, and longer-duration outage studies are necessary before broader deployment claims can be made.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

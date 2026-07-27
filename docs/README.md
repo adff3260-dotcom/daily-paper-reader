@@ -6,29 +6,26 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-26
-- 运行时间：2026-07-26 21:10:09 UTC
+- 最新运行日期：2026-07-27
+- 运行时间：2026-07-27 21:33:08 UTC
 - 运行状态：成功
-- 本次总论文数：2
+- 本次总论文数：1
 - 精读区：0
-- 速读区：2
+- 速读区：1
 
 ### 今日简报（AI）
-今日速览两项深度强化学习用于氢能社区微电网的调度研究，覆盖同一课题的不同评分版本。  
-结论指向强化学习能有效应对源荷不确定性，提升氢储与用电协同的经济性与韧性。  
-建议关注该算法在真实微电网中的实证表现，以及如何兼顾氢能设施寿命等长期成本。
-- 详情：[/202607/26/README](/202607/26/README)
+速读氢能社区微电网的智能调度新方案，用预测+强化学习提升能源效率。  
+该方法通过集成预测辅助深度强化学习，显著降低运营成本并稳定氢储供。  
+感兴趣可关注结合AI与气象预测的零碳微网前沿，拓展阅读该方向的实验验证。
+- 详情：[/202607/27/README](/202607/27/README)
 
 ### 精读区论文标签
 - 本次无精读推荐。
 
 ### 速读区论文标签
-1. [Deep Reinforcement Learning-Based Energy Management for Hydrogen-Enabled Community Microgrids Under Uncertainty](/202607/26/2607.17248v1-deep-reinforcement-learning-based-energy-management-for-hydrogen-enabled-community-microgrids-under-uncertainty)  
+1. [Forecast-Assisted Deep Reinforcement Learning for Energy Management of Hydrogen-Enabled Community Microgrids](/202607/27/2607.18903v1-forecast-assisted-deep-reinforcement-learning-for-energy-management-of-hydrogen-enabled-community-microgrids)  
    标签：评分：7.0/10、query:uav
-   evidence：开发基于PPO的氢能-电池微电网能量管理，涉及RL方法和混合能源管理
-2. [Deep Reinforcement Learning-Based Energy Management for Hydrogen-Enabled Community Microgrids Under Uncertainty](/202607/26/2607.17248v2-deep-reinforcement-learning-based-energy-management-for-hydrogen-enabled-community-microgrids-under-uncertainty)  
-   标签：评分：6.0/10、query:uav
-   evidence：基于强化学习的燃料电池/电池微电网能量管理
+   evidence：基于深度强化学习（PPO）的氢-电池微电网能量管理与燃料电池/电池无人机能量管理问题高度相似。
 
 
 <div class="dpr-home-promo-card">
