@@ -1,0 +1,54 @@
+{
+  "label": "2026-07-28",
+  "date": "2026-07-28",
+  "generated_at": "2026-07-28T21:40:46",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202607/28/2607.18903v2-forecast-assisted-deep-reinforcement-learning-for-energy-management-of-hydrogen-enabled-community-microgrids",
+      "section": "quick",
+      "title_en": "Forecast-Assisted Deep Reinforcement Learning for Energy Management of Hydrogen-Enabled Community Microgrids",
+      "authors": "Mohamed Atef, Sanath Alahakoon, Umme Mumtahina, Peter Wolfs, Tamer Khatib, Moslem Uddin",
+      "date": "2026-07-21",
+      "pdf": "https://arxiv.org/pdf/2607.18903v2",
+      "score": "7.0",
+      "evidence": "深度强化学习用于氢-电池系统能量管理，可迁移至燃料电池/电池无人机",
+      "tldr": "氢能社区微电网面临可再生能源出力波动、负荷不确定及分时电价等复杂运行条件，传统优化策略难以应变。本文提出预报辅助的近端策略优化（PPO）能量管理框架，将多步社区负荷预测整合进控制器状态，以提升决策前瞻性。基于澳大利亚Rockhampton千户微电网仿真，尽管预测精度有限（1h RMSE=239kW，R²≈0.2），该方法仍使策略收敛快14.3%，年运行成本减少13.4%（增量A$325.97），可再生利用率增至36.4%。研究表明，即使不完美预报也能显著增强强化学习经济调度性能，但预报校准与更长期韧性评估仍有待完善。",
+      "tags": "query:uav",
+      "abstract_en": "Hydrogen-enabled community microgrids can improve renewable energy utilization and local resilience, but their operation is complicated by uncertain residential demand, variable renewable generation, dynamic electricity prices, and the coupled dynamics of battery and hydrogen storage. This paper extends a previously developed proximal policy optimization (PPO) energy management system by adding multi-horizon community-load forecasts to the controller state. The framework is evaluated for a 1,000-household residential microgrid in Rockhampton, Australia. Forecast accuracy is mixed: the 1-h model achieves an RMSE of 239.32 kW and an R2 of 0.201, whereas the 6-h and 12-h horizons produce negative R2 values; the 24-h forecast achieves an RMSE of 249.79 kW, a MAPE of 62.52%, and an R2 of 0.126. Despite this limited predictive accuracy, the forecast-enriched PPO converges approximately 14.3% earlier than the non-predictive controller and increases the final reward by 8.3%. Annual savings rise from A$2,439.86 without forecasts to A$2,765.83 with forecasts, an incremental gain of A$325.97 (13.4%), while renewable utilization increases from 35.3% to 36.4%. Grid imports fall to 58,147.49 kWh. Resilience tests show a 20.1% battery protection value during grid outages, but no measurable forecast-specific resilience improvement. The results demonstrate that even imperfect forecasts can improve learning and economic dispatch while also showing that forecast calibration, common test conditions, and longer-duration outage studies are necessary before broader deployment claims can be made.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202607/28/2607.18903v3-forecast-assisted-deep-reinforcement-learning-for-energy-management-of-hydrogen-enabled-community-microgrids",
+      "section": "quick",
+      "title_en": "Forecast-Assisted Deep Reinforcement Learning for Energy Management of Hydrogen-Enabled Community Microgrids",
+      "authors": "Mohamed Atef, Sanath Alahakoon, Umme Mumtahina, Peter Wolfs, Tamer Khatib, Moslem Uddin",
+      "date": "2026-07-21",
+      "pdf": "https://arxiv.org/pdf/2607.18903v3",
+      "score": "7.0",
+      "evidence": "采用PPO强化学习结合负荷预测对含电池和氢储能的微电网进行能量管理，与混合动力无人机能量管理策略直接相关",
+      "tldr": "氢能社区微电网因住宅需求不确定、可再生能源间歇性、动态电价及电池与氢储能耦合而运行复杂。本文提出预测辅助的PPO深度强化学习能源管理方法，将多时间尺度负荷预测融入控制器状态。即使预测精度有限（1小时RMSE239kW，24小时MAPE62.5%），训练收敛仍快14.3%，奖励高8.3%，年运行成本节约增加A$326，可再生利用率从35.3%升至36.4%，电网进口降至58,147kWh。韧性测试显示电池保护值提高20.1%，但无预测特定改善。证明不完美预测也能提升强化学习效率与经济性，但大规模部署前需预测校准与更长停电研究。",
+      "tags": "query:uav",
+      "abstract_en": "Hydrogen-enabled community microgrids can improve renewable energy utilization and local resilience, but their operation is complicated by uncertain residential demand, variable renewable generation, dynamic electricity prices, and the coupled dynamics of battery and hydrogen storage. This paper extends a previously developed proximal policy optimization (PPO) energy management system by adding multi-horizon community-load forecasts to the controller state. The framework is evaluated for a 1,000-household residential microgrid in Rockhampton, Australia. Forecast accuracy is mixed: the 1-h model achieves an RMSE of 239.32 kW and an R2 of 0.201, whereas the 6-h and 12-h horizons produce negative R2 values; the 24-h forecast achieves an RMSE of 249.79 kW, a MAPE of 62.52%, and an R2 of 0.126. Despite this limited predictive accuracy, the forecast-enriched PPO converges approximately 14.3% earlier than the non-predictive controller and increases the final reward by 8.3%. Annual savings rise from A$2,439.86 without forecasts to A$2,765.83 with forecasts, an incremental gain of A$325.97 (13.4%), while renewable utilization increases from 35.3% to 36.4%. Grid imports fall to 58,147.49 kWh. Resilience tests show a 20.1% battery protection value during grid outages, but no measurable forecast-specific resilience improvement. The results demonstrate that even imperfect forecasts can improve learning and economic dispatch while also showing that forecast calibration, common test conditions, and longer-duration outage studies are necessary before broader deployment claims can be made.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202607/28/2607.23867v1-bc-nmpc-battery-constrained-nmpc-with-propulsion-prediction-and-replanning-for-high-speed-flight",
+      "section": "quick",
+      "title_en": "BC-NMPC: Battery-Constrained NMPC with Propulsion Prediction and Replanning for High-Speed Flight",
+      "authors": "Parakh M. Gupta, Matej Mihulka, Matej Novosad, Robert Penicka, Martin Saska",
+      "date": "2026-07-26",
+      "pdf": "https://arxiv.org/pdf/2607.23867v1",
+      "score": "7.0",
+      "evidence": "将电池与推进模型集成到NMPC中实现实时功率预测",
+      "tldr": "无人机高速飞行时电池放电导致最大推力下降，引发轨迹跟踪失误与碰撞。本文提出将电池与推进系统模型集成到非线性模型预测控制框架中，实时预测推力衰减并在线重规划轨迹。实验证明该方法使跟踪RMSE降低6倍、飞行距离增加46%、时间延长100%，实现无碰撞飞行。为能源受限的敏捷飞行提供了有效解决方案。",
+      "tags": "query:uav",
+      "abstract_en": "Trajectory tracking performance of Uncrewed Aerial Vehicles (UAVs) degrades during high-speed and agile flight due to the depletion of the battery and subsequent loss of maximum available thrust. In applications such as drone racing, the consequent trajectory tracking error leads to a collision with obstacles and a subsequent failure to complete the race. In this paper, we present a novel method for integrating battery and propulsion system models into a Nonlinear Model Predictive Controller (NMPC) framework to enable real-time prediction of the voltage, consumed current, power, and maximum available thrust of the platform. This enables our approach to account for the dynamic variations in the maximum available thrust of the UAV caused by battery discharge, allowing it to plan for the depleting thrust and improve trajectory tracking performance. A trajectory planning algorithm is implemented to replan the trajectory in-flight based on evolving thrust limits. The accuracy of the proposed model is verified in real-world flight experiments, while the effectiveness of the replanning algorithm is evaluated in simulation. Compared to an uncompensated flight, our novel approach demonstrates achieves a collision-free flight to achieve a 6-fold decrease in tracking Root Mean Square Error (RMSE), a 46 % increase in flight distance, and a 100 % increase in flight time in an obstacle-ridden environment.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

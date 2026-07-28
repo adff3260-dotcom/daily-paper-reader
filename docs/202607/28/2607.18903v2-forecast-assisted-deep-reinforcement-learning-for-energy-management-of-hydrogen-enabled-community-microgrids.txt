@@ -1,0 +1,491 @@
+Title: Forecast-Assisted Deep Reinforcement Learning for Energy Management of Hydrogen-Enabled Community Microgrids
+
+URL Source: https://arxiv.org/pdf/2607.18903v2
+
+Published Time: Thu, 23 Jul 2026 00:45:10 GMT
+
+Number of Pages: 31
+
+Markdown Content:
+# Forecast-Assisted Deep Reinforcement Learning for Energy Management of Hydrogen-Enabled Community Microgrids 
+
+Mohamed Atef a, Sanath Alahakoon a, Umme Mumtahina b, Peter Wolfs b,Tamer Khatib c, Moslem Uddin d
+
+> a
+
+School of Engineering and Technology, Central Queensland University, Gladstone, QLD 4680, Australia 
+
+> b
+
+School of Engineering and Technology, Central Queensland University, Rockhampton, QLD 4680, Australia 
+
+> c
+
+Energy Engineering & Environment Dept., An-Najah National University, Nablus, West Bank 97300, Palestine 
+
+> d
+
+School of Engineering & Technology, The University of New South Wales, Canberra, ACT 2610, Australia 
+
+Abstract 
+
+Hydrogen-enabled community microgrids can improve renewable energy utilization and local resilience, but their operation is complicated by uncer-tain residential demand, variable renewable generation, dynamic electricity prices, and the coupled dynamics of battery and hydrogen storage. This pa-per extends a previously developed proximal policy optimization (PPO) en-ergy management system by adding multi-horizon community-load forecasts to the controller state. The framework is evaluated for a 1000-house resi-dential microgrid in Rockhampton, Australia. Forecast accuracy is mixed: the 1-h model achieves an RMSE of 239 .32 kW and R2 = 0 .201 , whereas the 6-h and 12-h horizons produce negative R2 values; the 24-h forecast achieves an RMSE of 249 .79 kW , MAPE of 62.52%, and R2 = 0 .126 . Despite this limited predictive accuracy, forecast-enriched PPO converges approxi-mately 14.3% earlier than the non-predictive controller and increases final reward by 8.3%. Annual savings rise from A$2,439.86 without forecasts to A$2,765.83 with forecasts, an incremental gain of A$325.97 or 13.4%, while renewable utilization increases from 35.3% to 36.4%. Grid imports fall to 
+
+Email address: Muhamed.Atef1408@gmail.com (Mohamed Atef) arXiv:2607.18903v2 [eess.SY] 22 Jul 2026 58 147 .49 kW h . Resilience tests show a 20.1% battery protection value dur-ing grid outages, but no measurable forecast-specific resilience improvement. The results demonstrate that even imperfect forecasts can improve learning and economic dispatch, while also showing that forecast calibration, com-mon test conditions, and longer-duration outage studies are necessary before broader deployment claims can be made. 
+
+Keywords: 
+
+Transformer Forecasting, Predictive Energy Management, Deep Reinforcement Learning, Proximal Policy Optimization, Hydrogen-Enabled Community Microgrids, Renewable Energy Forecasting, Battery Energy Storage Systems, Hydrogen Energy Systems 
+
+1. Introduction 
+
+1.1. Background 
+
+Community microgrids are increasingly being adopted as decentralized energy platforms that improve local reliability, increase renewable energy utilization, and support the transition toward low-carbon electricity systems [1, 2]. Community-scale studies further emphasize that local DER coor-dination can support resilient and low-carbon operation when distributed generation, storage, controllable demand, and grid exchange are managed together [3, 4]. Recent residential microgrid research shows a shift from conventional photovoltaic (PV)–battery configurations toward multi-energy platforms that include PV, wind generation, battery energy storage systems (BESSs), demand response, and hydrogen-based storage pathways [5, 6]. Battery storage is effective for short-term balancing, peak shaving, and renewable self-consumption. However, battery-only systems can be limited when renewable shortfalls persist for several hours or days. Hydrogen tech-nologies provide a complementary long-duration storage route in which sur-plus renewable electricity is converted to hydrogen through an electrolyzer, stored in a hydrogen tank, and later reconverted to electricity by a fuel cell [7, 8]. Techno-economic and sustainability studies also show that hydrogen pathways can improve renewable hosting and long-duration autonomy when they are coordinated with electrical storage [9, 10]. This battery–hydrogen architecture is particularly suitable for community microgrids because bat-teries can respond rapidly to short-term power fluctuations, while hydrogen storage can support resilience and autonomy over longer time scales. 2The operational value of such systems depends strongly on how well the energy management system (EMS) anticipates uncertainty. Solar irradiance, wind speed, residential demand, and electricity market prices vary continu-ously and can lead to inefficient storage dispatch if the EMS relies only on current measurements. The integrated Australian microgrid design frame-work established the PV–wind–battery–hydrogen system foundation consid-ered here [11]. A subsequent PPO-based preprint formulated learning-based dispatch for the same 1000-house community [12]. The present paper ex-tends that controller by adding a forecasting layer, allowing the policy to use expected community demand rather than reacting only to instantaneous observations. 
+
+1.2. Motivation 
+
+Conventional EMS approaches, including rule-based control, determinis-tic scheduling, and metaheuristic optimization, remain useful because they are interpretable and can be implemented with modest computational re-quirements. Nevertheless, fixed dispatch rules cannot fully adapt to rapid changes in renewable production, household demand, electricity prices, or storage availability [13, 14]. Recent EMS studies also note that deterministic and heuristic dispatch strategies can become sensitive to forecast assump-tions and operating-condition changes [15, 16]. Optimization-based methods can improve dispatch by solving cost, emission, and reliability objectives, but they may require repeated computation whenever operating conditions change [17, 18]. These limitations become more important in hydrogen-enabled community microgrids, where the EMS must simultaneously sched-ule short-term battery actions, long-duration hydrogen production and use, fuel-cell dispatch, and grid import/export decisions. Forecasting provides future awareness that can improve sequential storage and grid decisions. Accurate multi-step community-load forecasts can help the EMS preserve battery capacity before demand peaks, avoid unnecessary charging before low-demand periods, and shift grid transactions toward eco-nomically favorable intervals. Deep learning models such as long short-term memory (LSTM), gated recurrent unit (GRU), and attention-based architec-tures have been widely used for energy forecasting, while Transformer models are attractive because self-attention can capture long-range temporal depen-dencies. Integrating multi-horizon load forecasting with the PPO EMS in [12] is therefore a direct extension toward predictive energy management. 31.3. Research Gap 
+
+Recent EMS literature highlights the importance of uncertainty-aware control and forecasting for renewable-rich microgrids [19, 20]. Other re-views emphasize data-driven scheduling, resilience, and scalable EMS de-sign as key requirements for future microgrids [21, 22]. Recent work also points to persistent gaps in translating advanced EMS methods into robust, sector-specific operation under uncertainty [23]. Existing work has separately advanced renewable/load forecasting, hydrogen-enabled microgrid planning, and DRL-based dispatch. However, many forecasting studies evaluate pre-diction accuracy without demonstrating how forecast outputs change battery and hydrogen operation, while many DRL EMS studies learn dispatch poli-cies from current states without explicitly embedding multi-step forecasts into the control state. Similarly, hydrogen microgrid studies often focus on sizing, techno-economic assessment, or deterministic scheduling, leaving a need for integrated predictive control frameworks that couple advanced fore-casting with adaptive learning-based dispatch. The previous planning framework established the PV–wind–battery– hydrogen community configuration and techno-economic foundation [11]. The subsequent PPO study demonstrated learning-based dispatch but did not provide explicit future information to the controller [12]. The remaining research gap is therefore the development and evaluation of a forecast-assisted PPO framework in which multi-horizon predictions are embedded into the EMS state, together with a quantitative assessment of whether imperfect forecasts improve learning and operation. 
+
+1.4. Contributions 
+
+The main contributions of this paper are summarized as follows: 
+
+• A multi-horizon forecasting layer is evaluated for 1, 6, 12, 24, 48, and 72-h community-load prediction using RMSE, MAE, MAPE, nRMSE, correla-tion, and R2.
+
+• A predictive EMS is developed by extending the PPO-based hydrogen-enabled microgrid controller in [12] with forecast-enriched state informa-tion. 
+
+• Forecast-assisted PPO, non-predictive PPO, perfect-forecast operation, and no-battery operation are compared to isolate the operational value of forecast information. 4• The framework is evaluated using a 1000-house Australian residential mi-crogrid based on the earlier planning studies [11, 24]. 
+
+• Forecasting, learning, economic, operational, environmental, and resilience results are reported together with limitations arising from forecast error and accounting assumptions. 
+
+1.5. Paper Organization 
+
+The remainder of this paper is organized as follows. Section 2 presents the architecture and mathematical models of the hydrogen-enabled community microgrid. Section 3 introduces the multi-horizon load-forecasting frame-work, input features, model architecture, training process, and evaluation metrics. Section 4 describes the forecast-assisted predictive EMS and its integration with the PPO controller. Section 5 presents the Australian com-munity microgrid case study, datasets, simulation settings, and benchmark methods. Section 6 analyzes forecasting accuracy and the resulting impacts on microgrid operation. Section 7 discusses key findings, practical implica-tions, and limitations. Finally, Section 8 concludes the paper and outlines future research directions. 
+
+2. System Description 
+
+This section describes the hydrogen-enabled community microgrid used to evaluate the proposed Transformer-assisted predictive EMS. The model follows the same physical system considered in [11], but it is prepared here for forecast-enriched operation by explicitly defining the renewable gener-ation, demand, battery, hydrogen, and grid-balance equations used by the simulation environment. The community scale used in this paper is fixed at 
+
+Nh = 1000 residential houses, and all aggregated demand and DER schedul-ing variables are interpreted at this 1000-house level rather than the smaller 100-house model. 
+
+2.1. Microgrid Architecture 
+
+The studied system supplies an aggregated residential community through a hybrid renewable and storage infrastructure. PV arrays and wind turbines are the primary local generation resources. A BESS provides short-duration electrical storage, absorbs renewable surplus during high-generation inter-vals, and supports the load during short-term renewable deficits. The hy-drogen subsystem consists of an electrolyzer, a hydrogen storage tank, and a 5fuel cell. When local renewable generation exceeds community demand and battery-charging requirements, the electrolyzer converts part of the surplus electricity into hydrogen. When renewable production and battery discharge are insufficient, the fuel cell can reconvert stored hydrogen into electricity. The microgrid is also connected to the utility grid. Grid import cov-ers residual demand after local renewable generation and storage dispatch, while grid export allows unused renewable electricity to be transferred out-side the community boundary when local storage and conversion options are saturated or economically unattractive. The EMS coordinates PV and wind utilization, battery charging/discharging, electrolyzer power, fuel-cell output, hydrogen storage, and grid transactions. In the proposed predictive framework, this coordination is informed not only by current measurements but also by Transformer forecasts of renewable generation, load demand, and market prices. 
+
+2.2. Mathematical Models 
+
+The microgrid is represented in discrete time with interval length ∆t. At each time step t, the community electrical demand is denoted by PL,t . If indi-vidual household demand profiles ph,t are available, the aggregate community load is 
+
+PL,t =
+
+> Nh
+
+X
+
+> h=1
+
+ph,t , (1) where Nh is the number of households. If a representative normalized house-hold profile is used for all customers, Eq. (1) becomes PL,t = Nhph,t . Alter-natively, when a base profile Pb,t is available for Nb households, the scaled load is expressed as 
+
+PL,t = αLPb,t , αL = Nh
+
+Nb
+
+, (2) where αL is the demand-scaling factor. 
+
+2.2.1. Photovoltaic Generation Model 
+
+The PV output is modeled as a function of installed capacity, solar irra-diance, derating losses, and cell-temperature effects [25, 26]. The generated PV power is calculated as 
+
+PP V,t = P rated P V fP V Gt
+
+1 + γP V 
+
+ Tc,t − T ref c
+
+ , (3) 6where PP V,t is the PV power output, P rated P V is the installed PV capacity, fP V 
+
+is the derating factor, Gt = It/I ref is the normalized irradiance, It is the measured irradiance, Iref is the reference irradiance, γP V is the PV tempera-ture coefficient, Tc,t is the PV cell temperature, and T ref c is the reference cell temperature. The cell temperature is estimated from ambient temperature and irradiance as 
+
+Tc,t = Tamb,t +
+
+TN OCT − T N OCT amb 
+
+IN OCT 
+
+
+
+It, (4) where Tamb,t is the ambient temperature, TN OCT is the nominal operating cell temperature, T N OCT amb = 20 ◦C, and IN OCT = 800 W m −2.
+
+2.2.2. Wind Turbine Model 
+
+The wind turbine output is represented using the aerodynamic power relationship and constrained by the practical turbine operating curve [25]. The available wind power is 
+
+PW T,t = 12ρC pAsv3 
+
+> t
+
+, (5) where PW T,t is the wind turbine power, ρ is air density, Cp is the power coefficient, As is the swept rotor area, and vt is the hub-height wind speed. In implementation, Eq. (5) is bounded by cut-in, rated, and cut-out wind-speed limits so that the turbine produces zero power below cut-in and above cut-out speeds, follows the cubic region below rated speed, and is capped at rated power in the rated operating region. 
+
+2.2.3. Battery Energy Storage Model 
+
+The BESS state of charge (SOC) is updated according to the charging and discharging powers selected by the EMS [27]. The SOC transition is 
+
+SOC t+1 = SOC t + ∆tErated B
+
+ηch P ch B,t − P dis B,t 
+
+ηdis 
+
+!
+
+, (6) where SOC t is the battery state of charge, Erated B is the rated battery energy capacity, P ch B,t and P dis B,t are the battery charging and discharging powers, and ηch and ηdis are the charging and discharging efficiencies. The SOC is constrained by 
+
+SOC ≤ SOC t ≤ SOC, (7) 7where SOC and SOC define the minimum and maximum allowable SOC val-ues. These limits prevent deep discharge and overcharge, thereby preserving feasible and safe battery operation. 
+
+2.2.4. Hydrogen Subsystem Model 
+
+The hydrogen subsystem captures the conversion of surplus electricity into hydrogen and the later reconversion of stored hydrogen into electricity. The hydrogen energy produced by the electrolyzer during one time interval is 
+
+Ein H,t = ηely Pely,t ∆t, (8) where Ein H,t is the hydrogen energy added to the tank, ηely is the electrolyzer efficiency, and Pely,t is the electrolyzer input power. The hydrogen storage state is updated by 
+
+EH,t +1 = EH,t + Ein H,t − Eout H,t , (9) where EH,t is the stored hydrogen energy and Eout H,t is the hydrogen energy withdrawn for fuel-cell operation. The fuel-cell electrical output is 
+
+PF C,t = ηf c 
+
+Eout H,t 
+
+∆t , (10) where ηf c is the fuel-cell efficiency. The storage tank is constrained by 
+
+EH ≤ EH,t ≤ EH , (11) where EH and EH are the lower and upper hydrogen storage limits. 
+
+2.2.5. Power Balance Equation 
+
+At every time step, the EMS must satisfy the electrical power balance be-tween local generation, storage actions, hydrogen conversion, grid exchange, and community demand. The balance is written as 
+
+PP V,t + PW T,t + PF C,t + P dis B,t + P buy grid,t − PL,t − P ch B,t − Pely,t − P sell grid,t = 0 ,
+
+(12) where P buy grid,t and P sell grid,t are the grid import and export powers, respectively. If a dispatchable backup generator is considered in a scenario, its output is added to the supply side of Eq. (12). This balance couples all micro-grid components and forms the physical basis of the forecast-assisted PPO environment developed in the following sections. 83. Transformer-Based Forecasting Framework 
+
+This section presents the forecasting layer used by the predictive EMS. The available simulation results quantify community-load forecasts at 1, 6, 12, 24, 48, and 72-h horizons. Forecasting is treated as an information layer because the PPO controller can use expected demand to prepare stor-age and grid actions before the corresponding load is observed. Recent AI-enabled EMS reviews show that ML and DL models are increasingly used for load forecasting, demand response, and smart energy scheduling [28, 29]. Building-level and campus-scale studies likewise show that pre-diction and learning models can support practical energy-performance im-provement when integrated with operational decision-making [30, 31]. Hy-brid LSTM–XGBoost and GRU-attention models provide relevant forecast-ing benchmarks for nonlinear energy time series [32, 33]. 
+
+3.1. Forecasting Problem Formulation 
+
+The forecasting problem is formulated as a supervised time-series predic-tion task. At each decision instant t, the model receives a historical input window Xt−L+1: t with length L and produces a community-load forecast over horizon H: bPL,t +1: t+H = fθ (Xt−L+1: t) , (13) where fθ(·) denotes the forecasting model with trainable parameters θ. The prediction at step k is 
+
+bPL,t +k = fθ,k (Xt−L+1: t) , k = 1 , . . . , H, (14) where bPL,t +k is the predicted aggregated load of the 1000-house community. The supplied report does not provide separate PV, wind, or electricity-price forecast scores; consequently, those channels are not claimed as validated outputs in this paper. 
+
+3.2. Data Collection and Feature Engineering 
+
+The underlying microgrid dataset contains 8,760 hourly observations of community demand, available PV and wind power, grid purchase price, and export price. For the load-forecasting task, historical community demand and temporal information provide the core predictors; the wider microgrid variables are available as exogenous context. The preprocessing workflow aligns all signals to hourly resolution and normalizes continuous variables 9using training-set statistics. The supplied result report does not archive the final feature manifest, missing-data treatment, or normalization constants; these implementation details must therefore be preserved in the reproducibil-ity package before submission. The use of engineered temporal and operational features follows recent data-driven EMS studies, where prediction accuracy and downstream control quality depend strongly on data quality, feature selection, and robust pre-processing [28, 30]. In the case of renewable-rich systems, uncertainty-aware scheduling studies also emphasize that renewable prediction errors must be handled consistently when deriving dispatch strategies [34]. 
+
+3.3. Input Features and Forecast Horizon 
+
+The general input vector available to the forecasting workflow is 
+
+xt = [ It, T amb,t , v t, P P V,t , P W T,t , P L,t , λ t, ϕ t] , (15) where It is irradiance, Tamb,t is ambient temperature, vt is wind speed, λt
+
+is the electricity price, and ϕt represents temporal indicators. The evalu-ated horizons are H ∈ { 1, 6, 12 , 24 , 48 , 72 } h. Short horizons support near-real-time battery scheduling, whereas day-ahead and multi-day horizons can inform energy-reserve planning. The empirical results show that forecast quality is strongly horizon-dependent rather than monotonically decreasing with horizon. 
+
+3.4. Transformer Architecture 
+
+The Transformer model maps the input sequence into a latent represen-tation using input embeddings, positional encoding, stacked self-attention layers, and feed-forward networks. For an embedded sequence Z, the scaled dot-product attention is defined as 
+
+Attention( Q, K, V) = softmax 
+
+QK T
+
+√dk
+
+
+
+V, (16) where Q, K, and V are the query, key, and value matrices, and dk is the key dimension. Multi-head attention allows the model to learn different temporal patterns simultaneously, such as daily demand cycles, weather-driven renewable variations, and price fluctuations. Compared with recurrent models such as LSTM and GRU, the Transformer can directly attend to relevant historical intervals across the full input window, which is useful for 10 capturing delayed and long-range dependencies. This is particularly relevant because recent GRU-attention and LSTM-hybrid forecasting studies show that attention and hybrid learning can improve renewable and load prediction accuracy [33, 32]. 
+
+3.5. Model Training and Optimization 
+
+The model is trained by minimizing the prediction error between mea-sured and forecasted load sequences. The loss function is expressed as 
+
+LF (θ) = 1
+
+N H 
+
+> N
+
+X
+
+> n=1
+> H
+
+X
+
+> k=1
+
+Yn,t +k − bYn,t +k
+
+> 22
+
+, (17) where N is the number of training samples. Chronological train–validation– test splitting is required to avoid information leakage, and the trained model is frozen before its forecasts are supplied to the PPO controller. The supplied report records the resulting test metrics and confidence interval but does not preserve the split ratios, optimizer, batch size, epoch count, or final Transformer dimensions. These values are therefore not fabricated here and are identified as required reproducibility information in Section 7. 
+
+3.6. Forecasting Performance Metrics 
+
+Forecasting performance is evaluated using RMSE, MAE, MAPE, nor-malized RMSE (nRMSE), and the coefficient of determination R2. These metrics are defined as 
+
+RMSE = 
+
+vuut 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+(yi − byi)2, MAE = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+|yi − byi| , (18) 
+
+MAPE = 100 
+
+N
+
+> N
+
+X
+
+> i=1
+
+yi − byi
+
+yi
+
+, R2 = 1 −
+
+PNi=1 (yi − byi)2
+
+PNi=1 (yi − ¯y)2 . (19) RMSE emphasizes large errors, MAE measures average absolute deviation, MAPE provides a percentage-based interpretation, nRMSE normalizes RMSE by the data scale, and R2 indicates the proportion of variance explained by the model. Correlation is also reported to distinguish pattern tracking from amplitude accuracy. The available benchmark set comprises linear, ridge, lasso, autoregressive (AR), and time-of-day (TOD) average models. 11 4. Predictive Energy Management Framework 
+
+This section presents the predictive EMS that supplies the load forecast to the PPO controller developed in the preceding DRL study [12]. PPO is retained so that the value of forecasting can be isolated without simultane-ously changing the control algorithm. DRL is appropriate because it can learn sequential control policies under nonlinear dynamics and uncertainty. Recent applications have demonstrated DRL for PV-aware railway control, smart-home demand response, safe building operation, and coupled port-energy scheduling [35, 36]. Constraint-aware and degradation-aware studies further motivate careful reward design for hybrid energy systems [37, 38]. 
+
+4.1. Predictive MDP Formulation 
+
+The EMS is formulated as a forecast-enriched Markov Decision Process (MDP) defined by the tuple (S, A, P, r, γ ). The environment is the hydrogen-enabled community microgrid, S is the state space, A is the continuous action space, P is the transition function governed by Section 2, r is the hourly reward, and γ is the discount factor. The PPO policy πθ maximizes 
+
+J(θ) = Eπθ
+
+"T −1X
+
+> t=0
+
+γtrt
+
+#
+
+. (20) At each hour, the agent observes current operating conditions and the fore-cast vector, selects battery, diesel, and hydrogen commands, and receives the next state after residual grid exchange and storage updates are calculated. The MDP formulation follows the general structure used in recent DRL energy management studies, where uncertain PV generation and load dis-turbance are represented through state transitions and reward feedback [35]. For demand-side and transportation-coupled applications, MDP-based DRL has also been used to represent user behavior, comfort, logistics, and en-ergy scheduling interactions [36, 39]. In contrast to non-predictive DRL, the proposed MDP augments the state with Transformer forecasts, allowing the policy to anticipate future renewable surplus, load peaks, and price changes. 
+
+4.2. Forecast-Enriched State Space 
+
+The base PPO observation contains battery SOC, normalized hydrogen level, time features, normalized PV, wind, load, purchase and export prices, 12 and the grid-availability indicator. The forecast-assisted state appends the multi-horizon load forecast: 
+
+sFt = SOC t, H t, τ t, sin(2 πτ t), cos(2 πτ t),
+
+ePP V,t , ePW T,t , ePL,t , eπbuy t , eπsell t , G t, ebPL,t +1: t+H
+
+⊤. (21) Here, Ht is the normalized hydrogen storage level, τt is normalized hour of day, Gt is the outage indicator, and tildes denote normalized values. The non-predictive controller receives the same base state without ebPL,t +1: t+H ,allowing a controlled comparison of forecast value. 
+
+4.3. Action Space 
+
+The PPO agent retains the three continuous actions of the base manuscript: 
+
+at = [ aB,t , a DG,t , a H,t ]⊤ , aB,t , a H,t ∈ [−1, 1] , aDG,t ∈ [0 , 1] . (22) The battery command is scaled by 530 kW ; positive values discharge and neg-ative values charge. The diesel command is scaled by 180 kW and is enabled during outages. Positive hydrogen actions operate the electrolyzer, while negative values dispatch the fuel cell. Grid import or export is calculated from the residual power balance rather than selected directly by the policy. 
+
+4.4. Reward Function 
+
+The hourly cost follows the base PPO manuscript: 
+
+Ct = πbuy t P buy grid,t − πsell t P sell grid,t + 0 .01 |PB,t | + 0 .20 PDG,t + 0 .40 mprod H,t + 2 .00 mcons H,t ,
+
+(23) where export revenue enters with a negative sign. The reward is 
+
+rt = −Ct − 5P unmet t − 0.02 |SOC t − 0.5| − 0.01 |Ht − 0.5|. (24) Unmet demand receives the dominant reliability penalty, while the SOC and hydrogen terms discourage sustained operation near storage extremes. Fore-casts affect the policy through the state rather than by altering the reward, so differences between the forecast and no-forecast cases can be attributed to information availability. 13 4.5. Proximal Policy Optimization Controller 
+
+PPO is an on-policy actor–critic algorithm that limits excessively large policy updates. With probability ratio ρt = πθ(at|st)/π θold (at|st), the clipped surrogate objective is 
+
+Lclip (θ) = Et
+
+h
+
+min 
+
+
+
+ρt bAt, clip( ρt, 1 − ϵ, 1 + ϵ) bAt
+
+i 
+
+, (25) where bAt is the generalized advantage estimate and ϵ = 0 .25 . The Gaussian actor and value critic each use two 256-neuron ReLU layers, consistent with the base study [12]. 
+
+4.6. Training Environment 
+
+The environment simulates chronological hourly operation using the com-ponent models and constraints in Section 2. The inherited PPO settings are discount factor 0.995, generalized-advantage factor 0.95, experience horizon 4,096, 10 update epochs, mini-batch size 256, entropy weight 0.001, and ran-dom seed 42. The forecast-comparison report records 100 training episodes and compares forecast-assisted PPO against the same controller without fore-cast inputs. A perfect-forecast case is evaluated as an upper information benchmark, while no-battery operation provides a physical baseline. 
+
+5. Case Study and Simulation Setup 
+
+This section presents the Australian community microgrid case study and simulation environment used to evaluate the proposed forecasting and predic-tive energy management framework. Details regarding datasets, forecasting model configurations, DRL hyperparameters, and benchmark methods are provided. 
+
+5.1. Australian Community Microgrid 
+
+The case study represents a 1000-house Australian residential community microgrid based on the PV–wind–battery–hydrogen configuration developed in the earlier planning and EMS studies [11, 24]. The aggregated load is therefore calculated for Nh = 1000 households using Eq. (1) or, when a base profile is used, the scaling relation in Eq. (2). The infrastructure includes PV arrays, wind generation, BESS capacity, an electrolyzer, hydrogen storage, a fuel cell, and a grid interconnection. Renewable and storage capacities are treated as community-level assets sized for the 1000-house case, while grid import/export limits define the boundary between local operation and the upstream distribution network. 14 5.2. Input Datasets 
+
+The base dataset contains 8,760 hourly observations of community de-mand, available PV and wind power, grid purchase price, and grid export price. Annual community demand is 4.106 GW h , equivalent to approxi-mately 4106 kW h per household. Table 1 summarizes the chronological in-puts inherited from the PPO study [12]. Exogenous variables are normalized for neural-network inputs, while raw values are retained for power balancing, cost accounting, and performance evaluation. The forecast-result set reports a peak evaluation load of 1684 .51 kW ; this is lower than the 2134 .13 kW 
+
+maximum of the complete annual input record, indicating that the forecast evaluation used a subset or processed series rather than the raw annual max-imum. 
+
+> Table 1: Summary of the 1000-house hourly input dataset.
+
+Variable Mean Maximum Annual total Community load 468 .75 kW 2134 .13 kW 4 106 249 .99 kW h 
+
+PV availability 1620 .91 kW 7973 .49 kW 14 199 183 .53 kW h 
+
+Wind availability 18 .27 kW 60 .00 kW 160 045 .69 kW h 
+
+Grid purchase price A$0.3060/kWh A$0.4571/kWh –Grid export price A$0.0601/kWh A$0.0601/kWh –
+
+5.3. Transformer Model Configuration 
+
+The forecasting report identifies the evaluated horizons, metrics, base-lines, 24-h confidence interval, and resulting predictions, but it does not record the final embedding dimension, number of attention heads, encoder depth, feed-forward width, dropout, optimizer, or epoch count. These values cannot be reconstructed reliably from the output figures and are therefore not invented. Table 2 records the configuration information that is supported by the uploaded evidence. The missing architecture manifest must be exported from the forecasting code before journal submission. 15 Table 2: Forecasting configuration supported by the supplied result report.          
+
+> Item Reported setting Forecast target Aggregated community load Time resolution Hourly Forecast horizons 1, 6, 12, 24, 48, and 72 h Uncertainty output 95% confidence interval for 24-h forecast Accuracy metrics RMSE, MAE, MAPE, nRMSE, correlation, R2
+> Baseline models Linear, ridge, lasso, AR, TOD average Architecture hyperparameters Not archived in supplied report
+
+5.4. Forecasting Training Settings 
+
+The forecast model is trained independently of PPO and frozen before controller training. This ordering prevents PPO rewards from changing the forecasting weights and allows forecast error to be evaluated separately from control performance. Chronological splitting is required for time-series validation; however, the supplied report does not state the exact train– validation–test percentages, hardware, optimizer, or early-stopping rule. The reported linear, ridge, lasso, AR, and TOD training times range from 0.01 to 0.18 s and describe only the lightweight baselines, not Transformer training time. These omissions are retained explicitly as reproducibility limitations rather than replaced with assumed values. 
+
+5.5. PPO Hyperparameters 
+
+The PPO architecture and update parameters are inherited from the base DRL manuscript, while the forecast comparison uses 100 episodes as shown in the supplied convergence figure. Table 3 lists the inherited settings. The result report also provides a quantity labelled “learning rate” of 0.82 with forecasts and 0.72 without forecasts; because these values are not plausi-ble optimizer step sizes and no definition is provided, they are treated as normalized learning-progress indicators rather than PPO optimizer rates. 16 Table 3: PPO settings inherited from the base hydrogen-microgrid EMS.                            
+
+> Parameter Value Parameter Value Forecast comparison episodes 100 Discount factor 0.995 GAE factor 0.95 Experience horizon 4,096 Update epochs 10 Mini-batch size 256 PPO clip 0.25 Entropy weight 0.001 Actor network 2×256 ReLU Critic network 2×256 ReLU Battery scale 530 kW Diesel scale 180 kW
+
+The principal physical parameters are a 5300 kW h battery with 0.95 charge/discharge efficiency, a 1370 kg hydrogen tank, an electrolyzer lim-ited to 3.90 kg h −1 with 0.65 efficiency, and a fuel-cell withdrawal limit of 
+
+7.50 kg h −1 with 0.60 efficiency [12]. 
+
+5.6. Benchmark Methods 
+
+Forecasting is compared with linear regression, ridge regression, lasso re-gression, an autoregressive model, and a time-of-day average. For energy management, four information/configuration cases are used: no battery, PPO without forecasts, PPO with the reported forecast, and PPO with perfect forecasts. The no-forecast PPO case preserves the controller and physical model while removing future load information, making it the primary bench-mark for the operational value of forecasting. The perfect-forecast case de-fines an upper information bound rather than a deployable controller. The no-battery case quantifies the combined value of storage and control. No annual RBC, PSO, or alternative-DRL result was included in the supplied forecasting report, so such comparisons are not claimed here. 
+
+6. Results 
+
+This section presents and analyzes the forecasting and predictive energy management performance of the proposed framework. The forecasting accu-racy and resulting impacts on microgrid operation are evaluated from eco-nomic, technical, environmental, and resilience perspectives. 
+
+6.1. Forecasting Performance 
+
+Table 4 summarizes the multi-horizon community-load forecasts. The 1-h forecast provides the lowest RMSE ( 239 .32 kW ) and nRMSE (0.114), with correlation 0.725 and R2 = 0 .201 . Accuracy deteriorates sharply at 6 and 12 17 h: R2 becomes −0.757 and −1.914 , respectively, and the 12-h correlation is negative. This indicates that the model performs worse than a mean-value predictor at these intermediate horizons. At 24–72 h, RMSE returns to approximately 246–250 kW and correlation stabilizes near 0.686, suggesting that the model recovers the broad daily pattern but not peak magnitude. The high MAPE values, especially 126.37% at 12 h, also reflect sensitivity to low-demand observations and substantial amplitude error.                                           
+
+> Table 4: Multi-horizon community-load forecasting performance.
+> Horizon (h) RMSE (kW) MAE (kW) MAPE (%) R2Correlation nRMSE 1239.32 190.90 58.87 0.201 0.725 0.114 6354.10 287.13 84.25 -0.757 0.208 0.169 12 456.48 385.24 126.37 -1.914 -0.423 0.218 24 249.79 197.36 62.52 0.126 0.683 0.119 48 247.62 195.54 61.92 0.136 0.687 0.118 72 246.46 193.85 61.22 0.143 0.686 0.118
+
+Figure 1 shows the horizon dependence, the 24-h prediction with its 95% confidence interval, and the error distribution. The forecast follows the recur-ring load cycle but underestimates several sharp peaks. The error histogram is concentrated below zero, which indicates a tendency toward underpredic-tion under the sign convention used in the report. 18 Figure 1: Forecasting results across prediction horizons, including 24-h prediction and error distribution. 
+
+6.2. Forecasting Model Comparison 
+
+The available baseline comparison is reported in Table 5. Among these lightweight benchmarks, the AR model provides the highest R2 (0.6529) and lowest normalized RMSE (0.6279). Linear regression is second, while ridge and lasso regularization slightly reduce performance. The TOD average has negative R2, indicating that a fixed hourly profile is inadequate. Because the supplied baseline table does not include a row for the Transformer and appears to use normalized scores that are not directly aligned with Table 4, it cannot support a claim that the Transformer outperforms the AR baseline. A common test split and identical normalization are required for a defensible model ranking. 19 Table 5: Forecasting baseline comparison supplied with the simulation report. 
+
+Model R2 Normalized RMSE Complexity Training time (s) Linear regression 0.6077 0.6674 Low 0.12 Ridge regression 0.5904 0.6820 Low 0.15 Lasso regression 0.5892 0.6830 Low 0.18 AR model 0.6529 0.6279 Low 0.05 TOD average -0.0070 – Very low 0.01 
+
+6.3. DRL Training Performance 
+
+Forecast information improves the observed PPO learning trajectory. As shown in Table 6, the forecast-assisted controller begins with a reward of A$24,500 and reaches A$27,571, compared with A$23,800 and A$25,455 without forecasts. The resulting reward gain is 8.3% at the final episode. The forecast-assisted policy improves by A$3,071 over training, whereas the non-predictive policy improves by A$1,655; thus, the reported learning gain is 85.6% larger. Approximate convergence occurs near Episode 30 with fore-casts and Episode 35 without forecasts.                   
+
+> Table 6: PPO training convergence with and without load forecasts.
+> Metric With forecast Without forecast Reported improvement Initial reward (A$) 24,500 23,800 2.9% Final reward (A$) 27,571 25,455 8.3% Training reward increase (A$) 3,071 1,655 85.6% Approximate convergence episode 30 35 14.3% earlier Normalized learning indicator 0.82 0.72 13.9%
+
+Figure 2 confirms that the smoothed forecast-assisted reward remains above the non-predictive reward after the initial training period. Under the report’s sign convention, the forecast-assisted cost curve also becomes more favorable. The episode-to-episode traces remain noisy, so the smoothed curves are more informative than individual episodes. 20 Figure 2: PPO reward and operating-objective convergence with and without forecast inputs. 
+
+6.4. Impact of Forecasting on Energy Management 
+
+The forecast-assisted policy produces A$2,765.83 in annual savings, com-pared with A$2,439.86 without forecasts (Table 7). The incremental value of forecast information is therefore A$325.97, equivalent to 13.4% relative to the non-predictive savings. The perfect-forecast case reaches A$3,054.94, leaving a gap of A$289.11 between the implemented forecast and the informa-tion upper bound. The implemented model captures approximately 90.5% of perfect-forecast savings. Renewable utilization increases by 1.1 percent-age points relative to the no-forecast policy, while the degradation charge increases slightly by A$0.53. The net-benefit improvement remains approxi-mately A$325.44 after the reported degradation charge. 
+
+Table 7: Operational value of forecast information.                     
+
+> Scenario Savings (A$) Savings (%) Utilization (%) Degradation (A$) Net benefit (A$) With forecast 2,765.83 11.2 36.4 18.20 2,747.63 Without forecast 2,439.86 9.9 35.3 17.67 2,422.19 Perfect forecast 3,054.94 12.4 37.7 18.85 3,036.09
+
+21 6.5. Economic Performance 
+
+Table 8 presents the report’s annual economic accounting. Negative val-ues denote a more favorable net operating balance under the simulation sign convention. The no-battery case has an objective value of A$-24,719.53. Adding PPO-controlled storage changes the value to A$-27,159.39 without forecasts and A$-27,485.35 with forecasts. Forecast information therefore im-proves the annual objective by A$325.96 while retaining the same reported grid component. The forecast-assisted case provides 11.2% savings relative to no battery and 13.4% greater savings than the non-predictive policy. These figures describe operating outcomes only; capital cost, replacement cost, and fixed O&M are outside the reported boundary.                         
+
+> Table 8: Economic performance under the report’s operating-balance convention.
+> Metric No battery With forecast Without forecast Grid component (A$) -24,719.53 -24,719.53 -24,719.53 Storage-controlled objective (A$) 0.00 -27,485.35 -27,159.39 Total objective (A$) -24,719.53 -27,485.35 -27,159.39 Savings (A$) 0.00 2,765.83 2,439.86 Savings (%) 0.0 11.2 9.9 Degradation charge (A$) 0.00 18.20 17.67 Net savings (A$) 0.00 2,747.63 2,422.19
+
+6.6. Operational Performance 
+
+The main operational effects are modest (Table 9). Relative to no battery, forecast-assisted PPO reduces peak net load from 681.79 to 676 .26 kW and grid imports from 59,594.33 to 58 147 .49 kW h . Relative to PPO without forecasts, however, the incremental import reduction is only 170 .15 kW h 
+
+(0.29%), and peak net load falls by only 0.65 kW . Peak gross load and maximum ramp rate are unchanged. Curtailment is slightly higher with forecasts than without forecasts, and grid export is slightly lower. Thus, the principal measured value of forecasting is economic timing rather than major peak reduction or curtailment avoidance. The supplied report does not separate electrolyzer, fuel-cell, or hydrogen-tank trajectories, so forecast-specific hydrogen coordination cannot be quantified from these outputs. 22 Table 9: Operational performance metrics. 
+
+Metric No battery With forecast Without forecast Peak load (kW) 1,684.51 1,684.51 1,684.51 Peak net load (kW) 681.79 676.26 676.91 Maximum ramp rate (kW/h) 1,165.09 1,165.09 1,165.09 Curtailment (kWh) 762,274.21 763,593.19 763,437.38 Grid import (kWh) 59,594.33 58,147.49 58,317.64 Grid export (kWh) 760,214.31 764,243.18 764,387.58 
+
+6.7. Environmental Performance 
+
+The forecast-assisted policy reduces grid imports by 2.4% relative to the no-battery case, lowering import-related emissions from 29,797.17 to 
+
+29 073 .74 kg CO 2 under the report’s grid factor. The non-predictive case produces 29 158 .82 kg CO 2; forecast information therefore reduces import-related emissions by a further 85 .08 kg CO 2. The report assigns export cred-its that produce negative net emissions for both controlled cases (Table 10). This accounting yields a reported 1027.5% reduction, but the percentage exceeds 100% because exported renewable electricity is credited against lo-cal emissions. It should be interpreted as an export-credit balance, not as a literal reduction in the community’s physical emissions. A conservative forecast-specific comparison is the additional 785 .62 kg CO 2 of avoided emis-sions relative to the no-forecast policy, approximately 0.26%. 
+
+> Table 10: Environmental performance under the supplied export-credit accounting.
+
+Metric No battery With forecast Without forecast Grid import (kWh) 59,594.33 58,147.49 58,317.64 Grid emissions (kg CO 2) 29,797.17 29,073.74 29,158.82 Battery emissions (kg CO 2) 0.00 4.55 4.42 Net balance (kg CO 2) 29,797.17 -276,358.98 -276,211.71 Avoided emissions (kg CO 2) 0.00 306,156.15 305,370.53 
+
+6.8. Resilience Analysis 
+
+Table 11 evaluates normal, high-load, low-PV, high-price, and grid-outage scenarios. Storage reduces the grid-outage objective from A$164,844.44 to A$131,778.44, corresponding to a protection value of 20.1%. However, the 23 forecast and no-forecast results are identical in every reported stress scenario. The result therefore demonstrates resilience value from the battery/controller configuration, but it does not demonstrate additional resilience from the forecast input. This distinction is important: the forecast improves normal-operation learning and savings, while the resilience experiment is insensitive to the supplied forecast under the tested setup. 
+
+> Table 11: Resilience scenario results.
+
+Scenario No battery (A$) With forecast (A$) Without forecast (A$) Normal -24,719.53 -27,503.26 -27,503.26 High load -14,928.38 -17,773.23 -17,773.23 Low PV 15,563.74 12,833.78 12,833.78 High price -14,188.19 -18,654.28 -18,654.28 Grid outage 164,844.44 131,778.44 131,778.44 
+
+6.9. Comparative Analysis 
+
+The consolidated comparison in Table 12 shows that forecast-assisted PPO provides the best reported economic outcome, lowest grid imports, high-est renewable utilization, and most favorable export-credit emissions balance. It does not change gross peak load and does not outperform non-predictive PPO in the resilience scenarios. The result is therefore more specific than a general claim of universal superiority: the forecast improves learning and price-sensitive operation, while physical resilience is provided by storage and remains unchanged by the forecast in the tested scenarios. 
+
+> Table 12: Consolidated comparison of the principal cases.
+
+Metric No battery With forecast Without forecast Economic savings (A$) 0.00 2,765.83 2,439.86 Renewable utilization (%) – 36.4 35.3 Grid import (kWh) 59,594.33 58,147.49 58,317.64 Peak net load (kW) 681.79 676.26 676.91 Net CO 2 balance (kg) 29,797.17 -276,358.98 -276,211.71 Grid-outage protection (%) 0.0 20.1 20.1 
+
+24 7. Discussion 
+
+This section discusses the key findings obtained from the forecasting and predictive energy management analyses. The practical implications, advan-tages, limitations, and deployment challenges associated with the proposed framework are critically examined. 
+
+7.1. Role of Forecasting in Predictive Energy Management 
+
+The results show that forecast value does not require uniformly high pre-diction accuracy. The forecast-assisted PPO policy obtains a higher final reward and larger savings even though the 6-h and 12-h forecasts have nega-tive R2. This suggests that the controller extracts useful information from the horizons or operating periods where the prediction retains temporal struc-ture. The strongest operational evidence is economic: forecasts increase savings by A$325.97 and improve renewable utilization by 1.1 percentage points relative to non-predictive PPO. By contrast, peak net-load reduction and grid-import reduction are small, and curtailment is not improved. Fore-casting therefore appears to assist transaction timing and storage scheduling more than it changes the gross physical power profile. The results also delimit what cannot yet be claimed. The supplied output does not report electrolyzer, fuel-cell, or hydrogen-tank trajectories for the forecast and no-forecast cases. Consequently, improved hydrogen scheduling is plausible within the inherited PPO framework but is not directly demon-strated by the current result set. Component-level dispatch plots are required to establish whether forecast information changes hydrogen production tim-ing, fuel-cell use, or storage reserve management. 
+
+7.2. Practical Implications and Scalability 
+
+The framework is directly relevant to a 1000-house community because the load, renewable availability, and storage parameters are modeled at that scale. Once trained, PPO inference requires only a neural-network forward pass and is therefore compatible with hourly supervisory control. Forecast generation and PPO inference can be executed sequentially: the forecasting service updates the future load vector, the EMS combines it with current storage and market states, and the PPO policy returns battery, diesel, and hydrogen commands. This modular structure permits the forecasting model to be recalibrated without changing the physical environment or reward def-inition. 25 Scaling to other communities requires more than multiplying demand. Renewable capacities, grid limits, storage power-to-energy ratios, tariff struc-tures, and outage exposure must be rescaled consistently. The forecast model must also be retrained for the local demand distribution. For deployment, the controller should operate behind a safety layer that clips actions, en-forces storage limits, and verifies the power balance. Safe DRL and hybrid MPC–DRL studies provide suitable directions for this implementation layer [37, 38]. 
+
+8. Conclusion 
+
+This paper extended a PPO-based EMS for a 1000-house hydrogen-enabled community microgrid by adding multi-horizon community-load forecasts. The forecasting results are mixed: the 1-h horizon achieves an RMSE of 239 .32 kW and R2 = 0 .201 , the 6-h and 12-h horizons per-form poorly, and the 24-h horizon achieves an RMSE of 249 .79 kW and 
+
+R2 = 0 .126 . Nevertheless, forecast-enriched PPO reaches a final reward 8.3% above the non-predictive controller and converges approximately five episodes earlier. Annual savings increase from A$2,439.86 to A$2,765.83, renewable utilization rises from 35.3% to 36.4%, and grid import falls by 
+
+170 .15 kW h relative to PPO without forecasts. The benefits are not uniform across all dimensions. Peak load and ramp rate are unchanged, curtailment is slightly higher than in the no-forecast case, and forecast-specific resilience improvement is zero in the reported stress tests. The battery/controller configuration provides a 20.1% outage-protection value relative to no battery, but this benefit is identical with and without forecasts. The environmental advantage is likewise modest when assessed through direct grid-import emissions; the much larger reported re-duction arises from export-credit accounting. The central conclusion is therefore that imperfect forecasts can still im-prove PPO learning and economic dispatch, but the present evidence does not support claims of superior forecasting accuracy, major peak reduction, or forecast-enhanced resilience. Future work should recover the complete Transformer training manifest, improve horizon-specific calibration, report component-level battery and hydrogen trajectories, evaluate multiple ran-dom seeds, apply consistent emissions boundaries, and test sustained grid outages. Probabilistic forecasting, safe or uncertainty-aware PPO, digital-twin validation, and real-time community deployment are appropriate next 26 steps. 
+
+References 
+
+[1] M. Uddin, H. Mo, D. Dong, S. Elsawah, J. Zhu, J. M. Guerrero, Micro-grids: A review, outstanding issues and future trends, Energy Strategy Reviews 49 (2023) 101127. [2] S. L. Chartier, V. K. Venkiteswaran, S. S. Rangarajan, E. R. Collins, T. Senjyu, Microgrid emergence, integration, and influence on the future energy generation equilibrium—a review, Electronics 11 (5) (2022) 791. [3] R. Trivedi, S. Patra, Y. Sidqi, B. Bowler, F. Zimmermann, G. Deconinck, A. Papaemmanouil, S. Khadem, Community-based microgrids: Litera-ture review and pathways to decarbonise the local electricity network, Energies 15 (3) (2022) 918. [4] M. Atef, S. Alahakoon, P. Wolfs, U. Mumtahina, T. Khatib, M. Ud-din, Energy management in microgrids: Commercial, industrial, and residential perspectives, Energies 19 (2) (2026) 419. [5] M. Atef, S. Alahakoon, U. Mumtahina, P. Wolfs, T. Khatib, M. Uddin, A review of microgrid energy management systems: methods, challenges, and future directions, International Journal of Ambient Energy 47 (1) (2026) 2595117. [6] O. Sadeghian, A. M. Shotorbani, S. Ghassemzadeh, B. Mohammadi-Ivatloo, Energy management of hybrid fuel cell and renewable en-ergy based systems-a review, International Journal of Hydrogen Energy (2024). [7] B. Modu, M. P. Abdullah, A. L. Bukar, M. F. Hamza, A systematic re-view of hybrid renewable energy systems with hydrogen storage: Sizing, optimization, and energy management strategy, International Journal of Hydrogen Energy (2023). [8] R. Elkhatib, T. Kaoutari, H. Louahlia, Green hydrogen energy source for a residential fuel cell micro-combined heat and power, Applied Thermal Engineering 248 (2024) 123194. 27 [9] D. Das, I. Chakraborty, A. K. Bohre, P. Kumar, R. Agarwala, Sustain-able integration of green hydrogen in renewable energy systems for res-idential and ev applications, International Journal of Energy Research 2024 (1) (2024) 8258624. [10] R. Enaloui, S. Sharifi, B. Faridpak, A. Hammad, M. Al-Hussein, P. Musilek, Techno-economic assessment of a solar-powered green hydro-gen storage concept based on reversible solid oxide cells for residential micro-grid: A case study in calgary, Energy 319 (2025) 134981. [11] M. Atef, S. Alahakoon, U. Mumtahina, P. Wolfs, T. Khatib, M. Uddin, An integrated techno-economic framework for optimal microgrid design: An australian case study, arXiv preprint arXiv:2606.03783 (2026). [12] M. Atef, S. Alahakoon, U. Mumtahina, P. Wolfs, T. Khatib, M. Uddin, Deep reinforcement learning-based energy management for hydrogen-enabled community microgrids under uncertainty (2026). arXiv:2607. 17248 .URL https://arxiv.org/abs/2607.17248 
+
+[13] N. Houben, A. Cosic, M. Stadler, M. Mansoor, M. Zellinger, H. Auer, A. Ajanovic, R. Haas, Optimal dispatch of a multi-energy system mi-crogrid under uncertainty: A renewable energy community in austria, Applied Energy 337 (2023) 120913. doi:10.1016/j.apenergy.2023. 120913 .[14] M. A. Majeed, F. Asghar, U. Hussan, S. Phichaisawat, Optimal en-ergy management system for grid-tied microgrid: An improved adap-tive genetic algorithm, IEEE Access 11 (2023) 117351–117361. doi: 10.1109/access.2023.3326505 .[15] A. Niknami, M. Tolou Askari, M. Amir Ahmadi, M. Babaei Nik, M. Samiei Moghaddam, Resilient day-ahead microgrid energy manage-ment with uncertain demand, evs, storage, and renewables, Cleaner Engineering and Technology 20 (2024) 100763. doi:10.1016/j.clet. 2024.100763 .[16] W. Tang, L. Cao, Y. Chen, B. Chen, Y. Yue, Solving engineering opti-mization problems based on multi-strategy particle swarm optimization 28 hybrid dandelion optimization algorithm, Biomimetics (Basel, Switzer-land) 9 (5) (2024) 298. doi:10.3390/biomimetics9050298 .[17] M. Asif, S. Razzaq, A. Amin, F. P. Mahdi, U. Ahmed, U. Jamil, A. Mah-mood, Combined emission economic dispatch using quantum-inspired particle swarm optimization and its variants, Energy Exploration & Ex-ploitation 42 (5) (2024) 1602–1644. doi:10.1177/01445987241235419 .[18] B. Bhuvaneshwarri, C. Kalaivanan, T. Kanth, P. Deepthi, M. Mah-eswari, V. Saravanan, Hybrid swarm intelligence-based neural frame-work for optimizing real-time computational models in engineering sys-tems, International Journal of Computational and Experimental Science and Engineering 11 (1) (2025). doi:10.22399/ijcesen.1001 .[19] A. Cabrera-Tobar, A. Massi Pavan, G. Petrone, G. Spagnuolo, A review of the optimization and control techniques in the presence of uncertain-ties for the energy management of microgrids, Energies 15 (23) (2022) 9114. [20] P. Sharma, H. D. Mathur, P. Mishra, R. C. Bansal, A critical and com-parative review of energy management strategies for microgrids, Applied Energy 327 (2022) 120028. [21] R. G. Allwyn, A. Al-Hinai, V. Margaret, A comprehensive review on energy management strategy of microgrids, Energy Reports 9 (2023) 5565–5591. [22] M. Bilal, A. A. Algethami, S. Hameed, et al., Review of computational intelligence approaches for microgrid energy management, IEEE Access (2024). [23] M. Mannan, M. Mansor, M. Reza, M. Roslan, P. J. Ker, M. Hannan, Recent development of grid-connected microgrid scheduling controllers for sustainable energy: A bibliometric analysis and future directions, IEEE Access (2024). [24] M. Atef, S. Alahakoon, P. Wolfs, T. Khatib, U. Mumtahina, M. Ud-din, Techno-economic energy planning of residential microgrids: An aus-tralian case study, in: 2025 IEEE PES 35th Australasian Universities Power Engineering Conference (AUPEC), IEEE, 2025, pp. 1–5. 29 [25] M. F. Zia, M. Nasir, E. Elbouchikhi, M. Benbouzid, J. C. Vasquez, J. M. Guerrero, Energy management system for a hybrid pv-wind-tidal-battery-based islanded dc microgrid: Modeling and experimental vali-dation, Renewable and Sustainable Energy Reviews 159 (2022) 112093. [26] W. M. N. Witharama, K. Bandara, K. M. D. P. Bandara, M. I. Azeez, C. Wanigasekara, V. Logeeshan, Advanced genetic algorithm for opti-mal microgrid scheduling considering solar and load forecasting, battery degradation, and demand response dynamics, IEEE Access 12 (2024) 83269–83284. doi:10.1109/access.2024.3412914 .[27] Y. Yang, S. Bremner, C. Menictas, M. Kay, Modelling and optimal energy management for battery energy storage systems in renewable energy systems: A review, Renewable and Sustainable Energy Reviews 167 (2022) 112671. [28] H. Javed, F. Eid, S. El-Sappagh, T. Abuhmed, Sustainable energy man-agement in the ai era: a comprehensive analysis of ml and dl approaches, Computing 107 (6) (2025) 132. [29] E. Tabaku, E. Vyshka, R. Kapçiu, A. Shehi, E. Smajli, Utilizing artificial intelligence in energy management systems to improve carbon emission reduction and sustainability, Jurnal Ilmiah Ilmu Terapan Universitas Jambi 9 (1) (2025) 393–405. [30] E. C. Quispe, M. Viveros Mira, M. Chamorro Díaz, R. Castrillón Men-doza, J. R. Vidal Medina, Energy management systems in higher edu-cation institutions’ buildings, Energies 18 (7) (2025) 1810. [31] C. T. Madabathula, K. Agrawal, V. Mehta, S. Kasarabada, S. S. Kom-mamuri, G. Liu, J. Gao, Smart green energy management for campus: an integrated machine learning and reinforcement learning model, Smart Cities 8 (1) (2025) 30. [32] F. Dakheel, M. Çevik, Optimizing smart grid load forecasting via a hy-brid long short-term memory-xgboost framework: Enhancing accuracy, robustness, and energy management, Energies 18 (11) (2025) 2842. [33] L. N. Boucetta, Y. Amrane, S. Arezki, Wind power forecasting using a gru attention model for efficient energy management systems, Electrical Engineering 107 (3) (2025) 2595–2620. 30 [34] M. S. Ramkumar, J. Subramani, M. Sivaramkrishnan, A. Munimathan, G. K. O. Michael, M. M. Alam, Optimal energy management for multi-energy microgrids using hybrid solutions to address renewable energy source uncertainty, Scientific Reports 15 (1) (2025) 7755. [35] Q. Xu, W. Liu, X. Zhang, D. Xia, J. Zhang, Z. Tian, Drl energy man-agement for urt considering uncertainties of pv and train disturbance, IEEE Transactions on Smart Grid (2026). [36] H. N. Abishu, A. M. Seid, A. Erbad, S. Márquez-Sánchez, J. H. Fer-nandez, J. M. Corchado, Multi-agent drl-based demand response opti-mization for iot-based smart home energy management systems, IEEE Internet of Things Journal (2025). [37] X. Wang, P. Wang, R. Huang, X. Zhu, J. Arroyo, N. Li, Safe deep reinforcement learning for building energy management, Applied Energy 377 (2025) 124328. [38] S. Liu, H. Cheng, S. Jung, Y.-B. Kim, Novel energy management strat-egy for fuel cell/battery hybrid energy systems combining mpc and deep reinforcement learning, Energy Conversion and Management 341 (2025) 120081. [39] T. Song, L. Fu, L. Zhong, Y. Fan, Q. Shang, Two-layer deep rein-forcement learning based port energy management strategy consider-ing transportation-energy coupling characteristics, Energy 318 (2025) 134659. 31
