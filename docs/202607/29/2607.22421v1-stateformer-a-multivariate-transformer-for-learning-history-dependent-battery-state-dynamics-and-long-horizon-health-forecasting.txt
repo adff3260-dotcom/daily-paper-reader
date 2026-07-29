@@ -1,0 +1,222 @@
+Title: StateFormer: A Multivariate Transformer for Learning History-Dependent Battery State Dynamics and Long-Horizon Health Forecasting
+
+URL Source: https://arxiv.org/pdf/2607.22421v1
+
+Published Time: Mon, 27 Jul 2026 00:54:15 GMT
+
+Number of Pages: 5
+
+Markdown Content:
+# StateFormer: A Multivariate Transformer for Learning History-Dependent Battery State Dynamics and Long-Horizon Health Forecasting 
+
+Zhe Bai a, Stephen Harris b
+
+> a
+
+Applied Mathematics and Computational Research 
+
+> b
+
+Energy Storage & Distribution Lawrence Berkeley National Laboratory 
+
+Berkeley, CA 94720, USA 
+
+{zhebai, sjharris }@lbl.gov 
+
+Abstract —This paper introduces a novel multivariate Trans-former StateFormer that forecasts degradation dynamics of large-scale battery systems. The model learns across time scales, from short-term thermal fluctuations to long-term aging trajectories, enabling accurate prediction of battery states including state of charge (SOC), state of health (SOH), or battery temperature. By capturing long-range dependencies and identifying the operating conditions that drive future degradation, the model simultane-ously represents fast electrochemical and thermal processes and slow aging mechanisms within a unified framework. StateFormer 
+
+achieves robust and accurate predictions of battery state estima-tion across both synthetic and real-world datasets. It maintains high predictive performance under additive current/voltage noise levels ranging from 1% to 10% and a wide range of ambient temperatures in a synthetic battery fleet accommodating different types of electrode chemistry and manufacturing, as well as five years of field data collected from residential utility battery systems. The resulting model bridges the laboratory-to-field gap and provides predictive intelligence for maintenance planning, operational optimization, and economic decision-making. 
+
+Index Terms —Battery, state of health, long-range forecasting, energy storage systems, grid edge, electrothermal modeling 
+
+I. I NTRODUCTION 
+
+The rapid integration of variable energy and surging power demands of future grid infrastructures rely heavily on the deployment of large-scale Battery Energy Storage Systems (BESS). Understanding and accurately forecasting the long-term degradation of these battery fleets is a formidable while essential challenge. Grid-scale battery degradation unfolds over multi-year timescales under deeply coupled electrochem-ical, thermal, and operational feedback. Reliable monitoring and long-term forecasting of battery states, including the state of charge (SOC) and state of health (SOH), are essential for ensuring system reliability, optimizing maintenance, and extending asset lifetime. However, accurate battery state fore-casting remains challenging due to the nonlinear interactions among electrochemical, thermal, and operational processes, which evolve over years under diverse conditions. 
+
+This work was supported by the U.S. Department of Energy, Office of Electricity under Award Number DE-AC02-05CH11231. 
+
+Existing data-driven approaches [1]–[3] are constrained by limited training data. Laboratory datasets collected under con-trolled cycling fail to capture the heterogeneous operating and environmental conditions of real-world battery systems, while field data are often proprietary, incomplete, and lack ground-truth degradation labels. Moreover, most existing methods rely on representative battery models that assume homoge-neous degradation across an entire fleet. In practice, battery fleets exhibit significant variability due to manufacturing tol-erances, thermal gradients, and diverse operating conditions. Consequently, accurate SOH forecasting must capture the distribution of degradation trajectories across battery fleets to enable reliable warranty assessment, predictive maintenance, and fleet-scale reliability management. To optimize future grid and data center storage, operators must reliably forecast how dispatch policies interact with site-specific environmental controls. These challenges motivate the development of robust AI models capable of learning long-term battery dynamics from both synthetic and field data while generalizing across diverse operating conditions and measurement uncertainties. To enable reliable deployment, such models must remain resilient to measurement noise, abrupt operational transitions, and dis-continuous system behaviors while maintaining accurate long-horizon predictions. Physics-grounded synthetic simulation platforms complement limited field measurements by gen-erating degradation behaviors that are difficult to observe experimentally, including accelerated aging under extreme operating environment, such as high temperatures. State-space models (SSMs) [4], [5] provide a principled framework for modeling dynamical systems by separating latent system evolution from noisy observations, while Trans-former architectures [6], [7] have demonstrated remarkable capability in capturing long-range temporal dependencies. Building on these complementary strengths, we propose 
+
+StateFormer , a state-space transformer for long-horizon bat-tery state forecasting. StateFormer is validated using both a physics-grounded synthetic battery fleet spanning a wide range of ambient temperatures and multi-year field measurements arXiv:2607.22421v1 [eess.SY] 24 Jul 2026 from a residential battery energy storage system [8]. The results demonstrate accurate and robust long-horizon forecast-ing, strong extrapolation to unseen temperature conditions, resilience to measurement noise, and reliable generalization from simulation to real-world operation, making StateFormer apractical framework for battery fleet monitoring and predictive maintenance. II. N EURAL DEGRADATION MODEL 
+
+A key component of the proposed framework is the neural degradation model, which captures the long-term evolution of battery health under realistic operating conditions. StateFormer 
+
+exploits both state-space representations and long-range atten-tion mechanisms to model the coupled electrochemical and thermal dynamics governing battery aging. This data-driven formulation enables accurate long-horizon state (e.g., SOH) forecasting while remaining robust to measurement noise and heterogeneous operating conditions. Fig. 1 illustrates the neural architecture of the proposed 
+
+StateFormer for learning long-range battery state dynamics. The battery state at time St+1 is determined not only by its current state St, but also by the cumulative operating states encoded in the historical window Lin and the latest actuation or operating condition Υt+1 . Through self-attention 
+
+αi = softmax( qt+1 k⊤ 
+
+> i
+
+), the model dynamically identifies the most relevant historical degradation patterns, while positional encoding preserves the temporal ordering of these states. The resulting latent representation Zin integrates long-term degra-dation memory with the immediate operating input, enabling an accurate battery state estimation. Specifically, the model learns a state transition function of the form in which the transition depends jointly on the degradation history and the current operating input as (1): 
+
+ˆSt+1 = F(ˆSt−Lin +1: t, Υt−Lin +1: t+1 ). (1) Here, S represents multi-variable output, such as the state-of-charge (SOC) and state-of-health (SOH) variables, and Υt
+
+consists of the instantaneous operating variables, including measured current and ambient temperature. The historical SOC and SOH sequence captures the cumulative effects of irreversible degradation mechanisms, while the current elec-trical and thermal states characterize the immediate operating stress experienced by the battery. Combining these comple-mentary sources of feature information, the neural model learns the nonlinear degradation dynamics directly from data without requiring explicit electrochemical or empirical aging equations. Implemented as an autoregressive Transformer, 
+
+StateFormer recursively propagates the battery health state forward in time by conditioning each prediction on previously estimated multivariate states along with the current operating inputs, thereby providing a data-driven approximation to the underlying degradation dynamics. This state-space formula-tion naturally captures the path-dependent nature of battery aging, enabling accurate long-horizon state forecasting under varying operating conditions and serving as the foundation for degradation-aware battery operation and optimization. To rigorously assess long-horizon forecasting, all predic-tions are performed in an autoregressive rollout without state correction from future measurements. For the synthetic bat-tery fleet, only the first 50 hours of complete battery states are provided to initialize the model. Thereafter, StateFormer 
+
+recursively predicts SOC and SOH for the remainder of the three-year evaluation period using its own previous predictions conditioned on the measured hourly current and ambient temperature as inputs. Similarly, for the field measurements, only the first 120 minutes of battery voltage and temperature are used for initialization. The model then recursively forecasts battery voltage and temperature over the remaining one-year period using the measured current and room temperature at each one-minute interval. This protocol evaluates the model’s ability to maintain stable and accurate long-horizon forecasts without access to future ground-truth battery states. III. C ASE STUDY 
+
+A. Synthetic fleet with inherent heterogeneity and noise 
+
+First, we evaluate the proposed framework using a synthetic dataset generated from hour-resolved, multi-decade simula-tions that couple stochastic environmental conditions, market-driven dispatch, electrothermal dynamics, and fleet hetero-geneity. The dataset assumes a fixed-duration, constant-power discharge strategy representative of grid-scale battery energy storage systems participating in energy arbitrage and resource adequacy services, with each battery executing at most one price-driven discharge cycle per day. We simulate the time development of SOC given by (2), 
+
+SOC( t + ∆ t) = SOC( t) − Pgrid (t)∆ tηdis (t)Ecap (t) , (2) where Pbatt( t) = Pgrid( t)/η dis( t). During non-dispatch hours 
+
+Pgrid( t) = 0 , and therefore Pbatt (t) = 0 , so SOC remains unchanged. As state of health declines, the allowable SOC operating window contracts toward end-of-life limits 
+
+SOC max (t) = SOC max ,BOL − (SOC max ,BOL 
+
+− SOC max ,EOL ) 1 − SOH( t)1 − SOH EOL 
+
+, (3) and the usable SOC range shrinks as the battery ages. The increasing internal resistance raises the current required to meet a fixed power request and increases polarization losses (IR drop), so voltage limits are encountered earlier within the nominal SOC range. Under baseline parameters, the allowable SOC window narrows from 0.05 -0.95 at the beginning of life (BOL) to 0.20 -0.80 at end of life (EOL) [9], [10]. The ambient temperature Tamb represents the air temperature inside the battery container regulated by HVAC, and is modeled as 
+
+Tamb (t) = Tsetpoint + α(Tout (t) − ¯Tout ) + ϵ(t)) , (4) where Tsetpoint is the HVAC target ( 22 ◦C baseline), α is the attenuation factor representing the fraction of outdoor temper-ature deviation that penetrates the container, and ϵ(t) is small-amplitude noise capturing HVAC control imprecision. Cell • Capture cross-regime nonlinearity dependencies 
+
+## • Predict long-range behaviors of system dynamics through embeddings       
+
+> Input Projection Layer
+> t−Lin
+> t−Lin+1
+
++               
+
+> …Lin−2Lin−101
+> Positional Embedding
+> t−1
+> t−1
+> I(t) V(t) T(t) S(t)
+
+## ̂ St+1 = ℱ(̂St−Lin+1:t , Υt−Lin+1:t+1)              
+
+> Add & Norm
+> Feed Forward
+> Multi-Head
+> Self-Attention
+> Add & Norm
+> Transformer Encoder (N layers)
+> xN
+> Autoregressive rollouts for multivariate prediction
+> …
+> Historical window (L in )
+> Time
+> Zin
+> StateFormer Forecasting Fig. 1. Schematic of the proposed StateFormer framework. A sliding historical window of battery operating states is encoded into attention-based latent embeddings that capture long-term degradation dynamics. Incorporating the historical operating states, the current operating inputs with the latest battery state, the model autoregressively rolls out the battery states at the following time step.
+
+temperature determines degradation rates through Arrhenius kinetics, employing a quasi-steady-state thermal model, 
+
+Tcell (t) = Tamb (t) + ∆ Tstatic + ∆ Toper (t), (5) 
+
+∆Tstatic = g · ∆Tgradient , (6) where g represents vertical position within the rack ( 0 = bot-tom, 1 = top) and Tgradient is the total temperature difference from bottom to top layer. The operating heat generated from discharge is modeled as 
+
+∆Toper (t) = KT · Pheat (t), (7) 
+
+Pheat (t) = Pgrid (t)( 1
+
+ηdis (t) − 1) , (8) where (7) relates heat generation rate to temperature rise through KT , an effective steady-state thermal gain ( ◦C/KW )that aggregates enclosure heat rejection under quasi-steady operating conditions. Equation (8) calculates the heat genera-tion rate from the difference between power drawn from the battery and power delivered to the grid, where the feedback loop of heat generation inside cells accelerates Arrhenius-driven degradation and further reduces its efficiency. The total capacity loss is the sum of calendar and cycle contributions accumulated over the simulation horizon: 
+
+SOH( t) = 1 − Qloss,cal − Qloss,cyc (t). (9) Calendar aging is modeled as continuous capacity loss driven by temperature and state of charge, accumulating over elapsed time. The instantaneous calendar-aging rate follows a power-law dependence modulated by temperature and SOC stress factors: 
+
+dQ cal 
+
+dt = kcal βt β−1fT (Tcell )f SOC (SOC) , (10) 
+
+fT (Tcell ) = exp[ Ea,cal 
+
+R ( 1
+
+Tref 
+
+− 1
+
+Tcell 
+
+)] , (11) 
+
+fSOC (SOC) = exp[ αcal · (SOC − SOC ref )] (12) where Qcal is fractional capacity loss, kcal is a rate constant, and fT , f SOC represent temperature- and SOC- dependent acceleration factors. The time exponent β is treated as a con-figurable parameter, allowing exploration of different calendar-aging behaviors under grid-relevant operating conditions. Cal-endar aging accumulates continuously, including during idle periods, with the rate determined by the prevailing thermal and SOC conditions. Cycle aging accumulates proportionally to energy throughput with Arrhenius temperature acceleration: 
+
+dQ cyc 
+
+dt = kcyc 
+
+∥Pbatt (t)∥
+
+Ecap 
+
+fT,cyc , (13) 
+
+fT,cyc = exp[ Ea,cyc 
+
+R ( 1
+
+Tref 
+
+− 1
+
+Tcell 
+
+)] , (14) where cycling damage is coupled to instantaneous cell tem-perature, capturing the physical reality that cycling at elevated temperatures accelerates degradation. Discharge efficiency de-grades linearly with the SOH: 
+
+ηdis (t) = ηdis ,BOL − (ηdis ,BOL − ηdis ,EOL ) 1 − SOH( t)1 − SOH EOL 
+
+.
+
+(15) This coupled mechanism creates an electro-thermal feedback loop as internal resistance grows with aging, discharge ef-ficiency declines, increasing resistive heat generation and thereby accelerating Arrhenius-driven degradation [11]. Assets are retired when state of health falls below a fixed, con-figurable threshold [12], SOH( t) ≤ SOH EOL . The baseline threshold is set to SOH EOL = 0.7, rendering grid-scale systems under typical market and safety constraints. In the fleet simulation, we generate populations of assets sharing identical market environments and dispatch schedules but differing in intrinsic characteristics. Each asset receives a quality factor sampled from qfactor ∼ N (1 .0, σ qual ). Degrada-tion rate constants are divided by this factor, representing cell-to-cell variability in effective reaction kinetics, interfacial sta-bility, and defect density reflecting manufacturing tolerances for commercial BMS measurement uncertainty [13]–[15]. The synthetic dataset consists of 50 unique battery cells, each simulated under five ambient temperatures ( 25 , 30 , 35 , 40 ,and 45 ◦C). To evaluate the robustness of StateFormer , additive (a) 
+
+(b)     
+
+> Fig. 2. Predicted and true SOH trajectories of a battery module operated at 40 ◦Cand 45 ◦C. Strong agreement is maintained despite the presence of additive measurement noise, as highlighted in the zoomed-in views.
+
+Gaussian noise with levels ranging from 1% to 5% was inde-pendently applied to the measured current and voltage signals. To assess the model’s extrapolation capability, StateFormer 
+
+was trained using data from the lower-temperature conditions (25 –35 ◦C) and evaluated on unseen operating conditions at elevated temperatures of 40 and 45 ◦C.Figure 2 compares the predicted and reference SOH trajec-tories for all 50 cells over a three-year degradation period. 
+
+StateFormer accurately captures the long-term degradation behavior across the entire fleet, with the predicted trajectories closely matching the ground truth despite the unseen temper-ature conditions. Quantitative comparisons are summarized in Table I, which reports the mean and standard deviation of the predicted SOC at the beginning of life ( SOC BOL ), SOC at the end of life ( SOC EOL ), and SOH at the end of life (SOH EOL ) under 1% additive Gaussian noise. The predicted statistics closely agree with the reference values, with amaximum discrepancy of approximately 0.02% in SOC BOL 
+
+and SOC EOL , while the associated standard deviations remain below 0.001% , demonstrating the high fidelity and consistency of the forecasting model in learning the Arrhenius behavior. The robustness of StateFormer under progressively noisier measurements is further evaluated in Table II, which reports the relative L2 errors and their corresponding 95% confidence intervals for noise levels ranging from 1% to 5% . Across all noise levels, StateFormer consistently maintains a relative L2
+
+error on the order of 2 × 10 −2%, while the 95% confidence intervals remain below 1 × 10 −4%. These results demonstrate                                                                           
+
+> TABLE I STATISTICAL COMPARISON OF TRUE AND PREDICTED BOL/EOL VALUES OF SOC AND SOH AT 45 ◦CWITH 1% ADDITIVE GAUSSIAN NOISE .
+> Variable Battery State of Charge & Health over Time Statistics SOC BOL (%) SOC EOL (%) SOH EOL (%)
+> Max aMin Max Min
+> μT rue 94 .944 6.442 80 .912 19 .089 69 .997
+> σT rue 0.004 0.004 0.006 0.006 69 .997
+> μpred 94 .961 6.442 80 .919 19 .072 0.002
+> σpred 0.005 0.004 0.006 0.006 0.002
+> aUnder baseline parameters, the allowable SOC window narrows (3). TABLE II RELATIVE L2ERROR AND 95% CONFIDENCE INTERVALS UNDER ADDITIVE GAUSSIAN NOISE LEVELS OF 1%,3%,5% AND 10%.
+> Noise StateFormer Prediction Performance Level Relative L2Error (%) 95% CI (%)
+> η= 1% 1.64 e-02 ±1.48 e-04 4.11 e-05
+> η= 3% 1.93 e-02 ±1.03 e-04 2.84 e-05
+> η= 5% 2.78 e-02 ±3.23 e-04 8.95 e-05
+> η= 10% 2.81 e-02 ±1.42 e-03 3.92 e-04
+
+that the proposed framework is highly robust to measurement noise and delivers stable, accurate predictions under realistic sensing uncertainties. 
+
+B. Field measurements of home storage systems 
+
+We further evaluate the predictive performance of State-Former using real-world field measurements from a residen-tial home storage system (HSS) integrated with a rooftop photovoltaic (PV) system [8]. The available measurements include battery current, voltage, power, battery pack housing temperature, and ambient room temperature. In this study, 
+
+StateFormer is trained to predict long-horizon voltage and battery temperature trajectories from historical current mea-surements and room temperature. The dataset spans five years of operation. Measurements collected over the first 35 months ( 2015 –2018 ) are used for training, the subsequent seven months in 2019 are reserved for validation, and the remaining ten months of data in 2020 (ex-cluding October and November, for which measurements are unavailable) are used for testing. This chronological partition evaluates the model’s ability to generalize to future operating conditions over extended time horizons. Fig. 3 compares the predicted and measured battery temper-ature and voltage given current and room temperature through-out the 2020 test period. StateFormer accurately reproduces the long-term temporal evolution of both voltage and battery temperature, including the abrupt operating transition observed between September and December. Across five independent training realizations, the model achieves an average relative L2
+
+error of approximately 0.05% , with a narrow 95% confidence interval of 0.06% . As illustrated in the bottom panel of Fig. 3, the measured voltage and battery temperature consistently remain within the predicted uncertainty bands over the entire test period, demonstrating both the accuracy and reliability of the proposed framework for long-term battery state forecasting under real operating conditions. (a) 
+
+(b) 
+
+(c) 
+
+(d) 
+
+Fig. 3. Field measurements from the HSS and corresponding StateFormer 
+
+predictions. (a) Measured battery current and voltage over the 2020 oper-ating period. (b) Measured and predicted battery cell temperature using the measured current and room temperature as inputs over the same period. (c-d) Measured battery temperature and voltage during a representative 24-hour test period, showing that the field measurements remain within the predicted uncertainty bands. 
+
+IV. C ONCLUSION 
+
+The proposed Transformer-based autoregressive framework enables accurate, robust, and uncertainty-aware long-horizon battery state forecasting across both synthetic battery fleets and multi-year field measurements, demonstrating strong gen-eralization to unseen operating conditions and measurement noise. By combining historical battery states with latest oper-ating conditions through self-attention, the model captures the nonlinear electrothermal dynamics governing battery degra-dation while remaining robust to measurement noise. The close agreement between predicted and measured trajectories validates the model’s ability to perform accurate long-horizon forecasting while preserving short-term prediction accuracy across diverse operating conditions. These results demonstrate the value of combining synthetic fleet-scale and field datasets to develop data-driven battery digital twins for accurate state estimation, health monitoring, and degradation-aware control and optimization in next-generation electric vehicle and grid-scale energy storage systems. Beyond forward prediction, StateFormer serves as a compu-tationally efficient surrogate for inverse degradation modeling, enabling the rapid synthesis of current input profiles that achieve desired SOH trajectories and target battery lifetimes. This capability provides a foundation for scalable battery digital twins that support real-time fleet health monitoring, predictive diagnostics, and degradation-aware operational opti-mization. As battery energy storage systems become critical to future power grids and hyperscale data center infrastructures, battery management can no longer rely on static, single-asset approximations. Instead, next-generation energy man-agement systems require AI frameworks that capture coupled electrochemical-thermal dynamics, fleet-level heterogeneity, and long-term degradation to ensure the reliability, resilience, and economic efficiency of large-scale energy storage through-out its service lifetime. ACKNOWLEDGMENT 
+
+This research used resources of the National Energy Re-search Scientific Computing Center (NERSC), a Department of Energy User Facility. We would like to thank Paul Gasper for valuable discussions on the source data. REFERENCES [1] D. N. How, M. Hannan, M. H. Lipu, and P. J. Ker, “State of charge estimation for lithium-ion batteries using model-based and data-driven methods: A review,” Ieee Access , vol. 7, pp. 136 116–136 136, 2019. [2] Z. Wang, G. Feng, D. Zhen, F. Gu, and A. Ball, “A review on online state of charge and state of health estimation for lithium-ion batteries in electric vehicles,” Energy Reports , vol. 7, pp. 5141–5161, 2021. [3] K. A. Severson, P. M. Attia, N. Jin, N. Perkins, B. Jiang, Z. Yang, M. H. Chen, M. Aykol, P. K. Herring, D. Fraggedakis et al. , “Data-driven prediction of battery cycle life before capacity degradation,” Nature energy , vol. 4, no. 5, pp. 383–391, 2019. [4] Z. Bai, E. Kaiser, J. L. Proctor, J. N. Kutz, and S. L. Brunton, “Dynamic mode decomposition for compressive system identification,” 
+
+AIAA Journal , vol. 58, no. 2, pp. 561–574, 2020. [5] L. Zhou, M. Poli, W. Xu, S. Massaroli, and S. Ermon, “Deep latent state space models for time-series generation,” in International Conference on Machine Learning . PMLR, 2023, pp. 42 625–42 643. [6] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, Ł. Kaiser, and I. Polosukhin, “Attention is all you need,” Advances in neural information processing systems , vol. 30, 2017. [7] Z. Bai and H. Johansen, “Predicting wave reflection and transmission in heterogeneous media via fourier operator-based transformer modeling,” in 2026 International Conference on Artificial Intelligence, Computer, Data Sciences and Applications (ACDSA) . IEEE, 2026, pp. 1–6. [8] J. Figgener, J. Van Ouwerkerk, D. Haberschusz, J. Bors, P. Woerner, M. Mennekes, F. Hildenbrand, C. Hecht, K.-P. Kairies, O. Wessels et al. ,“Multi-year field measurements of home storage systems and their use in capacity estimation,” Nature Energy , vol. 9, no. 11, pp. 1438–1447, 2024. [9] T. Rahman and T. Alharbi, “Exploring lithium-ion battery degradation: A concise review of critical factors, impacts, data-driven degradation estimation techniques, and sustainable directions for energy storage systems,” Batteries , vol. 10, no. 7, p. 220, 2024. [10] V. Kumtepeli, H. Hesse, T. Morstyn, S. M. Nosratabadi, M. Aunedi, and D. A. Howey, “Depreciation cost is a poor proxy for revenue lost to aging in grid storage optimization,” in 2024 American Control Conference (ACC) . IEEE, 2024, pp. 701–706. [11] M. Koller, T. Borsche, A. Ulbig, and G. Andersson, “Defining adegradation cost function for optimal control of a battery energy storage system,” in 2013 IEEE Grenoble Conference . IEEE, 2013, pp. 1–6. [12] Y. Liu and X.-L. Wang, “Warranties of batteries: Requirements, state-of-the-art, relevant analysis methods, and research perspectives,” Journal of Reliability Science and Engineering , vol. 1, no. 3, p. 032003, 2025. [13] S. Fasolato, A. Allam, S. Onori, and D. M. Raimondo, “Analyzing cell-to-cell heterogeneities and cell configurations in parallel-connected battery modules using physics-based modeling,” Journal of Energy Storage , vol. 129, p. 116942, 2025. [14] S. Shete, P. Jog, R. Kumawat, and D. Palwalia, “Battery management system for soc estimation of lithium-ion battery in electric vehicle: a review,” in 2021 6th IEEE International Conference on Recent Advances and Innovations in Engineering (ICRAIE) , vol. 6. IEEE, 2021, pp. 1–4. [15] Y. Che, V. N. Lam, J. Rhyu, J. Schaeffer, M. Kim, M. Z. Bazant, W. C. Chueh, and R. D. Braatz, “Diagnostic-free onboard battery health assessment,” Joule , vol. 9, no. 8, 2025.

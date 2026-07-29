@@ -1,0 +1,53 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-29T21:37:31.924071+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.22421v1",
+      "source": "arxiv",
+      "title": "StateFormer: A Multivariate Transformer for Learning History-Dependent Battery State Dynamics and Long-Horizon Health Forecasting",
+      "abstract": "This paper introduces a novel multivariate Transformer \\emph{StateFormer} that forecasts degradation dynamics of large-scale battery systems. The model learns across time scales, from short-term thermal fluctuations to long-term aging trajectories, enabling accurate prediction of battery states including state of charge (SOC), state of health (SOH), or battery temperature. By capturing long-range dependencies and identifying the operating conditions that drive future degradation, the model simultaneously represents fast electrochemical and thermal processes and slow aging mechanisms within a unified framework. \\emph{StateFormer} achieves robust and accurate predictions of battery state estimation across both synthetic and real-world datasets. It maintains high predictive performance under additive current/voltage noise levels ranging from $1\\%$ to $10\\%$ and a wide range of ambient temperatures in a synthetic battery fleet accommodating different types of electrode chemistry and manufacturing, as well as five years of field data collected from residential utility battery systems. The resulting model bridges the laboratory-to-field gap and provides predictive intelligence for maintenance planning, operational optimization, and economic decision-making.",
+      "authors": [
+        "Zhe Bai",
+        "Stephen Harris"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-07-24T15:40:33+00:00",
+      "link": "https://arxiv.org/pdf/2607.22421v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "battery SOC and SOH prediction addresses key challenges in hybrid UAV energy management",
+      "llm_evidence_cn": "电池SOC与SOH预测解决混合动力无人机能量管理的关键挑战",
+      "llm_evidence": "电池SOC与SOH预测解决混合动力无人机能量管理的关键挑战",
+      "canonical_evidence": "电池SOC与SOH预测解决混合动力无人机能量管理的关键挑战",
+      "llm_tldr_en": "Proposes StateFormer, a multivariate Transformer for battery state and health forecasting, directly addressing SOC control and battery aging issues critical to hybrid UAV energy management.",
+      "llm_tldr_cn": "该论文提出StateFormer模型，利用多变量Transformer预测大规模电池系统的退化动态，涵盖从短期热波动到长期老化轨迹的多时间尺度。模型能准确预测荷电状态(SOC)和健康状态(SOH)，为混合动力无人机能量管理中的SOC维持和电池老化问题提供关键技术支持。",
+      "llm_tldr": "该论文提出StateFormer模型，利用多变量Transformer预测大规模电池系统的退化动态，涵盖从短期热波动到长期老化轨迹的多时间尺度。模型能准确预测荷电状态(SOC)和健康状态(SOH)，为混合动力无人机能量管理中的SOC维持和电池老化问题提供关键技术支持。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "What are the unsolved problems in hybrid UAV energy management, such as SOC control, fuel consumption, generator transients, and mission adaptation?",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

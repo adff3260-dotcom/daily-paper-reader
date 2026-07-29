@@ -1,0 +1,24 @@
+{
+  "label": "2026-07-29",
+  "date": "2026-07-29",
+  "generated_at": "2026-07-29T21:38:48",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202607/29/2607.22421v1-stateformer-a-multivariate-transformer-for-learning-history-dependent-battery-state-dynamics-and-long-horizon-health-forecasting",
+      "section": "quick",
+      "title_en": "StateFormer: A Multivariate Transformer for Learning History-Dependent Battery State Dynamics and Long-Horizon Health Forecasting",
+      "authors": "Zhe Bai, Stephen Harris",
+      "date": "2026-07-24",
+      "pdf": "https://arxiv.org/pdf/2607.22421v1",
+      "score": "7.0",
+      "evidence": "电池SOC与SOH预测解决混合动力无人机能量管理的关键挑战",
+      "tldr": "大规模电池系统状态预测存在快慢动态耦合难题，传统方法难以同时捕捉短期热波动与长期老化。StateFormer多变量Transformer通过跨时间尺度注意力机制，统一学习历史依赖，精准估计SOC、SOH和温度。在多种合成电池和五年住宅现场数据中，对1%-10%电流电压噪声及宽温范围保持高性能，验证了实验室到现场的泛化能力。该模型为电池预测性维护、经济调度和寿命优化提供了可靠智能决策工具。",
+      "tags": "query:uav",
+      "abstract_en": "This paper introduces a novel multivariate Transformer \\emph{StateFormer} that forecasts degradation dynamics of large-scale battery systems. The model learns across time scales, from short-term thermal fluctuations to long-term aging trajectories, enabling accurate prediction of battery states including state of charge (SOC), state of health (SOH), or battery temperature. By capturing long-range dependencies and identifying the operating conditions that drive future degradation, the model simultaneously represents fast electrochemical and thermal processes and slow aging mechanisms within a unified framework. \\emph{StateFormer} achieves robust and accurate predictions of battery state estimation across both synthetic and real-world datasets. It maintains high predictive performance under additive current/voltage noise levels ranging from $1\\%$ to $10\\%$ and a wide range of ambient temperatures in a synthetic battery fleet accommodating different types of electrode chemistry and manufacturing, as well as five years of field data collected from residential utility battery systems. The resulting model bridges the laboratory-to-field gap and provides predictive intelligence for maintenance planning, operational optimization, and economic decision-making.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

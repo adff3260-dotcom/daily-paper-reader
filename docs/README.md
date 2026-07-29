@@ -6,32 +6,26 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-28
-- 运行时间：2026-07-28 21:40:33 UTC
+- 最新运行日期：2026-07-29
+- 运行时间：2026-07-29 21:38:41 UTC
 - 运行状态：成功
-- 本次总论文数：3
+- 本次总论文数：1
 - 精读区：0
-- 速读区：3
+- 速读区：1
 
 ### 今日简报（AI）
-今天速览3篇前沿研究，聚焦预测技术与深度强化学习、模型预测控制的融合应用。  
-氢能社区的深度强化学习能源管理引入预测辅助可提升策略性能，约束型NMPC则用推进预测重规划支撑高速飞行。  
-对可持续能源与自主飞行感兴趣的读者，不妨从这两项预测驱动的控制方法入手探索。
-- 详情：[/202607/28/README](/202607/28/README)
+今天速读了一篇电池健康预测论文，聚焦用Transformer捕捉历史状态依赖进行长程健康预测。  
+核心结论：历史充电状态序列对电池退化预测至关重要，StateFormer在长时预测上优于传统模型。  
+普通读者可关注这类模型在电动车电池寿命预估中的应用潜力。
+- 详情：[/202607/29/README](/202607/29/README)
 
 ### 精读区论文标签
 - 本次无精读推荐。
 
 ### 速读区论文标签
-1. [Forecast-Assisted Deep Reinforcement Learning for Energy Management of Hydrogen-Enabled Community Microgrids](/202607/28/2607.18903v2-forecast-assisted-deep-reinforcement-learning-for-energy-management-of-hydrogen-enabled-community-microgrids)  
+1. [StateFormer: A Multivariate Transformer for Learning History-Dependent Battery State Dynamics and Long-Horizon Health Forecasting](/202607/29/2607.22421v1-stateformer-a-multivariate-transformer-for-learning-history-dependent-battery-state-dynamics-and-long-horizon-health-forecasting)  
    标签：评分：7.0/10、query:uav
-   evidence：深度强化学习用于氢-电池系统能量管理，可迁移至燃料电池/电池无人机
-2. [Forecast-Assisted Deep Reinforcement Learning for Energy Management of Hydrogen-Enabled Community Microgrids](/202607/28/2607.18903v3-forecast-assisted-deep-reinforcement-learning-for-energy-management-of-hydrogen-enabled-community-microgrids)  
-   标签：评分：7.0/10、query:uav
-   evidence：采用PPO强化学习结合负荷预测对含电池和氢储能的微电网进行能量管理，与混合动力无人机能量管理策略直接相关
-3. [BC-NMPC: Battery-Constrained NMPC with Propulsion Prediction and Replanning for High-Speed Flight](/202607/28/2607.23867v1-bc-nmpc-battery-constrained-nmpc-with-propulsion-prediction-and-replanning-for-high-speed-flight)  
-   标签：评分：7.0/10、query:uav
-   evidence：将电池与推进模型集成到NMPC中实现实时功率预测
+   evidence：电池SOC与SOH预测解决混合动力无人机能量管理的关键挑战
 
 
 <div class="dpr-home-promo-card">
