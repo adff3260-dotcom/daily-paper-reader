@@ -1,0 +1,24 @@
+{
+  "label": "2026-07-30",
+  "date": "2026-07-30",
+  "generated_at": "2026-07-30T20:19:26",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202607/30/2607.26325v1-joint-beamforming-energy-management-and-trajectory-optimization-for-figure-eight-loitering-in-solar-powered-haps-enabled-isac-systems",
+      "section": "deep",
+      "title_en": "Joint Beamforming, Energy Management, and Trajectory Optimization for Figure-Eight Loitering in Solar-Powered HAPS-Enabled ISAC Systems",
+      "authors": "Xue Zhang, Bang Huang, Mohamed-Slim Alouini",
+      "date": "2026-07-28",
+      "pdf": "https://arxiv.org/pdf/2607.26325v1",
+      "score": "8.0",
+      "evidence": "太阳能动力HAPS的能量管理通过联合优化与无人机功率管理直接相关",
+      "tldr": "太阳能HAPS结合ISAC可提供广域覆盖，但实现昼夜能量平衡和跨地理区域持久服务面临挑战。采用图八盘旋架构，联合考虑太阳能收集、电池动态、推进功耗及SAR成像，建立通信-感知-能量统一模型。将问题分解为日间与夜间操作，通过电池状态耦合，并通过迭代算法联合优化波束、能源与轨迹，最大化日间通信性能并最小化夜间推进能耗。仿真结果验证了协同设计的有效性，证明所提框架能支撑HAPS的可持续昼夜ISAC运行。",
+      "tags": "query:uav",
+      "abstract_en": "Solar-powered high-altitude platform stations (HAPSs) provide a promising platform for integrated sensing and communication (ISAC) owing to their wide-area coverage and long-endurance operation. This paper proposes a solar-powered HAPS-enabled ISAC framework for sustainable day-night operation, where a figure-eight loitering architecture is adopted to provide persistent ISAC services over geographically separated regions while harvesting solar energy. A unified communication-sensing-energy model is developed by jointly characterizing solar energy harvesting, battery dynamics, propulsion power consumption, communication transmission, and synthetic aperture radar (SAR) imaging. Based on this model, coupled optimization problems are formulated for daytime operation (DTO) and nighttime operation (NTO), where the battery state bridges the two operational phases through a long-term energy budget. The proposed framework jointly optimizes communication, sensing, mobility, and energy management to maximize daytime communication performance while minimizing nighttime propulsion energy consumption. Efficient iterative algorithms are developed to solve the resulting non-convex optimization problems. Simulation results verify the effectiveness of the proposed communication-sensing-energy co-design and demonstrate that the proposed framework effectively supports sustainable day-night ISAC operation.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

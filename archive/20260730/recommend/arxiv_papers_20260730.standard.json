@@ -1,0 +1,53 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-30T20:17:24.300391+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 1,
+    "deep_cap": 6,
+    "deep_selected": 1,
+    "quick_candidates": 0,
+    "quick_skim_target": 11,
+    "quick_selected": 0
+  },
+  "deep_dive": [
+    {
+      "id": "2607.26325v1",
+      "source": "arxiv",
+      "title": "Joint Beamforming, Energy Management, and Trajectory Optimization for Figure-Eight Loitering in Solar-Powered HAPS-Enabled ISAC Systems",
+      "abstract": "Solar-powered high-altitude platform stations (HAPSs) provide a promising platform for integrated sensing and communication (ISAC) owing to their wide-area coverage and long-endurance operation. This paper proposes a solar-powered HAPS-enabled ISAC framework for sustainable day-night operation, where a figure-eight loitering architecture is adopted to provide persistent ISAC services over geographically separated regions while harvesting solar energy. A unified communication-sensing-energy model is developed by jointly characterizing solar energy harvesting, battery dynamics, propulsion power consumption, communication transmission, and synthetic aperture radar (SAR) imaging. Based on this model, coupled optimization problems are formulated for daytime operation (DTO) and nighttime operation (NTO), where the battery state bridges the two operational phases through a long-term energy budget. The proposed framework jointly optimizes communication, sensing, mobility, and energy management to maximize daytime communication performance while minimizing nighttime propulsion energy consumption. Efficient iterative algorithms are developed to solve the resulting non-convex optimization problems. Simulation results verify the effectiveness of the proposed communication-sensing-energy co-design and demonstrate that the proposed framework effectively supports sustainable day-night ISAC operation.",
+      "authors": [
+        "Xue Zhang",
+        "Bang Huang",
+        "Mohamed-Slim Alouini"
+      ],
+      "primary_category": "eess.SP",
+      "categories": [
+        "eess.SP"
+      ],
+      "published": "2026-07-28T22:51:13+00:00",
+      "link": "https://arxiv.org/pdf/2607.26325v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Energy management for solar-powered HAPS via joint optimization directly relevant to UAV power management",
+      "llm_evidence_cn": "太阳能动力HAPS的能量管理通过联合优化与无人机功率管理直接相关",
+      "llm_evidence": "太阳能动力HAPS的能量管理通过联合优化与无人机功率管理直接相关",
+      "canonical_evidence": "太阳能动力HAPS的能量管理通过联合优化与无人机功率管理直接相关",
+      "llm_tldr_en": "Proposes joint optimization of beamforming, energy, and trajectory for solar-powered HAPS to sustain day-night ISAC services, addressing UAV energy management.",
+      "llm_tldr_cn": "针对太阳能动力高空平台平台昼夜持续运行挑战，提出联合波束成形、能量管理和轨迹优化框架，通过统一建模太阳能收集、电池动态和推进功耗，实现持久ISAC服务，为无人机能源管理提供优化方案。",
+      "llm_tldr": "针对太阳能动力高空平台平台昼夜持续运行挑战，提出联合波束成形、能量管理和轨迹优化框架，通过统一建模太阳能收集、电池动态和推进功耗，实现持久ISAC服务，为无人机能源管理提供优化方案。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "UAV power management",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": []
+}
