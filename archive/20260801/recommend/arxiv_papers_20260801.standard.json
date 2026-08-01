@@ -1,0 +1,55 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-01T21:17:42.867676+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.25114v1",
+      "source": "arxiv",
+      "title": "Integrated Eco-Driving and Powertrain Optimization for Hybrid Vehicles in Complex Urban Traffic",
+      "abstract": "Urban eco-driving requires the simultaneous planning of speed, acceleration, lane decisions, surrounding-vehicle safety, intersection rules, and vehicle energy use. Existing studies commonly optimize only selected aspects of urban driving, such as longitudinal motion, lane changing, intersection crossing, or powertrain energy management, while treating the remaining decisions separately. Unlike these studies, this paper develops an integrated finite-horizon eco-driving planning framework for urban hybrid vehicles that jointly optimizes traffic behavior and powertrain operation within a unified mixed-integer formulation. The novelty of the proposed method lies in simultaneously modeling longitudinal motion, lane occupancy and changes, car-following and lane-change safety, signalized and unsignalized intersection behavior, and hybrid powertrain operation. The formulation captures lane availability, lane-dependent speed limits, mandatory and emergency lane changes, safe-to-clear signal conditions, downstream clearance, stop-and-yield rules, engine and motor power, battery state of charge, regenerative braking, and fuel consumption. Simulation studies compare the proposed method with rule-following, signal-aware, overtaking-enabled, and kinematic-only optimization baselines. The results demonstrate improved energy performance while maintaining feasible, safe, comfortable, and traffic-rule-compliant urban driving plans.",
+      "authors": [
+        "Milad Hasanzadeh",
+        "Amin Kargarian",
+        "Mehdi Farasat"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY",
+        "math.OC"
+      ],
+      "published": "2026-07-27T22:19:00+00:00",
+      "link": "https://arxiv.org/pdf/2607.25114v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Powertrain energy management optimization for hybrid vehicles",
+      "llm_evidence_cn": "混合动力车辆动力系统能量管理优化",
+      "llm_evidence": "混合动力车辆动力系统能量管理优化",
+      "canonical_evidence": "混合动力车辆动力系统能量管理优化",
+      "llm_tldr_en": "Proposes an integrated eco-driving and powertrain optimization framework that jointly plans traffic behavior and energy management for hybrid vehicles using mixed-integer programming.",
+      "llm_tldr_cn": "针对城市混合动力汽车，提出一种集成生态驾驶与动力系统优化的有限时域规划框架，通过统一混合整数规划同时优化交通行为和动力系统操作，克服了现有方法仅优化单一方面的局限，实现更优的能耗与行驶效率，为混合动力车辆能量管理提供了新思路。",
+      "llm_tldr": "针对城市混合动力汽车，提出一种集成生态驾驶与动力系统优化的有限时域规划框架，通过统一混合整数规划同时优化交通行为和动力系统操作，克服了现有方法仅优化单一方面的局限，实现更优的能耗与行驶效率，为混合动力车辆能量管理提供了新思路。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "equivalent consumption minimization strategy for hybrid electric vehicles",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

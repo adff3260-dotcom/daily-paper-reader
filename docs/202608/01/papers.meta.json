@@ -1,0 +1,24 @@
+{
+  "label": "2026-08-01",
+  "date": "2026-08-01",
+  "generated_at": "2026-08-01T21:18:55",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202608/01/2607.25114v1-integrated-eco-driving-and-powertrain-optimization-for-hybrid-vehicles-in-complex-urban-traffic",
+      "section": "quick",
+      "title_en": "Integrated Eco-Driving and Powertrain Optimization for Hybrid Vehicles in Complex Urban Traffic",
+      "authors": "Milad Hasanzadeh, Amin Kargarian, Mehdi Farasat",
+      "date": "2026-07-27",
+      "pdf": "https://arxiv.org/pdf/2607.25114v1",
+      "score": "7.0",
+      "evidence": "混合动力车辆动力系统能量管理优化",
+      "tldr": "城市混合动力汽车生态驾驶需同时规划纵向运动、变道、交叉口行为和动力分配，但现有方法常割裂优化。本文提出统一的混合整数集成规划框架，联合建模交通行为与混动能量管理。仿真表明，该框架在复杂城市交通下相比规则遵循等基准显著降低油耗，并生成安全合规且舒适的驾驶计划，为一体化生态驾驶提供了新范式。",
+      "tags": "query:uav",
+      "abstract_en": "Urban eco-driving requires the simultaneous planning of speed, acceleration, lane decisions, surrounding-vehicle safety, intersection rules, and vehicle energy use. Existing studies commonly optimize only selected aspects of urban driving, such as longitudinal motion, lane changing, intersection crossing, or powertrain energy management, while treating the remaining decisions separately. Unlike these studies, this paper develops an integrated finite-horizon eco-driving planning framework for urban hybrid vehicles that jointly optimizes traffic behavior and powertrain operation within a unified mixed-integer formulation. The novelty of the proposed method lies in simultaneously modeling longitudinal motion, lane occupancy and changes, car-following and lane-change safety, signalized and unsignalized intersection behavior, and hybrid powertrain operation. The formulation captures lane availability, lane-dependent speed limits, mandatory and emergency lane changes, safe-to-clear signal conditions, downstream clearance, stop-and-yield rules, engine and motor power, battery state of charge, regenerative braking, and fuel consumption. Simulation studies compare the proposed method with rule-following, signal-aware, overtaking-enabled, and kinematic-only optimization baselines. The results demonstrate improved energy performance while maintaining feasible, safe, comfortable, and traffic-rule-compliant urban driving plans.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
