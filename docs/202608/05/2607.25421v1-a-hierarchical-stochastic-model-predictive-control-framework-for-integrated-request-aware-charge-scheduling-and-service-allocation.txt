@@ -1,0 +1,1341 @@
+Title: A Hierarchical Stochastic Model Predictive Control Framework for Integrated Request-aware Charge Scheduling and Service Allocation
+
+URL Source: https://arxiv.org/pdf/2607.25421v1
+
+Published Time: Wed, 29 Jul 2026 00:46:54 GMT
+
+Number of Pages: 14
+
+Markdown Content:
+1
+
+# A Hierarchical Stochastic Model Predictive Control Framework for Integrated Request-aware Charge Scheduling and Service Allocation 
+
+Mainak Dan, Arvind Easwaran, IEEE Senior Member 
+
+Abstract —This study introduces a unified control mechanism for integrated charging and service allocation of Mobility-on-Demand Electric Vehicles (MoD-EVs) operating under a flexible A-to-B rental model. The charging operation of MoD-EVs is influenced by stochastic customer rental requests and time-varying electricity prices. The framework captures the nonlinear battery dynamics and optimizes the charging operations against dynamic electricity prices and to meet stochastic customer demand while prioritizing battery health and cost efficiency. To address the computational challenges posed by the nonlinear bat-tery dynamics, the framework employs a piece-wise linear model integrated into a multi-objective, chance-constrained mixed-integer linear programming (MILP) Model Predictive Control (MPC) formulation. A mixed logical switching mechanism is utilized to determine optimal charging sequences. Furthermore, a distributed approach is implemented to ensure computational scalability compared to centralized alternatives. Evaluation of this approach using a state-of-the-art commercial solver with stochastic EV rental requests under different confidence levels and time-varying electricity prices demonstrates significant ben-efits of the integrated mechanism design, including a reduction in charging costs and battery capacity degradation compared to the prevailing business-as-usual (BAU) approach and state of the art Laxity-based charging (LC) approach. 
+
+Index Terms —Electric vehicle, mobility-on-demand, battery dynamics, capacity fading, chance-constrained operational op-timization, charging coordination, model predictive control, fleet management. 
+
+NOMENCLATURE 
+
+Abbreviations 
+
+MoD-EV Mobility-on-Demand Electric Vehicle. ECM Equivalent circuit model. SOC State of charge. SOE State of energy. OCV Open circuit voltage. MILP Mixed Integer Linear Programming. MPC Model Predictive Control. 
+
+iCMS Integrated charging management and service allocation mechanism. 
+
+Set and Indices 
+
+ℋ Set of time-bins. 
+
+ℰ𝒞 The fleet of MoD-EVs. ec Index of a MoD-EV in ℰ𝒞 .
+
+Mainak Dan is with Univ. Grenoble Alpes, CNRS, Grenoble INP, G2Elab, 38000 Grenoble, France, e-mail: mainak.dan@grenoble-inp.fr. Arvind Easwaran is with the College of Computing and Data Science, Nanyang Technological University, 50 Nanyang Avenue, 639798, Singapore, e-mail: arvinde@ntu.edu.sg. 
+
+𝜇 Set of charging modes {CM 1 , CM 2 , OFF , DM }.
+
+𝒮𝒯 Set of charging mode transitions. 
+
+𝑘 Time index. 
+
+Decision and State Variables 
+
+xec State vector of EV battery state-space model. 
+
+yec Output vector for EV battery state-space model. 
+
+𝑖 ec Current for charging/discharging operations. 
+
+𝜉 ec 
+
+𝑐 State of charge. 
+
+𝜉 ec 
+
+𝑎𝑣 𝑔 Average state of charge. 
+
+𝜉 ec 
+
+𝑑𝑒𝑣 Deviation in state of charge. 
+
+𝑇 ec in Internal temperature of battery [K]. 
+
+𝑖 ec 
+
+𝑅 ec 
+
+> 𝑗
+
+Current through resistor 𝑗 of ECM [A]. 
+
+𝑣 ec Terminal voltage of battery [V]. 
+
+𝑒 ec State of energy. 
+
+𝛿 ec ,𝑟 𝑖 
+
+all Service allocation variable. 
+
+𝛿 ec 
+
+𝑐,𝑙 Operational segment indicator in piecewise model. 
+
+𝛿 ec 
+
+𝜇 Charging mode indicator 𝜇 .
+
+𝑛 cs all Number of allocated EVs. 
+
+𝐶 ec el Electricity cost . 
+
+𝐶 ec deg Degradation cost 
+
+𝐶 ec sw Charging mode switching cost. 
+
+𝐶 ec cy Cyclic capacity loss of battery. 
+
+Parameters 
+
+Δ𝑡 Sample interval. 
+
+𝑅 ec 
+
+𝑗 ECM electrical resistors. 
+
+𝑅 ec th Thermal resistance of battery. 
+
+𝐶 ec 
+
+𝑗 ECM capacitance. 
+
+𝑄 ec Capacity of the battery. 
+
+𝑣 ec OC Open circuit voltage. 
+
+𝜂 ec Charging and/ discharging efficiency. 
+
+𝜂 ec th Thermal efficiency. 
+
+𝑘 ec 1 − 𝑘 ec 4 Cyclic capacity fading model parameters. 
+
+Aec 
+
+𝑙 , Bec 
+
+𝑙 State-space matrices of segment 𝑙 .
+
+𝑅 ec 
+
+𝑗,𝑙 , 𝐶 ec 
+
+𝑗,𝑙 Modeling parameters of segment 𝑙 .
+
+𝑣 ec OC ,𝑙 OCV in segment 𝑙 .
+
+𝑘 ec 1 –𝑘 ec 4 Capacity degradation model parameters. 
+
+𝐸 ec dep Departure SOE. 
+
+ℛ𝒬 cs [𝑘 ] Set of requests at a charging station cs at time 
+
+𝑘 .
+
+𝑛 cs rq Number of ride requests. 
+
+𝛼 CON Confidence level for chance constraint. arXiv:2607.25421v1 [eess.SY] 28 Jul 2026 2
+
+I. I NTRODUCTION 
+
+A. Motivation 
+
+# THE increasing adoption of electric vehicles (EVs) for mobility-on-demand (MoD-EV) services such as ride-hailing and ride-sharing has led to a transition from personally owned vehicles and individual transportation towards rental-cum-sharing services provided by both private and public transportation companies in recent years [1]–[3]. To meet the ever-changing spatial and temporal patterns of customer demand for such services, particularly in urban areas, mobility providers will encounter difficulties in efficiently overseeing and arranging their expanding fleets of electric vehicles [4]. The integration of EVs with the current energy infrastructure poses several inevitable difficulties, such as power outages, and excessive charging costs, especially if multiple EVs are charging without any coordinated strategies [5]–[7]. In addi-tion, the heterogeneous characteristics of EVs and different energy requirements due to the battery size, state of health, and driving range (energy) requirements can create challenges for interoperability and coordination, leading to the inefficient use of charging infrastructure. Moreover, the inaccurate modeling of the batteries leads to insufficient energy storage, contribut-ing to range anxiety, one of the intrinsic problems associated with EV users. In short, to address these socio-economic and technological challenges, several strategies encompassing the development of smart and advanced scheduling algorithms for automated and optimal charge scheduling and service allocation have become an utmost requirement. 
+
+B. Related Works 
+
+Research on EVs spans from strategies to minimize charging costs for individual owners to the comprehensive management of operational costs for large fleets, e.g. optimizing charging schedules, integrating renewable energy, developing vehicle-to-grid (V2G) technology, and exploring economic and policy implications to enhance the sustainability, reliability, and cost-effectiveness of electric transportation [8], [9]. The existing literature that target modeling approaches can be categorized into two groups concerning EVs’ applicability: one focusing on their use as distributed energy sources within the current energy network, and the other on their application as mobility-on-demand vehicles in transportation services. A predominant group of studies extensively examines the impacts of EV charging on current energy networks. These includes the investigation of energy management methods and effect of power quality due to high penetration of EVs in a grid-connected network [10], [11]. For example, Pan et al. proposed a coordination control strategy to improve the stability and efficiency of standalone DC microgrids integrated with PV and EV charging, addressing the challenges of power fluctuations and voltage instability caused by these variable energy sources [12]. The authors in [13] introduced a multi-objective optimization model that coordinates EV charging in distribution networks to balance the interests of distribution network operators and EV owners, using an innovative I-AUGMENCON method to minimize costs and power loss while enhancing voltage stability and operational efficiency. The authors in [14] considered fleet electrification pace, grid constraint frequency, and trickle charging, to maximize net present value and reduce carbon emissions through integrated photovoltaic-energy storage-charging station systems. These approaches aim to enhance grid management systems through ancillary services, e.g. the utilization of EVs to reduce re-newable energy curtailment [15] and efficient integration of EV movement model with charging infrastructure planning [16], particularly during periods when EVs are in stationary condition (see [17], and the references therein). In addition, the optimized usage of EVs as distributed energy resources for demand response and demand side management have also been studied and explored [18]. Zeynali et al. developed a multi-objective optimization model for scheduling plug-in hybrid EV fleet with wind farms as a price-maker player in the day-ahead wholesale market, aiming to minimize costs and emissions while considering uncertainties in vehicle fleets and wind power [19]. A real-time charging scheme for electric vehicle charging stations has been proposed in [20] to man-age uncertain vehicle demand and optimize participation in incentive-based demand response programs. However, these studies primarily have focused on energy management and used EVs as distributed energy resources, with less emphasis on their impacts on both energy and transportation services. Moreover, most of the EV modeling techniques utilized an oversimplified state-of-the-charge (SOC) based linear energy exchange model that has the inherent limitations of capturing the battery responses under different charging conditions and input stimuli e.g., aggressive current profiles, which may cause severe battery degradation effects. Thus adaptation of detailed battery modeling in devising optimal charge scheduling in parity with the operational and safety constraints is needed [21]. Integrating charge scheduling with service allocation in rental-cum-sharing/mobility-on-demand services can signifi-cantly enhance both the quality of service and cost-efficiency for customers by leveraging the low electricity rates dur-ing off-peak times, anticipating high demand periods, and strategic service allocations. The research on mobility-on-demand pertains to comprehensive fleet operation and man-agement, encompassing charge scheduling, order dispatching, and vehicle rebalancing, particularly for large-scale shared EV fleet operators [22], [23]. There exist research works in the direction of efficient routing problems to improve energy efficiency and to reduce driving range anxiety [24], [25]. Chen 
+
+et al. have proposed a coordinated optimization framework for logistic EVs incorporating simultaneous loading and partial charging, renewable energy integration, and electricity market participation to enhance logistics efficiency, reduce costs, and minimize carbon emissions under uncertain electricity prices and renewable generation [26]. However, flexible charging options and applicability on heterogeneous fleets have not been explored. In [27], Huang et al. proposed a robust optimization model for charging coordination of the electric buses under the uncertainty of remaining capacity, to minimize the total charging cost considering two modes of charging namely battery swapping, and plug-in charging. The authors in [28] have proposed a centralized integrated charging and dispatching strategy to simulate ride-hailing services in New York City to improve fleet performance. However, centralized 3
+
+approaches tend to show scalability issues in implementation for large-scale EV fleets. Tucker et al. [29] have studied an online heuristic algorithm to maximize profit by optimizing the between-ride schedules of the EVs to exploit cheaper time-of-use electricity rates and behind-the-meter solar generation in addition to efficiently re-balancing the vehicles throughout the city to avoid congestion at charging facilities and pick-up locations. Liang et al. [30] designed a partially observable Markov decision process and utilized a blend of deep rein-forcement learning and binary linear programming to craft a nearly optimal solution. In [31], the authors developed a MILP model followed by a heuristic algorithm framework for overall fleet operation and charge scheduling decisions. In [32], the authors utilized dynamic programming and deep reinforcement learning to generate near-optimal control policies for the joint routing and charging problem under the stochastic nature of trip demands, renewable energy availability, and electricity prices. 
+
+C. Research Gap 
+
+Building on the discussion of related works, it is evident that most research on MoD-EV charge scheduling and charging operation optimization relies on simplified SOC-based EV battery models and aggregated degradation cost-based capacity fading models. While these studies focus on broader aspects of fleet operations and management planning, they provide limited insights into battery behavior and the detailed mecha-nisms for selecting charging options under dynamic electricity pricing and uncertain customer demands. The inclusion of battery degradation in EV charging is essential, as existing demand-aware charge planning models for MoD-EVs over-look critical factors such as degradation-dependent parameters and the long-term impact of charging/discharging cycles on heterogeneous fleet performance [33]. Additionally, existing literature has not addressed comprehensive charge planning that accounts for fulfilling rental requests. With the growing penetration of high-power ultra-fast and super-fast charging infrastructure, it has become crucial to consider the nonlinear dynamics such as current-terminal voltage response for safe operational optimization and capacity fading factors such as input current and internal temperature [21]. Following this argument, limited efforts have been dedicated in addressing the following issues in the context of MoD-EVs: 1) development of integrated charging mechanism consid-ering service allocation under stochastic rental requests and nonlinear dynamic behaviour of EV batteries; 2) adaptation of dynamical characteristics-based capacity fading model into the EV battery charging coordination instead of an agglomerated cost model; 3) consideration of stochastic and intermittent behavior of the customer rental requests and dynamic charging costs that impact the overall operational cost of a fleet operator. 
+
+D. Problem Statement and Contributions 
+
+The primary objective of this study is to address the limita-tions above for MoD-EVs operating on an A-to-B model in an urban setting, where the customer (who is also the driver) rents a self-driving EV from a charging station (CS) and returns to another. The EVs are parked and connected to a specific source CS, with demand reflecting customer-initiated rental requests. It is to be noted that the trip bookings although mentioning the destination CS, do not quantify or produce information about the probable distance travelled or route taken by the customer during the rented period. The core challenges of the fleet operator lies not only in matching a vehicle with an appropriate energy level to a rent request but also in planning the charging operation of all other vehicles to maximize service level quality for future rent requests which have the intrinsic nature of uncertainties. A fleet operator considers all the information related to the vehicular state of charge, electricity price, and future demands, and processes accordingly to devise charge scheduling to achieve the following objectives: 1) minimization of electricity cost for charging under dy-namic electricity pricing structure; 2) minimization of the batteries’ capacity fading through strategic energy exchange with the grid; 3) management of supply-demand imbalances by manag-ing the uncertainties in customer-requests prediction through a chance-constrained receding horizon optimiza-tion framework. Ride-hailing systems exhibit uncertainty due to stochas-tic ride-request arrivals and variable travel conditions. Ride-request uncertainty is modeled using a scenario-based chance-constrained formulation constructed from historical ride-request data. By directly using empirical demand realizations, the proposed approach captures observed demand variability without assuming a specific parametric distribution. Service-level constraints are enforced probabilistically by requiring feasibility across a prescribed fraction of demand scenarios, corresponding to a selected confidence level. This confidence level controls the trade-off between operational reliability and system cost, with higher values yielding stronger service guar-antees at the expense of increased resource utilization. This work focuses on optimizing service allocation and charging decisions under demand uncertainty rather than on demand forecasting. Accordingly, we assume that sufficiently accurate short-term ride-request forecasts are available, which is rea-sonable for the operational horizons considered. The core accomplishment of this study is the development of an integrated charging management and service allocation mechanism ( iCMS) that addresses nonlinearities associated with EV batteries, customer-initiated rent requests, battery operational boundaries, and degradation. The key contribution of this research can be summarized as follows: 1) adaptation of a comprehensive parametric battery model that captures and mirrors the nonlinear dynamical be-havior of EV battery pack; 2) construction of a MILP problem through piece-wise linear relaxation of the nonlinear battery model for achieving improvement in computational efficiencies in the decision-making process; 3) development of discrete charging operations and for-mulation of the transition automata among different charging modes in the presence of a unified charging model for vehicle-to-grid interaction; 4
+
+Fig. 1: Centralized Architecture and System Components 4) development of an allocation mechanism based upon the stored charge condition followed by a stochastic multi-objective model predictive control (MPC) framework for overall fleet charging and degradation cost minimization. 5) development of a hierarchical distributed algorithm for overall integrated charge scheduling and ride allocation to reduce the computational complexity of the central-ized approach. 
+
+E. Organization 
+
+The paper is organized as follows. Section II introduces the system components and dynamics forming the basis of the problem formulation. Section III formalizes the central-ized stochastic optimization for fleet management. Section IV presents a hierarchical distributed solution via two-stage stochastic optimization, splitting the problem into global plan-ning and local scheduling. Section V details the case study and experimental setup, and Section VI concludes with key findings and future research directions. II. S YSTEM COMPONENTS AND DYNAMICS 
+
+The primary objective of this investigation is to develop an integrated charging management and service allocation mechanism as shown in Fig. 1, while simultaneously meet-ing operational and service level constraints. The centralized framework comprises of four key components: (i) battery dynamics and operational behavior, (ii) service allocation and ride-demand management, and (iii) vehicle-to-grid interac-tion. Let us consider a fleet of 𝑚 EVs defined by the set, 
+
+ℰ𝒞 = {ec 1 , ec 2 , . . . , ec 𝑚 }. In addition, let us consider that the prediction window is divided into 𝐻 number of time-bins i.e. 
+
+ℋ = {1, . . . , 𝐻 } with each having a duration Δ𝑡 . The model captures either a vehicle’s presence at a CS or the vehicle’s expected arrival time through a vector Arr ec ⊂ {0, 1}1×𝐻 
+
+where each entry defines the presence or absence of the vehicle ec at time-bin 𝑘 in the CS under consideration. It is to be noted that the set ℰ𝒞 only defines the vehicle set that is present at the CS under consideration or en route to that CS and a subset of the actual fleet. 
+
+A. Electric Vehicle Battery Dynamics Modeling 
+
+Battery modeling is central to EV charge scheduling, as accurately capturing nonlinear battery behavior—due to vary-ing discharge rates, temperature effects, and aging—enables reliable state estimation and efficient system operation [21]. EV batteries are commonly modeled using electrochemi-cal, parametric, or data-driven approaches; however, elec-trochemical models are computationally intensive for large-scale optimization, and data-driven models require extensive data. Alternatively, this study employs an enhanced equivalent circuit model (ECM) owing to its computational efficiency, scalability, and ability to accurately capture the trade-off between model accuracy and computational cost by effectively approximating both the transient and steady-state dynamics of batteries [34], [35]. 
+
+1) State Space Modeling: In ECM approach, each battery is represented as an electric circuit that contains a voltage source (reflects the open circuit voltage (OCV)) 𝑣 ec OC in series with a resistor 𝑅 ec 0 , and a finite number of parallel resistor-capacitor (RC) {( 𝑅 ec  
+
+> 𝑗
+
+, 𝐶 ec  
+
+> 𝑗
+
+)} , 𝑗 = 1, · · · , 𝑛 components as depicted in Fig. 1. Let us consider the state vector of the vehicle battery as, 
+
+xec [𝑘 ] =
+
+h𝑇 ec in [𝑘 ], 𝜉 ec  
+
+> 𝑐
+
+[𝑘 ], 𝑖 ec 
+
+> 𝑅 ec 1
+
+[𝑘 ], 𝑖 ec 
+
+> 𝑅 ec 2
+
+[𝑘 ], . . . i⊤
+
+, (1) where, 𝑇 ec in [𝑘 ] is the battery internal temperature, 𝜉 ec  
+
+> 𝑐
+
+[𝑘 ] is the state of the charge (SOC) defined as the measurement of available charge relative to the actual capacity, and 𝑖 ec 
+
+> 𝑅 ec
+> 𝑗
+
+[𝑘 ], 𝑗 =
+
+1, · · · , 𝑛 is current through the resistor of the 𝑗 𝑡 ℎ RC circuit at time instant 𝑘 . The output of the state space model is considered as the state of energy (SOE) 𝑒 ec [𝑘 ] and the terminal voltage 𝑣 ec [𝑘 ] at time instant 𝑘 , which is expressed as a combination of OCV and, the voltage drops across the resistor components. It is to be noted that OCV and the model components are dependent on the SOC of the battery, i.e., 
+
+𝑣 ec OC = 𝑣 ec  
+
+> 𝑂𝐶
+
+(𝜉 ec  
+
+> 𝑐
+
+), 𝑅 ec  
+
+> 𝑗
+
+= 𝑅 ec  
+
+> 𝑗
+
+(𝜉 ec  
+
+> 𝑐
+
+), 𝐶 ec  
+
+> 𝑗
+
+= 𝐶 ec  
+
+> 𝑗
+
+(𝜉 ec  
+
+> 𝑐
+
+), ∀𝑗. (2) Thus, the state estimation and output prediction equations be-come a nonlinear function of the state vector and input/output current 𝑖 ec [𝑘 ] as follows. 
+
+xec [𝑘 + 1] = 𝑓 𝑥 (xec [𝑘 ], 𝑖 ec [𝑘 ]) , (3) 
+
+yec [𝑘 + 1] = [𝑒 ec [𝑘 ], 𝑣 ec [𝑘 ]] ⊤ = fy (xec [𝑘 ], 𝑖 ec [𝑘 ]) . (4) 
+
+2) Capacity Fade Modeling: Capacity fading in batteries can be broadly classified into calendric aging and cyclic aging [36]. Calendric aging dominates in infrequently used vehicles, whereas cyclic aging is more pronounced in high-utilization 5
+
+applications such as rental fleets and MoD-EVs due to repeated charge–discharge cycles. Accordingly, we adopt the cyclic capacity fading model from [36], given by, 
+
+𝐶 ec cy =
+
+
+
+𝑘 ec 1 𝜉 ec  
+
+> 𝑑𝑒𝑣
+
+𝑒 𝑘 ec 2 .𝜉 ec  
+
+> 𝑎𝑣 𝑔
+
++ 𝑘 ec 3 𝑒 𝑘 ec 4 .𝜉 ec 
+
+> 𝑑𝑒𝑣
+
+
+
+.𝑖 ec Δ𝑡, (5) where, 𝑘 ec 1 −𝑘 ec 4 are the modeling parameters. The stress factors during charging are the average SOC 𝜉 ec  
+
+> 𝑎𝑣 𝑔
+
+, SOC deviation 
+
+𝜉 ec  
+
+> 𝑑𝑒𝑣
+
+, and amount of transferred charge 𝑖 ec . The factors, 𝜉 ec 
+
+> 𝑎𝑣 𝑔
+
+and 𝜉 ec  
+
+> 𝑑𝑒𝑣
+
+are computed as follows: 
+
+𝜉 ec  
+
+> 𝑎𝑣 𝑔
+
+[𝑘 ] = 𝜉 ec  
+
+> 𝑐
+
+[𝑘 ] + 0.5 × 𝜂 ec 𝑖 ec [𝑘 ]Δ𝑡 𝑄 ec ,
+
+𝜉 ec  
+
+> 𝑑𝑒𝑣
+
+[𝑘 ] = 0.5 × 𝜂 ec 𝑖 ec [𝑘 ]Δ𝑡 𝑄 ec .
+
+(6) 
+
+B. Service Allocation Mechanism 
+
+The service allocation mechanism aims to match idle ve-hicles with incoming customer rent requests. Unlike personal EV charging, where the departure time is predetermined by the owner and known before scheduling, this investigation deter-mines the EV’s departure time using an automated allocation mechanism based on SOE. The set of incoming requests at the time-instant 𝑘 at the origin charging station is denoted as 
+
+ℛ𝒬 cs [𝑘 ] = {𝑟 1 , 𝑟 2 , · · · } . Thus an EV ec ∈ ℰ𝒞 is allocated if the following expression holds, 
+
+𝛿 ec ,𝑟 𝑖  
+
+> all
+
+[𝑘 ] = 1 =⇒ 𝑒 ec [𝑘 ] ≥ 𝐸 ec dep ∩ 𝛿 ec cs [𝑘 ] = 1, (7a) 
+
+Õ
+
+> 𝑟 𝑖
+
+𝛿 ec ,𝑟 𝑖  
+
+> all
+
+[𝑘 ] ≤ 1, ∀ec , (7b) where 𝐸 ec dep is a parameter denoting the predetermined depar-ture energy level and the boolean variables 𝛿 ec ,𝑟 𝑖  
+
+> all
+
+[𝑘 ], 𝛿 ec cs [𝑘 ] ∈ {0, 1} denotes whether the vehicle is assigned at a time instant 
+
+𝑘 to the request 𝑟 𝑖 and whether the car is present at the concerned charging station. Let us consider that 𝑛 cs all [𝑘 ] is the number of vehicles that are allocated to the incoming service requests at time instant 
+
+𝑘 . In deterministic scenario, the following constraint needs to be satisfied to meet the customer ride-requests, 
+
+𝑛 cs all [𝑘 ] =
+
+Õ
+
+> ec ∈𝒞
+
+𝛿 ec all [𝑘 ] ≥ 𝑛 cs rq [𝑘 ] = |ℛ𝒬 cs [𝑘 ]| , ∀𝑘. (8) However, the number of ride requests at time instant 𝑘 ,denoted by 𝑛 cs rq [𝑘 ], is inherently uncertain and cannot be predicted with perfect accuracy in advance. To account for this uncertainty, we adopt a scenario-based chance-constrained modeling framework derived from historical ride-request data. Instead of imposing a parametric assumption on the demand distribution, historical demands are directly used to character-ize uncertainty, which is particularly suitable for ride-hailing systems exhibiting nonstationary, skewed, or multi-modal de-mand behavior. Consequently, service-level requirements are enforced through the following chance constraint: 
+
+ℙ 𝑛 cs all [𝑘 ] ≥ 𝑛 cs rq [𝑘 ] ≥ 1 − 𝛼 CON , ∀𝑘. (9) where 𝛼 CON ∈ [0, 1] is the confidence level denoting the allowable risk of unmet demand and is treated as a design parameters that govern the trade-off between operational reli-ability and system cost. 
+
+C. Vehicle-to-Grid (V2G) Interaction Mechanism 
+
+The V2G interaction within a unified charging infrastruc-ture is formulated by specifying the availability of multiple charging modes and modeling the mechanisms governing tran-sitions between them. This unified framework is essential for ensuring flexibility and scalability, as it enables the seamless integration and coordinated management of diverse charging modes. In this study, four discrete operational modes namely CM 1 (charging), CM 2 (charging), OFF and DM (discharging) are considered. The switching mechanism is general and can be extended to accommodate any number of charging modes offered by the charging infrastructure, enhancing the system’s adaptability and efficiency in responding to diverse energy needs. These modes have been characterized by four mutually exclusive logical variables 𝛿 ec  
+
+> 𝜇
+
+∈ { 0, 1} with 𝜇 ∈{CM 1 , CM 2 , OFF , DM }. Fig 1 depicts the transition from one mode to the other. The four discrete modes 𝛿 ec  
+
+> 𝜇
+
+[𝑘 ] with 𝜇 ∈{CM 1 , CM 2 , OFF , DM } are characterized by the operating current at any time 𝑘 . Specifically, when the EV is connected to the charging grid, at time instant 𝑘 , it will either extract from or feed in energy to the grid. Depending upon the mode of exchange, the corresponding logical variable will be considered. In other words, 
+
+
+
+𝑖 ec [𝑘 ] = 0 ⇐⇒ 𝛿 ec OFF [𝑘 ] = 1,𝑖 ec 1 ≤ 𝑖 ec [𝑘 ] ≤ ¯ 𝑖 ec 1 ⇐⇒ 𝛿 ec CM 1 [𝑘 ] = 1,𝑖 ec 2 ≤ 𝑖 ec [𝑘 ] ≤ ¯ 𝑖 ec 2 ⇐⇒ 𝛿 ec CM 2 [𝑘 ] = 1,
+
+−𝑖 ec 3 ≤ 𝑖 ec [𝑘 ] ≤ −¯ 𝑖 ec 3 ⇐⇒ 𝛿 ec DM [𝑘 ] = 1,
+
+(10) 
+
+𝛿 ec OFF [𝑘 ] + 𝛿 ec CM 1 [𝑘 ] + 𝛿 ec CM 2 [𝑘 ] + 𝛿 ec DM [𝑘 ] = 1. (11) The transition among different operational modes as shown in Fig. 1 can be expressed with the help of the following expressions, 
+
+𝜎 ec   
+
+> 𝜇 1,𝜇 2
+
+[𝑘 ] = 𝛿 ec  
+
+> 𝜇 1
+
+[𝑘 − 1] ∧ 𝛿 ec  
+
+> 𝜇 2
+
+[𝑘 ], (12) where 𝜎 ec   
+
+> 𝜇 1,𝜇 2
+
+∈ { 0, 1} with (𝜇 1 , 𝜇 2) ∈ 𝒮𝒯 with 
+
+𝒮𝒯 ∈
+
+
+
+(OFF , CM 1), (CM 1 , OFF ), (OFF , CM 2),
+
+(CM 2 , OFF ), (CM 1 , CM 2), (CM 2 , CM 1),
+
+(OFF , DM ), (DM , OFF ), (DM , CM 1),
+
+(CM 1 , DM ), (DM , CM 2), (CM 2 , DM )
+
+
+
+(13) III. O PTIMIZATION PROBLEM FORMULATION 
+
+This section aims to establish an optimal control framework for iCMS that addresses and devises a scalable approach to incorporate the nonlinear behavior of EV batteries as discussed in eqs. (3) and (4) and the logical constraints of V2G interactions as discussed in eqs. (10)-(12). Incorporating nonlinear dynamics into the framework presents challenges for real-time applications, particularly for large EV fleets. Thus, the central challenge lies in translating the dynamic and logical behavior of system components into an MILP formulation and in developing a chance-constrained model predictive control (CCMPC) framework to enable request-aware charging planning for a fleet of MoD-EVs under time-varying electricity prices. 6
+
+A. EV Battery Dynamics Approximation 
+
+The EV batteries show non-linear responses with regards to their SOC across the operational range due to variation in modeling parameters (ref. to eq. (2)) as experimentally demonstrated and depicted later in section V-A and Fig. 3(A). First, we introduce the linear dynamics model, assuming the parameters remain constant throughout the dynamic range. Subsequently, we adopt the concept of simplified linear dy-namics to construct the piecewise approximation. 
+
+1) Battery Linear Dynamics: Following the definition of state variables in eq. (1), the vectorized representation of the linear battery state-space dynamics can be written as [34], [35], 
+
+xec [𝑘 + 1] = Aec xec [𝑘 ] + Bec 𝑖 ec [𝑘 ], (14) where, Aec and Bec are state matrices. By definition, 
+
+Aec = diag 
+
+
+
+𝜂 ec th , 1, 𝑒 − Δ𝑡  
+
+> 𝜏 ec 1
+
+, 𝑒 − Δ𝑡  
+
+> 𝜏 ec 2
+
+, · · · 
+
+
+
+, (15) 
+
+Bec =
+
+h
+
+𝑅 ec th ∗ sgn (𝑖 ec [𝑘 ]) , 𝜂 ec Δ𝑡 𝑄 ec , 1 − 𝑒 − Δ𝑡  
+
+> 𝜏 ec 1
+
+, 1 − 𝑒 − Δ𝑡  
+
+> 𝜏 ec 2
+
+, · · · 
+
+i⊤
+
+,
+
+where 𝑅 ec th is the thermal resistance, 0 < 𝜂 ec th < 1 is a factor that captures the temperature decay effect if idle, sgn (𝑖 ec ) = +1 if 
+
+𝑖 ec ≥ 0 and 𝜏 ec  
+
+> 𝑗
+
+= 𝑅 ec  
+
+> 𝑗
+
+𝐶 ec  
+
+> 𝑗
+
+. The terminal voltage 𝑣 ec , regarded as the output of the state-space model, considers OCV 𝑣 ec OC , the voltage across the series resistance 𝑅 ec 0 (𝜉 ec  
+
+> 𝑐
+
+), and the resistors of the RC parallel circuits, 
+
+𝑣 ec [𝑘 ] = 𝑣 ec OC [𝑘 ] + 𝑅 ec 0 𝑖 ec [𝑘 ] + 
+
+Õ
+
+> 𝑗
+
+𝑅 ec  
+
+> 𝑗
+
+𝑖 ec 
+
+> 𝑅 ec
+> 𝑗
+
+[𝑘 ]. (16) The SOE can be modeled as a linear function of SOC as follows, 
+
+𝑒 ec [𝑘 ] = 𝜃 ec 𝜉 ec  
+
+> 𝑐
+
+[𝑘 ]. (17) 
+
+2) Piecewise Approximations: Based on the linear dynam-ics described in section III-A1, this investigation reduces the computational complexity by dividing the operational SOC range of an EV battery into L mutually exclusive yet consecu-tive sections, each of which exhibits linear output characteris-tics in the OCV-SOC dynamics. Let 𝛿 ec  
+
+> 𝑐,𝑙
+
+∈ { 0, 1}, 𝑙 = 1, . . . , L, indicates the active operating segment such that the following condition is satisfied, 
+
+𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ]𝜉 ec  
+
+> 𝑐,𝑙
+
+≤ 𝜉 ec  
+
+> 𝑐
+
+[𝑘 ] < 𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ] ¯ 𝜉 ec  
+
+> 𝑐,𝑙
+
+,
+
+> L
+
+Õ
+
+> 𝑙 =1
+
+𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ] = 1. (18) In addition, to incorporate continuity between two consecutive segments, the following boundary condition is imposed, 
+
+𝜉 ec  
+
+> 𝑐,𝑙
+
+= ¯𝜉 ec 
+
+> 𝑐,𝑙 −1
+
+. (19) The following condition which shows that the modeling pa-rameters are fixed in values in each segment is imposed to obtain the piece-wise linear model, 
+
+𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ] = 1 =⇒
+
+
+
+𝑣 ec OC [𝑘 ] = 𝑣 ec OC ,𝑙 ,𝑅 ec  
+
+> 𝑗
+
+= 𝑅 ec  
+
+> 𝑗,𝑙
+
+, ∀𝑗 𝐶 ec  
+
+> 𝑗
+
+= 𝐶 ec  
+
+> 𝑗,𝑙
+
+, ∀𝑗. 
+
+(20) Utilizing eq. (20) in eq. (15) and (16), the state dynamics and output equation can be formulated through the following set of equations, 
+
+𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ] = 1 ⇐⇒ 
+
+
+
+xec [𝑘 + 1] = Aec  
+
+> 𝑙
+
+xec [𝑘 ] + Bec  
+
+> 𝑙
+
+𝑢 ec [𝑘 ],𝑣 ec [𝑘 ] = 𝑣 ec OC ,𝑙 + 𝑅 ec 0,𝑙 𝑖 ec [𝑘 ] + Í𝑗 𝑅 ec  
+
+> 𝑗,𝑙
+
+𝑖 ec 
+
+> 𝑅 ec
+> 𝑗,𝑙
+
+[𝑘 ],𝑒 ec [𝑘 ] = 𝜃 ec  
+
+> 𝑙
+
+𝜉 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ],
+
+(21) where, 𝜃 ec  
+
+> 𝑙
+
+is the transformation factor between the SOC and SOE. 
+
+3) Battery Operational Constraints: To cope with the ex-pressions in (21), we consider two auxiliary variables 𝜙 ec  
+
+> 𝑙
+
+(𝑘 )
+
+and 𝜒 ec  
+
+> 𝑙
+
+(𝑘 ) defined as, 
+
+
+
+𝜙 ec  
+
+> 𝑙
+
+(𝑘 ) = 𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ]
+
+
+
+Aec  
+
+> 𝑙
+
+xec [𝑘 ] + Bec  
+
+> 𝑙
+
+𝑢 ec [𝑘 ]
+
+
+
+,
+
+𝜒 ec  
+
+> 𝑙
+
+(𝑘 ) = 𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ]
+
+
+
+𝑣 ec OC ,𝑙 + 𝑅 ec 0,𝑙 𝑖 ec [𝑘 ] + Í𝑗 𝑅 ec  
+
+> 𝑗,𝑙
+
+𝑖 ec  
+
+> 𝑅 ec
+> 𝑗 ,
+
+[𝑘 ]
+
+
+
+,
+
+xec [𝑘 + 1] = ÍL 
+
+> 𝑙 =1
+
+𝜙 ec  
+
+> 𝑙
+
+(𝑘 ),𝑣 ec [𝑘 ] = ÍL 
+
+> 𝑙 =1
+
+𝜒 ec  
+
+> 𝑙
+
+(𝑘 ).
+
+(22) The following equations define the MIL constraints for the above expressions [37], 
+
+
+
+𝜙 ec  
+
+> 𝑙
+
+(𝑘 ) ≤ 𝑀 PL 𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ],
+
+𝜙 ec  
+
+> 𝑙
+
+(𝑘 ) ≥ 𝑚 PL 𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ],
+
+𝜙 ec  
+
+> 𝑙
+
+(𝑘 ) ≤ Aec  
+
+> 𝑙
+
+xec [𝑘 ] + Bec  
+
+> 𝑙
+
+𝑢 ec [𝑘 ] − 𝑚 PL (1 − 𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ]) ,
+
+𝜙 ec  
+
+> 𝑙
+
+(𝑘 ) ≥ Aec  
+
+> 𝑙
+
+xec [𝑘 ] + Bec  
+
+> 𝑙
+
+𝑢 ec [𝑘 ] − 𝑀 PL (1 − 𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ]) ;
+
+𝜒 ec  
+
+> 𝑙
+
+(𝑘 ) ≤ 𝑀 PL 𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ],
+
+𝜒 ec  
+
+> 𝑙
+
+(𝑘 ) ≥ 𝑚 PL 𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ],
+
+𝜒 ec  
+
+> 𝑙
+
+(𝑘 ) ≤ 𝑣 ec OC ,𝑙 + 𝑅 ec 0,𝑙 𝑖 ec [𝑘 ] + Í𝑗 𝑅 ec  
+
+> 𝑗,𝑙
+
+𝑖 ec 
+
+> 𝑅 ec
+> 𝑗
+
+[𝑘 ] − 𝑚 PL (1 − 𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ]) ,
+
+𝜒 ec  
+
+> 𝑙
+
+(𝑘 ) ≥ 𝑣 ec OC ,𝑙 + 𝑅 ec 0,𝑙 𝑖 ec [𝑘 ] + Í𝑗 𝑅 ec  
+
+> 𝑗,𝑙
+
+𝑖 ec 
+
+> 𝑅 ec
+> 𝑗
+
+[𝑘 ] − 𝑀 PL (1 − 𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ]) ;(23) 
+
+where, 𝑀 PL and 𝑚 PL are the BigM operators. It is to be noted that eq. (23) approximates the nonlinear OCV-SOC response of EV batteries by introducing state matrices such as Aec  
+
+> 𝑙
+
+and Bec  
+
+> 𝑙
+
+that only model a particular linear section as defined in eq. (18) and (20). To find optimal results within the permissible and safe operating range of the EV batteries following constraints are also imposed, 
+
+xec ≤ xec [𝑘 ] ≤ ¯ xec , yec ≤ yec [𝑘 ] ≤ ¯ yec . (24) 
+
+B. Vehicle-to-Grid (V2G) Interaction Mechanism 
+
+In order to the integrate the V2G logical interaction and state transitions as described in eq (12) into the iCMS framework, the following MIL constraints are devised (following the discussion in [37]), 
+
+−𝛿 ec  
+
+> 𝜇 1
+
+[𝑘 − 1] + 𝜎 ec   
+
+> 𝜇 1,𝜇 2
+
+[𝑘 ] ≤ 0,
+
+−𝛿 ec  
+
+> 𝜇 2
+
+[𝑘 ] + 𝜎 ec   
+
+> 𝜇 1,𝜇 2
+
+[𝑘 ] ≤ 0, (25) 
+
+𝛿 ec  
+
+> 𝜇 1
+
+[𝑘 − 1] + 𝛿 ec  
+
+> 𝜇 2
+
+[𝑘 ] − 𝜎 ec   
+
+> 𝜇 1,𝜇 2
+
+[𝑘 ] ≤ 1.
+
+where 𝜎 ec   
+
+> 𝜇 1,𝜇 2
+
+∈ { 0, 1} with (𝜇 1 , 𝜇 2) ∈ 𝒮𝒯 with 𝒮𝒯 defined in eq. (13). While the aforementioned formulation designs the switching mechanism, we consider the total energy exchange 7
+
+between an EV and grid by defining a continuous variable 
+
+Δ𝑒 ec [𝑘 ] as, 
+
+Δ𝑒 ec [𝑘 ] = 𝑒 ec [𝑘 + 1] − 𝑒 ec [𝑘 ], (26) 
+
+𝛿 ec DM [𝑘 ] = 1 ⇐⇒ Δ𝑒 ec [𝑘 ] < 0. (27) For ease of understanding, we will utilize the following variables in the rest of the investigation, 
+
+Δ𝑒 ec [𝑘 ] = (Δ𝑒 ec [𝑘 ]) + , if Δ𝑒 ec [𝑘 ] ≥ 0,
+
+Δ𝑒 ec [𝑘 ] = (Δ𝑒 ec [𝑘 ]) − , if Δ𝑒 ec [𝑘 ] < 0.
+
+To implement the CS energy limitations, we impose the following constraints, 
+
+(Δ𝑒 ec [𝑘 ]) + ≤ ¯ 𝐸 cs , (Δ𝑒 ec [𝑘 ]) − ≥ − 𝐸 cs . (28) 
+
+C. CCMPC Problem Formulation 
+
+The utilization of MPC is intended to incorporate time-dynamic electricity prices and customer requests, enabling request-aware charge planning for a fleet of vehicles that are either idle or en route to a specific CS. This section describes the associated costs and provides a detailed formulation of the MPC problem. For ease of understanding, Fig. 2 presents the approximation steps along with the associated constraint formulation and objective functions used to construct the CCMPC problem. 
+
+1) Operational Cost: The total operational cost for the fleet charging includes - (i) the cost of electricity for charging, influenced by the dynamic electricity pricing, (ii) battery degradation cost, influenced by the energy exchange with the charging station (iii) switching cost, responsible for prohibiting abrupt switching of various charging modes and their inter-toggling. In this problem, we consider that the forecasted energy purchase and sale price is available for a particular planning horizon. The total electricity cost due to energy exchange with the grid can be formulated as, 
+
+𝐶 ec el [𝑘 ] = 𝑐 pur el [𝑘 ]( Δ𝑒 ec [𝑘 ]) + − 𝑐 sale el [𝑘 ]( Δ𝑒 ec [𝑘 ]) − , (29) where 𝑐 pur el [𝑘 ] and 𝑐 sale el [𝑘 ] are the purchasing and feeding in unit energy price at time instant 𝑘 .Furthermore, considering the switching cost when choosing a charging mode is crucial, as it deters arbitrary shifts between charging strategies in the algorithm, a behavior that could be prevented by introducing additional expenses. The switching cost is defined as, 
+
+𝐶 ec sw [𝑘 ] =
+
+Õ 
+
+> (𝜇 1,𝜇 2)∈𝒮𝒯
+
+𝑐 ec   
+
+> 𝜇 1,𝜇 2
+
+𝜎 ec   
+
+> 𝜇 1,𝜇 2
+
+[𝑘 ] (30) The battery degradation cost can be calculated by projecting the unit capacity manufacturing cost upon the capacity loss during the charging-discharging cycle in order to implement the V2G system. The cyclic degradation as described in eq. (5)-(6) depends upon the amount of charge exchanged between the vehicle and the grid and the SOC condition. To tackle the complexity and high non-linearity of eq. (5)-(6), we implemented mixed logical dynamic formulation [37] to obtain the piece-wise linear approximation of the degradation function utilizing the binary variables 𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ] and 𝛿 ec  
+
+> 𝜇
+
+[𝑘 ]. The model constraints can be written as follows, 
+
+𝛾 ec 
+
+> 𝑙, 𝜇
+
+[𝑘 ] = 𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ] ∧ 𝛿 ec  
+
+> 𝜇
+
+[𝑘 ],
+
+𝛾 ec 
+
+> 𝑙, 𝜇
+
+[𝑘 ] = 1 ⇐⇒ 𝑐 ec deg [𝑘 ] = ℒ ( 𝑖 ec [𝑘 ], 𝜉 ec  
+
+> 𝑐
+
+[𝑘 ]) , (31) with 
+
+ℒ ( 𝑖 ec [𝑘 ], 𝜉 ec  
+
+> 𝑐
+
+[𝑘 ]) = 𝑐 ec 0,𝑙, 𝜇 + 𝑐 ec 1,𝑙, 𝜇 𝑖 ec [𝑘 ] + 𝑐 ec 2,𝑙, 𝜇 𝜉 ec  
+
+> 𝑐
+
+[𝑘 ], (32) where, 𝜇 ∈ { CM 1 , CM 2 , OFF , DM } and 𝑙 = 1, . . . , L. Consid-ering 𝑐 man as the manufacturing cost of the battery per unit capacity, the overall degradation cost can be expressed as, 
+
+𝐶 ec deg [𝑘 ] = 𝑐 man 𝑐 ec deg [𝑘 ]. (33) 
+
+Fig. 2: Centralized CCMPC Problem 
+
+2) Problem Formulation: The objective of iCMS is to min-imize the multiple objectives occurring from the operational cost and the battery degradation cost. The comprehensive cost of preparing a vehicle for serving the customer request is calculated using a weighted sum of both operational cost as well as the battery degradation cost, as follows, 
+
+𝐶 ec (w, dec )[ 𝑘 ] = 𝑤 1(𝐶 ec el [𝑘 ] + 𝐶 ec sw [𝑘 ]) + 𝑤 2𝜆 deg 𝐶 ec deg [𝑘 ], (34) where, 𝜆 deg acts as scaling factor and 𝑤 1 + 𝑤 2 = 1. The vector of decision variables ∀𝑘, ∀ec is described as, 
+
+dec [𝑘 ] =
+
+h
+
+𝑖 ec [𝑘 ], 𝛿 ec ,𝑟 𝑖  
+
+> all
+
+[𝑘 ], 𝜎 ec   
+
+> 𝜇 1,𝜇 2
+
+[𝑘 ], (Δ𝑒 ec [𝑘 ]) + ,
+
+(Δ𝑒 ec [𝑘 ]) − , 𝛾 ec 
+
+> 𝑙, 𝜇
+
+[𝑘 ], 𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ], 𝛿 ec  
+
+> 𝜇
+
+[𝑘 ]
+
+i⊤
+
+, (35) with the vector of state variables being xec [𝑘 ] defined in (1) and the output variable being [𝑣 ec [𝑘 ], 𝑒 ec [𝑘 ]] ⊤. The chance-constrained MPC can be constructed by formulating the op-timization problem for minimizing the weighted sum of the cost functions over a prediction horizon as follows, 
+
+𝒫 ℳ : min 
+
+> dec [𝑘 ],∀𝑘, ∀ec
+
+Õ
+
+> 𝑘 ∈ℋ
+
+Õ
+
+> ec ∈ℰ𝒞
+
+𝔼 𝒩 rq {𝐶 ec (w, dec )[ 𝑘 ]} (36) s.t., constraints (9) , (18) − (27) , ∀𝑘, ∀ec .
+
+The problem 𝒫 ℳ in eq. (36) defines the multi-time step, mixed-integer chance-constrained optimization problem with its structure illustrated in Fig. 2. The methodology integrates four primary components: an objective function targeting 8
+
+electricity, switching, and degradation costs (29)-(33); mixed-integer piecewise-linear battery dynamics to ensure safe opera-tion (18)-(24); V2G constraints governing bidirectional energy exchange and mode selection (10), (11), (13) and (25)-(28); and a service allocation mechanism employing chance con-straints (7)-(9) to satisfy stochastic rental requests at defined confidence levels. The solution of the MPC problem yields a sequence of decisions dec [𝑘 ], defined in (35), over the prediction horizon ℋ for all vehicles ec ∈ ℰ𝒞 . In line with the MPC paradigm, only the control actions at the current time step are implemented, after which the horizon is shifted and the problem is re-solved. 
+
+Remark III-C.1: (Problem Complexity) Let’s consider a fleet of 𝑛 𝑣𝑒 ℎ vehicles, which includes only the vehicles that are currently idle at the charging station or en route within a specified prediction horizon (𝑁 ), while the number of operational states offered by the charging station is 𝑛 𝑠 . Each vehicle’s battery dynamics are approximated using L piece-wise sections. Consequently, the number of binary decision variables required for the decision-making process at a spe-cific time instant as modeled in section III is determined to be 𝑛 𝑣𝑎𝑟 = 𝑛 𝑣𝑒 ℎ 
+
+
+
+3L + 1 + 𝑛 𝑠 
+
+
+
+2L + 3 + 𝑛 𝑠 −12
+
+ 
+
+. Since prob-lem (36) entails a multi-time step decision-making process spanning 𝑁 time-steps, the total number of binary variables increases to 𝑁 𝑛 𝑣𝑎𝑟 . Similarly, the number of continuous vari-ables involved in the optimization problem can be calculated as 𝑛 𝑣𝑒 ℎ (𝑁 (𝑛 𝑠 L + 10 ) + 2). Although there exist state-of-the-art MILP solvers such as branch-and-bound, the scale of the problem increases with the introduction of more EVs in the fleet to satisfy the increasing demand, and finding the solution to the centralized problem suffers from a slow convergence rate. Thus, to tackle the increasing scale of the problem, the solution method with improved scalability and lower compu-tational requirements is needed for real-time implementation. IV. H IERARCHICAL & D ISTRIBUTED SOLUTION FOR iCMS In Section III, we demonstrated that the centralized prob-lem’s computational complexity increases with the fleet size growth and the prediction horizon extension. This increasing computational complexity poses significant challenges to real-time implementation due to scalability issues. This section presents a distributed hierarchical solution approach designed to effectively manage the computational complexity associated with the problem detailed in Eq. (36). The proposed method employs a two-stage hierarchical framework to solve the optimization problem efficiently: 1) Upper (planning) stage: It employs a reduced order modeling, focusing on allocating the available vehicles to the customer requests by handling the chance con-straints as described in eq. (9) over a horizon. The al-location mechanism results in determining the departure times of the idle EVs and thus provides an important parameter to find the solution in the next stage. 2) Lower (scheduling) stage: The lower stage employs decentralized optimization approach that decomposes the centralized problem into sub-problems for individual MoD-EVs, considering the constraints and objectives related to battery behavior, dynamic pricing, and de-parture time determined by the upper stage problem. The optimization at this level ensures that the EVs are charged adequately to meet their service commitments while minimizing overall operational costs. 
+
+A. Ride Assignment Problem 
+
+The planning stage optimization problem deals with a high-level approach with a reduced number of decision variables. This stage aims to optimize the cost of charging to the desired level of SOE while maintaining the service level constraints over the prediction horizon. The problem can be defined as, 
+
+𝒫 RA : min 
+
+> dec PS [𝑘 ],∀𝑘, ∀ec
+
+Õ
+
+> ec ∈ℰ𝒞
+
+𝔼 𝒩 rq 
+
+(Õ
+
+> 𝑘 ∈ℋ
+
+𝐶 ec el [𝑘 ]
+
+)
+
+(37) s.t., constraints (7) , (9) , (10) , (17) , (26) , (27) , (28) ,
+
+SOC : 𝜉 ec  
+
+> 𝑐
+
+[𝑘 + 1] = 𝜉 ec  
+
+> 𝑐
+
+[𝑘 ] + 𝜂 ec Δ𝑡 𝑄 ec 𝑖 ec [𝑘 ], ∀𝑘, ∀ec .
+
+The formulation incorporates chance-constrained service availability constraints (7)–(9), SOC dynamics and SOE (17) of MoD-EV, and energy exchange feasibility constraints (26)–(27), along with charging station capacity limits (28). The decision variables of this stage are defined as follows 
+
+∀𝑘 ∈ ℋ , ∀ec ∈ ℰ𝒞 ,
+
+dec RA [𝑘 ] = 𝛿 ec ,𝑟 𝑖  
+
+> all
+
+[𝑘 ], (Δ𝑒 ec [𝑘 ]) + , (Δ𝑒 ec [𝑘 ]) −⊤ . (38) It is to be noted that the allocation variables 𝛿 ec all [𝑘 ], ∀ec , ∀𝑘 
+
+determine the departure time of EVs, 𝑡 ec dep , ∀ec ∈ ℰ𝒞 . This departure time is then transmitted to each idle EV for further scheduling of charging variables. The details of the steps involved are discussed in Algorithm 1. 
+
+Algorithm 1 Ride Assignment (RA) Optimization 
+
+Require: Prediction horizon ℋ ; set of EVs ℰ𝒞 ; historical demand profiles; electricity prices; station capacity limits; initial SOE of EVs; confidence level for chance constraints 
+
+Ensure: Ride assignments dec RA [𝑘 ], and departure times 𝑡 ec dep ; 
+
+> 1:
+
+Define decision variables dec RA [𝑘 ] according to (38), ∀𝑘 ∈ℋ , ∀ec ∈ ℰ𝒞 ; 
+
+> 2:
+
+Construct and solve problem 𝒫 RA as defined in (37);  
+
+> 3:
+
+return dec RA [𝑘 ], 𝑡 ec dep ; 
+
+> 4:
+
+Communicate 𝑡 ec dep to idle EVs for subsequent charging-level scheduling. 
+
+Remark IV-A.1: (Complexity) The optimization problem in (37) reduces the number of discrete decision variables compared to (36) focusing only on the high-level energy consumption and service allocation. 
+
+Remark IV-A.2: (Lower bound solution) The ride assign-ment problem serves as a lower bound solution to the charging cost of the original optimization problem in eq. (36) by uti-lizing a simplified reduced order model while maintaining the essential energy consumption and station capacity constraints. 
+
+B. Charging Scheduling and Optimization(CO) 
+
+The second stage optimization problem deals with the intricate EV battery dynamics and safe operational range, and the degradation costs by decomposition the problem into a 9
+
+multi-agent (EV) optimization problem. The application of multi-agent objective has three-fold advantages: 1) Each optimization problem is solved by an individual EV (agent) bypassing the requirement of a centralized solver leading to a reduced computational burden. 2) The departure time, 𝑡 ec dep , ∀ec ∈ ℰ𝒞 within a pre-determined prediction horizon is only transmitted to the idle EVs standing at the CS leading to a fewer number of decomposed sub-problems to be solved in parallel contrary to the centralized approach which considers the en-route EVs reaching CS within that prediction horizon. 3) Given a prediction horizon 𝐻 , it is evident from the RA that 𝑡 ec dep ≤ 𝐻, ∀ec ∈ ℰ𝒞 , leading to a reduced number of optimization variables in each decomposed sub-problem. Thus, in second stage, the resultant optimization problem for a MoD-EV is a deterministic problem with a predetermined departure time as follows, 
+
+𝒫 ec CO : min 
+
+> dec SS [𝑘 ],∀𝑘 𝑡 ec dep
+
+Õ
+
+> 𝑘 =1
+
+𝐶 ec (w, dec CO )[ 𝑘 ] + 𝜆 pen 
+
+
+
+𝐸 ec all − 𝑒 ec [𝑡 ec dep ]
+
+2
+
+s.t., constraints (18) − (27) , ∀𝑘 ∈ ℋ , ∀ec ∈ ℰ𝒞 , (39) with the decision variables for ec ∈ ℰ𝒞 , ∀𝑘 ∈ [ 1, 𝑡 ec dep ] as follows, 
+
+dec CO [𝑘 ] =
+
+h
+
+𝑖 ec [𝑘 ], 𝜎 ec   
+
+> 𝜇 1,𝜇 2
+
+[𝑘 ], (Δ𝑒 ec [𝑘 ]) + , (Δ𝑒 ec [𝑘 ]) − ,
+
+𝛾 ec 
+
+> 𝑙, 𝜇
+
+[𝑘 ], 𝛿 ec  
+
+> 𝑐,𝑙
+
+[𝑘 ], 𝛿 ec  
+
+> 𝜇
+
+[𝑘 ]
+
+i⊤
+
+, (40) and the vector of state variables being xec [𝑘 ] from (1). The details of the steps involved are discussed in Algorithm 2. 
+
+Algorithm 2 Decentralized Charging Optimization (CO) 
+
+Require: departure times 𝑡 ec dep from the RA stage for each MoD-EV in ℰ𝒞 ; initial battery states xec [0]; electricity prices; battery and charging parameters 
+
+Ensure: Optimal charging schedules dec CO [𝑘 ], ∀ec ∈ ℰ𝒞  
+
+> 1:
+
+for each idle EV ec ∈ ℰ𝒞 at the charging station do  
+
+> 2:
+
+Set the prediction horizon to [0, 𝑡 ec dep − 1], define the decision variables dec CO [𝑘 ] as in (40) and initialize the state vector xec [0]; 
+
+> 3:
+
+Solve problem (39);  
+
+> 4:
+
+return dec CO [𝑘 ], ∀ec ∈ ℰ𝒞 ; 
+
+> 5:
+
+end for  
+
+> 6:
+
+Implement the charging action at the current time step V. C ASE STUDY AND RESULTS 
+
+A. Data Preprocessing 
+
+To develop an accurate EV battery model, we utilized a dataset containing 18650 Li-ion cell information as described in [38]. In particular, the pulse discharge experimental dataset in [38] was used to identify the components of the equivalent circuit model depicted in Fig. 3, illustrating their behavior with SOC variations. Battery packs of different capacities were then constructed by combining these cells in series and parallel configurations, denoted as ( 𝑏 𝑠 , 𝑏 𝑝 ), to meet different energy requirements. While certain assumptions were made TABLE I: Battery Parameters                           
+
+> Parameters 𝑣 OC 𝑄 𝑅 0𝑅 1𝑅 1𝐶 1
+> Range 3.2-4.2 20.004-0.014 0.002-0.008 60-250
+> Unit VAh ohm ohm sec
+> Scaling 𝑏 𝑠 𝑣 OC 𝑏 𝑝 𝑄 𝑏 𝑠
+> 𝑏 𝑝 𝑅 0𝑏 𝑠
+> 𝑏 𝑝 𝑅 1𝑅 1𝐶 1
+
+TABLE II: NRMSE and R2 for Different SOC Interval                
+
+> SOC increment (%) 2510 15 20
+> NRMSE (%) 0.03 0.48 3.84 14.58 42.04 R20.987 0.986 0.984 0.978 0.971
+
+in scaling to pack-level models, the essential characteristics observed at the cell level were preserved, providing reliable representations of EV battery performance. The use of cell-level ageing parameters at the pack scale is supported by literature showing that electro-thermal and ageing dynamics identified at the cell level can be extended to packs with proper calibration. Experimentally validated pack-level models indicate that voltage, temperature, and capacity degradation trends are preserved with errors below approximately 5% compared to measured pack data, and cell-to-pack upscaling approaches have been shown to accurately predict pack-level lifetime under realistic operating conditions [39]–[42]. For a comprehensive overview, Table I presents the approxi-mated parameters with scaling. The coefficients of the battery’s cyclic capacity fading model, 𝑘 ec 1 , 𝑘 ec 2 , 𝑘 ec 3 , and 𝑘 ec 4 , were determined by fitting equation (5) to the Stanford degradation dataset [39] using MATLAB’s surface fitting tool, achieving a root mean squared percentage error of 3.7%. Piece-wise linear relaxation was obtained by dividing SOC into increments of 2–20% to determine coefficients for the degradation cost function in equation (31) and the state-space formulation in equation (23). Table II reports normalized RMSE for the piece-wise state-space model and R 2 scores for the degradation cost function. Considering the increase in binary variables with finer increments, a 10% SOC interval was selected, with the corresponding linearized coefficients given in Table III. 
+
+Fig. 3: Battery parameters and OCV modeling 
+
+B. Experimental Setup 
+
+We have utilized a dataset containing 300 EVs (i.e., the number of vehicles that are stationed or en-route to the CS 10 
+
+TABLE III: Range of coefficients for linear approximation of degradation function                     
+
+> 𝜇 𝑖 ec 𝑐 ec 0,𝑙, 𝜇 𝑐 ec 1,𝑙, 𝜇 𝑐 ec 2,𝑙, 𝜇
+> CM 1[20,60] [-6e-4,-0.8e-4] [2.27e-6,9.15e-6] [1e-4,5e-4] CM 2[80,200] [-5e-3,-6.6e-4] [6.34e-6,2.37e-5] [1.1e-3,4.3e-3] DM [-80,-20] [-9e-4,-1.2e-4] [-1.06e-5,-2.7e-6] [2e-4,8e-4] OFF 0000
+
+TABLE IV: Fleet description      
+
+> Capacity (kWh) Capacity (Ah) Initial SOC (%) Batt cost ($/kWh)
+> 34.1 100 30-53 300
+
+over a time horizon of 24 hr ) with varying vehicle-specific parameters as illustrated in Table IV. The dataset also contains the arrival time of the EVs at the charging station and initial SOC. The number of vehicles that are present simultaneously at the charging station may vary depending on the arrival time and customer requests. The case study focuses on price-based charging coordination, real-time operation scheduling, and the cost-effectiveness and robustness performance of the algorithm over the planning horizon. We compare the following schedul-ing algorithms: 1) Business as usual (BAU): BAU is a heuristic approach based on the current industry practice for fleet operators. The policy applies the maximum input current at each time slot during the charging period of each EV upon connection. 2) Laxity-based charging (LC): The laxity-based policy [43] prioritizes vehicles according to their charging slack (time remaining until departure relative to the required charging time), giving higher priority to EVs with tighter deadlines to ensure timely SOC fulfillment. 3) C-iCMS: This approach employs the Gurobi solver [44] for the centralized multi-objective multi-time step stochastic optimization problem in eq. (36) to determine the charging sequences at each time slot for all EVs. 4) D-iCMS: The hierarchical distributed problems in eq. (37) and (39) are solved using Gurobi [44] to determine the charging sequences at each time slot for individual EV. 
+
+Fig. 4: Historical Demand, with solid and dotted lines, repre-senting the actual requests and means of the request scenario, respectively and the spread of the plot, representing the maximum and minimum. To assess the energy efficiency and cost-effectiveness of the proposed iCMS framework, uniform Singapore energy prices (half-hourly energy price in the Singapore wholesale electricity market) [45] over a 24-hour horizon and an actual demand request from the historical demand at a charging station have been considered along with the historical demand scenarios as shown in Fig. 4. It is to be noted that the penalty term introduced to ease the energy requirement for ride allocation enables the algorithms to meet customer demand, even if the desired energy level has not been reached, by incurring an extra penalty cost ( 𝜆 pen ) of $1/kWh for each kWh of energy unmet from the desired level. The switching costs among different charging modes are considered to be $0.1 for iCMS. The scaling factor 𝜆 deg is found to be of the order of 40. The experiments have been performed in a Python environment on a notebook equipped with the Intel core-i7 processor and 16GB RAM. 
+
+C. Comprehending Energy Consumptions and Charging Costs 
+
+To understand the cost-effectiveness, we assumed that the demand requests have been accurately predicted i.e., eq. (36) and (37) has been treated as a deterministic optimization problem. Fig. 4 showcases the demand profile scenarios and actual demand profile. The weight coefficients 𝑤 1 and 𝑤 2 from eq. (36) and (39) are set as 0.9 and 0.1, respectively and 𝐸 ec all 
+
+from eq. (7) is set at 70% of the maximum capacity. Fig. 5 demonstrate the comparative scheduling outcomes between the three strategies as described in section V-B. 
+
+Fig. 5: Price vs. energy consumption profile with 𝐸 ec all , ∀ec ∈ℰ𝒞 at 70% of the maximum capacity with deterministic ride requests TABLE V: Energy and cost efficiency analysis                
+
+> Method PAR Elec. cost ($) Deg. cost ($)
+> BAU 2.04 193.95 21.04 Laxity 2.68 176.54 19.63 C-iCMS 3.89 137.45 7.90 D-iCMS 2.33 138.38 5.2
+
+The performance comparison in Table V reveals clear trade-offs between peak demand characteristics and economic effi-ciency across different charging strategies. The BAU approach achieves the lowest PAR of 2.04, reflecting the smoothest load profile, but this comes with higher electricity and degradation costs, indicating suboptimal economic performance. The LC method lowers electricity cost to $176.54 and slightly reduces degradation cost to $19.63, yet exhibits a higher PAR of 2.68, showing that cost improvements come at the expense of increased load concentration. Among the proposed strategies, the C-iCMS framework achieves the lowest electricity cost and relatively low degrada-tion cost, demonstrating superior cost efficiency. However, this 11 
+
+comes with a substantial increase in PAR, as the centralized algorithm aggressively exploits low-price periods (Fig. 5). In contrast, the D-iCMS approach strikes a balance, attaining near-optimal electricity cost, the lowest degradation cost, and a moderate PAR of 2.33. These performance differences stem from the underlying charging philosophies. LC schedules charging based solely on SOC requirements and departure deadlines, without consider-ing electricity prices, often consuming more energy during high-price periods. Both C-iCMS and D-iCMS incorporate price-informed charging via an MPC structure, which allows them to exploit temporal price variations and optimize energy consumption, resulting in lower electricity costs and occa-sional temporal spikes during low-price “valleys”. The distinction between centralized and decentralized implementations further explains observed behaviors. C-
+
+iCMS leverages global system information to minimize cost but concentrates load, leading to a higher PAR. D-iCMS uses local information, slightly increasing electricity cost but achieving better load distribution and minimal degradation. While C-iCMS optimizes economic performance, D-iCMS of-fers a more balanced solution, and LC remains advantageous when peak reduction and grid stability are prioritized. 
+
+D. Assessment of Stochastic Optimization Solution 
+
+The stochastic objective function in eq. (36) is evaluated using the proposed distributed hierarchical optimization algo-rithm. The solution accounts for the actual demand realization of the current time instant and incorporates chance constraint formulation for the future time instants of the prediction horizon. To assess the effectiveness of the proposed approach, the performance of stochastic optimization is examined in multiple charging modes and varying confidence levels, with 
+
+𝐸 ec all , ∀ec ∈ ℰ𝒞 evaluated in the range of 60 to 80%. The anal-ysis is structured into two complementary sets of results. The first set, presented in Figs. 6(a)–6(c), examines the influence of the confidence level on the optimized cost components. As the confidence level increases, constraint satisfaction is enforced over a broader set of demand scenarios, leading to more conservative decisions that are, in turn, more robust and less sensitive to demand uncertainty. Conversely, lower confidence levels permit the optimizer to exploit favorable realizations, which in turn reduce expected costs but simultaneously in-crease exposure to a greater number of unmet demands. The second set of results, reported in Figs. 6(d)–6(f), captures the cost difference between the optimized chance-constrained solution and the recourse action cost — defined here as the cost incurred under actual demand materializa-tion, encompassing charging, battery degradation, and penalty cost components across the planning horizon. This difference reflects the implicit cost of uncertainty not fully anticipated by the chance-constrained formulation at a given confidence level, and serves as a key indicator of solution robustness. Higher confidence levels consistently yield smaller deviations between the chance-constrained and recourse action costs, confirming that more conservative decisions better anticipate actual demand outcomes and reduce the need for costly corrective adjustments. Nevertheless, the marginal reduction in this cost difference diminishes as the confidence level approaches unity, reflecting the characteristic trade-off inher-ent to chance-constrained optimization, whereby additional conservatism ceases to yield proportional gains in robustness against demand uncertainty. It is to be noted that higher confidence levels necessitate stricter service guarantees in the face of demand uncertainty, requiring greater fleet availability or charging flexibility. In contrast, lower confidence levels reduce operational burden at the expense of an increased likelihood of unmet ride requests.   
+
+> (a) Charging cost (b) Degradation cost (c) Penalty violation
+> (d) deviation in charg-ing cost
+> (e) Deviation in degra-dation cost
+> (f) Deviation in penalty
+
+Fig. 6: Stochastic optimization performance analysis for vari-ous confidence levels 
+
+E. Multi-Objective Framework Assessment 
+
+Fig. 7 illustrates the impact of favoring one objective over another through the allocation of greater weights. To understand the effect of optimizing one objective more over others, we have varied the weight 𝑤 1 from 1 to 0 to capture the optimized objectives. As evident from Fig. 7, applying a higher weight to the charging cost yields the most pronounced reduction in charging expenses compared to the other alterna-tive weight combinations. The battery degradation cost has been seen to be improved with a weight of 0.1 compared to the lower weight of 0.9. Although the absolute value of the degradation cost related to battery value preservation as reported in Fig. 7 might not be considerably substantial, its 
+
+Fig. 7: Pareto front with different weight vectors for charging and degradation cost. The weight 𝑤 1 is indicated. 12 
+
+Fig. 8: Normalized penalty cost and electricity cost analysis at different penalty factor and 𝐸 ec all level TABLE VI: Understanding the effect of switching parameters                 
+
+> Variations PAR Elec. cost($) Deg. cost($) Penalty($)
+> D-iCMS 5.05 164.58 10.73 1.55 D-iCMS-V1 2.6 166.5 6.88 14 D-iCMS-V2 5.15 173.6 14.66 1.55
+
+long-term implications prove beneficial in addressing battery state of health, resale value, and collective driving range of the fleet. Thus, the incorporation of a comprehensive degradation model followed by its piece-wise linearization for improved computational complexity into the framework captures the degradation of the EV battery with higher accuracy. 
+
+F. Understanding the Effect of Hyperparameters 
+
+The model formulation involves two key hyper-parameters: (i) penalty cost and (ii) switching cost. The penalty cost sig-nificantly impacts the energy state of electric vehicles (EVs) at departure. Fig. 8 illustrates the relationship between charging costs and penalty violation costs across various penalty factors. At the lowest penalty factor of 0.001, the charging cost is minimized, but this results in more penalty violations, causing vehicles to depart with insufficient SOE. Conversely, a higher penalty cost reduces penalty violations but leads to increased energy costs. 
+
+Fig. 9: Consumption profile for variations in switching param-eters In addition, we have experimented with the following com-binations of switching costs to understand their impact on the overall operational, degradation cost, and penalty violation cost: 1) D-iCMS-V1: by setting 𝑐 ec OFF ,CM 2 , 𝑐 ec CM 2 ,OFF , 𝑐 ec CM 2 ,CM 1 ,
+
+𝑐 ec CM 1 ,CM 2 at higher values of $10; 2) D-iCMS-V2: by setting 𝑐 ec OFF ,CM 1 , 𝑐 ec CM 1 ,OFF , 𝑐 ec CM 2 ,CM 1 ,
+
+𝑐 ec CM 1 ,CM 2 at higher values of $10. Table VI summarizes the electricity costs, battery degradation costs, penalty terms, and PAR at the 70% 𝐸 ec all level for different switching configurations. To clearly highlight the impact of switching parameters, the maximum power draw constraint is relaxed in this analysis, allowing the effects to be observed more prominently without loss of generality. The D-iCMS-V1 variant, characterized by switching costs that favor slower charging, achieves a substantially lower PAR compared to the other configurations. This reduction in charging intensity also leads to significantly lower battery degradation costs. However, this conservative charging behav-ior results in a notable increase in penalty costs, indicating more frequent constraint violations. In contrast, D-iCMS-V2, which relies exclusively on fast charging, exhibits the highest degradation cost and a slightly higher PAR, reflecting more ag-gressive energy usage. Nevertheless, it maintains low penalty costs, as the higher charging rates enable better compliance with operational constraints. The baseline D-iCMS strikes a balance between these two extremes, achieving moderate electricity cost, degradation cost, and low penalty cost, while maintaining a PAR of 5.05. It is to be noted that the results signify that the unified model can be tuned via switching cost parameters to prioritize either grid smoothness and battery health (D-iCMS-V1) or operational feasibility and constraint satisfaction (D-iCMS-V2), with D-iCMS providing a balanced trade-off among the competing objectives. 
+
+G. Run-time Analysis 
+
+Table VII presents the runtime of C-iCMS and D-iCMS ap-proaches under different sampling intervals and prediction horizons for a 24-hour planning horizon. Given a price sig-nal with a 30-minute sampling interval, a first-order hold method is employed to model intermediate points when using shorter sampling intervals. As expected, the runtime of the C-
+
+iCMS approach increases significantly with shorter sampling intervals and longer prediction horizons, primarily due to the growth in the number of binary variables and the number of linear programming subproblems generated through cutting planes, branching, and bounding nodes. This highlights the scalability challenges of centralized implementation for real-time operation. In contrast, the D-iCMS approach decomposes the problem into a two-stage process. The higher-level stage solves a simplified assignment problem, while the lower-level stage distributes the detailed computation among individual EV agents, reducing the number of decision variables per subproblem and enabling parallel computation. The tabulated runtime corresponds to the combination of the higher-level solution and the maximum runtime among all lower-level EV agents, illustrating the computational efficiency of the distributed framework. Table VIII further explores the impact of SOC discretiza-tions on runtime and battery degradation cost deviation in the D-iCMS framework. Finer SOC increments lead to a larger number of binary variables, which substantially increases 13 
+
+TABLE VII: Runtime (in sec) w.r.t. prediction horizon and sampling interval 
+
+Algorithm Interval(min) 10 15 20 30 C-iCMS 190.25 20.38 27.8 3.2 
+
+D-iCMS 3.8 1.35 3.8 1.3 
+
+TABLE VIII: Runtime and degradation cost deviation analysis for D-iCMS under different SOC discretizations 
+
+Metric 2% 5% 10% 20% 
+
+Runtime (s) 223.7 20.2 1.35 0.41 Deg. Dev. (%) 0.04 0.19 0.52 1.93 
+
+runtime, whereas coarser increments reduce computational effort but slightly increase the deviation in degradation cost, calculated as the difference between the original nonlinear degradation model in (5) and the piecewise linear approxi-mation from (31) used in the simulation. For instance, small SOC increments yield the most accurate representation of battery aging but result in the highest runtime, which may limit practical applicability in real-time or large-scale deployments. Conversely, moderate to coarse SOC increments dramatically reduce runtime while maintaining degradation cost deviation within acceptable bounds, highlighting a key trade-off be-tween computational efficiency and modeling accuracy. The centralized C-iCMS method achieves an optimality gap of about 0.1%, while the distributed D-iCMS method reaches an even smaller gap of roughly 0.005%, demonstrating that both approaches yield near-optimal solutions. VI. C ONCLUSION 
+
+This study proposes an integrated charge-scheduling and service-allocation framework to improve service quality and reduce operational costs for EV ride-hailing customers. We formulated a stochastic Mixed-Integer Linear Programming Model Predictive Control (MILP-MPC) framework, supported by a hierarchical distributed algorithm to ensure compu-tational scalability. The analysis demonstrates that our D-
+
+iCMS framework achieves a favorable balance between real-time implementability and solution fidelity. While 10% SOC discretizations offer a robust starting point, careful tuning remains essential to balance runtime performance with battery degradation accuracy as fleet sizes grow. Finally, the framework provides a practical decision-support tool for fleet management. By adjusting the weights of the cost function and cost coefficients, fleet managers can achieve the following objectives:  
+
+> •
+
+balance competing objectives: Real-time tuning be-tween electricity costs, service reliability, and battery longevity allows for operational adaptability to changing market conditions;  
+
+> •
+
+enable grid-Responsive dispatching: The model facil-itates grid-conscious charging, helping to mitigate peak-load impacts while taking advantage of potential energy price incentives;  
+
+> •
+
+scale sustainably: The decentralized computation struc-ture allows managers to scale fleet operations indepen-dently of the computational bottlenecks common in cen-tralized systems. ACKNOWLEDGMENT 
+
+This study is supported under the RIE2020 Industry Align-ment Fund – Industry Collaboration Projects (IAF-ICP) Fund-ing Initiative, as well as cash and in-kind contributions from the industry partner(s). This research is also part of the pro-gramme DesCartes and is supported by the National Research Foundation, Prime Minister’s Office, Singapore, under its Campus for Research Excellence and Technological Enterprise (CREATE) programme. REFERENCES [1] Y. Zhao, Y. Wen, F. Wang, W. Tu, S. Zhang, Y. Wu, and J. Hao, “Fea-sibility, economic and carbon reduction benefits of ride-hailing vehicle electrification by coupling travel trajectory and charging infrastructure data,” Applied Energy , vol. 342, p. 121102, 2023. [2] Y. Xu, L. Ling, J. Wu, and S. Xu, “On-demand ride-hailing platforms under green mobility: Pricing strategies and government regulation,” 
+
+Transportation Research Part E: Logistics and Transportation Review ,vol. 189, p. 103650, 2024. [3] Y. Li, X. Li, and A. Jenn, “Evaluating the emission benefits of shared autonomous electric vehicle fleets: A case study in california,” Applied Energy , vol. 323, p. 119638, 2022. [4] T. Zeng, H. Zhang, S. J. Moura, and Z.-J. M. Shen, “Economic and environmental benefits of automated electric vehicle ride-hailing services in new york city,” Scientific Reports , vol. 14, no. 1, p. 4180, 2024. [5] I. Mahmud, M. B. Medha, and M. Hasanuzzaman, “Global challenges of electric vehicle charging systems and its future prospects: A review,” 
+
+Research in Transportation Business & Management , vol. 49, p. 101011, 2023. [6] Y. Yu, D. Reihs, S. Wagh, A. Shekhar, D. Stahleder, G. R. C. Mouli, F. Lehfuss, and P. Bauer, “Data-driven study of low voltage distribu-tion grid behaviour with increasing electric vehicle penetration,” IEEE Access , vol. 10, pp. 6053–6070, 2022. [7] S. Pankaj, M. R. Khalid, M. S. Alam, M. J. Asghar, and S. Hameed, “Electric vehicle charging stations and their impact on the power quality of utility grid,” in 2022 International Conference on Decision Aid Sciences and Applications (DASA) . IEEE, 2022, pp. 816–821. [8] S. Gnanavendan, S. K. Selvaraj, S. J. Dev, K. K. Mahato, R. S. Swathish, G. Sundaramali, O. Accouche, and M. Azab, “Challenges, solutions and future trends in ev-technology: A review,” IEEE Access , 2024. [9] O. Sadeghian, A. Oshnoei, B. Mohammadi-Ivatloo, V. Vahidinasab, and A. Anvari-Moghaddam, “A comprehensive review on electric vehicles smart charging: Solutions, strategies, technologies, and challenges,” 
+
+Journal of Energy Storage , vol. 54, p. 105241, 2022. [10] Y. Li, M. Han, Z. Yang, and G. Li, “Coordinating flexible demand response and renewable uncertainties for scheduling of community integrated energy systems with an electric vehicle charging station: A bi-level approach,” IEEE Transactions on Sustainable Energy , vol. 12, no. 4, pp. 2321–2331, 2021. [11] M. Menghwar, J. Yan, Y. Chi, M. A. Amin, and Y. Liu, “A market-based real-time algorithm for congestion alleviation incorporating ev demand response in active distribution networks,” Applied Energy , vol. 356, p. 122426, 2024. [12] H. Pan, X. Feng, F. Li, and J. Yang, “Energy coordinated control of dc microgrid integrated incorporating pv, energy storage and ev charging,” 
+
+Applied Energy , vol. 342, p. 121155, 2023. [13] Y. Wang, H. Wang, R. Razzaghi, M. Jalili, and A. Liebman, “Multi-objective coordinated ev charging strategy in distribution networks using an improved augmented epsilon-constrained method,” Applied Energy ,vol. 369, p. 123547, 2024. [14] C. Hull, J. Wust, M. Booysen, and M. McCulloch, “Techno-economic optimization and assessment of solar-battery charging station under grid constraints with varying levels of fleet ev penetration,” Applied Energy ,vol. 374, p. 123990, 2024. [15] H. Fan, D. Wang, Z. Yu, and L. Du, “Bi-level optimal scheduling of electric bus fleets in regional integrated electricity-gas-heat energy systems,” IEEE Transactions on Transportation Electrification , 2022. [16] J. Luke, M. Salazar, R. Rajagopal, and M. Pavone, “Joint optimization of autonomous electric vehicle fleet operations and charging station siting,” in 2021 IEEE International Intelligent Transportation Systems Conference (ITSC) . IEEE, 2021, pp. 3340–3347. 14 
+
+[17] X. Li, Z. Wang, L. Zhang, F. Sun, D. Cui, C. Hecht, J. Figgener, and D. U. Sauer, “Electric vehicle behavior modeling and applications in vehicle-grid integration: An overview,” Energy , vol. 268, p. 126647, 2023. [18] S. Kuppannagari, R. Kannan, and V. K. Prasanna, “Approximate schedul-ing of ders with discrete complex injections,” in Proceedings of the Tenth ACM International Conference on Future Energy Systems , 2019, pp. 204–214. [19] S. Zeynali, N. Nasiri, M. Marzband, and S. N. Ravadanegh, “A hybrid robust-stochastic framework for strategic scheduling of integrated wind farm and plug-in hybrid electric vehicle fleets,” Applied Energy , vol. 300, p. 117432, 2021. [20] G. G. Zanvettor, M. Fochesato, M. Casini, J. Lygeros, and A. Vicino, “A stochastic approach for ev charging stations in demand response programs,” Applied Energy , vol. 373, p. 123862, 2024. [21] S. Park, A. Pozzi, M. Whitmeyer, H. Perez, W. T. Joe, D. M. Raimondo, and S. Moura, “Reinforcement learning-based fast charging control strategy for li-ion batteries,” in 2020 IEEE Conference on Control Technology and Applications (CCTA) . IEEE, 2020, pp. 100–107. [22] X. Yu, Z. Zhu, H. Mao, M. Hua, D. Li, J. Chen, and H. Xu, “Coordi-nating matching, rebalancing and charging of electric ride-hailing fleet under hybrid requests,” Transportation Research Part D: Transport and Environment , vol. 123, p. 103903, 2023. [23] L. Chen, H. Hamedmoghadam, M. Jalili, and M. Ramezani, “Electric vehicle e-hailing fleet dispatching and charge scheduling,” arXiv preprint arXiv:2302.12650 , 2023. [24] L. Li, H. K. Lo, W. Huang, and F. Xiao, “Mixed bus fleet location-routing-scheduling under range uncertainty,” Transportation Research Part B: Methodological , vol. 146, pp. 155–179, 2021. [25] Y. Zhou, Q. Meng, and G. P. Ong, “Electric bus charging scheduling for a single public transport route considering nonlinear charging pro-file and battery degradation effect,” Transportation Research Part B: Methodological , vol. 159, pp. 49–75, 2022. [26] Y. Chen, S. Hu, Y. Zheng, S. Xie, Q. Yang, Y. Wang, and Q. Hu, “Coor-dinated optimization of logistics scheduling and electricity dispatch for electric logistics vehicles considering uncertain electricity prices and renewable generation,” Applied Energy , vol. 364, p. 123147, 2024. [27] D. Huang, J. Zhang, and Z. Liu, “A robust coordinated charging schedul-ing approach for hybrid electric bus charging systems,” Transportation Research Part D: Transport and Environment , vol. 125, p. 103955, 2023. [28] Z. Yi and J. Smart, “A framework for integrated dispatching and charging management of an autonomous electric vehicle ride-hailing fleet,” Transportation Research Part D: Transport and Environment ,vol. 95, p. 102822, 2021. [29] N. Tucker, B. Turan, and M. Alizadeh, “Online charge scheduling for electric vehicles in autonomous mobility on demand fleets,” in 2019 IEEE Intelligent Transportation Systems Conference (ITSC) . IEEE, 2019, pp. 226–231. [30] Y. Liang, Z. Ding, T. Ding, and W.-J. Lee, “Mobility-aware charging scheduling for shared on-demand electric vehicle fleet using deep reinforcement learning,” IEEE Transactions on Smart Grid , vol. 12, no. 2, pp. 1380–1393, 2020. [31] F. Boewing, M. Schiffer, M. Salazar, and M. Pavone, “A vehicle coordination and charge scheduling algorithm for electric autonomous mobility-on-demand systems,” in 2020 American Control Conference (ACC) . IEEE, 2020, pp. 248–255. [32] B. Turan, R. Pedarsani, and M. Alizadeh, “Dynamic pricing and fleet management for electric autonomous mobility on demand systems,” 
+
+Transportation Research Part C: Emerging Technologies , vol. 121, p. 102829, 2020. [33] W. Vermeer, G. R. Chandra Mouli, and P. Bauer, “A comprehensive review on the characteristics and modeling of lithium-ion battery aging,” 
+
+IEEE Transactions on Transportation Electrification , vol. 8, no. 2, pp. 2205–2232, 2022. [34] C. Zhang, K. Li, S. Mcloone, and Z. Yang, “Battery modelling methods for electric vehicles - a review,” in 2014 European Control Conference (ECC) , 2014, pp. 2673–2678. [35] X. Hu, S. Li, and H. Peng, “A comparative study of equivalent circuit models for li-ion batteries,” Journal of Power Sources , vol. 198, pp. 359–367, 2012. [36] L. Lam and P. Bauer, “Practical capacity fading model for li-ion battery cells in electric vehicles,” IEEE transactions on power electronics ,vol. 28, no. 12, pp. 5910–5918, 2012. [37] A. Bemporad and M. Morari, “Control of systems integrating logic, dynamics, and constraints,” Automatica , vol. 35, no. 3, pp. 407–427, 1999. [38] B. Bole, C. S. Kulkarni, and M. Daigle, “Adaptation of an electrochemistry-based li-ion battery model to account for deterioration observed under randomized use,” in Annual conference of the PHM society , vol. 6, no. 1, 2014. [39] P. M. Attia, A. Grover, N. Jin, K. A. Severson, T. M. Markov, Y.-H. Liao, M. H. Chen, B. Cheong, N. Perkins, Z. Yang et al. , “Closed-loop optimization of fast-charging protocols for batteries with machine learning,” Nature , vol. 578, no. 7795, pp. 397–402, 2020. [40] L. Calearo, A. Thingvad, C. Ziras, and M. Marinelli, “A methodology to model and validate electro-thermal-aging dynamics of electric vehicle battery packs,” Journal of energy storage , vol. 55, p. 105538, 2022. [41] Y. Che, Z. Deng, X. Tang, X. Lin, X. Nie, and X. Hu, “Lifetime and aging degradation prognostics for lithium-ion battery packs based on a cell to pack method,” Chinese Journal of Mechanical Engineering ,vol. 35, no. 1, p. 4, 2022. [42] M. S. Hosen, A. Pirooz, T. Kalogiannis, J. He, J. Van Mierlo, and M. Berecibar, “A strategic pathway from cell to pack-level battery lifetime model development,” Applied Sciences , vol. 12, no. 9, p. 4781, 2022. [43] Y. Nakahira, N. Chen, L. Chen, and S. H. Low, “Smoothed least-laxity-first algorithm for ev charging,” in Proceedings of the Eighth International Conference on Future Energy Systems , 2017, pp. 242–251. [44] Gurobi Optimization, LLC, “Gurobi Optimizer Reference Manual,” 2024. [Online]. Available: https://www.gurobi.com [45] E. M. Company, “Nems prices,” 2023. [Online]. Available: https://www.nems.emcsg.com/en/nems-prices 
+
+Mainak Dan received the B.E. and M.E. degrees in Electronics and Communication Engineering from Jadavpur University, Kolkata, India, and the Ph.D. degree from Nanyang Technological University, Sin-gapore. He is currently a Research Engineer at G2Elab, Grenoble INP, France, where he focuses on the development of open-source optimization and simulation tools for power and multi-energy systems, specifically within the framework of EU-funded projects. His expertise spans the stochastic optimization of energy systems, the strategic inte-gration of storage technologies, electric vehicle fleet charging optimization, and the management of distributed energy resources. His research interests are centered on the application of advanced mathematical optimization methods to solve complex, real-world energy challenges and facilitate sustainable energy transition. 
+
+Arvind Easwaran is an Associate Professor and As-sistant Dean (Academic) in the College of Comput-ing and Data Science at Nanyang Technological Uni-versity (NTU), Singapore. He is also the co-Director for the CNRS@CREATE program DesCartes on AI-based robust decision-making for urban critical systems. He received a PhD degree in Computer and Information Science from the University of Pennsylvania, USA, in 2008. Prior to joining NTU in 2013, he has been an Invited Research Scientist at the Polytechnic Institute of Porto, Portugal, in 2009-2010, and a Research & Development Scientist at Honeywell Aerospace, USA, in 2010-2012. In NTU, his research focuses on the design and analysis of real-time and cyber-physical computing systems, including their application in domains such as automotive and urban energy systems. He is a Senior Member of IEEE.

@@ -1,0 +1,24 @@
+{
+  "label": "2026-08-05",
+  "date": "2026-08-05",
+  "generated_at": "2026-08-05T21:41:58",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202608/05/2607.25421v1-a-hierarchical-stochastic-model-predictive-control-framework-for-integrated-request-aware-charge-scheduling-and-service-allocation",
+      "section": "quick",
+      "title_en": "A Hierarchical Stochastic Model Predictive Control Framework for Integrated Request-aware Charge Scheduling and Service Allocation",
+      "authors": "Mainak Dan, Arvind Easwaran",
+      "date": "2026-07-28",
+      "pdf": "https://arxiv.org/pdf/2607.25421v1",
+      "score": "6.0",
+      "evidence": "分层随机模型预测控制用于电动汽车充电调度，可应用于无人机功率管理。",
+      "tldr": "在灵活租赁模式下，按需电动车充电与服务分配受随机需求和时变电价影响，现有方法难以协同优化电池健康与经济性。本文提出分层随机模型预测控制框架，通过分段线性电池模型与机会约束混合整数规划，实现请求感知的充电调度与分配，并采用分布式求解确保可扩展性。仿真表明，该方法在不同置信水平下显著降低充电成本与电池退化，优于普通运营和松弛充电策略。为大规模车队提供高效、低损耗的集成控制方案。",
+      "tags": "query:uav",
+      "abstract_en": "This study introduces a unified control mechanism for integrated charging and service allocation of Mobility-on-Demand Electric Vehicles (MoD-EVs) operating under a flexible A-to-B rental model. The charging operation of MoD-EVs is influenced by stochastic customer rental requests and time-varying electricity prices. The framework captures the nonlinear battery dynamics and optimizes the charging operations against dynamic electricity prices and to meet stochastic customer demand while prioritizing battery health and cost efficiency. To address the computational challenges posed by the nonlinear battery dynamics, the framework employs a piece-wise linear model integrated into a multi-objective, chance-constrained mixed-integer linear programming (MILP) Model Predictive Control (MPC) formulation. A mixed logical switching mechanism is utilized to determine optimal charging sequences. Furthermore, a distributed approach is implemented to ensure computational scalability compared to centralized alternatives. Evaluation of this approach using a state-of-the-art commercial solver with stochastic EV rental requests under different confidence levels and time-varying electricity prices demonstrates significant benefits of the integrated mechanism design, including a reduction in charging costs and battery capacity degradation compared to the prevailing business-as-usual (BAU) approach and state of the art Laxity-based charging (LC) approach.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

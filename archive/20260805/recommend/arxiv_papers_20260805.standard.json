@@ -1,0 +1,53 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-05T21:39:34.270838+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.25421v1",
+      "source": "arxiv",
+      "title": "A Hierarchical Stochastic Model Predictive Control Framework for Integrated Request-aware Charge Scheduling and Service Allocation",
+      "abstract": "This study introduces a unified control mechanism for integrated charging and service allocation of Mobility-on-Demand Electric Vehicles (MoD-EVs) operating under a flexible A-to-B rental model. The charging operation of MoD-EVs is influenced by stochastic customer rental requests and time-varying electricity prices. The framework captures the nonlinear battery dynamics and optimizes the charging operations against dynamic electricity prices and to meet stochastic customer demand while prioritizing battery health and cost efficiency. To address the computational challenges posed by the nonlinear battery dynamics, the framework employs a piece-wise linear model integrated into a multi-objective, chance-constrained mixed-integer linear programming (MILP) Model Predictive Control (MPC) formulation. A mixed logical switching mechanism is utilized to determine optimal charging sequences. Furthermore, a distributed approach is implemented to ensure computational scalability compared to centralized alternatives. Evaluation of this approach using a state-of-the-art commercial solver with stochastic EV rental requests under different confidence levels and time-varying electricity prices demonstrates significant benefits of the integrated mechanism design, including a reduction in charging costs and battery capacity degradation compared to the prevailing business-as-usual (BAU) approach and state of the art Laxity-based charging (LC) approach.",
+      "authors": [
+        "Mainak Dan",
+        "Arvind Easwaran"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-07-28T08:20:22+00:00",
+      "link": "https://arxiv.org/pdf/2607.25421v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Hierarchical stochastic MPC for EV charging scheduling, applicable to UAV power management.",
+      "llm_evidence_cn": "分层随机模型预测控制用于电动汽车充电调度，可应用于无人机功率管理。",
+      "llm_evidence": "分层随机模型预测控制用于电动汽车充电调度，可应用于无人机功率管理。",
+      "canonical_evidence": "分层随机模型预测控制用于电动汽车充电调度，可应用于无人机功率管理。",
+      "llm_tldr_en": "Proposes a stochastic MPC framework for integrated charge scheduling and service allocation in mobility-on-demand EVs, considering battery dynamics and cost. The hierarchical approach addresses nonlinearities, showing potential for real-time energy management in UAVs.",
+      "llm_tldr_cn": "针对按需电动出行车辆的充电调度与服务分配问题，提出分层随机模型预测控制框架。采用分段线性模型处理电池非线性，优化充电与分配，降低成本和保障电池健康。该方法为无人机实时能量管理提供了分层预测控制思路。",
+      "llm_tldr": "针对按需电动出行车辆的充电调度与服务分配问题，提出分层随机模型预测控制框架。采用分段线性模型处理电池非线性，优化充电与分配，降低成本和保障电池健康。该方法为无人机实时能量管理提供了分层预测控制思路。",
+      "llm_tags": [
+        "query:uav:composite"
+      ],
+      "matched_query_tag": "query:uav:composite",
+      "matched_query_text": "Papers central to 查找关于混合动力无人机和混合电推垂直起降飞行器能量管理策略的综述论文和代表性研究。重点关注串联混合动力无人机、燃料电池/电池混合动力无人机、内燃机-发电机/电池混合动力无人机和混合电推垂直起降飞行器。总结主要的能量管理方法，包括基于规则控制、模糊逻辑控制、等效消耗最小化策略、自适应等效消耗最小化策略、动态规划、庞特里亚金极小值原理、模型预测控制和强化学习。优先考虑讨论系统建模、基于任务剖面的功率分配、电池荷电状态维持控制、降低油耗、发电机瞬态抑制、电池老化、实时实现以及实验或硬件验证的论文。识别当前局限性和潜在研究空白，以支持混合动力无人机能量管理的未来创新。, especially work that connects or combines: UAV power management; fuel cell battery UAV; hybrid-electric propulsion; energy management strategy for hybrid electric unmanned aerial vehicles; | English keyword            | 中文含义       | | -------------------------- | ---------- | | hybrid-powered UAV         | 混合动力无人机    | | energy management strategy | 能量管理策略     | | hybrid-electric propulsion | 混合电推进      | | series hybrid UAV          | 串联混动无人机    | | fuel cell battery UAV      | 燃料电池/电池无人机 | | UAV power management       | 无人机功率管理    |; equivalent consumption minimization strategy for hybrid electric vehicles; Which papers provide a clear taxonomy of rule based, fuzzy, ECMS, dynamic programming, PMP, MPC, and reinforcement learning methods?; What are the unsolved problems in hybrid UAV energy management, such as SOC control, fuel consumption, generator transients, and mission adaptation?; What are the main categories of energy management strategies for hybrid powered UAVs?; What are the current limitations and research gaps in hybrid UAV energy management?.",
+      "matched_requirement_id": "req-composite-uav",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
