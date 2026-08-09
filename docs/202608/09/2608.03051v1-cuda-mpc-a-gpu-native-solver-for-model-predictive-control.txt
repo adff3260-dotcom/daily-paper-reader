@@ -1,0 +1,684 @@
+Title: CUDA MPC: A GPU-Native Solver for Model Predictive Control
+
+URL Source: https://arxiv.org/pdf/2608.03051v1
+
+Published Time: Wed, 05 Aug 2026 00:25:41 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+> 1
+
+# CUDA MPC: A GPU-Native Solver for Model Predictive Control 
+
+Babak Akbari and Melissa Greeff 
+
+Abstract —Model Predictive Control (MPC) delivers constraint-aware control, but its reliance on online optimization limits its use on systems with fast dynamics, high-dimensional models, or long horizons. Existing GPU implementations typically treat the device as a linear-algebra accelerator, leaving the optimization loop dependent on repeated kernel launches and high-latency memory transfers. This paper introduces C UDA MPC, a GPU-native MPC framework that co-designs the optimization algo-rithm, execution model, and memory architecture for CUDA hardware. CUDA MPC pairs a parallel-in-horizon alternating direction method of multipliers (ADMM) splitting with a fused CUDA kernel that runs the entire iterative solve on the device. Intermediate optimization variables stay in low-latency, on-chip shared memory, and a localized atomic-flag protocol synchronizes only adjacent horizon blocks, minimizing host intervention, kernel-dispatch overhead, and global-memory traffic. Across six nonlinear robotics benchmarks spanning increasing state dimension and constraint density, C UDA MPC sustains real-time rates at horizons one to two orders of magnitude longer than CPU solvers: it solves an optimization-based collision-avoidance parking problem with 100 s of lookahead within a 0.1 s sampling interval, and is the only solver evaluated that achieves both real-time execution and collision-free coordination for a centralized 10-agent swarm, where acados and CasADi return no feasible solution and require 3.5 s and 4.5 s per solve. Against tensor-framework implementations of the same ADMM splitting, the fused kernel is up to 965 × faster. 
+
+I. I NTRODUCTION 
+
+Model Predictive Control (MPC) is among the most estab-lished advanced control methodologies, owing to its ability to explicitly enforce state and input constraints while optimizing multivariable performance over a receding horizon [1], [2]. Advances in embedded optimization have extended it from process control to fast, nonlinear systems: autonomous vehi-cles [3], [4], mobile and aerial robots [5], [6], agile quadrotor flight [7], and aerospace flight control [8]. Despite strong theoretical foundations [9], the online opti-mization required by MPC remains a significant computational burden, and one that binds hardest on exactly these fast robotic platforms. At each sampling instant MPC solves a constrained optimization problem—a quadratic program (QP) for linear systems, or a nonlinear program (NLP) otherwise—whose cost grows rapidly with the state and input dimensions, the number of constraints, and the horizon length. For fast-sampled sys-tems, CPU-based implementations may therefore be unable to compute a sufficiently accurate control action within the sampling interval, forcing compromises in horizon length, model fidelity, or optimization accuracy [10]. CPU-oriented frameworks such as acados [11] and CasADi [12] combine structure-exploiting formulations with highly optimized QP   
+
+> Robora Lab, Department of Electrical and Computer Engineering Queen’s University, Kingston, ON, Canada
+> {babak.akbari, melissa.greeff }@queensu.ca
+> Fig. 1. C UDA MPC is designed for the GPU, not merely executed on it. Rather than using the GPU only as a linear-algebra accelerator through a tensor framework (e.g., PyTorch), C UDA MPC tailors the complete MPC solution process to the CUDA architecture, combining parallel-in-horizon ADMM, fully GPU-native execution, and block-resident computation in low-latency shared memory.
+
+and NLP solvers, but their cost still grows with the horizon and model dimensions, motivating approaches that expose greater parallelism. With thousands of parallel cores, NVIDIA’s Compute Uni-fied Device Architecture (CUDA) is a natural platform for such parallelism, but adoption in real-time control has been hindered by the sequential structure of traditional optimal-control algorithms and by CPU–GPU communication latency. Tensor frameworks such as PyTorch and JAX [13], [14] pro-vide convenient GPU-accelerated linear algebra and automatic differentiation (Fig. 1). However, when iterative optimization is expressed as a sequence of framework-level operations rather than a single fused device program, it incurs repeated kernel launches and global-memory traffic, which at high-frequency MPC rates can dominate the solve time and erode the parallel advantage of the GPU. This paper introduces CUDA MPC, a GPU-native MPC framework co-designed at the algorithmic, execution, and memory levels (Fig. 1). First, it maps the parallel-in-horizon alternating direction method of multipliers (ADMM) formu-lation of [15] onto the CUDA thread-block hierarchy, dis-tributing the horizon across streaming multiprocessors (SMs) and coupling them through a localized atomic-flag protocol that synchronizes only adjacent blocks rather than the whole grid. Second, the complete optimization loop executes natively on the GPU, without returning control to the host between ADMM iterations. Third, optimization variables and inter-mediate computations remain in low-latency, on-chip shared memory throughout the solve. This input/output (I/O)-aware design follows the principle underlying FlashAttention [16]: performance improves not only by increasing arithmetic par-allelism, but also by minimizing transfers between on-chip and higher-latency global memory. arXiv:2608.03051v1 [cs.RO] 4 Aug 2026 2
+
+The contributions of this paper are: 1 
+
+> •
+
+The CUDA MPC framework: a GPU-native MPC architec-ture executing parallel-in-horizon ADMM within a single, shared-memory-resident CUDA kernel.  
+
+> •
+
+A neighbor-local synchronization protocol replacing grid-wide barriers with pairwise atomic flags, so coordination cost is independent of the number of horizon blocks.  
+
+> •
+
+A benchmark study against state-of-the-art CPU and GPU solvers on six nonlinear robotics problems, showing that the resulting increase in real-time-feasible horizon yields closed-loop capability the CPU baselines cannot achieve at any horizon they can run. II. R ELATED WORK 
+
+Work related to CUDA MPC falls into two strands. In the first, the methodological advance lies in the con-trol formulation—improved models, higher-fidelity actua-tor dynamics, task-specific objectives, or more expressive constraints—while the optimization is delegated to established libraries such as acados or CasADi. Representative examples include aggressive quadrotor control using DQ-NMPC [17], low-level-dynamics-aware NMPC [18], UAV landing on a moving surface vessel [19], and predictive control of surface vessels under wave disturbances [20], [21]. These advance the modeling and decision-making layers of MPC rather than redesigning the solver for the target hardware. The second strand exposes greater parallelism by redesign-ing parts of the MPC optimization for GPUs, through custom CUDA implementations, QP solvers expressed in machine-learning frameworks, and parallel-in-time methods based on associative scans [15], [22]–[25]. Unlike prior approaches that accelerate individual numerical operations or map an existing solver onto a GPU framework, C UDA MPC restructures the MPC algorithm around the CUDA execution and memory hierarchy. 
+
+A. CPU-Based MPC Solvers 
+
+Real-time nonlinear MPC has traditionally relied on highly optimized numerical methods executed on CPUs. CasADi [12] provides symbolic modeling, automatic differentiation, and in-terfaces to nonlinear programming solvers such as Ipopt [26]. acados [11] instead exploits the multistage structure of opti-mal control problems through tailored Sequential Quadratic Programming (SQP) and Real-Time Iteration (RTI) schemes; its structured QP solvers, including HPIPM [27], use block-sparse factorizations and Riccati-type recursions to achieve real-time performance. These frameworks have enabled in-creasingly sophisticated onboard controllers: for example, DQ-NMPC employs acados, SQP-RTI, and HPIPM for aggressive quadrotor flight at rates up to 190 Hz on an NVIDIA Jetson Orin NX [17]. The efficiency of these methods follows from exploiting the structured sparsity of the optimal control problem. Their factorization stages, forward–backward sweeps, and Riccati-style recursions nevertheless retain stagewise dependencies 
+
+> 1Source code will be released upon acceptance.
+
+across the horizon, so cost grows with horizon length and problem dimension. First-order methods offer an alterna-tive with simpler iteration steps. General-purpose ADMM solvers such as OSQP [28] are effective for structured QPs, and TinyMPC [29] caches problem factorizations to run linear MPC on resource-constrained microcontrollers. These methods remain principally CPU-oriented and do not target horizon-parallel execution of large nonlinear MPC problems. 
+
+B. GPU-Accelerated MPC 
+
+The most widely deployed GPU-based predictive controller in robotics is sampling-based: model predictive path integral (MPPI) control [30], [31] rolls out thousands of perturbed input sequences in parallel, which maps naturally onto GPU hardware and requires no derivatives. MPPI is complemen-tary rather than a competing baseline: it enforces constraints only through cost penalties, provides no feasibility certificate, and its sample complexity grows with input dimension and horizon—precisely the regime targeted here. C UDA MPC in-stead pursues gradient-based, constraint-enforcing MPC. Among gradient-based methods, recent GPU-accelerated MPC differs in where parallelism enters the optimization pipeline. One class accelerates selected numerical kernels within otherwise conventional trajectory-optimization meth-ods. MPCGPU [22], for instance, uses custom GPU kernels for Schur-complement construction, linear-system solution, and line search. Although hardware-aware, its parallelism is concentrated in the Newton-system solve, whereas C UDA MPC reformulates the MPC subproblem itself to expose parallelism across the horizon and handles state and input constraints through ADMM projections. A second class maps optimization iterations onto GPU-enabled tensor frameworks such as PyTorch or JAX. ReLU-QP [23] expresses ADMM iterations as a weight-tied ReLU network, and implementations of πMPC [15] use a parallel-in-horizon ADMM formulation admitting independent stagewise updates. Such frameworks provide convenient GPU execution, but implementations written as sequences of framework-level operations incur repeated kernel launches and global-memory accesses. C UDA MPC instead executes the complete ADMM loop within a fused CUDA kernel and retains intermediate pri-mal and dual variables in low-latency, on-chip shared memory. A third class parallelizes the recursive structure of opti-mal control using associative scans. Temporal dynamic pro-gramming [32], Parallel-in-Time Newton [24], Primal-Dual iLQR [33], and GPU-SLS [25] recast Riccati, dynamic-programming, or KKT recursions as tree-structured prefix operations, reducing parallel depth from O(N ) to O(log N ).These methods still require horizon-wide upsweep and down-sweep passes, with the associated storage, synchronization, and communication of intermediate scan variables. CUDA MPC exploits temporal parallelism differently: rather than parallelizing a global forward–backward recursion, it uses ADMM splitting to produce local stagewise updates coupled through neighboring-block consensus. Each CUDA block pro-cesses a contiguous sub-horizon in on-chip shared memory, exchanging only boundary variables with its neighbors. This 3
+
+avoids repeated horizon-wide scans and keeps the complete ADMM iteration inside a single fused kernel. III. P ROBLEM STATEMENT 
+
+We consider the constrained finite-horizon optimal control problem underlying nonlinear MPC: 
+
+min     
+
+> x0: N,u0: N−1
+> N−1
+
+X
+
+> k=0
+
+ℓ(xk, uk) + ℓf (xN )
+
+subject to x0 = x(t),
+
+xk+1 = f (xk, uk), k = 0 , . . . , N − 1,
+
+xk ∈ X , k = 0 , . . . , N, 
+
+uk ∈ U , k = 0 , . . . , N − 1.
+
+(1) Here xk ∈ Rnx and uk ∈ Rnu are the predicted state and input at stage k, x(t) is the measured state, f : Rnx × Rnu → Rnx
+
+are the nonlinear discrete-time dynamics, N is the horizon length, and ℓ, ℓ f are the stage and terminal costs. At each sampling instant the first element of the resulting control sequence is applied to the system. IV. B ACKGROUND 
+
+A. Sequential Convexification 
+
+We solve the nonlinear MPC problem using Sequential Con-vex Programming (SCP) [34], [35], which at each MPC update constructs convex subproblems by linearizing the nonlin-ear dynamics—and, when necessary, nonconvex constraints— about the trajectory {xjk, ujk}N −1 
+
+> k=0
+
+obtained at the preceding outer iteration j, j = 0 , . . . , j max − 1. A first-order approxi-mation of the dynamics gives 
+
+xj+1  
+
+> k+1
+
+= Ajkxj+1  
+
+> k
+
++ Bjkuj+1  
+
+> k
+
++ ejk, (2) where 
+
+Ajk = ∂f
+
+∂x (xjk ,ujk )
+
+, Bjk = ∂f
+
+∂u (xjk ,ujk )
+
+,
+
+ejk = f (xjk, ujk) − Ajkxjk − Bjkujk.
+
+Nonlinear state and input constraints, when present, are like-wise replaced by stagewise polyhedral approximations 
+
+X jk =
+
+n
+
+x | Cjkx + cjk ≤ 0
+
+o
+
+, (3) 
+
+Ujk =
+
+n
+
+u | Djku + djk ≤ 0
+
+o
+
+. (4) SCP iterations continue until a prescribed convergence toler-ance is satisfied or the maximum number of iterations jmax is reached. 
+
+B. Incremental-Input Formulation 
+
+Following velocity-form MPC formulations [15], [36], de-fine ∆uk = uk − uk−1 and the augmented state 
+
+¯xk =
+
+ xk
+
+uk−1
+
+
+
+, ¯xk+1 = ¯Ajk ¯xk + ¯Bjk∆uk + ¯ ejk, (5) where 
+
+¯Ajk =
+
+Ajk Bjk
+
+0 I
+
+
+
+, ¯Bjk =
+
+Bjk
+
+I
+
+
+
+, ¯ejk =
+
+ejk
+
+0
+
+
+
+,        
+
+> Fig. 2. The prediction horizon Nis partitioned into sub-horizons of length
+> M, distributed across CUDA blocks and GPU streaming multiprocessors (SMs). Within each block, threads are arranged in an M×¯nxlayout, with one row per prediction stage, and update the primal, consensus, and dual variables in low-latency shared memory. Only boundary variables are exchanged between adjacent blocks through global memory, with atomic synchronization enforcing dynamic consistency across the horizon.
+
+and ¯nx = nx + nu denotes the augmented state dimen-sion. This form directly accommodates input-rate penalties and constraints and supports the parallel-in-horizon splitting of [15]. The corresponding augmented stagewise feasible set is ¯X jk = X jk × U jk−1, onto which C UDA MPC projects during the consensus update. 
+
+C. Consensus-Split Convex Subproblem 
+
+To expose parallelism across the horizon, we introduce local copies zk+1 and vk and apply an ADMM consensus splitting [37], [38]. At SCP iteration j, the convex subproblem is 
+
+min  
+
+> ¯x,∆u,z,v
+> N−1
+
+X
+
+> k=0
+
+h
+
+ℓQP 
+
+> k
+
+
+
+¯xj+1 
+
+> k+1
+
+, ∆uj+1 
+
+> k
+
+
+
++ ι ¯X jk+1 
+
+
+
+zj+1 
+
+> k+1
+
+i 
+
+s.t. ¯xj+1  
+
+> k+1
+
+= zj+1 
+
+> k+1
+
+, ¯Bjk∆uj+1  
+
+> k
+
+= vj+1  
+
+> k
+
+,
+
+zj+1  
+
+> k+1
+
+= ¯Ajk ¯xj+1  
+
+> k
+
++ vj+1  
+
+> k
+
++ ¯ ejk, k = 0 , . . . , N − 1,
+
+¯x0 = x(t)⊤ u(t − 1) ⊤⊤ ,
+
+(6) with stage cost 
+
+ℓQP  
+
+> k
+
+= 12 ¯x⊤ 
+
+> k+1
+
+¯Qk ¯xk+1 − ¯q⊤ 
+
+> k
+
+¯xk+1 + 12 ∆u⊤ 
+
+> k
+
+Rk∆uk, (7) where ¯Qk, Rk ⪰ 0 and ιC is the indicator function of the convex set C, whose proximal operator is the projection ΠC .This splitting separates quadratic updates, projections, and dynamic consensus across stages, and follows the πMPC formulation [15]. Here Π ¯X projects onto the polyhedral convex sets (3)–(4) obtained by SCP linearization, rather than the box constraints of a linear-MPC formulation, so nonlinear dynamics and nonconvex constraints such as OBCA and pairwise collision avoidance are admitted through the outer SCP loop. V. M ETHODOLOGY 
+
+CUDA MPC is organized around three tightly coupled design layers, described in turn below. At the algorithmic level, a parallel-in-horizon ADMM splitting of (6) exposes indepen-dent computations across the horizon. At the execution level, these map onto the CUDA thread-block hierarchy and the 4
+
+complete ADMM iteration is fused into a GPU-native kernel. At the memory level, each block keeps its local optimization variables in low-latency, on-chip shared memory. 
+
+A. Parallel-in-Horizon ADMM 
+
+For each fixed SCP iteration, the primal updates, constraint projections, and dual updates of (6) are evaluated concurrently over k = 0 , . . . , N − 1. Suppressing the SCP index j, we associate the scaled dual variables θk, βk, and λk with the constraints 
+
+¯xk+1 = zk+1 , ¯Bk∆uk = vk, zk+1 = ¯Ak ¯xk+vk+¯ ek,
+
+respectively. For a fixed linearization, define 
+
+Jk :=   ¯B⊤ 
+
+> k
+
+¯Bk
+
+−1 ¯B⊤ 
+
+> k
+
+, (8a) 
+
+Hk := 
+
+(  ¯Qk + ρI−1 , k = N − 1,
+
+  ¯Qk + ρI + ρ ¯A⊤ 
+
+> k+1
+
+¯Ak+1 
+
+−1 , k < N − 1, (8b) with penalty parameter ρ > 0. These matrices are computed once per SCP linearization and reused across the ADMM iterations. At iteration i + 1 , the primal updates are 
+
+∆ui+1  
+
+> k
+
+= Jk
+
+ vik − βik
+
+ , (9a) 
+
+¯xi+1  
+
+> k+1
+
+= Hkhik, (9b) with 
+
+rik+1 := zik+2 − vik+1 − ¯ek+1 + λik+1 , (10a) 
+
+hik := 
+
+(
+
+¯qk + ρ(zik+1 − θik), k = N − 1,
+
+¯qk + ρ zik+1 − θik + ¯A⊤
+
+> k+1
+
+rik+1 
+
+ , k < N − 1.
+
+(10b) These updates are stagewise independent because neighboring quantities are taken from iteration i.The consensus quantities are 
+
+γi+1  
+
+> k
+
+= ¯Bk∆ui+1  
+
+> k
+
++ βik − ¯Ak ¯xi+1  
+
+> k
+
+− ¯ek + λik, (11a) 
+
+ηi+1  
+
+> k
+
+= ¯ xi+1  
+
+> k+1
+
++ θik + ¯Ak ¯xi+1  
+
+> k
+
++ ¯ ek − λik, (11b) where ¯x0 is fixed by the current state and previous input. The projection and consensus updates are 
+
+zi+1  
+
+> k+1
+
+= Π ¯Xk+1 
+
+2ηi+1  
+
+> k
+
++ γi+1 
+
+> k
+
+3
+
+!
+
+, (12a) 
+
+vi+1  
+
+> k
+
+= 12
+
+ zi+1  
+
+> k+1
+
++ γi+1 
+
+> k
+
+ , (12b) and the scaled dual variables satisfy 
+
+θi+1  
+
+> k
+
+= θik + ¯ xi+1  
+
+> k+1
+
+− zi+1 
+
+> k+1
+
+, (13a) 
+
+βi+1  
+
+> k
+
+= βik + ¯Bk∆ui+1  
+
+> k
+
+− vi+1  
+
+> k
+
+, (13b) 
+
+λi+1  
+
+> k
+
+= λik + zi+1  
+
+> k+1
+
+− ¯Ak ¯xi+1  
+
+> k
+
+− vi+1  
+
+> k
+
+− ¯ek. (13c) Equations (9)–(13) are evaluated in parallel over k. Their local and nearest-neighbor dependencies are what enable the CUDA block mapping of Sec. V-B. 
+
+B. GPU-Native CUDA Execution 
+
+CUDA MPC maps the prediction horizon onto CUDA thread blocks, each assigned a contiguous sub-horizon of M stages (Fig. 2). Threads within a block cooperatively evaluate the primal, consensus, and dual updates. Rather than launching a separate kernel per ADMM operation, the complete inner loop is fused into a single custom kernel that runs all prescribed iterations without returning control to the host, eliminating repeated dispatch and keeping intermediate variables resident on the device. At the outer MPC level, CUDA Graphs [39] capture the recurring sequence of trajectory shifting, model linearization, matrix preparation, ADMM solution, and control extraction; subsequent MPC updates replay this graph with minimal host-side overhead. CUDA Graphs thus reduce dispatch between 
+
+outer solver stages, while kernel fusion eliminates dispatch 
+
+within the ADMM solve. The grid size is chosen within the cooperative-launch residency limit and launched with 
+
+cudaLaunchCooperativeKernel , so that all solver blocks are concurrently resident. Within a block, stages exchange data through shared memory and synchronize using 
+
+__syncthreads() . Because shared memory is block-private, only boundary variables are exchanged between adjacent sub-horizons through global memory. 
+
+Neighbor-local synchronization: A grid-wide 
+
+grid.sync() barrier after every ADMM sub-step would force all B blocks to the slowest block twice per iteration, so its cost grows with the horizon even though the dependencies in (9)–(13) are only nearest-neighbor. C UDA MPC therefore replaces the global barrier with pairwise atomic flags in the style of [40]: each block increments a shared stage counter twice per iteration, once after the primal update and once after the consensus update, and spins only on the counters of its immediate spatial neighbors. This makes coordination cost independent of B. Because boundary states are exchanged just prior to their respective synchronization barriers (primal variables propagating forward, and consensus variables propagating backward), the scheme admits a bounded drift of one stage: a block may consume a neighbor’s boundary value from iteration i − 1 rather than i. The scheme is thus a partially asynchronous ADMM with delay bound one, for which convergence under bounded delay is established in [41], rather than the synchronous iteration of [15]. 
+
+C. Memory-I/O-Aware Block Residency and Resource Alloca-tion 
+
+Following the I/O-aware principle of FlashAttention [16], CUDA MPC reduces repeated movement of intermediate it-erates between global and on-chip memory. At kernel ini-tialization, each block cooperatively loads the matrices and trajectory variables for its sub-horizon into a shared-memory workspace. The primal variables ¯x, z, v, dual variables θ, β, λ,and intermediate ADMM quantities remain resident through-out the solve; global memory is used only for the initial load, the final output, and the boundary exchange. Each block deliberately consumes up to the available shared-memory 5
+
+budget to keep the largest possible sub-horizon on-chip, which on the evaluated GPU limits residency to one block per SM— trading occupancy for persistent on-chip storage. The local horizon length follows from the thread and shared-memory limits of the target device. Let Tmax be the maxi-mum threads per block, Smax the available shared memory per block, ¯nx the augmented state dimension, and Sstep 
+
+the shared-memory footprint per stage (which comprises the local state trajectories, consensus variables, and cached system matrices). Then 
+
+Mthreads =
+
+ Tmax 
+
+¯nx
+
+
+
+, (14) 
+
+Mmemory =
+
+ Smax 
+
+Sstep 
+
+
+
+, (15) and the stages per block and total number of blocks are 
+
+M = min {N, M threads , M memory } , (16) 
+
+B =
+
+ NM
+
+
+
+. (17) This adapts the horizon partition to the resources of desktop and embedded CUDA devices while ensuring each block’s working set fits in shared memory. Both limits tighten as the augmented state grows, so M shrinks and B rises with 
+
+¯nx, increasing boundary exchanges per iteration; the design therefore favors problems whose per-stage working set is small relative to the shared-memory budget, and a stage exceeding 
+
+Smax cannot be made block-resident at all. The resulting architecture aligns the algorithmic decom-position with the CUDA execution and memory hierarchies: parallel-in-horizon ADMM provides stagewise concurrency, the fused kernel removes host intervention, neighbor-local flags bound coordination cost, and block-resident storage minimizes global-memory traffic. Sec. VI-A measures their combined effect. VI. B ENCHMARK STUDIES 
+
+We evaluate C UDA MPC through two benchmark studies. The first compares it with the PyTorch and Julia implemen-tations of πMPC on the linearized AFTI-16 aircraft model, isolating the benefit of the GPU-native execution architecture. The second compares it against state-of-the-art CPU and GPU MPC solvers on six nonlinear robotics problems, measuring both solve-time scaling with horizon length and the closed-loop performance obtained at the maximum real-time-feasible horizon. All benchmarks use an Intel Core i7-12700H CPU, 16 GB RAM, and an NVIDIA RTX 3060 Laptop GPU with 6 GB VRAM. 
+
+A. Comparison with Tensor-Framework Implementations 
+
+To isolate the effect of the proposed CUDA execution archi-tecture, we compare C UDA MPC with the PyTorch and Julia implementations of πMPC on the unstable linearized AFTI-16 aircraft model, the numerical example used in the original 
+
+πMPC study [15]. All three implementations employ the same parallel-in-horizon ADMM splitting, so the comparison isolates differences in GPU execution, synchronization, and 5 20 50 100 500 1000           
+
+> Horizon Length (N)
+> 10 2
+> 10 4
+> Solve Time [ms] (Log)
+> 136.4x 605.0x 965.3x 822.3x 845.9x 767.7x
+> PiMPC (Julia) PiMPC (PyTorch) CUDA MPC PiMPC (PyTorch) CUDA MPC (CUDA)
+> 10 1
+> 10 3
+> 10 5172,456 1
+> Kernel Launches (Count per solve)
+> PiMPC (PyTorch) CUDA MPC (CUDA)
+> 10 1
+> 10 3
+> 17,419.0 31.2
+> VRAM Traffic (MB per solve)
+> PiMPC (PyTorch) CUDA MPC (CUDA)
+> 0510 15
+> 8.9% 13.4%
+> Active Warp Occupancy (%)
+> PiMPC (PyTorch) CUDA MPC (CUDA)
+> 10 2
+> 10 1
+> 10 00.86 ms
+> 0.0060 ms
+> Avg Solve Time (ms per iteration)
+
+Fig. 3. Comparison with tensor-framework implementations of πMPC on the linearized AFTI-16 model. Top: solve-time scaling with horizon N for CUDA MPC , Julia πMPC , and PyTorch πMPC . Bottom: GPU metrics for the inner ADMM solve at N = 1000 . Kernel fusion reduces launches from 172 ,456 to 1, VRAM traffic from 17 .42 GB to 31 .2 MB, and per-iteration time from 0.86 ms to 0.0060 ms, while occupancy increases from 
+
+8.9% to a shared-memory-limited 13 .4% .
+
+memory organization; our PyTorch solve times are consistent with those reported in [15], confirming a comparable baseline. We use dt = 0 .05 s, 2000 ADMM iterations per MPC step, and 200 simulation steps. As shown in Fig. 3, C UDA MPC achieves a 136 × speedup at N = 5 and 768 × at N = 1000 ,peaking at 965 × at N = 50 . The mechanism is directly measurable per MPC solve: at N = 1000 , fusing the ADMM solve into one persistent kernel reduces inner-ADMM kernel launches from 172 ,456 to 1, VRAM traffic from 17 .42 GB to 
+
+31 .2 MB, and average iteration time from 0.86 to 0.0060 ms. The persistent kernel runs at low occupancy ( 13 .4% ) because the shared-memory workspace limits residency to one block per SM, but the solve is latency-bound rather than throughput-bound, so this is a deliberate trade. The speedup here reflects execution overhead alone. 
+
+B. Scalability and Closed-Loop Performance Across Nonlin-ear Benchmarks 
+
+We compare C UDA MPC against CasADi with Ipopt [12] and acados with HPIPM [11] on CPU, and Primal-Dual iLQR [33] and GPU-SLS [25] on GPU, across six non-linear control problems: classical Pendulum and Cart-Pole setpoint regulation, Car Parking with obstacle-avoidance con-straints [42], Truck-Trailer reversing [43], Quadcopter-Pole stabilization [44], and centralized swarm control using the 2D formulation of [45]. Together these span increasing state dimension, nonlinear complexity, and constraint density. 
+
+1) Benchmark Protocol: Solvers from different paradigms cannot be equalized by tolerance: Ipopt tests NLP-level pri-mal feasibility, dual feasibility and complementarity, acados applies separate tests to its outer SQP and inner QP solves, and C UDA MPC’s dual variables attach to augmented-state and slack equalities rather than to the original NLP. Mapping these onto a common KKT criterion would require reconstructing 65 20 50 100 500 1000 Horizon Length (N)                                                      
+
+> 10 1
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+> 10 4
+> 10 5
+> Solve Time [ms] (Log)
+> 1.9x 3.1x 11.6x 20.1x
+> Pendulum
+> 520 50 100 500 1000 Horizon Length (N)
+> 10 1
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+> 10 4
+> 10 5
+> Solve Time [ms] (Log)
+> 1.1x 2.0x 5.5x 10.1x
+> Cart-Pole
+> 520 50 100 500 1000 Horizon Length (N)
+> 10 1
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+> 10 4
+> 10 5
+> Solve Time [ms] (Log)
+> 1.6x 1.5x 1.6x 1.4x 1.1x
+> Car Parking
+> 520 50 100 500 1000 Horizon Length (N)
+> 10 1
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+> 10 4
+> 10 5
+> Solve Time [ms] (Log)
+> 1.2x 1.4x 4.1x 7.4x
+> Truck-Trailer
+> 520 50 100 500 1000 Horizon Length (N)
+> 10 1
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+> 10 4
+> 10 5
+> Solve Time [ms] (Log)
+> 1.4x 4.8x 14.7x 8.7x
+> Quadcopter-Pole
+> 510 20 50 100 Horizon Length (N)
+> 10 1
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+> 10 4
+> 10 5
+> Solve Time [ms] (Log)
+> 1.7x 2.5x 1.9x 1.5x
+> Centralized Swarm
+> CasADi IPOPT (CPU) acados HPIPM (CPU) Primal-Dual iLQR (GPU) GPU-SLS (GPU) CUDA MPC (GPU) Sampling dt
+
+Fig. 4. MPC solve-time benchmark across six nonlinear systems—Pendulum, Cart-Pole, Car Parking, Truck-Trailer, Quadcopter-Pole, and Centralized Swarm—for varying horizons N . Box plots show logarithmic solve-time distributions for CPU-based CasADi Ipopt and acados HPIPM , and GPU-based Primal-Dual iLQR , GPU-SLS , and C UDA MPC . Arrows indicate the speedup of C UDA MPC over the next-fastest solver; the dashed line marks the real-time threshold. GPU-SLS is omitted at larger horizons for Truck-Trailer and Quadcopter-Pole when runs exceed the available GPU memory. TABLE I MAXIMUM REAL -TIME -FEASIBLE HORIZON AND CLOSED -LOOP PERFORMANCE ACROSS THE NONLINEAR BENCHMARKS . RMSE IS THE ROOT -MEAN -SQUARE ERROR BETWEEN THE CLOSED -LOOP STATE TRAJECTORY AND THE REFERENCE , IN THE UNITS OF EACH SYSTEM ’S STATE . U:
+
+UNSTABLE ; L: POOR LOCAL MINIMUM ; I: INFEASIBLE ; OOT: SOLVE TIME EXCEEDS dt ; N.A.: FORMULATION NOT EXPRESSIBLE IN THE AVAILABLE IMPLEMENTATION . A N ASTERISK DENOTES SOFT BARRIER CONSTRAINTS , NOT DIRECTLY COMPARABLE WITH THE HARD PROJECTIONS USED BY 
+
+CUDA MPC. Problem Setup CPU Solvers GPU Solvers CasADi (Ipopt) [12] acados (HPIPM) [11] Primal-Dual iLQR [33] GPU-SLS [25] CUDA MPC 
+
+Problem nx nu dt N RMSE N RMSE N RMSE status N RMSE Pendulum 2 1 0.01 s 100 0.860 500 0.861 150 0.862 OOT 1000 0.986 Cart-Pole 4 2 0.01 s 20 30.702 ( U) 500 3.364 100 21.833 ( U) OOT 1000 3.693 Car Parking [42] 4 2 0.1 s 15 4.749 ( L) 60 4.742 ( L) 1000 5.280 ∗ (L) N.A. 1000 3.766 
+
+Truck-Trailer [43] 6 2 0.1 s 15 13.661 ( L) 1000 5.498 30 4.218 ∗ (I) OOT 1000 6.418 Quadcopter-Pole [44] 17 4 0.01 s OOT – 60 – ( U) 5 – ( U) OOT 600 0.466 
+
+Centralized Swarm [45] 40 20 0.1 s OOT – OOT – ( I) 100 7.616 ∗ (L) N.A. 100 4.685 
+
+missing multipliers and imposing shared scaling conventions, each a method-dependent assumption. We therefore retain each solver’s default stopping criteria, standardize iteration counts where the architectures permit, and compare computation time and closed-loop performance in the intended real-time-control setting. All methods use the same dynamics, objectives and constraints where supported; those employing sequential linearization use the same number of outer iterations, and Primal-Dual iLQR uses the default settings of [33]. Reported solve times include trajectory shift-ing, model linearization, matrix preparation, the solve, and control extraction, excluding one-time JIT compilation and graph-capture overhead. Performance is assessed through (i) solve-time scaling with N , and (ii) closed-loop performance at the largest horizon executable within the sampling time dt .
+
+2) Computational Scaling with Prediction Horizon: Fig. 4 shows that the CPU methods remain competitive at short horizons, particularly for low-dimensional problems, but their solve times grow more rapidly with N . The horizon-parallel structure of C UDA MPC, by contrast, yields increasing benefit at longer horizons. Relative to the next-fastest solver, its speedup grows from 1.9× at N = 50 to 20 .1× at N = 1000 
+
+for the Pendulum, and from 1.1× to 10 .1× for the Cart-Pole. At N = 1000 , C UDA MPC is also 7.4× faster for the Truck-Trailer and 8.7× faster for the Quadcopter-Pole. The arrows in Fig. 4 report the margin over the next-fastest solver, which for several problems is another GPU method; margins over the CPU solvers are much larger. For Car Parking at N = 100 ,CUDA MPC requires 5.75 ms against 165 .71 ms for acados— an 28 .77 × speedup—while the margin over the next-fastest solver overall is 1.4×.75 0 5           
+
+> X Position [m]
+> 6
+> 4
+> 2
+> 0246
+> Y Position [m] CUDA MPC 505
+> X Position [m]
+> 6
+> 4
+> 2
+> 0246
+> Y Position [m] PrimalDual iLQR
+> Fig. 5. Centralized swarm control with 10 agents ( dt = 0 .1s, N= 100 ). Average solve times are 28 .22 ms for C UDA MPC (left) and 26 .37 ms for Primal-Dual iLQR (right). C UDA MPC enforces pairwise collision constraints explicitly, whereas Primal-Dual iLQR uses soft penalties. Reducing these penalties permits inter-agent collisions; increasing them avoids collisions but yields the poor local minimum shown here, in which the agents deadlock.
+
+GPU-SLS is excluded from two benchmarks for a different reason than the rest: its available implementation cannot ex-press the optimization-based collision-avoidance (OBCA) [46] auxiliary-variable constraints or the pairwise inter-agent colli-sion constraints, so Car Parking and Centralized Swarm cannot be posed for it. Where it does run it is too slow for the prescribed sampling intervals, reaching approximately 0.4 s(Truck-Trailer) and 0.3 s (Quadcopter-Pole) at N = 100 
+
+before exceeding available GPU memory. Both cases are recorded in Table I. 
+
+3) Closed-Loop Performance at the Maximum Feasible Horizon: Table I shows that computational speed does not translate uniformly into improved control performance. For low-dimensional but relatively constraint-sparse problems such as Pendulum, Cart-Pole, and Truck-Trailer, the CPU-based second-order methods achieve performance comparable to— and in some cases slightly better than—C UDA MPC despite using shorter horizons. We hypothesize that their stronger local convergence outweighs the benefit of additional lookahead on these problems, though the present experiments do not isolate this effect from the accuracy attained within a fixed first-order iteration budget. The benefits of longer real-time-feasible horizons become more pronounced as state dimension and constraint complexity increase. For Car Parking, CUDA MPC solves the OBCA formulation with approximately 100 s of lookahead while remaining below the 0.1 s sampling interval, eliminating the separate Hybrid A* planning stage used in [42] and enabling receding-horizon collision avoidance. The benefits are clearest for the high-dimensional Quadcopter-Pole and swarm problems, where longer looka-head is needed to coordinate coupled dynamics and anticipate multiple constraints. For centralized control of 10 agents at 
+
+N = 100 (Fig. 5), C UDA MPC achieves an average solve time of 28 .22 ms , within the 100 ms sampling interval. Neither CPU solver is a viable candidate for real-time control here: acados (HPIPM) terminates at 3524 .72 ms without finding a feasible solution. While CasADi (Ipopt) successfully returns a feasible solution, its average solve time of 4451 .42 ms 
+
+exceeds the sampling interval by more than an order of magnitude. This ∼ 4.5 s solve time makes CasADi (Ipopt) entirely impractical for closed-loop MPC, though its output remains useful for offline, open-loop trajectory optimization. Because neither baseline can supply a feasible solution within the required time window, we report their runtimes to highlight these practical limitations rather than as a direct speedup ratio. Primal-Dual iLQR does run in real time, at a comparable 
+
+26 .37 ms , but penalties large enough to prevent collisions lead to the deadlocked local minimum of Fig. 5. In this benchmark, therefore, only C UDA MPC combines real-time execution with successful collision-free coordination. VII. C ONCLUSION 
+
+This paper introduced CUDA MPC, a GPU-native MPC solver that co-designs parallel-in-horizon ADMM with CUDA execution and memory management. By fusing the iterative solve into a single kernel and retaining optimization variables in shared memory, C UDA MPC substantially reduces kernel-launch and global-memory overhead, enabling long-horizon MPC at real-time control rates across nonlinear robotic bench-marks. In the evaluated problems, longer real-time-feasible horizons improved collision avoidance, coupled multi-agent coordination, and constraint anticipation relative to shorter-horizon baselines. Future work will address deployment and closed-loop validation on embedded GPU-equipped robotic platforms under practical power, memory, and real-time com-puting constraints. REFERENCES [1] D. Q. Mayne, J. B. Rawlings, C. V. Rao, and P. O. M. Scokaert, “Con-strained model predictive control: Stability and optimality,” Automatica ,vol. 36, no. 6, pp. 789–814, 2000. [2] S. J. Qin and T. A. Badgwell, “A survey of industrial model predictive control technology,” Control Eng. Pract. , vol. 11, no. 7, pp. 733–764, 2003. [3] P. Falcone, F. Borrelli, J. Asgari, H. E. Tseng, and D. Hrovat, “Predictive active steering control for autonomous vehicle systems,” IEEE Trans. Control Syst. Technol. , vol. 15, no. 3, pp. 566–580, 2007. [4] A. Liniger, A. Domahidi, and M. Morari, “Optimization-based au-tonomous racing of 1:43 scale RC cars,” Optim. Control Appl. Methods ,vol. 36, no. 5, pp. 628–647, 2015. [5] C. J. Ostafew, A. P. Schoellig, T. D. Barfoot, and J. Collier, “Learning-based nonlinear model predictive control to improve vision-based mobile robot path tracking,” J. Field Robot. , vol. 33, no. 1, pp. 133–152, 2016. [6] M. Greeff and A. P. Schoellig, “Flatness-based model predictive control for quadrotor trajectory tracking,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. (IROS) , 2018, pp. 6740–6745. [7] A. Romero, S. Sun, P. Foehn, and D. Scaramuzza, “Model predictive contouring control for time-optimal quadrotor flight,” IEEE Trans. Robot. , vol. 38, no. 6, pp. 3340–3356, 2022. [8] T. Keviczky and G. J. Balas, “Receding horizon control of an F-16 aircraft: A comparative study,” Control Eng. Pract. , vol. 14, no. 9, pp. 1023–1033, 2006. [9] M. N. Zeilinger, M. Morari, and C. N. Jones, “Soft constrained model predictive control with robust stability guarantees,” IEEE Trans. Autom. Control , vol. 59, no. 5, pp. 1190–1202, 2014. [10] M. N. Zeilinger, D. M. Raimondo, A. Domahidi, M. Morari, and C. N. Jones, “On real-time robust model predictive control,” Automatica ,vol. 50, no. 3, pp. 683–694, 2014. [11] R. Verschueren, G. Frison, D. Kouzoupis, J. Frey, N. van Duijkeren, A. Zanelli, B. Novoselnik, T. Albin, R. Quirynen, and M. Diehl, “acados—a modular open-source framework for fast embedded optimal control,” Math. Program. Comput. , vol. 14, pp. 147–183, 2022. [12] J. A. E. Andersson, J. Gillis, G. Horn, J. B. Rawlings, and M. Diehl, “CasADi—a software framework for nonlinear optimization and optimal control,” Math. Program. Comput. , vol. 11, no. 1, pp. 1–36, 2019. 8
+
+[13] A. Paszke, S. Gross, F. Massa, A. Lerer, J. Bradbury, G. Chanan, T. Killeen, Z. Lin, N. Gimelshein, L. Antiga, A. Desmaison, A. K¨ opf, E. Yang, Z. DeVito, M. Raison, A. Tejani, S. Chilamkurthy, B. Steiner, L. Fang, J. Bai, and S. Chintala, “PyTorch: An imperative style, high-performance deep learning library,” in Adv. Neural Inf. Process. Syst. ,vol. 32, 2019, pp. 8024–8035. [14] R. Frostig, M. J. Johnson, and C. Leary, “Compiling machine learning programs via high-level tracing,” in Proc. Syst. Mach. Learn. Conf. (SysML) , 2018. [15] L. Wu, B. Yang, J. Li, X. Yang, Y. Mo, Y. Shi, A. D. Ames, and J. Drgoˇ na, “ πMPC: A parallel-in-horizon and construction-free NMPC solver,” arXiv:2601.14414 , 2026. [16] T. Dao, D. Y. Fu, S. Ermon, A. Rudra, and C. R´ e, “FlashAttention: Fast and memory-efficient exact attention with IO-awareness,” in Adv. Neural Inf. Process. Syst. , vol. 35, 2022, pp. 16 344–16 359. [17] L. F. Recalde, D. Agrawal, J. Arrizabalaga, and G. Li, “DQ-NMPC: Dual-quaternion NMPC for quadrotor flight,” IEEE Robot. Autom. Lett. ,vol. 10, no. 12, pp. 12 644–12 651, 2025. [18] P. M. Gupta, O. Proch´ azka, J. Hˇ rebec, M. Novosad, R. Pˇ eniˇ cka, and M. Saska, “LoL-NMPC: Low-level dynamics integration in nonlin-ear model predictive control for unmanned aerial vehicles,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. (IROS) , 2025, pp. 1186–1193. [19] O. Proch´ azka, F. Nov´ ak, T. B´ aˇ ca, P. M. Gupta, R. Pˇ eniˇ cka, and M. Saska, “Model predictive control-based trajectory generation for agile landing of unmanned aerial vehicle on a moving boat,” Ocean Eng. , vol. 313, p. 119164, 2024. [20] Z. Jiang, J. Li, and H. Zheng, “Robust predictive visual servoing of USVs with wave perturbations considering FOV constraint,” IEEE Trans. Ind. Electron. , vol. 72, no. 8, pp. 8279–8289, 2025. [21] D. L. Jenkins and J. A. Marshall, “This is the way: Mitigating the roll of an autonomous uncrewed surface vessel in wavy conditions using model predictive control,” in Proc. IEEE/RSJ Int. Conf. Intell. Robots Syst. (IROS) , 2024, pp. 1252–1257. [22] E. Adabag, M. Atal, W. Gerard, and B. Plancher, “MPCGPU: Real-time nonlinear model predictive control through preconditioned conjugate gradient on the GPU,” in Proc. IEEE Int. Conf. Robot. Autom. (ICRA) ,2024, pp. 9787–9794. [23] A. L. Bishop, J. Z. Zhang, S. Gurumurthy, K. Tracy, and Z. Manch-ester, “ReLU-QP: A GPU-accelerated quadratic programming solver for model-predictive control,” in Proc. IEEE Int. Conf. Robot. Autom. (ICRA) , 2024, pp. 13 285–13 292. [24] C. Iacob, H. Abdulsamad, and S. S¨ arkk¨ a, “A parallel-in-time newton’s method for nonlinear model predictive control,” IEEE Trans. Control Syst. Technol. , vol. 34, no. 1, pp. 509–516, 2026. [25] J. Fang and G. Chou, “Safe large-scale robust nonlinear mpc in millisec-onds via reachability-constrained system level synthesis on the gpu,” in 
+
+Proc. Robot.: Sci. Syst. (RSS) , 2026. [26] A. W¨ achter and L. T. Biegler, “On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming,” 
+
+Math. Program. , vol. 106, no. 1, pp. 25–57, 2006. [27] G. Frison and M. Diehl, “HPIPM: A high-performance quadratic programming framework for model predictive control,” IFAC-PapersOnLine , vol. 53, no. 2, pp. 6563–6569, 2020. [28] B. Stellato, G. Banjac, P. Goulart, A. Bemporad, and S. Boyd, “OSQP: An operator splitting solver for quadratic programs,” Math. Program. Comput. , vol. 12, pp. 637–672, 2020. [29] K. Nguyen, S. Schoedel, A. Alavilli, B. Plancher, and Z. Manchester, “TinyMPC: Model-predictive control on resource-constrained microcon-trollers,” in Proc. IEEE Int. Conf. Robot. Autom. (ICRA) , 2024, pp. 1–7. [30] G. Williams, A. Aldrich, and E. A. Theodorou, “Model predictive path integral control: From theory to parallel computation,” J. Guid. Control Dyn. , vol. 40, no. 2, pp. 344–357, 2017. [31] G. Williams, N. Wagener, B. Goldfain, P. Drews, J. M. Rehg, B. Boots, and E. A. Theodorou, “Information theoretic MPC for model-based reinforcement learning,” in Proc. IEEE Int. Conf. Robot. Autom. (ICRA) ,2017, pp. 1714–1721. [32] S. S¨ arkk¨ a and ´A. F. Garc´ ıa-Fern´ andez, “Temporal parallelization of dynamic programming and linear quadratic control,” IEEE Trans. Autom. Control , vol. 68, no. 2, pp. 851–866, 2023. [33] L. Amatucci, J. Sousa-Pinto, G. Turrisi, D. Orban, V. Barasuol, and C. Semini, “Primal-dual iLQR for GPU-accelerated learning and control in legged robots,” IEEE Robot. Autom. Lett. , vol. 11, no. 1, pp. 1010– 1017, 2026. [34] Y. Mao, M. Szmuk, and B. Ac ¸ıkmes ¸e, “Successive convexification of non-convex optimal control problems and its convergence properties,” in Proc. IEEE Conf. Decis. Control (CDC) , 2016, pp. 3636–3641. [35] Y. Mao, D. Dueri, M. Szmuk, and B. Ac ¸ıkmes ¸e, “Successive convexifi-cation of non-convex optimal control problems with state constraints,” 
+
+IFAC-PapersOnLine , vol. 50, no. 1, pp. 4063–4069, 2017. [36] L. E. Sokoler, G. Frison, M. S. Andersen, and J. B. Jørgensen, “Input-constrained model predictive control via the alternating direction method of multipliers,” in Proc. Eur. Control Conf. (ECC) , 2014, pp. 115–120. [37] S. Boyd, N. Parikh, E. Chu, B. Peleato, and J. Eckstein, “Distributed optimization and statistical learning via the alternating direction method of multipliers,” Found. Trends Mach. Learn. , vol. 3, no. 1, pp. 1–122, 2011. [38] F. Rey, P. Hokayem, and J. Lygeros, “ADMM for exploiting structure in MPC problems,” IEEE Trans. Autom. Control , vol. 66, no. 5, pp. 2076–2086, 2021. [39] NVIDIA Corporation, CUDA C++ Programming Guide -4.2. CUDA Graphs , NVIDIA, 2026, version 13.3. [On-line]. Available: https://docs.nvidia.com/cuda/cuda-programming-guide/ 04-special-topics/cuda-graphs.html [40] S. Xiao and W.-c. Feng, “Inter-block gpu communication via fast barrier synchronization,” in 2010 IEEE International Symposium on Parallel & Distributed Processing (IPDPS) . IEEE, 2010, pp. 1–12. [41] T.-H. Chang, M. Hong, W.-C. Liao, and X. Wang, “Asynchronous distributed ADMM for large-scale optimization—Part I: Algorithm and convergence analysis,” IEEE Trans. Signal Process. , vol. 64, no. 12, pp. 3118–3130, 2016. [42] X. Zhang, A. Liniger, A. Sakai, and F. Borrelli, “Autonomous parking using optimization-based collision avoidance,” in Proc. IEEE Conf. Decis. Control (CDC) , 2018, pp. 4327–4332. [43] C. Altafini, A. Speranzon, and B. Wahlberg, “A feedback control scheme for reversing a truck and trailer vehicle,” IEEE Trans. Robot. Autom. ,vol. 17, no. 6, pp. 915–922, 2001. [44] M. Hehn and R. D’Andrea, “A flying inverted pendulum,” in Proc. IEEE Int. Conf. Robot. Autom. (ICRA) , 2011, pp. 763–770. [45] R. Firoozi, L. Ferranti, X. Zhang, S. Nejadnik, and F. Borrelli, “A distributed multi-vehicle coordination algorithm for navigation in tight environments,” IEEE Trans. Veh. Technol. , vol. 73, no. 10, pp. 14 499– 14 509, 2024. [46] X. Zhang, A. Liniger, and F. Borrelli, “Optimization-based collision avoidance,” IEEE Trans. Control Syst. Technol. , vol. 29, no. 3, pp. 972– 983, 2020.

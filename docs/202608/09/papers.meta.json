@@ -1,0 +1,24 @@
+{
+  "label": "2026-08-09",
+  "date": "2026-08-09",
+  "generated_at": "2026-08-09T19:42:16",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202608/09/2608.03051v1-cuda-mpc-a-gpu-native-solver-for-model-predictive-control",
+      "section": "quick",
+      "title_en": "CUDA MPC: A GPU-Native Solver for Model Predictive Control",
+      "authors": "Babak Akbari, Melissa Greeff",
+      "date": "2026-08-04",
+      "pdf": "https://arxiv.org/pdf/2608.03051v1",
+      "score": "6.0",
+      "evidence": "GPU原生MPC求解器，用于实时控制",
+      "tldr": "模型预测控制(MPC)因在线优化计算开销大，难以用于快速动态、高维或长时域系统。本文提出CUDA MPC框架，将并行时域ADMM与GPU融合内核结合，在片上共享内存完成全部迭代，并通过局部原子同步最小化主机干预。在碰撞避免泊车中实现0.1秒内求解100秒前瞻，并唯一完成10智能体群集实时无碰撞协调，比张量框架实现快965倍。为边缘实时控制提供了高效的GPU原生解决方案。",
+      "tags": "query:uav",
+      "abstract_en": "Model Predictive Control (MPC) delivers constraint-aware control, but its reliance on online optimization limits its use on systems with fast dynamics, high-dimensional models, or long horizons. Existing GPU implementations typically treat the device as a linear-algebra accelerator, leaving the optimization loop dependent on repeated kernel launches and high-latency memory transfers. This paper introduces CUDA MPC, a GPU-native MPC framework that co-designs the optimization algorithm, execution model, and memory architecture for CUDA hardware. CUDA MPC pairs a parallel-in-horizon alternating direction method of multipliers (ADMM) splitting with a fused CUDA kernel that runs the entire iterative solve on the device. Intermediate optimization variables stay in low-latency, on-chip shared memory, and a localized atomic-flag protocol synchronizes only adjacent horizon blocks, minimizing host intervention, kernel-dispatch overhead, and global-memory traffic. Across six nonlinear robotics benchmarks spanning increasing state dimension and constraint density, CUDA MPC sustains real-time rates at horizons one to two orders of magnitude longer than CPU solvers: it solves an optimization-based collision-avoidance parking problem with 100 s of lookahead within a 0.1 s sampling interval, and is the only solver evaluated that achieves both real-time execution and collision-free coordination for a centralized 10-agent swarm, where acados and CasADi return no feasible solution and require 3.5 s and 4.5 s per solve. Against tensor-framework implementations of the same ADMM splitting, the fused kernel is up to $965\\times$ faster.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
