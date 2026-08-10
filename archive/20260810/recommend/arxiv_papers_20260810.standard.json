@@ -1,0 +1,53 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-10T19:34:51.846510+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2608.06707v1",
+      "source": "arxiv",
+      "title": "Hoverflie: An empirical investigation of rotor shrouds to transform micro air vehicles into multi-modal hovercraft",
+      "abstract": "Small rotorcraft intended for use indoors or around the built environment have extremely limited flight duration. This paper presents the design and experimental characterization of a custom shroud system that transforms a Crazyflie 2.1 micro air vehicle into a multi-modal robot capable of operating as a high-efficiency hovercraft or a free-flying drone. A custom experimental platform was developed for precise control of hover height and rotor duty cycle, and automated data logging of lift forces. Parametric testing of duct, intake, and nozzle geometries was performed to investigate the impact of shroud configuration on in-ground-effect and free-flight performance. An empirical model is developed which, unlike typical models for ground effect in rotorcraft, captures the suckdown effect that reduces force at intermediate height. It is shown that, through proper design of the shroud, beneficial ground effects can be increased while diminishing negative effects both close to the ground and in free flight. An optimized configuration exhibited nearly three times higher in-ground-effect force while maintaining comparable out-of-ground-effect aerodynamic thrust, although the added shroud mass reduces free-flight control authority. Lightweight shrouds are manufactured using thin-film thermoformed components, and total single-charge flight time is shown to increase by 60% in-ground-effect while decreasing by only 30% in free-flight as compared to the stock drone. Finally, controlled flight in the air, hovering close to the ground, and hover-to-flight transitions are demonstrated using a simple mode-switching controller, with tracking errors reported to quantify performance. This work provides an experimentally-validated and easily adoptable foundation for future research into lightweight ground-effect vehicles and hybrid drone-hovercraft systems.",
+      "authors": [
+        "Mrinmoy Modak",
+        "Daniel S. Drew"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-08-07T02:02:23+00:00",
+      "link": "https://arxiv.org/pdf/2608.06707v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "extends flight duration of micro air vehicles through multi-modal energy-efficient operation",
+      "llm_evidence_cn": "通过多模态高效运行扩展微型飞行器的飞行时长",
+      "llm_evidence": "通过多模态高效运行扩展微型飞行器的飞行时长",
+      "canonical_evidence": "通过多模态高效运行扩展微型飞行器的飞行时长",
+      "llm_tldr_en": "To extend flight duration of small rotorcraft, a custom shroud system transforms a micro air vehicle into a multi-modal hovercraft, achieving energy-efficient operation via in-ground-effect mode.",
+      "llm_tldr_cn": "针对小型旋翼机续航能力严重受限的问题，本文设计定制整流罩系统，使Crazyflie 2.1微型飞行器可切换为高效率气垫船模式。通过精确控制悬停高度与旋翼占空比，并参数化测试导管、进气口和喷嘴几何形状，开发了经验模型。实验表明，利用地面效应可大幅降低功耗，延长任务时间，为微型无人机能量管理提供了新思路。",
+      "llm_tldr": "针对小型旋翼机续航能力严重受限的问题，本文设计定制整流罩系统，使Crazyflie 2.1微型飞行器可切换为高效率气垫船模式。通过精确控制悬停高度与旋翼占空比，并参数化测试导管、进气口和喷嘴几何形状，开发了经验模型。实验表明，利用地面效应可大幅降低功耗，延长任务时间，为微型无人机能量管理提供了新思路。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "UAV power management",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

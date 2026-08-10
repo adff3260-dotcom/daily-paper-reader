@@ -1,0 +1,24 @@
+{
+  "label": "2026-08-10",
+  "date": "2026-08-10",
+  "generated_at": "2026-08-10T19:35:42",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202608/10/2608.06707v1-hoverflie-an-empirical-investigation-of-rotor-shrouds-to-transform-micro-air-vehicles-into-multi-modal-hovercraft",
+      "section": "quick",
+      "title_en": "Hoverflie: An empirical investigation of rotor shrouds to transform micro air vehicles into multi-modal hovercraft",
+      "authors": "Mrinmoy Modak, Daniel S. Drew",
+      "date": "2026-08-07",
+      "pdf": "https://arxiv.org/pdf/2608.06707v1",
+      "score": "7.0",
+      "evidence": "通过多模态高效运行扩展微型飞行器的飞行时长",
+      "tldr": "小型旋翼机室内飞行续航极短，本文通过为Crazyflie 2.1设计转子护罩，将其转变为高效气垫船与无人机双模态机器人。参数化测试了管道、入口、喷嘴几何形状，建立经验模型捕捉近地吸力效应。优化护罩使近地力提升近3倍，且自由飞行推力相当，续航在地效下提升60%，自由飞行仅降30%。实现了空中飞行、近地悬停及模式切换，为轻量化地效飞行器研究提供实验基础。",
+      "tags": "query:uav",
+      "abstract_en": "Small rotorcraft intended for use indoors or around the built environment have extremely limited flight duration. This paper presents the design and experimental characterization of a custom shroud system that transforms a Crazyflie 2.1 micro air vehicle into a multi-modal robot capable of operating as a high-efficiency hovercraft or a free-flying drone. A custom experimental platform was developed for precise control of hover height and rotor duty cycle, and automated data logging of lift forces. Parametric testing of duct, intake, and nozzle geometries was performed to investigate the impact of shroud configuration on in-ground-effect and free-flight performance. An empirical model is developed which, unlike typical models for ground effect in rotorcraft, captures the suckdown effect that reduces force at intermediate height. It is shown that, through proper design of the shroud, beneficial ground effects can be increased while diminishing negative effects both close to the ground and in free flight. An optimized configuration exhibited nearly three times higher in-ground-effect force while maintaining comparable out-of-ground-effect aerodynamic thrust, although the added shroud mass reduces free-flight control authority. Lightweight shrouds are manufactured using thin-film thermoformed components, and total single-charge flight time is shown to increase by 60% in-ground-effect while decreasing by only 30% in free-flight as compared to the stock drone. Finally, controlled flight in the air, hovering close to the ground, and hover-to-flight transitions are demonstrated using a simple mode-switching controller, with tracking errors reported to quantify performance. This work provides an experimentally-validated and easily adoptable foundation for future research into lightweight ground-effect vehicles and hybrid drone-hovercraft systems.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
