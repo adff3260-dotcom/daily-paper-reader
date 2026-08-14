@@ -1,0 +1,975 @@
+Title: Grid-Compatible Flexibility from Multi-Energy Systems via Cyclic-Terminal Economic MPC with Hybrid Thermal-Electrical Dynamics
+
+URL Source: https://arxiv.org/pdf/2608.07273v1
+
+Published Time: Mon, 10 Aug 2026 00:59:24 GMT
+
+Number of Pages: 19
+
+Markdown Content:
+# Grid-Compatible Flexibility from Multi-Energy Systems via Cyclic-Terminal Economic MPC with Hybrid Thermal–Electrical Dynamics 
+
+Abdul Azzam a,c, ∗, Lukas Schwenkel b, Leon Scheurer a,c , Pascal Häbig a,c , Kai Hufendiek a,c 
+
+> aUniversity of Stuttgart, Institute of Energy Economics and Rational Energy Use, Heßbrühlstrasse 49a, Stuttgart, 70565, Baden-Württemberg, Germany
+> bUniversity of Stuttgart, Institute for Systems Theory and Automatic Control, Pfa ff enwaldring 9, Stuttgart, 70569, Baden-Württemberg, Germany
+> cStuttgart Research Initiative "Discursive Transformation of Energy Systems" (SRI DiTEnS) , Heßbrühlstrasse 49a, Stuttgart, 70565, Baden-Württemberg, Germany
+
+Abstract 
+
+Coupled electrical and thermal infrastructures need controllers that respond to market prices and still solve fast enough to run online. This paper presents a unified Economic Model Predictive Control (EMPC) framework for the coordinated operation of integrated thermal and electrical energy networks. Building on cyclic-terminal EMPC, the proposed approach incorporates hybrid thermal–electrical dynamics, network constraints, and time-varying economic signals within a single mixed-integer state-space representation, jointly optimizing combined heat and power units, large-scale heat pumps, thermal energy storage, batteries, and grid interactions under a convex economic stage cost. Computational tractability is ensured by reduced-order models of district heating networks and DC power flow grids. The framework is demonstrated on a campus-scale multi-energy system under time-varying prices and demand profiles. A joint sweep of the prediction horizon against the terminal penalty weight shows that the two act as substitutes rather than as independent tuning knobs. Without terminal anchoring, the closed-loop cost approaches the periodic-reference average-performance bound only once the horizon spans several diurnal cycles. With a su ffi ciently large terminal weight, the bound is attained essentially tightly at every tested horizon, including the shortest one, so the horizon ceases to be a performance-critical parameter and becomes a purely computational one. The result reproduces on a second, independent price week. Beyond the weight at which the soft terminal constraint activates, closed-loop behavior is insensitive to the weight over a wide multi-decade plateau; below activation, cost and storage tracking both degrade markedly. These findings are specific to this campus system and the studied price weeks. A residual receding-horizon drift of the cost-neutral thermal-storage state is also documented and interpreted. 
+
+Keywords: Economic model predictive control, Multi-energy systems, District heating networks, Mixed-integer programming, Sector coupling, Flexibility 
+
+1. Introduction 
+
+Heating and cooling remain one of the major challenges on the path toward deep decarbonization. In Germany, these sec-tors accounted for 56 % of final energy consumption in 2024, yet renewables supplied only 18.2 % of this demand, far below their approximately 62 % share in the electricity sector [1, 2]. This disparity shows how strongly heat generation still depends on fossil fuels, which poses a critical barrier to national and global climate targets [3]. At the same time, thermal networks o ff er large-scale inher-ent storage by thermal inertia, whereas power grids lack such bu ff ering capacity. Exploiting these complementary character-istics is a direct route to system-level flexibility and stronger renewable integration. Coordinated operation across thermal and electrical domains, however, introduces several challenges. The volatility of renew-able generation, uncertainties in electrical and thermal demand,  
+
+> ∗Corresponding author
+> Email address: abdulrahmman.azzam@ier.uni-stuttgart.de
+> (Abdul Azzam )
+
+and the individual dynamics of units such as combined heat and power (CHP) plants, heat pumps (HPs), batteries, and ther-mal energy storage (TES) complicate the operational decision-making. Coordinating them means handling assets on di ff erent time scales without violating network constraints, as in campus-scale systems that couple CHP, thermal storage, photovoltaic (PV), and waste-heat-driven heat pumps through shared ther-mal and electrical networks. Conventional approaches to operating such systems, includ-ing rule-based dispatch and static optimization, typically treat assets in isolation or rely on fixed schedules, and therefore lack the ability to anticipate future states, price signals, or renewable availability. As system complexity grows, these strategies leave much of the cost-reduction potential untapped and struggle to enforce coupled network constraints across multiple energy car-riers. These limitations motivate Model Predictive Control (MPC), which optimizes control inputs over a receding horizon while explicitly incorporating system dynamics, network constraints, and forecasts of renewable generation and demand. Economic MPC (EMPC), in particular, directly minimizes operational arXiv:2608.07273v1 [eess.SY] 7 Aug 2026 costs rather than tracking predefined setpoints, an important distinction for multi-energy systems where cost-optimal oper-ation is inherently time-varying. While MILP-based schedul-ing approaches handle cost-optimal coordination e ff ectively in open-loop settings, they yield fixed schedules that cannot react to forecast errors or disturbances at execution time. This in-ability to close the loop motivates the receding-horizon EMPC formulation developed here. This work therefore builds a sin-gle EMPC framework that optimizes the thermal and electrical subsystems jointly and still solves fast enough for real-time use. That requires reduced-order yet accurate dynamic models of the thermal and electrical networks, an economic cost function cov-ering fuel and electricity costs alongside renewable utilization, and an optimization structure that stays feasible and economi-cally consistent under time-varying disturbances. 
+
+1.1. Related Work 
+
+Optimal scheduling of multi-energy systems has a long tradi-tion in operations research (OR) and energy economics. Mixed-integer linear programming (MILP) formulations for economic dispatch and unit commitment have been widely applied to co-ordinate distributed generation, storage, and demand-side re-sources over day-ahead or intra-day horizons [4, 5]. Founda-tional work in this area includes that of Casisi et al. [6], who developed a MILP model jointly optimizing the layout and op-eration of a distributed CHP system with microturbines and district heating for urban public buildings. Subsequent stud-ies advanced MILP dispatch with detailed pipeline dynamics [4], performance degradation via digital twins [5], portfolio op-timization comparing merit order and MILP [7], and multilevel stochastic frameworks incorporating N-1 security [8]. Reviews such as [9] and [10] synthesize cost- and market-based CHP scheduling, emphasizing thermal inertia and multi-type demand response for wind integration. Tools such as DER-CAM [11] and scheduling frameworks such as those developed by [12, 13] provide established benchmarks for cost-optimal energy man-agement. In particular, Schulz et al. [12] propose an integrated two-part control for heat pumps coupling optimization schedul-ing with detailed simulation, while Schick et al. [13] quan-tify prosumer self-consumption impacts in near-100% RES sys-tems, revealing flexibility redundancies and distributional ef-fects from regulatory levies. These o ffl ine approaches yield open-loop schedules requiring lower-level execution. In con-trast, the EMPC formulation developed here closes the loop via continuous reoptimization with state feedback, providing ro-bustness to forecast errors while matching economic objectives. For central energy plants with discrete on /off equipment deci-sions and time-varying electricity tari ff s, Risbeck et al. [14] de-veloped a MILP-based receding-horizon formulation for real-time HVAC dispatch, demonstrating cost reduction over heuris-tic scheduling and over a continuous relaxation without discrete variables, illustrating the economic value of retaining binary commitment decisions within the optimization layer. In electrical systems, aggregation concepts such as Virtual Power Plants combine distributed generation units, controllable loads, and storage into a coordinated entity [15]. Dynamic Virtual Power Plants extend this idea to provide fast ancillary services and short-term flexibility [16, 17]. However, as Ab-delkader et al. [18] highlight, these concepts remain almost en-tirely electrical: thermal assets such as HPs, HVAC systems, and DHNs are rarely included, even though they o ff er large amounts of slow-timescale flexibility. Co-optimizing thermal and electrical assets under MPC reaches flexibility that purely electrical implementations cannot. MPC is established practice for energy management in dy-namic systems [19]. In DHNs, it has been applied to multi-source systems with day-ahead price optimization [20], robust control under uncertainty [21], mixed-integer unit commitment [22], network model uncertainty [23], multi-agent scalability [24], building thermal mass as storage [25], and data-driven forecasting using neural networks [26] or physics-informed ap-proaches [27]. Recent studies have increasingly targeted integrated thermal– electric systems. Rose et al. [28] coupled DC power flow mod-els with reduced-order thermal networks for real-time MPC in electro-thermal microgrids, demonstrating computational feasi-bility for operational horizons. Behrunani et al. [29] formulated a distributed economic MPC for interconnected energy hubs, co-optimizing thermal and electrical flows via multi-horizon decomposition to maintain long-term planning without exces-sive computation. Further contributions include device-level distributed MPC for coordinated CHP, HP, battery, and PV operation [30], co-simulation frameworks combining high-fidelity network mod-els with low-fidelity MPC [31], stochastic MPC for CHP-powered district heating [32], and successive linearization for fast thermal–electric coordination [33]. 
+
+1.2. Contribution 
+
+Unified state-space frameworks that couple DHNs and power grids for joint optimization are still rare. The co-optimization of thermal inertia and battery storage, despite their complemen-tary time scales, has received comparatively little attention, as has the systematic integration of real-time market signals into the MPC cost function. High-fidelity multi-energy models fur-ther impose a heavy computational burden, motivating reduced-order approximations for operational use. This work addresses these gaps with a unified EMPC frame-work for integrated multi-energy grids that jointly operates CHPs, large-scale HPs, TES, and batteries within a single mixed-integer state-space formulation. The cost function is convex and captures fuel-electricity trade-o ff s, grid exchange costs, and renewable curtailment, while accommodating time-varying market signals. Reduced-order network models keep the resulting program small enough to solve online: resistive– capacitive DHN representations [34], linearized storage dynam-ics [35], and DC power flow [28, 36]. The overall system topol-ogy is illustrated in Figure 1. The main contributions of this work are as follows: 
+
+• A unified, a ffi ne state-space model that couples an RC-based district heating network (DHN) with a DC power flow electrical grid, five generation /storage components, and time-varying disturbances in a single mixed-integer linear program with a convex economic stage cost. 2Figure 1: Schematic representation of the multi-energy system integrating ther-mal and electrical flows, storage systems, and renewable energy sources for op-timized operation. 
+
+• A cyclic-terminal EMPC with scaled soft terminal con-straints that anchors receding-horizon operation to an of-fline periodic economic orbit, exploiting daily price and demand periodicity without hard terminal sets. 
+
+• A practical mixed-integer EMPC implementation for a campus-scale multi-energy system, integrating CHP units with Mixed Logical Dynamical (MLD) startup logic, a large-scale heat pump, thermal energy storage, a battery, and network constraints. 
+
+• A closed-loop sensitivity analysis characterizing two structural design properties: (i) a horizon sweep run with and without the terminal condition, showing that the prediction horizon and the cyclic terminal condition act as substitutes: without anchoring, the cost gap to the window-matched periodic reference closes only slowly and monotonically with lookahead, whereas with a su ffi -ciently large terminal weight the gap is small and near-flat across the entire swept range, down to the shortest hori-zon tested, with the residual spread attributable to integer-switching noise, a result cross-validated on a second, in-dependent price week, and (ii) a terminal weight sweep identifying a low-weight regime in which the soft termi-nal constraint is inactive, an activation threshold beyond which it engages, and a wide multi-decade cost plateau thereafter within which the baseline choice sits comfort-ably. 
+
+• An empirical characterization of a receding-horizon drift of the thermal energy storage, a cost-neutral storage state that the o ffl ine periodic reference keeps inert but the on-line EMPC drives far across its range, together with an interpretation consistent with a failure of strict dissipativ-ity in that coordinate, under which average-performance guarantees hold for the hard-constrained formulation of [37] while trajectory convergence to the reference is not implied; the implemented soft-penalty scheme trades that formal bound for feasibility robustness (Section 3). The paper is organized as follows: Section 2 introduces time-varying EMPC theory; Section 3 presents the component mod-els, the unified formulation, the EMPC design, and the exper-imental setup; Section 4 discusses results; and Section 5 con-cludes. 
+
+2. Economic MPC with time-varying cost function 
+
+Both tracking MPC and EMPC minimize a finite-horizon cost of the form 
+
+JN (x, u, t) =
+
+> N−1
+
+X
+
+> k=0
+
+ℓ x(k), u(k), t + k + J f
+
+ x(N), t + N; (1) the distinction lies in the choice of the stage cost ℓ and terminal cost J f . Tracking MPC penalizes the deviation from a prede-fined setpoint or reference trajectory, whereas EMPC employs the economic objective itself, such as energy cost or fuel con-sumption, as the stage cost [38, p.153]. This section recalls the elements of the time-varying EMPC framework of [37] that form the basis of the cyclic-terminal formulation used in this work. The plant is described by linear time-invariant continuous dy-namics ˙x(t) = A x(t) + B u(t) + E d(t) + w, (2) where A, B, and E map the state x, input u, and disturbance 
+
+d, and w ∈ Rnx is a constant a ffi ne term. The a ffi ne term w
+
+is a known , constant vector (not a disturbance) collecting the fixed physical o ff sets of the component models, such as the TES lower temperature TL and the DHN ground temperature Text . It acts only on the strictly stable thermal states and is retained explicitly so that each o ff set stays traceable to its originating component. For controller design, (2) is discretized by zero-order hold at sampling period Ts (Section 3.2), yielding 
+
+x+ = Ad x + Bd u + Ed d + wd, (3) where x+ denotes the successor state. After discretization, 
+
+t ∈ I≥0 denotes the discrete time index (corresponding to sam-pling instant t T s), and k the prediction-step o ff set within the horizon. The stage cost ℓ(x, u, t) is time-varying even though the dynamics are not, because electricity prices and demand profiles vary with time. In the energy systems considered here, prices and demand exhibit a strong, but not exact, daily pattern. We therefore do not assume the disturbances themselves to be periodic. In-stead, a nominal disturbance estimate { ˆdk}Np−1 
+
+> k=0
+
+over one period of length Np is used to construct, o ffl ine, an optimal periodic orbit {xref  
+
+> k
+
+, uref  
+
+> k
+
+}Np−1 
+
+> k=0
+
+: the state–input sequence minimizing the economic cost over one period subject to the dynamics, the con-straints, and the periodic boundary condition xNp = x0 (stated formally in Section 3.3, Eq. (41)). Extended Np-periodically, this orbit is a feasible trajectory of the nominal system in the sense of [37, Assumption 1]. It is computed once o ffl ine and held fixed throughout the closed-loop run; it is never re-solved or updated online and therefore introduces no jumps. Being a feasible trajectory, it satisfies the system dynamics at every step, and the online controller only slides its terminal anchor along this fixed reference as time advances. We emphasize that the orbit is not an exogenous tracking target: it is generated from the same economic stage cost and dynamics as the online controller, and it enters the online problem only through the ter-minal ingredients introduced below. The intra-horizon behavior remains governed purely by the economic stage cost. 3The role of the orbit is justified by Theorem 1 of [37]: if the reference is a feasible trajectory and the terminal ingredi-ents satisfy a recursive feasibility condition (Assumption 3 of [37]), the asymptotic average closed-loop cost of the receding-horizon controller does not exceed the average cost of the ref-erence. For the exact terminal equality X f (t) = {xref (t)} with 
+
+V f ≡ 0, this condition is met by u = uref (t), which keeps the successor state on the reference and renders the terminal-cost decrease an equality; it thus follows from reference feasibility (Assumption 1) alone, requiring no separately constructed ter-minal cost or invariant set. Two aspects of this result matter for our setting. First, the bound requires only that the reference be a feasible trajectory; it presumes neither periodicity nor any optimality property of the orbit. The guarantee therefore survives the use of a nominal periodic orbit even when realized disturbances de-viate from the estimate, provided the orbit remains feasible for the realized system. Second, it accommodates discrete-valued actuators: the input sets are required only to be compact, not convex or with nonempty interior [37, Remark 2], so the binary CHP commitment variables of Section 3.1 are covered. The re-sult is verified for the exact terminal equality X f (t) = {xref (t)};our implementation softens this constraint, as discussed below, and we assess the resulting orbit alignment empirically in Sec-tion 4.2. A complementary property explaining the practical e ff ective-ness of finite horizons is the turnpike property : optimal tra-jectories spend the majority of the horizon in the vicinity of the optimal orbit, deviating only near the initial and terminal steps [39], so that the closed-loop average cost approaches the orbit cost as the horizon N grows. The same turnpike mech-anism also underlies performance and stability guarantees for periodic economic MPC without terminal conditions, such as the linearly discounted scheme of [40]; we instead follow the terminal-condition route, anchoring the finite horizon to the precomputed periodic orbit. We use this property empirically in Section 4.2, where the per-state turnpike fraction gives a direct measure of how well the online controller tracks the periodic orbit across horizon lengths. Building on these elements, the finite-horizon EMPC prob-lem solved at time t is min   
+
+> {x,u},
+> sN≥0
+> N−1
+
+X
+
+> k=0
+
+ℓ x(k), u(k), t + k + ρ⊤ 
+
+> N
+
+sN , (4) s.t. x(0) = x(t), x+ = Ad x + Bdu + Edd + wd, (5) 
+
+x ∈ X , u ∈ U ,
+
+|CT xN − rN | ≤ sN (componentwise) , (6) with terminal reference rN = CT xref  
+
+> t+N
+
+, where CT ∈ Rns×nx se-lects the ns terminal states of interest, sN ∈ Rns 
+
+> ≥0
+
+are slack vari-ables, and ρN ∈ Rns 
+
+> >0
+
+penalizes terminal deviations from the pe-riodic orbit. Relative to the exact terminal equality of [37], the slack formulation trades the formal performance bound for ro-bustness: when realized disturbances render the nominal orbit unreachable within the horizon, the soft tube preserves feasibil-ity of the online problem while still anchoring the terminal state to the orbit. Absent binary variables, linear dynamics and a convex stage cost render (4)–(6) a convex program. With the binary commit-ment variables of the hybrid CHP formulation (Section 3.1), the problem becomes a mixed-integer linear program whose continuous relaxation retains convexity. The controller imple-mented in Section 3.3 instantiates this structure with a linear slack penalty and individually scaled terminal constraints. Figure 2 illustrates the scheme: at each sampling instant, the controller optimizes over the prediction horizon subject to the soft terminal tube, applies the first control action, and shifts the horizon forward, producing a closed-loop trajectory that con-verges toward the periodic operating orbit. Past Future Periodic Economic Reference Online EMPC Soft Terminal Constraints xref xonline kk + Nk + Np − kpast uonline Period for Economic Reference Prediction Horizon k − kpast        
+
+> Figure 2: Conceptual illustration of the time-varying EMPC scheme with a pe-riodic economic reference. The EMPC optimizes the future trajectories xonline
+> and uonline within the prediction horizon N, while the terminal tube constrains the terminal state around the periodic reference xref (t).
+
+3. Methodology 
+
+The proposed EMPC framework places the thermal and elec-trical subsystems in one state-space representation, so both are optimized against the same cost. This section summarizes the key component models and the overall formulation. 
+
+3.1. Mathematical Formulation of Components 
+
+After describing the investigated multi-energy system, we present the mathematical models for our EMPC framework. The goal is to derive one state-space representation compris-ing all components and grids in the form of equation (2), where 
+
+x(t) ∈ Rnx is the state vector (e.g., stored energy in thermal stor-age or battery state-of-charge); u(t) ∈ Rnu is the control input vector (e.g., power setpoints, heat input); d(t) ∈ Rnd represents exogenous disturbances (e.g., ambient temperature, solar irra-diation). Matrices A ∈ Rnx ×nx , B ∈ Rnx ×nu , and E ∈ Rnx ×nd
+
+describe the component’s intrinsic dynamics, control input ef-fects, and disturbance impacts, respectively; the constant a ffi ne term w ∈ Rnx collects constant contributions from individual component models. The multi-energy system considered in this work comprises five major components, a stratified TES, a battery, a large-scale HP, a CHP plant, and a DHN, interconnected through thermal 4and electrical distribution grids as depicted in Fig. 1. The fol-lowing subsections present the dynamic model of each compo-nent, followed by the disturbance model, the DHN and electri-cal grid formulations, and the integrated state-space assembly. Throughout this section, each physical component is derived in continuous time using the notation ˙ x(t). The combined model is discretized once in Section 3.2 (Eq. (32)), after which the discrete successor notation x+ is used consistently. The CHP is the only component formulated directly in discrete time, as its hybrid on /off logic is intrinsically discrete. 
+
+3.1.1. Thermal Energy Storage 
+
+The TES is modeled via a linear thermocline-based state-space framework adapted from [35], using the stored ther-mal energy QTES (t) as the state variable instead of the ther-mocline height. After combining losses from the high- and low-temperature zones through the tank surface area S TES =
+
+πDTES HTES , where DTES and HTES are the tank diameter and height, the TES dynamics take the form ˙xTES (t) = ATES xTES (t) + BTES uTES (t) + ETES TA(t) + wTES , (7) with 
+
+ATES = − UTES S TES (TH − TL)
+
+QTES,N 
+
+,
+
+BTES = −1, ETES = UTES S TES ,
+
+wTES = −UTES S TES TL.
+
+(8) Here, xTES (t) = QTES (t) is the state, uTES (t) = ˙QHS (t) the charge /discharge power (negative for charging), TA(t) the am-bient temperature disturbance, UTES the overall heat-transfer coe ffi cient of the tank wall, and QTES,N the nominal storage capacity. The parameters TH and TL denote the high- and low-temperature levels of the stratified storage, respectively. The lower storage temperature TL is absorbed into the constant affi ne term wTES . The discretized form used in the MPC follows from Equation (32). Denoting the maximum charge /discharge power by ˙ Qmax , power and energy are bounded by 
+
+− ˙Qmax ≤ ˙QHS (t) ≤ ˙Qmax , (9) 0 ≤ QTES (t) ≤ QTES,N . (10) 
+
+3.1.2. Battery Storage Model 
+
+The battery model neglects cycling losses, capacity fade, and thermal aging e ff ects. With state xbatt (t) = SOC and inputs 
+
+ubatt (t) = [Pch (t), Pdisch (t)] ⊤, the dynamics are ˙xbatt (t) =
+
+" ηch 
+
+Cbatt 
+
+− 1
+
+ηdisch Cbatt 
+
+#| {z }
+
+> Bbatt
+
+ubatt (t), (11) where ηch and ηdisch are the charging and discharging e ffi cien-cies, and Cbatt is the battery energy capacity. A binary variable 
+
+γbatt (t) ∈ { 0, 1} enforces mutually exclusive charging and dis-charging, with Pbatt,max the maximum battery power: 0 ≤ Pch (t) ≤ Pbatt,max γbatt (t),
+
+0 ≤ Pdisch (t) ≤ Pbatt,max [1 − γbatt (t)] . (12) The SOC is bounded by SOC min ≤ xbatt (t) ≤ SOC max , where SOC min and SOC max are the lower and upper admissible charge limits. The net active power injection at the battery’s electrical node is 
+
+ybatt (t) = h−1 1i| {z }
+
+> Dbatt
+
+ubatt (t) = Pdisch (t) − Pch (t), (13) which enters the nodal power injection vector of the electrical layer. Unlike a full MLD formulation [41], the binary variable only a ff ects the admissible input set, keeping the model e ffi cient for mixed-integer MPC. 
+
+3.1.3. Large Scale Heat Pump Model 
+
+Heat pumps convert electrical power and low-temperature heat sources into elevated-temperature thermal energy. To cap-ture the dynamic behavior of large-scale HPs, we identified a first-order model from step-response measurements of a two-stage screw /piston HP with a nominal thermal output of ap-proximately 1.5 MW [42]. A Padé-approximated model was also fitted and provides an improved transient match, but the first-order model is used here for its favorable balance of ac-curacy and computational e ffi ciency. The identified parameters are K = 1 and τ = 247 .46 s. The continuous-time state-space representation is ˙xHP (t) = AHP xHP (t) + BHP uHP (t),
+
+yHP (t) = CHP xHP (t), (14) where xHP (t) is the internal state, uHP (t) ∈ [0 , 1] the normalized electrical input, and yHP (t) the normalized output power. De-noting the rated electrical power of the heat pump by Pmax HP,el , the electrical power consumption is 
+
+PHP,el = Pmax HP,el CHP xHP , 0 ≤ PHP,el ≤ Pmax HP,el , (15) and the thermal output is obtained through a constant COP rep-resentative of the operating range: 
+
+PHP,th = COP · PHP,el , PHP,th ≥ 0. (16) The constant COP of 3 .252 is determined in two steps. First, following [43], the reference COP depends primarily on the temperature lift ∆Tlift = Tsink − Tsource between the heat sink and source. At the considered operating point ( ∆Tlift = 55 K, 
+
+Tsource = 45 °C), this yields COP ref = 3.47. Second, for part-load operation the e ff ective COP follows a quadratic correction with respect to the load ratio, reaching its maximum at approx-imately 80% of rated capacity. Evaluating this part-load char-acteristic once at the nominal operating point gives the con-stant 3 .252 used throughout this work. To maintain linearity within the MPC framework, temperature-dependent COP vari-ations are not modeled explicitly; temperature-dependent and Padé-model extensions are left for future work. 
+
+3.1.4. Mixed Logical Dynamical CHP Model 
+
+The CHP is formulated in the discrete-time Mixed Logical Dynamical (MLD) framework [41], based on [44], to represent 5its hybrid on /off dynamics within mixed-integer MPC. Unlike the continuous-time components discretized via ZOH in Sec-tion 3.2, the CHP is defined directly in discrete time at sampling period Ts.The CHP state vector collects a continuous and a binary com-ponent: 
+
+xCHP = hxc xℓ
+
+i⊤
+
+= hPset δon i⊤
+
+, xc ∈ R, xℓ ∈ { 0, 1},
+
+where Pset is the electrical set power and δon the on /off status. The input vector combines continuous and logical control ac-tions: 
+
+uCHP = huc uon ust 
+
+i⊤
+
+= h∆P δon ,cmd δstart i⊤
+
+,
+
+with uc ∈ R and uon , ust ∈ { 0, 1}, where ∆P is the power gradient command, δon ,cmd the binary on-command, and δstart the startup indicator. The one-step dynamics follow the canonical MLD form: 
+
+x+ 
+
+> CHP
+
+=
+
+"1 00 0
+
+#| {z }
+
+> ACHP
+
+xCHP +
+
+"1 0 00 1 0
+
+#| {z }
+
+> BCHP
+
+uCHP , (17) where x+ 
+
+> CHP
+
+denotes the successor state at the next sampling instant; xc evolves by the power gradient uc, and xℓ is updated directly by the on-command uon .The logical startup behavior is enforced by: 
+
+ust ≥ uon − xℓ, ust ≤ uon , ust ≤ 1 − xℓ,
+
+so that ust = 1 only on an o ff -to-on transition. Operational constraints enforce feasible power levels and ramp rates: 
+
+Pmin CHP x+ 
+
+> ℓ
+
+≤ x+ 
+
+> c
+
+≤ Pmax CHP x+ 
+
+> ℓ
+
+,
+
+∆Pmin ≤ uc ≤ ∆Pmax +  ∆Pstart − ∆Pmax 
+
+ust ,
+
+with Pmin CHP , Pmax CHP the power limits, ∆Pmin , ∆Pmax the ramp-rate bounds under normal operation, and ∆Pstart the reduced ramp cap applied during a startup transition. The electrical and thermal outputs are: 
+
+yCHP =
+
+"1 0
+
+κ 0
+
+#| {z }
+
+> cCHP
+
+xCHP +
+
+" 1 + α 0 Pstart 
+
+κ(1 + α) 0 κPstart 
+
+#| {z }
+
+> DCHP
+
+uCHP , (18) where yCHP = [Pav , Qchp ]⊤, κ = ηth /η el links thermal and elec-trical e ffi ciencies, α = (∆Pmax − ∆Pmin )/[2( ∆Pmax + ∆ Pmin )] captures the inertia-induced lag, and Pstart is the startup power deficit. Nonnegativity is enforced by Pav ≥ 0. 
+
+3.1.5. Disturbances 
+
+All exogenous time-varying signals are treated as distur-bances, incorporated either in the system dynamics or the cost function. To integrate the solar collector into the MPC, the thermal power output ˙Qcoll (t) is expressed using the Hottel–Whillier equation [45] as ˙Qcoll (t) = Acoll (η0Gcoll (t) − a1∆T (t)) , (19) where Gcoll (t) is the incident solar irradiance, ∆T (t) =
+
+Tcoll,avg (t) − TA(t) the e ff ective temperature di ff erence between the collector and the ambient air, η0 the optical e ffi ciency, and 
+
+a1 the first-order heat-loss coe ffi cient of the collector. Expand-ing (19) yields ˙Qcoll (t) = Acoll η0Gcoll (t)+ Acoll a1TA(t)− Acoll a1Tcoll,avg (t), (20) which can be written in the compact a ffi ne form ˙Qcoll (t) = Ecoll dcoll (t) + wcoll ,
+
+Ecoll = hAcoll η0 Acoll a1
+
+i , dcoll (t) = hGcoll (t) TA(t)i⊤
+
+,
+
+wcoll = −Acoll a1Tcoll,avg .
+
+(21) Thus, only Gcoll (t) and TA(t) enter as measurable external dis-turbances, while the e ff ect of Tcoll,avg , the mean collector tem-perature evaluated at the nominal operating point is absorbed into the constant a ffi ne term wcoll . The resulting heat flow ˙Qcoll (t) is injected into the DHN as an exogenous input, allow-ing the controller to anticipate variations in solar availability and ambient temperature through forecast data. The electrical power generated by the PV system is mod-eled as an external disturbance dPV (t). No explicit dynamic model is assumed, and perfect foresight of forecasted PV pro-files is assumed throughout this study, consistent with the perfect-foresight setting of Section 4. The net PV injection 
+
+pPV,net (t) = dPV (t) − pcurtail (t) is constrained by grid capac-ity pPV,net (t) ≤ pmax PV , where curtailment pcurtail (t) ≥ 0 is an optimization variable with economic penalties applied during positive-price periods in the cost function. Thermal and electrical demands of the buildings connected to the power and thermal grid are modeled as time-varying dis-turbance signals, 
+
+dload (t) = hdload,th (t) dload,el (t)i⊤
+
+, (22) where dload,el (t) = pload and dload,th (t) = ˙Qload denote the fore-casted thermal and electrical load demands, respectively. This formulation allows both domains to be represented compactly while maintaining clear reference to each component for cou-pling between the electrical and thermal layers. The ambient temperature TA(t) influences both the collector e ffi ciency and the thermal storage heat losses, and thus directly a ff ects the thermal subsystem dynamics. For compact notation, the overall disturbance vector is sepa-rated into physical and economic components expressed with         
+
+> dphys (t)=hTA(t)Gcoll (t)˙Qload (t)Pload (t)Text (t)dPV (t)i⊤(23)
+
+and decon (t) = cel (t). 
+
+3.1.6. District Heating Network Model 
+
+For the DHN, we employ a resistive–capacitive (RC) model adapted from [34, 46] as shown in Fig. 3. This reduced-order representation neglects hydraulic pressure dynamics and de-tailed pipe-level heat losses (in contrast to detailed models such 6as [47]), focusing instead on the dominant thermal storage ef-fect of the network water mass. The model comprises an exter-nal temperature node Text (t) representing the e ff ective ground temperature at pipe burial depth, connected through the equiva-lent insulation resistance Rext , the e ff ective thermal capacitance of the network water mass CDHN , and an internal water temper-ature node TDHN (t) = (Tsupply (t) + Treturn (t)) /2. The net thermal power balance of the grid is expressed as 
+
+X
+
+> i
+
+˙Qprod ,i(t) −
+
+X
+
+> j
+
+˙Qconsum , j(t) = PHP,th (t) + ˙QHS (t) + Qchp (t)
+
++ ˙Qcoll (t) − ˙Qload (t), (24) where PHP,th (t) is the heat pump thermal output, ˙QHS (t) the TES charge /discharge power, Qchp (t) the CHP thermal output, ˙Qcoll (t) the solar collector heat injection, and ˙ Qload (t) the aggre-gated consumer heat demand. Using the RC analogy, the first-order di ff erential equation governing the DHN temperature dynamics becomes ˙TDHN (t) = − 1
+
+Rext CDHN 
+
+| {z }
+
+> ADHN
+
+TDHN (t)
+
++
+
+" 1
+
+CDHN 
+
+1
+
+CDHN 
+
+1
+
+CDHN 
+
+#| {z }
+
+> BDHN
+
+
+
+PHP,th (t)˙QHS (t)
+
+Qchp (t)
+
+
+
++
+
+" 1
+
+CDHN 
+
+− 1
+
+CDHN 
+
+1
+
+Rext CDHN 
+
+# 
+
+˙Qcoll (t)˙Qload (t)
+
+Text (t)
+
+ .
+
+(25) Using the a ffi ne representations of the solar collector and TES losses derived in the previous sections, ˙ Qcoll (t) and ˙ QHS (t)can be expressed as linear functions of the disturbances Gcoll (t)and TA(t) plus constant o ff sets. Substituting into (25) and grouping terms yields the compact a ffi ne state-space form ˙xDHN (t) = ADHN xDHN (t) + BDHN uDHN (t) + EDHN dDHN (t) + wDHN ,
+
+(26) with 
+
+xDHN (t) = TDHN (t),
+
+uDHN (t) = hPHP,th (t) ˙QHS (t) Qchp (t)i⊤
+
+,
+
+dDHN (t) = hGcoll (t) TA(t) ˙Qload (t) Text (t)i⊤
+
+.
+
+The DHN disturbance matrix and a ffi ne term then become 
+
+EDHN =
+
+" Acoll η0
+
+CDHN 
+
+Acoll a1
+
+CDHN 
+
+− 1
+
+CDHN 
+
+1
+
+Rext CDHN 
+
+#
+
+,
+
+wDHN = − Acoll a1
+
+CDHN 
+
+Tcoll,avg ,
+
+(27) where the second column of EDHN captures the influence of the ambient temperature TA on the solar collector, and wDHN col-lects the constant contribution of the collector mean tempera-ture Tcoll,avg .To ensure thermally stable and operationally feasible condi-tions within the DHN, the average water temperature is con-strained within admissible bounds: 
+
+TDHN,min ≤ TDHN (t) ≤ TDHN,max , (28) where TDHN,min and TDHN,max denote the lower and upper al-lowable temperature limits, respectively. These bounds express a physical operating requirement; in the controller they are en-forced as an exact-penalty soft constraint (Section 3.3). ˙QCDHN TDHN RExt TExt Pipe Soil  
+
+> Figure 3: Resistive-capacitive equivalent circuit model for a DHN pipe system.
+
+3.1.7. Electrical Grid Model 
+
+Following [36] and [28], we model the electrical layer as a weighted, undirected graph 
+
+Ge = (Ne, Ee, We),
+
+where Ne is the set of nodes (buses), Ee the set of edges (lines), and We = {bi} the set of edge weights given by the line sus-ceptances bi. The topology of the modeled electrical network is illustrated in Fig. 4. It consists of six nodes, PCC (Point of common coupling), battery, CHP, heat pump, PV, and loads, interconnected by seven lines, each characterized by a suscep-tance bi.The nodal power injection vector is defined as 
+
+pe,n(k) = uPCC (k), −Pmax HP,el yHP (k), Pav (k),
+
+ybatt (k), dPV (k), −dload,el (k)⊤ ∈ R|N e|. (29) Here, uPCC (k) denotes the active power exchange with the external electrical grid at the PCC (positive = import, nega-tive =export) and is itself a control input, because the imported or exported power is a decision variable in the optimization. The first four entries of pe,n(k) correspond to controllable units, and the last two represent exogenous disturbances; the load 
+
+dload,el enters as a negative injection. We assume short, purely inductive lines with constant volt-age magnitudes and small voltage angle di ff erences between buses. Under these standard assumptions, the active power flow on each line can be approximated using a linear DC power flow model with 
+
+pe,e(k) = ˜Fe pe,n(k), (30) where pe,e(k) ∈ R|E e| collects the active power flows on all lines at time k, and ˜ Fe is a constant mapping matrix computed from the network’s incidence matrix and the corresponding line 7parameters (susceptances), providing a linear relationship be-tween nodal injections and line power flows. A global power balance constraint is imposed to satisfy Kirchho ff ’s current law by 
+
+1⊤|N e| pe,n(k) = 0. (31) This nodal active-power balance constraint enforces Kirch-ho ff ’s current law under the DC approximation, and the alge-braic DC power flow (DCPF) formulation introduces no ad-ditional dynamic states. For detailed derivations of ˜Fe, see [28, 36]. PCC ( uPCC )PV ( dPV )Loads ( dLoad )Battery ( uBatt )CHP ( uCHP )Heat Pump ( uHP )b1 = 0 .2b2 = 0 .15 b6 = 0 .25 b7 = 0 .3b3 = 0 .15 b4 = 0 .3b5 = 0 .1       
+
+> Figure 4: Topology of the electrical network represented as a weighted, undi-rected graph Ge=(Ne,Ee,We). Six nodes, PCC, heat pump, CHP, battery, PV, and load, are interconnected through seven lines, each characterized by a line susceptance bi. Line capacities can be specified to represent physical transfer limits.
+
+3.2. Integrated System Model 
+
+Applying zero-order hold (ZOH) discretization at sampling period Ts to the continuous subsystems (TES, battery, DHN, HP) and inserting the CHP MLD rows directly yields the uni-fied discrete-time hybrid model 
+
+x+ = Ad x + Bd u + Ed dphys (k) + wd, (32) with global state and input vectors 
+
+x = hxTES xbatt xDHN xHP xc xℓ
+
+i⊤
+
+,
+
+u = huTES Pch Pdisch uHP ∆P δon ,cmd δstart i⊤
+
+,
+
+(33) where xc = Pset and xℓ = δon are the CHP continuous and binary states, and the physical disturbance vector is 
+
+dphys (k) = hTA Gcoll ˙Qload Pload Text dPV 
+
+i⊤
+
+.
+
+The state transition matrix is                                
+
+> Ad=
+> 
+> ATES ,d0000001000000ADHN ,d
+> COP ·Pmax HP ,el CHP
+> CDHN
+> κ
+> CDHN
+> 0000AHP ,d00000010000000
+> 
+> .(34)
+
+The diagonal entries of the continuous blocks follow from the per-block ZOH formula Ai,d = eAi,cTs . The battery and CHP power-setpoint entries equal 1 because both subsystems are pure integrators ( Ai,c = 0, hence e0 = 1), while the CHP logi-cal entry is 0 since x+ 
+
+> ℓ
+
+= δon ,cmd carries no self-dynamics. The off -diagonal entries in the xDHN row arise because the HP and CHP thermal outputs depend on the states xHP and xc, which enter the DHN dynamics after substituting the HP thermal rela-tion PHP ,th = COP · Pmax HP ,el CHP xHP and the CHP output map (18). For readability, the o ff -diagonal coupling entries in (34) and the DHN row of (35) are displayed in their continuous-time form; the implementation applies exact ZOH discretization Ad = eAcTs
+
+to the full coupled system, so all implemented entries are di-mensionally consistent discrete-time maps. The input matrix is                                       
+
+> Bd=
+> 
+> BTES ,d0000000B(1) batt ,dB(2) batt ,d00001
+> CDHN
+> 000κ(1 +α)
+> CDHN
+> 0κPstart
+> CDHN
+> 000BHP ,d00000001000000010
+> 
+> ,(35)
+
+where BTES ,d and BHP ,d follow from the per-block ZOH inte-gral Bi,d = R Ts 
+
+> 0
+
+eAi,cτ dτ Bi,c, and the battery entries are B(1) batt ,d =
+
+ηch Ts/(3600 Cbatt ) and B(2) batt ,d = −Ts/(3600 ηdisch Cbatt ), where the factor 3600 converts Ts from seconds to hours consistent with Cbatt in kWh. The CHP rows are inserted directly from the MLD dynamics (17) without ZOH modification, since the CHP is formulated natively in discrete time at the same Ts. The PCC exchange uPCC does not appear in the state-space dynamics; it enters only through the DC power-flow constraints (31) below. The disturbance matrix Ed and a ffi ne term wd are 
+
+Ed =
+
+
+
+Eglob TES ,d
+
+01×6
+
+Eglob DHN ,d
+
+01×6
+
+02×6
+
+
+
+, wd = hwTES ,d 0 wDHN ,d 0 0 0i⊤
+
+,
+
+where ETES ,d and EDHN ,d follow from ZOH. The zero rows for battery, HP, and CHP reflect that these subsystems receive no direct physical disturbance inputs in their state equations. The inter-subsystem coupling between the HP and CHP thermal outputs and the DHN state is enforced through auxiliary output variables and equality constraints following the MLD structure of [41]. 
+
+Algebraic network coupling.. The state-space dynamics (32) govern the temporal evolution of all component states. At each step k, the electrical outputs must additionally satisfy the DC power-flow constraints, which enforce physical consistency of nodal injections and line flows shown in (29), (30) and (31). Together they constitute the complete system description: the state-space equations capture intertemporal storage dynamics, while the algebraic DC power-flow relations enforce instanta-neous electrical feasibility at every step [28, 29]. 8System properties.. The open-loop system (32) is marginally stable: the battery SOC and CHP power setpoint are pure inte-grators with eigenvalues at unity, while all thermal states have eigenvalues strictly inside the unit disc. Each subsystem is in-dividually controllable from its associated inputs in Bd, and the block upper-triangular structure of Ad ensures full state control-lability without eigenvalue–input cancellation across blocks. The presence of binary CHP actuators does not modify the fea-sible set structure of the MPC problem: since the admissible input set U need not have an interior for standard MPC feasi-bility and tracking-stability results to hold, discrete-valued in-puts are accommodated without further modification [48]; the extension of these results to economic objectives remains an open problem not addressed here (cf. the discussion of [37] in Section 2, whose Theorem 1 bound covers the hard-constrained mixed-integer setting, including the binary CHP commitment variables, via compactness rather than convexity of the input set). Under the perfect-foresight assumption of this study, all states are measured directly at each sampling instant ( C = I), making the system fully observable; the binary state xℓ is mea-sured rather than estimated. The marginal stability of the in-tegrator states motivates the cyclic-terminal soft constraints of Section 3.3, which anchor xbatt and xc to the periodic reference. 
+
+3.3. Cost Function and Optimization Problem 
+
+The economic and physical disturbances a ff ecting the system are approximately daily periodic, while still exhibiting short-term fluctuations in loads and electricity prices. To exploit this structure, we compute an economically optimal periodic oper-ating orbit o ffl ine, hereafter the periodic reference , and use it to anchor the online EMPC during receding-horizon operation. Specifically, the periodic reference provides (i) a periodic target trajectory and (ii) reference terminal values used in softened ter-minal consistency constraints, whereas the online EMPC con-tinually reoptimizes using the current state and updated fore-casts. Building on the theoretical framework of Section 2, the stage cost ℓ(x, u, t) is instantiated as a time-varying economic cost driven by the disturbances dphys (t) and decon (t), including the electricity price cel (t) and the thermal and electrical de-mand profiles. To improve numerical conditioning and dis-courage aggressive actuator behavior, we include mild regu-larization terms on the input magnitude and input increments. Here, Qchp (k) is the CHP thermal output obtained from the MLD output map (18) and thus depends on both x(k) and u(k); 
+
+uPCC (k) denotes the net active power exchange at the PCC (pos-itive = import). Furthermore, cgas is the gas price [ €/kg] and LHV the fuel’s lower heating value, so cgas /(LHV ηth ) gives the fuel cost per unit of thermal output. The electricity price cel (t)is a time-varying economic driver. The instantaneous cost is 
+
+ℓ(x(k), u(k), t + k) = cgas 
+
+LHV · ηth 
+
+Qchp (k) Ts + csu δstart (k)
+
++ uPCC (k) cel (t + k) Ts
+
++ pcurtail (k) c+
+
+> el
+
+(t + k) Ts
+
++  Pch (k) + Pdisch (k) cbatt Ts
+
++ WT,low sT,low (k) + WT,high sT,high (k)
+
++ Ts
+
+ ∥R¯uk∥1 + ∥L∆¯uk∥1
+
+, (36) where uPCC (k) is the net grid exchange defined in Section 3.1 (positive = import), csu is the CHP startup wear cost per 0 → 1transition [ €] and δstart (k) the startup indicator from (33), c+ 
+
+> el
+
+=
+
+max( cel , 0) is the positive part of the electricity price, applied to the curtailed PV power pcurtail (k) so that curtailment is charged at its lost revenue and never credited at negative prices, cbatt 
+
+is the battery degradation cost per unit throughput [ €/kWh], and sT,low , sT,high ≥ 0 are the slacks of the DHN temperature bounds (28), penalized by WT,low = WT,high = 10 6; ∆u(k) =
+
+u(k)−u(k−1), in which u(k−1) is the last applied input: a known parameter for k = 0 and a decision variable already present in the horizon for k ≥ 1, and the regularization is applied to component-wise normalized inputs ¯ui,k = ui(k)
+
+unom 
+
+> i
+
+, ∆¯ui,k = ¯ui,k − ¯ui,k−1, (37) with nominal magnitudes unom  
+
+> i
+
+from Table 1. The battery term penalizes throughput in both directions: Pch and Pdisch are non-negative and mutually exclusive by the charge /discharge com-plementarity binary, so Pch + Pdisch = |Pbatt | exactly and the term stays linear. Powers enter (36) in kW and prices in €/kWh, so each power–price product carries an explicit Ts (in hours) and ℓ has units of € per step. The startup and temperature-slack terms are charged per transition and per violation, respectively, and therefore carry no Ts factor. The weights R = diag( λu,i) and 
+
+L = diag( λ∆u,i) are diagonal matrices, which are chosen suf-ficiently small relative to the economic coe ffi cients such that they do not alter the economically optimal behavior and uni-form across actuators ( λu,i = 10 −4, λ∆u,i = 1 for all i, except the grid exchange, which carries only a magnitude penalty since it is the residual balance variable and smoothing it directly would distort price-following), so as not to materially alter the eco-nomically optimal behavior: a parameter sweep confirms this configuration increases cost by only 0 .10 % relative to the un-regularized baseline while eliminating numerical chatter. To guide the optimizer toward the periodic economic or-bit while still permitting controlled deviations, soft terminal constraints are imposed on selected state components. Since the terminal constraints act directly on individual states (TES energy, battery SOC, DHN temperature, HP state, and CHP scheduling variables), the selector matrix CT ∈ Rns×nx intro-duced in Section 2 reduces here to rows of the identity matrix (here CT consists of selected rows of I, so CT x = xi simply picks the relevant state components). For each selected termi-nal state xi,N and its corresponding reference value ri,N obtained 9from the periodic orbit, a slack variable si ≥ 0 bounds the ab-solute deviation according to 
+
+xi,N − ri,N ≤ si. (38) Collecting all terminal slacks in the vector sN and their corre-sponding scaling factors in σ > 0, the normalized linear termi-nal penalty is 
+
+Jterm = wterm 1⊤ σ−1 ⊙ sN
+
+, (39) where ⊙ denotes componentwise multiplication. This cor-responds to the terminal penalty ρ⊤ 
+
+> N
+
+sN from Section 2 with 
+
+ρN = wterm σ−1, where the normalization σ ensures compara-ble numerical scaling across terminal states. The scalar weight 
+
+wterm > 0 determines the overall importance of satisfying the terminal tube relative to the stage cost, while σ normalizes the individual slacks so that all terminal quantities contribute on comparable numerical levels. The complete finite-horizon cost is 
+
+JN (x, t) =
+
+> N−1
+
+X
+
+> k=0
+
+ℓ(x(k), u(k), t + k) + Jterm . (40) 
+
+Offl ine periodic reference (target orbit). Given an estimate of the disturbance sequence over one period, {dk}Np−1 
+
+> k=0
+
+, we compute offl ine a feasible periodic state–input trajectory {xref  
+
+> k
+
+, uref  
+
+> k
+
+}Np−1
+
+> k=0
+
+by solving 
+
+{xref  
+
+> k
+
+, uref  
+
+> k
+
+}Np−1 
+
+> k=0
+
+∈ arg min   
+
+> {xk,uk}
+> Np−1
+
+X
+
+> k=0
+
+ℓ(xk, uk, k) (41) s.t. xk+1 = Ad xk + Bduk + Eddk + wd,
+
+(xk, uk) ∈ X × U , DCPF( xk, uk),
+
+xNp = x0.
+
+The periodicity constraint xNp = x0 enforces a closed orbit con-sistent with the assumed periodic disturbance pattern. Here x0
+
+(equivalently xNp ) is itself an optimization variable: the orbit’s closure point is free, and only periodicity, not a prescribed ter-minal state, is imposed. The resulting optimizer defines the periodic targets {xref  
+
+> k
+
+, uref  
+
+> k
+
+} and the corresponding terminal refer-ence values ri,N used in (38). 
+
+Online EMPC (receding-horizon operation).. During opera-tion, at each time t the controller solves a finite-horizon EMPC problem initialized at the measured state and driven by updated forecasts, minimizing JN (x, t) in (40). The problem is re-solved at every sampling instant t (period Ts): the horizon terms use the time-shifted forecasts dphys (t+k) and stage costs ℓ(·, t+k), and the terminal reference rN = CT xref  
+
+> t+N
+
+is obtained by indexing the fixed periodic reference at t+N. The periodic reference is computed once before operation and is never recomputed dur-ing the run, so the terminal reference shifts smoothly along it as t advances rather than jumping between successive solves. The periodic reference anchors the online optimization to a fea-sible economic operating regime, while the slack variables sN
+
+allow temporary deviations when required by forecast changes or constraint activity. 
+
+3.4. Experimental Setup 
+
+The simulation setup is based on the multi-energy infrastruc-ture of the University of Stuttgart Campus Vaihingen, which in-cludes a CHP plant, a TES system, PV generation, and both thermal and electrical distribution networks. In its planned future configuration, the campus will additionally operate a large-scale heat pump using waste heat from the local high-performance computing center [49]. For the present study, this real infrastructure is augmented with a solar-thermal collector field and a battery system to explore the full potential of co-ordinated electro-thermal operation. Heat and electricity are coupled in the resulting test system through the CHP, the heat pump, and the shared campus connection point. The overall system topology is illustrated in Fig. 1. All internal computations use SI base units (J, W, K), consis-tent with the continuous-time and discretized state-space mod-els; Table 1 reports values in common engineering units (kW, MW, kWh, ◦C) for readability. Thermal and electrical demand, PV irradiance, and ambient temperature follow representative measured profiles. A periodic economic reference trajectory is computed o ffl ine over multiple days and used as the terminal target for the EMPC controller. The electricity price series is composed of German intraday prices from 2024, mapped onto the 2019 timebase of the mea-sured campus demand and weather profiles; the gas price is held constant (Table 1). This splice preserves the realistic short-term electricity-price volatility relevant to storage and CHP dispatch, at the cost of severing the physical correlation between weather and price; this is disclosed as a limitation. Table 1 summarizes the key parameters of the case study, in-cluding network limits, component ratings, and economic data. The MPC sampling time is set to Ts = 300 s, and the prediction horizon spans 24 hours and therefore N = 288 steps. SOC lim-its of 0 .2–0 .9 ensure practical depth-of-discharge operation. For the EMPC formulation, a uniform regularization scheme is ap-plied to normalized actuator signals: a small magnitude penalty 
+
+λu = 10 −4 improves numerical conditioning, and a smoothness penalty λ∆u = 1 is applied uniformly across all continuous in-puts, including the battery and the TES. 
+
+4. Results 
+
+The following results evaluate the closed-loop behavior of the proposed cyclic-terminal EMPC in three parts: (i) a base-line scenario establishing the qualitative behavior of one closed-loop trajectory under perfect foresight, (ii) the orbit-alignment reading of a joint sweep over the prediction horizon N and the terminal weight wterm , and (iii) the closed-loop-cost reading of that same joint sweep. Parts (ii) and (iii) are two views of one 14 × 8 grid of 112 closed-loop runs rather than independent one-dimensional sweeps, because horizon length and terminal weight are not separable design choices: each substitutes par-tially for the other, and that substitution is itself the central re-sult reported below. All online simulations cover three consecu-tive days with sampling time Ts = 300 s (5 min) and use perfect forecasts for exogenous signals. The initial condition x0 is set 10 Table 1: Key parameters of the EMPC case study.                                                                                               
+
+> Category Parameter Value
+> MPC Sampling time Ts300 s Horizon N288 steps =24 h Terminal weight wterm 10 3
+> Regularization All actuators (grid: magnitude only) 10 −4/1
+> Costs /Effi ciencies LHV 12 500 Wh /kg Gas price cgas 0.625 €/kg CHP ηth /η el 0.58 /0.24 Heat pump COP 3.252
+> Heating grid /TES 1/Rext (grid conductance) 183 W /KDHN thermal capacitance CDHN 6.2×10 9J/KTES UA 500 W /KTES energy Qmax TES 2.7×10 9JHigh /Low TES temperatures TH/TL100 /70 ◦CTES power Pmax TES 500 kW
+> Generation CHP Pmin CHP /Pmax CHP 10 kW /1.0 MW CHP ramp ∆P±60 kW /step CHP startup ∆Pstart 15 kW HP Pmax el 2 MW Solar coll. Acoll 4500 m 2
+> Coll. η0/a10.76 [-] /1.82 W /(m 2K) PV Pmax PV 10 MW
+> DC power flow Nodes /lines 6/7PCC limit Pmax PCC 8.0 MW Line limit Pmax
+> ℓ10 MW Line susceptance bℓ0.10–0 .30
+> Battery Capacity Cbatt 5.0×10 7Wh Power Pmax batt 2.0 MW SOC bounds 0.2–0 .9Round-trip e ffi ciency ηbatt 0.95 Throughput cost 10 €/MWh
+
+to xref 0 of the periodic reference, so that the reported gaps isolate finite-horizon e ff ects rather than transient response to x0 , xref 0 .
+
+4.1. Baseline Scenario 
+
+The baseline case characterizes the closed-loop behavior of the proposed cyclic-terminal EMPC under idealized conditions with perfect forecasts of all exogenous signals and a simulated plant matching the controller model. The results therefore iso-late the behavior induced by the economic objective, the hybrid feasibility constraints, and the cyclic-terminal structure. The periodic reference {xref  
+
+> k
+
+, uref  
+
+> k
+
+} is computed o ffl ine as one cyclic problem over eight consecutive days (2304 steps), with the periodicity constraint imposed between the first and the last step of that window. The closed-loop simulation then covers the first three days of the same window. The window must exceed those three days by at least the longest online prediction hori-zon tested ( N = 864, i.e. 72 h), since at every step of the closed-loop simulation the controller reads reference states and inputs up to N steps beyond the current time; eight days leave five days of reference beyond the simulated window, two more than the longest horizon requires. Online, we use a receding-horizon EMPC with a 24 h prediction horizon of N = 288 steps and ter-minal penalty weight wterm = 10 3, reoptimizing at each step. Of the tested weight grid {0, 30 , 100 , 200 , 300 , 10 3, 10 4, 10 6}, of which the seven weights up to 10 4 are shown in the figures (Sec-tion 4.2), the battery state-of-charge alignment becomes exact between wterm = 200 and wterm = 300; the chosen wterm = 10 3
+
+sits roughly half a decade above this activation edge, providing margin without pushing into the extreme-weight regime (Sec-tion 4.2). Measured by the turnpike fraction of Section 4.2, the battery is the only coordinate that reaches exactly 1 .000 at ev-ery horizon: the DHN temperature plateaus at a mean of 0 .96 without attaining unity across all horizons at any single weight, and the TES, heat-pump, and CHP fractions stay below unity at every weight tested. Measured by the terminal deviation in-stead, the TES and CHP terminal states are pinned to the ref-erence to machine precision from the smallest nonzero weight on; the two metrics answer di ff erent questions and should not be conflated. The baseline therefore demonstrates the paper’s own recommended operating point rather than an arbitrarily strong setting; the cost–alignment trade-o ff across weights is analyzed in Section 4.2. Figure 5 summarizes the coupled thermal-electrical opera-tion. The online EMPC tracks the o ffl ine periodic orbit nearly identically for the continuous network states and respects all thermal and electrical feasibility limits. The flexibility allocation is clearly asymmetric across energy carriers, but the reverse of a thermal-dominates-medium-term picture. The battery performs slow, multi-hour price arbitrage: over the three-day window it completes a small number of deep sweeps across its state-of-charge range ( 7 sign reversals total, correlation with price −0.77 for net charging power Pch − Pdisch ,positive in charging) 1, charging during cheap-price intervals and discharging into expensive ones; it, not the thermal subsys-tem, is the medium-term mover. The TES, by contrast, is a fast, near-continuous cycler ( ≈ 410 sign reversals, sub-hourly pe-riod) whose heat-flow signal is not itself strongly price-driven (correlation of the TES heat-flow signal Qhs with price is +0.03, near zero, with the sign a function of the discharge-positive flow convention used here; note that the TES level state x0 itself cor-relates more appreciably with price, at +0.35 ) but instead in-tegrates a persistent heat-pump overproduction bias: the heat pump supplies on average 0 .5 % more thermal output than the periodic reference ( +10 .8 kW), and the TES absorbs this ex-cess. This is not a contradiction of the heat pump’s own price-driven dispatch: what reaches the TES is not that price-driven signal directly but the residual mismatch between heat-pump output and instantaneous demand, i.e. the overproduction bias, which is why the TES itself shows negligible price correlation even though its charging source is price-driven upstream. The periodic reference keeps the TES nearly inert, whereas the on-line EMPC actively drives it far across its range; the mechanism behind this receding-horizon drift is analyzed in Section 4.3. Rather than following a fixed heuristic, the controller alternates between direct heat-pump supply and storage exchange depend-ing on the active thermal constraints and the current electrical operating point. On the electrical side, the CHP is dispatched predominantly during the highest-price portion of the window ( 35 % duty on the second, highest-price day versus 14 % and 12 % on the first and third days; correlation of the commitment signal with price 0.70 ) rather than being spread evenly across all higher-price     
+
+> 1All correlations reported in this section are Pearson coe ffi cients computed between the closed-loop signal and the intraday electricity price cel (t), evalu-ated pointwise over all 864 samples of the three-day window at the Ts=300 s simulation resolution, with no lagging, smoothing, or resampling.
+
+11 periods; DHN and TES bounds are occasionally active dur-ing this period but do not materially constrain the CHP sched-ule. In contrast to the TES, the battery tracks the periodic ref-erence tightly, executing the same slow price-arbitrage sweep described above. Grid exchange at the PCC follows the same economic logic but remains constrained by local demand, unit ratings, and PCC capacity. Constraint activity explains the remaining deviations from a price-only strategy: DHN and PCC bounds bind during the sharpest price swings. PV curtailment is the remaining relief mechanism whenever additional injection would violate net-work or storage limits, but it is not exercised in this window: the curtailment variable pcurtail is identically zero over all three days, so the local PV is absorbed in full here. Curtailment does become active in the reproduction week used in Section 4.2. Panel (viii) of Figure 5 shows the cumulative stage cost over the three simulated days. The online EMPC and the o ffl ine peri-odic reference track each other closely: the online total cost ex-ceeds the reference by only 0 .77 % over the three-day window. A finite-horizon, cyclic-terminal-anchored controller therefore stays within roughly one percent of the jointly-optimized of-fline reference on this window; this small, near-vanishing gap is consistent with, and not a counterexample to, the asymptotic average-performance bound of Theorem 1 in [37]: over a quasi-periodic exogenous signal the receding-horizon cost is expected to track the periodic-orbit cost closely, with the residual gap at-tributable to the finite-horizon e ff ects analyzed in detail in Sec-tion 4.2. Part of this residual gap is a storage-inventory book-keeping e ff ect rather than a true economic loss: the online ter-minal TES level exceeds the reference’s own by ≈ 62 kWh th 
+
+(≈ 224 MJ), worth well under 0 .1 % of total cost at window prices, so the reported gap is a conservative upper bound. 
+
+4.2. The Joint Horizon–Weight Grid: Orbit Alignment and Closed-Loop Cost 
+
+Both readings that follow draw on a single campaign: a full factorial sweep of the predic-tion horizon over the fourteen-point grid N ∈{4, 8, 12 , 16 , 24 , 36 , 48 , 72 , 144 , 288 , 432 , 576 , 720 , 864 },spanning 20 min to 72 h of lookahead, against the terminal weight wterm ∈ {0, 30 , 10 2, 2 · 10 2, 3 · 10 2, 10 3, 10 4, 10 6},i.e. 112 closed-loop runs. All runs share the same three-day window, the matched initial condition x0 = xref 0 , and an other-wise identical configuration. The weight grid is deliberately dense between 10 2 and 10 3, which is where the terminal tube activates. Setting wterm = 0 removes the soft terminal constraint (6) entirely and reduces the scheme to a plain economic MPC with no anchoring to the periodic orbit, so the bottom row of each grid is the unanchored baseline against which the terminal condition is assessed. The two metrics used to read the grid are the turnpike fraction (state alignment) and the AAC ( closed-loop cost ), defined in Section 4.2 below; the alignment reading is discussed first, the cost reading second. A third quantity, the normalized terminal deviation per state, is reported alongside them in Figure 6(c) as a direct check that the terminal tube is doing what the turnpike fraction attributes to it; it is corroborating rather than a separate reading. 0250 500 750 1000 1250         
+
+> kW
+> PV Collector Irradiance (W/m²) Price ( /MWh)
+> 02000 4000 6000
+> kW PCC import PCC export
+> 2000
+> 02000 4000 6000
+> kW Power flow lines
+> 02000 4000 6000 8000
+> kW Thermal supply aggr. Electrical supply aggr.
+> 02000 4000 6000
+> kW HP electric power HP thermal power CHP electric power CHP thermal power
+> 90 91 92 93 94 95
+> °C DHN temperature
+> 020 40 60 80 100
+> %
+> TES SOC Battery SOC
+> 09-22 00 09-22 12 09-23 00 09-23 12 09-24 00 09-24 12 09-25 00
+> Time
+> 0510
+> kEUR Cumulative cost
+> 050 100 150 200 250
+> Reference Online
+
+Figure 5: Baseline EMPC operation under perfect forecasts with a 24 h predic-tion horizon. Panels show: (i) exogenous signals (PV irradiance, solar-collector input, electricity price), (ii) PCC import /export, (iii) DC power flow lines, (iv) aggregated thermal and electrical supply, (v) heat-pump and CHP dispatch, (vi) DHN temperature, (vii) TES energy and battery SOC, and (viii) cumulative stage cost. Dashed lines: o ffl ine periodic reference; solid lines: online EMPC. 
+
+The average closed-loop cost AAC and the turnpike frac-tion are defined next, together with the methodological caveats that apply to both readings. Theorem 1 in [37] guarantees that under the hard terminal conditions recalled in Section 2, the asymptotic average closed-loop cost satisfies lim sup  
+
+> T→∞
+
+1
+
+T 
+
+> T−1
+
+X
+
+> k=0
+
+hℓ(x(k), u(k), k) − ℓ(xref (k), uref (k), k)i ≤ 0. (42) We report the empirical average stage cost over the 72 h simula-tion window, denoted AAC, as a finite-window approximation of this asymptotic quantity (the terminal condition here is a soft penalized tube, tight to solver tolerance for wterm ≥ 10 4; Sec-tion 2 states the soft-vs-hard distinction). The turnpike fraction, defined for each state i as the fraction of closed-loop time steps at which the normalized absolute de-12 viation satisfies |xi(t) − xref  
+
+> i
+
+(t)|
+
+σi
+
+< 1, (43) where σi is a state-specific physical tolerance: σTgrid = 0.4 °C, 
+
+σETES = 1.35 × 10 8 J, σSOC = 0.025, σxHP = 5 [-], and σPCHP =
+
+50 kW. Here xHP denotes the heat pump’s internal (unnormal-ized) dynamic state, not the normalized input uHP ∈ [0 , 1]; the tolerance σxHP is expressed in those internal state units. Note that this fraction is computed on the realized closed-loop tra-jectory xi(t), not on the open-loop predicted trajectory within each solved horizon; it is therefore best read as a closed-loop alignment /tracking diagnostic inspired by turnpike terminol-ogy, rather than as a direct measurement of the open-loop turn-pike property that the underlying theory concerns. Two dis-closures about these tolerances. First, the battery result re-ported below is obtained with the tightened battery tolerance 
+
+σSOC = 0.025, i.e. the battery tracks the periodic reference within 2 .5 % SOC throughout. Second, these measurement tol-erances are diagnostic quantities chosen for reporting and are distinct from the terminal-tube normalisation constants used in-side the controller, which are 3 .0 °C, 1 .348 × 10 8 J, 0 .05, 5 [-] and 100 kW in the same order; the two sets should not be con-flated. The turnpike fraction of (43) is evaluated for each of the five state groups over the grid shown in Figure 6(b). 
+
+Orbit alignment across the grid.. Two distinct alignment mechanisms are visible, and they act on di ff erent axes. The DHN temperature and the battery SOC are governed almost entirely by the terminal weight: the DHN fraction rises from well below half at the shortest horizons for low weights to at least 0 .80 at every horizon once wterm ≥ 2 · 10 2, and the battery SOC fraction stays at or below 0 .363 at every horizon shorter than N = 576 for all weights up to and including 2 · 10 2, and is exactly 1 .000 in all 56 cells with wterm ≥ 3 · 10 2, indepen-dently of N. On this primary week the wterm = 2 · 10 2 row is indistinguishable from the unanchored rows in the battery co-ordinate, whereas on the secondary week it is genuinely inter-mediate (horizon mean 0 .569 against 0 .137 at wterm = 0, the latter carried entirely by the three longest horizons, since the unanchored fraction stays below 0 .01 for all N ≤ 432), so the edge is sampled from below on one week and straddled on the other; the tube therefore anchors the battery through the inte-rior of the horizon, not only at the terminal step, and there is no longer a staged, state-by-state convergence ordering once the edge is crossed. Terminal-tube activation therefore appears in the alignment grid as a sharp horizontal edge in wterm , located in (10 2, 3 · 10 2], a step in the grid resolution tested, sampled directly at 2 · 10 2 and 3 · 10 2, and not as a diagonal trade-o ff 
+
+against horizon length. Lookahead is nevertheless a partial substitute for anchoring, which is the interaction that motivates reading the sweep as a grid rather than as two one-dimensional cuts. In the unan-chored bottom row the battery SOC fraction recovers on its own well before the longest tested horizon: on this primary price week (2019-09-22) it is 0 .363 at N = 432 and reaches 1 .000 at N = 576, i.e. two diurnal cycles of lookahead, so a plain economic MPC given two to three diurnal cycles of lookahead attains the alignment that the terminal condition already deliv-ers at N = 4, i.e. 20 min of lookahead. The DHN state shows the same substitution but stays partially anchored throughout: its unanchored fraction has a minimum of 0 .269 and never falls below 0 .2 on this week, climbing toward unity as the horizon lengthens. The terminal condition thus buys, at negligible on-line cost, alignment that would otherwise require a two-order-of-magnitude longer horizon. The TES is the exception on both axes: no weight anchors it, but its sensitivity to wterm is itself strongly horizon-dependent rather than uniformly weak. The max /min ratio of its fraction across the eight weights at a fixed horizon stays under a factor of two only for the shortest horizons tested ( N ≤ 12). Beyond that the ratio is large but not monotone in N, spanning 4 .5× at 
+
+N = 288 and 268 × at N = 432 on this primary week (2019-09-22), and it is unbounded at N = 144, where the smallest fraction over the eight weights is zero; at N = 432 the secondary week gives ≈ 64 ×. It is also non-monotone in N: large at the short-est horizons, falling over the mid-range of horizons, and rising again for N ≥ 576. The CHP fraction is by contrast nearly in-variant over the whole grid, and well below unity, capped by the quantized nature of its dispatch rather than by either design pa-rameter: its row means span only 0 .864 to 0 .897 across all eight weights on this week. The heat pump sits between the two be-haviors. It responds to the same terminal-weight edge as the DHN and the battery, with row means rising from 0 .498–0 .528 for wterm ≤ 10 2 to 0 .670–0 .684 for wterm ≥ 2 · 10 2 and its grid-wide minimum lifting from 0 .170 to 0 .587, but it plateaus far below unity and retains only a mild horizon dependence above the edge. The TES mechanism is analyzed in Section 4.3. Figure 6 is the paper’s only illustration of the grid campaign: it shows the two readings, alignment and closed-loop cost, to-gether with the terminal-deviation check, over the full 14 × 8grid, and is therefore the visual reference for both readings that follow; all numbers quoted below are this campaign’s own. The full campaign was repeated on a secondary price week (2019-09-14) as a reproduction check and gave similar results throughout, confirming that the lookahead a plain economic MPC needs is price-week dependent, which is exactly the de-pendence the terminal condition removes. Read over the grid, the Theorem 1 bound (Section 4.2) is attained tightly wher-ever the terminal condition is active and only at long horizons where it is not; the cost reading below quantifies that substitu-tion in cost terms. The remainder of this subsection collects the integer-dispatch and solve-time diagnostics of the wterm = 10 3
+
+row (the baseline weight, Section 4.1), which the alignment grid of Figure 6(b) does not display. The discrete CHP /HP commitment schedule is essentially frozen for N ≥ 144 (8 switches, 4 startups over the three-day window; 10 switches, 5 startups at N = 288 ), while at N = 72 the same cost is instead achieved with markedly more switching ( 58 switches, 29 startups), i.e. more myopic dispatch that is cost-neutral but not schedule-neutral. With the terminal condition active, cost is therefore saturated in N across the whole grid row, while the mean solve time grows roughly linearly from 275 ms ( N = 72) to 3379 ms ( N = 864): a factor of ≈ 12 .3× against a 12 × in-13 crease in N, i.e. an empirical scaling exponent of ≈ 1.01, con-sistent with linear rather than superlinear growth in the horizon, with the growth in fact flattening slightly between N = 720 and 
+
+N = 864. The Theorem 1 average-performance bound of [37] is thus attained essentially tightly at every tested horizon at this weight, although the formal bound is not directly in force for the implemented soft-penalty scheme (Section 3). The raw gaps are moreover conservative upper bounds: the closed loop ends the finite window holding up to ≈ 2.3 GJ of TES inventory relative to the reference terminal state, peaking at N = 72, with several cells (including N = 4 and N = 12) essentially at zero; the baseline cell ( N = 288) carries ≈ 0.22 GJ. This uncredited in-ventory is not counted by the finite-window metric; the largest gap ( N = 72) coincides with the largest un-credited inventory. Since the CHP schedule is essentially frozen across N ≥ 144, this residual is not CHP-switching noise; it reflects sub-integer variation in continuous dispatch and in HP switching. The turnpike metric validates the controller on all states ex-cept TES, which carries no stage cost and so is not anchored by the running cost away from the terminal step (Section 4.3). TES deviations are bimodal: at any given time the TES state is either on the reference or far o ff it, so the fraction is insensitive to the precise tolerance choice. The CHP dispatch likewise agrees with the reference: over the same three-day window, the online controller and the o ffl ine periodic reference dispatch the CHP at closely agreeing mean power and duty cycle, with no systematic under-commitment. The alignment reading therefore locates a single sharp edge in wterm and shows lookahead substituting for anchoring only at horizons two orders of magnitude longer. Whether that align-ment is bought at an economic price, or is simply free, is not answerable from the turnpike fractions alone: the same grid must be read a second time in closed-loop cost. 
+
+Closed-loop cost across the grid.. The closed-loop AAC is evaluated over the same 14 × 8 grid, diverging about the window-matched periodic reference of 17 .2978 €/step; Fig-ure 6(a) shows the corresponding cost surface. The grid sepa-rates the two design parameters cleanly. Along the horizon axis, cost is strongly horizon-dependent only while the terminal con-dition is inactive: at wterm = 0 the AAC falls monotonically with lookahead, from 21 .359 €/step at N = 4 ( +23 .5 % relative to the reference) to 17 .3138 €/step at N = 864 ( +0.09 %). That row spread contracts by an order of magnitude as the weight is raised across the activation edge identified in the alignment grid, the same contraction visible in Figure 6(a). Above the edge, all 56 cells with wterm ≥ 3 · 10 2 lie within +0.39 % to 
+
++1.02 % of the reference, at every horizon from 20 min to 72 h. The same substitution is visible along the other axis: the spread over the weight column contracts by more than an or-der of magnitude between the shortest and longest horizons, i.e. with two to three diurnal cycles of lookahead (two on the pri-mary week, three on the secondary) the terminal weight barely matters, and with the terminal weight active the horizon barely matters. Within the anchored region the residual variation is non-monotone in N and of the order of one per cent; we at-tribute it to integer-switching noise rather than to a systematic 4 864                                                     
+
+> N (increasing )
+> 01e04
+> w (increasing  ) AAC
+> 17.5 18.0 18.5 19.0 19.5 20.0 20.5 21.0
+> AAC [ /step]
+> ref
+> 4864
+> N (increasing )
+> 01e04
+> w (increasing  ) DHN
+> 4864
+> N (increasing )
+> TES
+> 4864
+> N (increasing )
+> Battery
+> 4864
+> N (increasing )
+> 01e04
+> w (increasing  ) HP
+> 4864
+> N (increasing )
+> CHP
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> Turnpike fraction [-]
+> 4864
+> N (increasing )
+> 01e04
+> w (increasing  ) DHN
+> 4864
+> N (increasing )
+> TES
+> 4864
+> N (increasing )
+> Battery
+> 4864
+> N (increasing )
+> 01e04
+> w (increasing  ) HP
+> 4864
+> N (increasing )
+> CHP
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> Norm. terminal deviation [-]
+> (a) (b) (c)
+> Figure 6: Joint horizon–weight grid, price week 2019-09-22, 14 ×8 cam-paign of N(columns) and wterm (rows), 112 runs; all numbers quoted in the text are this campaign’s own. The panels display the seven weights up to 10 4:
+> wterm =10 6behaves like 10 4throughout, matching it exactly in the battery co-ordinate, to within 0 .31 % in AAC and to within 0 .07 in the remaining turnpike fractions except the unanchored TES, and is omitted for legibility. All quanti-tative statements in the text are computed over the full eight-weight campaign. (a) AAC, green at /below reference, red above. (b) Turnpike fraction per state, green full alignment, red none. (c) Normalized terminal deviation per state, [0 ,1], green tight to reference. Same activation edge in all panels; TES is the one state neither parameter anchors.
+
+horizon e ff ect, and consequently we do not read longer looka-head as either beneficial or harmful once the terminal condition 14 is active. In practice the cyclic terminal condition removes the horizon from the performance trade-o ff : N can then be chosen on solve-time grounds alone. No cell in the grid prices out below the reference; the low-est AAC in the campaign is 17 .3138 €/step ( +0.09 %) at (N, wterm ) = (864 , 0), i.e. the longest-horizon, zero-weight cell, consistent with the alignment reading that su ffi cient lookahead alone can reach the orbit without the terminal penalty. This cell is not an outlier: it is the same horizon-substitutes-for-anchoring e ff ect read in cost rather than in turnpike fraction. The baseline of Section 4.1 is itself a grid cell, ( N, wterm ) =
+
+(288 , 10 3), at 17 .4303 €/step, +0.766 % from the reference. A finer one-dimensional weight sweep at N = 288 (price week 2019-09-14) gave similar results to the coarser grid: the same activation edge and plateau, the terminal SOC deviation collapsing ≈ 100 × across the transition, and no change in the discrete CHP dispatch pattern. Closed-loop behavior is invariant over the full plateau wterm ∈
+
+[10 3, 10 15 ] tested here. We nonetheless recommend wterm ∈
+
+[10 3, 10 12 ] and wterm = 10 3 as the default: the lower end sits comfortably above the activation edge, while the upper cap re-tains three decades of margin against the ill-conditioning that a terminal penalty many orders of magnitude above the stage cost would eventually induce in the MILP relaxation, although no conditioning failure was observed at any weight tested. The predicted CHP terminal state is anchored to the peri-odic reference for wterm ≥ 10 4 in the same way as the continu-ous states: both the predicted CHP power setpoint Pset (N) and the binary on /off state δon (N) at the horizon end match xref  
+
+> t+N
+
+to within solver tolerance. This concerns the open-loop terminal prediction only; as noted above, the closed-loop CHP trajectory does not align exactly with the reference at any tested weight. 
+
+4.3. Discussion 
+
+The horizon and terminal sensitivity analyses together char-acterize the closed-loop performance of the proposed cyclic-terminal EMPC. Four points follow from the grid. First, the prediction horizon and the cyclic terminal condi-tion act as substitutes rather than as independent tuning knobs. Without anchoring, the controller must look ahead far enough to discover the periodic orbit on its own, and the cost gap closes only once the horizon spans roughly two to three diur-nal cycles (two on the primary week, three on the secondary). The terminal condition supplies that information directly, so the same performance is reached with a horizon two orders of magnitude shorter. This is the practically relevant statement for deployment: horizon length can be traded against terminal-condition design, and the computational cost of the former is what makes the trade worth making, since the mean solve time grows roughly linearly in N while the achieved cost does not improve. Second, this saturation in N (Section 4.2) is why N = 288 is the concrete design recommendation for deployment: it matches the cost of shorter horizons while retaining the low-switching dispatch pattern and spanning a full diurnal cycle of the exogenous signals. This horizon insensitivity is not inci-dental but the expected regime given the structure of the opti-mal periodic reference. The reference is quasi-static: its TES level stays near-constant and nearly empty and all storage cy-cling is mild, so the system is (approximately) optimally oper-ated at steady state in the sense of Angeli, Amrit, and Rawlings’ Definition 6.1 of [50]. In that regime the average-performance bound of Theorem 1 is attained essentially tightly at any hori-zon long enough for the terminal condition to be attainable at negligible slack, i.e. long enough that the periodic orbit can be reached from the current state within N steps, which under a hard terminal constraint is the recursive feasibility threshold and under the soft tube used here is the point at which the slack penalty stops being paid. Because the optimal trajectory is al-ready near the steady state, extra lookahead beyond that min-imum has nothing left to improve, so no lookahead elbow can exist. A pronounced elbow at the price period (here 24 h) would arise only if optimal operation were genuinely periodic, i.e., if day-scale storage arbitrage were profitable, in which case the closed loop must see a full price cycle before its cost converges to the orbit cost. Under the present price and e ffi ciency parame-ters that arbitrage is not profitable, so the shortest tested horizon already su ffi ces. Third, the terminal penalty weight (activation and plateau values reported in Section 4.2) controls an alignment-vs-window-cost trade rather than a genuine cost-improving activa-tion: the AAC shift at activation largely reflects the storage in-ventory the anchored runs are forced to preserve, and the unan-chored runs deplete, rather than a genuine economic e ff ect of either sign. The discrete CHP commitment schedule is iden-tical across the entire sweep, so the terminal weight steers the storage states without touching the integer dispatch. Where inside the recommended plateau (Section 4.2) to sit is a use-case trade: large weights approach a hard terminal con-straint, smaller ones leave the closed loop some deviation free-dom, down to the battery ’s saturation point below which the extra freedom is bought by giving up battery alignment out-right, not by relaxing it gradually. The battery is the component that binds: the DHN turnpike fraction has already reached its plateau at wterm = 2 · 10 2 (mean 0 .96 across horizons on the primary week, and it never saturates at unity anywhere in the grid), whereas the battery SOC fraction reaches 1 .000 at every horizon only from 3 · 10 2 upward. Setting wterm = 10 3 there-fore keeps the battery anchored with a margin over that edge while sitting at the low end of the cost plateau, which is why we recommend it as the default. Fourth, the TES exhibits a persistent receding-horizon drift that the horizon and terminal-weight sweeps together isolate as a mechanism distinct from CHP dispatch. The TES mecha-nism has four parts. (i) The TES energy level carries no direct stage cost, only passive UA heat losses, so holding energy at any level is economically free to first order. (ii) Each receding-horizon solve satisfies the terminal condition by scheduling the required discharge in the horizon tail; because the hori-zon shifts forward at every re-solve, that scheduled discharge is never actually executed: the planned terminal TES devia-tion is zero at every individual solve, while the realized closed-15 loop level ratchets upward over time. (iii) Sweeping wterm from 0 to 10 15 (Section 4.2) leaves the TES drift behavior statisti-cally unchanged, confirming that the terminal penalty is not the driver of this drift. (iv) The o ffl ine periodic reference cannot ex-hibit the same behavior because its hard periodicity constraint 
+
+x(0) = x(Np) forces intra-period charge /discharge symmetry, and under that symmetry the lossy, power-limited TES is dom-inated by the DHN’s own thermal bu ff ering, which is why the reference keeps the TES nearly inert (Section 4.1). Theoreti-cally, the TES level is a direction in which the stage cost is flat, so strict dissipativity fails along that coordinate; Theorem 1’s average-performance bound still holds and is met closely (Sec-tion 4.2), but convergence to the reference trajectory is not im-plied in that direction, and the observed TES drift is exactly the kind of behavior that performance-without-dissipativity re-sults permit. The economic redundancy of the TES is struc-tural rather than an artifact of scenario sizing. Three sensitiv-ity experiments on the o ffl ine periodic reference confirm this: scaling the heat demand by 1 .5 leaves the reference TES tra-jectory unchanged (the heat pump absorbs the additional load within its capacity headroom); tightening the DHN tempera-ture band from [90 , 95] °C to [92 , 95] °C activates the TES only marginally, at modestly higher cost; and quadrupling the TES power limit from 0 .5 MW to 2 MW leaves the dispatch and cost unchanged. In each case the thermal inertia of the district-heating water mass provides the bu ff ering the lossy, power-limited TES would otherwise supply. The principal limitation of this study is the assumption of perfect foresight. In practice, forecast errors in load, price, and renewable generation will de-grade alignment between online trajectories and the periodic reference. A second, related limitation is that the closed loop is simulated with the plant model identical to the controller’s own internal model: there is no plant–model mismatch in these ex-periments, so all reported results are a nominal self-consistency demonstration rather than a test of robustness to modeling er-ror. The soft terminal mechanism provides inherent robustness by permitting controlled deviations when forecasts are incon-sistent with the o ffl ine orbit, but a systematic evaluation under uncertainty and under plant–model mismatch is left for future work. 
+
+5. Conclusion 
+
+This paper presented a cyclic-terminal EMPC framework for coordinated operation of integrated thermal and electrical en-ergy networks, combining reduced-order state-space models of district heating, storage, generation, and DC power flow within a single mixed-integer optimization. The key methodologi-cal contribution is the use of a periodic economic reference trajectory computed o ffl ine and enforced online through soft terminal constraints with scaled slack penalties. This mech-anism anchors receding-horizon optimization to an economi-cally meaningful periodic regime without imposing hard termi-nal constraints. Simulation results on a campus-scale system demonstrated an asymmetric flexibility allocation the reverse of a thermal-dominates-medium-term picture: the battery per-forms slow, multi-hour price arbitrage and is the medium-term flexibility mover, while the TES is a fast, near-continuous cy-cler driven primarily by a persistent heat-pump overproduction bias rather than by price (Section 4.1). Under perfect foresight, the online EMPC tracked the periodic orbit for the continuous network states, with deviations concentrated in storage cycling and CHP commitment and the remaining cost gap attributable to finite-horizon e ff ects and hybrid feasibility constraints. Hori-zon sensitivity analysis (Section 4.2) showed that closed-loop performance already saturates at the shortest tested horizon, 
+
+N = 72 steps (6 h, half a diurnal cycle); N = 288 nonethe-less remains the practical lookahead recommendation, since it matches N = 72 on cost while retaining a low-switching dis-crete schedule and spanning a full diurnal cycle, against a mean solve time that grows ≈ 12 .3× from N = 72 to N = 864. The recommended terminal weight is wterm = 10 3, the baseline choice used throughout, with any value in [10 3, 10 12 ] equiva-lent in closed loop; within this range the terminal tube is ac-tive for all states jointly, AAC is flat, and battery, DHN, HP, and CHP all track the reference closely. These lookahead and weight recommendations are established for this campus sys-tem and the studied price weeks; we have not tested whether they generalize to other systems or price regimes. Beyond these design recommendations, the analysis identified a struc-tural property of receding-horizon EMPC applied to hybrid sys-tems that is not about CHP commitment but about thermal stor-age: the online EMPC actively drives the TES far across its range while the o ffl ine periodic reference, bound by its hard pe-riodicity constraint, keeps it nearly inert. This receding-horizon TES drift persists across the full terminal-weight sweep and is best understood as a direction in which the stage cost is flat, so that Theorem 1’s average-performance bound is met closely without implying trajectory convergence in that co-ordinate. Future work will address forecast uncertainty and model mismatch through robust and stochastic extensions of the cyclic-terminal formulation, temperature-dependent heat-pump performance, and higher-fidelity thermal network mod-els. In particular, we intend to treat forecast uncertainty in load, price, and renewable generation via distributionally robust opti-mization, using the Wasserstein-metric framework of [51, 52] to construct ambiguity sets directly from historical forecast-error data rather than assuming a fixed distribution or bounded-support scenario set. A quantitative comparison against estab-lished MILP-based scheduling approaches, such as day-ahead unit commitment, will serve to benchmark the closed-loop eco-nomic performance under realistic operational conditions. The TES receding-horizon drift identified here motivates extensions that restore strict dissipativity in the storage-level coordinate. Theorem 3 of [50] provides the constructive route: augmenting the stage cost with a convex regularization term on the storage level restores strict dissipativity in that coordinate and thereby recovers closed-loop convergence to the reference orbit, at a quantifiable cost overhead; an ablation quantifying this trade-off is left for future work. 16 CRediT authorship contribution statement Abdul Azzam: Conceptualization, Data curation, Formal analysis, Investigation, Methodology, Project administration, Resources, Software, Supervision, Validation, Visualization, Writing – original draft, Writing – review & editing. Lukas Schwenkel: Formal analysis, Investigation, Methodology, Val-idation, Writing – review & editing. Leon Scheurer: Formal analysis, Investigation, Methodology, Software, Writing – orig-inal draft. Pascal Häbig: Validation, Supervision, Writing – original draft. Kai Hufendiek: Funding acquisition, Writing – review & editing. 
+
+Declaration of competing interest 
+
+The authors declare that they have no known competing fi-nancial interests or personal relationships that could have ap-peared to influence the work reported in this paper. 
+
+Acknowledgements 
+
+This work was supported by the Carl Zeiss Foundation within the Stuttgart Research Initiative “Discursive Transformation of Energy Systems” (SRI DiTEnS). 
+
+Data and Code Availability 
+
+The data and code that support the findings of this study are available from the corresponding author upon reasonable re-quest. 
+
+Declaration of generative AI and AI-assisted technologies in the manuscript preparation process 
+
+The authors used Claude (Anthropic) to support code devel-opment (Python simulation and analysis scripts), LaTeX for-matting, and manuscript text editing. All code was reviewed for correctness and validated against simulation results; all text was edited for accuracy and consistency. The authors take full responsibility for the content of the published article. 
+
+References 
+
+[1] Arbeitsgemeinschaft Energiebilanzen e.V., Anwendungs-bilanzen zur energiebilanz deutschland: Endenergiever-brauch nach energieträgern und anwendungszwecken, ac-cessed: 1 April 2026 (2025). [2] Umweltbundesamt, Erneuerbare Energien in Zahlen, last updated: 5 March 2026. Accessed: 1 April 2026 (2026). URL https://www.umweltbundesamt.de/themen/ klima-energie/erneuerbare-energien/erneuerb are-energien-in-zahlen#berblick 
+
+[3] H. Lund, S. Werner, R. Wiltshire, S. Svendsen, J. E. Thorsen, F. Hvelplund, B. V. Mathiesen, 4th Generation District Heating (4GDH): Integrating smart thermal grids into future sustainable energy systems, Energy 68 (2014) 1–11. doi:10.1016/j.energy.2014.02.089 .[4] L. Merkert, P. Castro, Optimal day-ahead scheduling of a district heating system, Applied Energy 275 (2020) 115396. doi:10.1016/j.apenergy.2020.115396 .[5] F. Aguilera, et al., Milp-based optimization of chp sys-tems considering performance degradation, Energy[From digital twin context] (2024). [6] M. Casisi, P. Pinamonti, M. Reini, Optimal lay-out and operation of combined heat & power (chp) distributed generation systems, Energy 34 (12) (2009) 2175–2183. 
+
+doi:10.1016/j.energy.2008.10.019 .[7] M. Gonzalez-Salazar, et al., Portfolio optimization of chp systems: merit order vs milp, Applied Energy[Specific journal details needed] (2023). [8] J. Hu, Y. Zou, N. Soltanov, A multilevel optimization ap-proach for daily scheduling of combined heat and power units with integrated electrical and thermal storage, Ex-pert Systems with Applications 250 (2024) 123729. doi: 10.1016/j.eswa.2024.123729 .[9] J. Wang, et al., Review of chp scheduling and optimiza-tion, Renewable and Sustainable Energy Reviews 107 (2019) 345–362. doi:10.1016/j.rser.2019.03.012 .[10] S. Sun, Y. Cheng, J. Xing, P. Yu, Y. Wang, Day-ahead optimization of integrated electricity and thermal system combining multiple types of demand response strategies and situation awareness technology, Frontiers in Energy Research 12 (2024) 1337169. doi:10.3389/fenrg.20 24.1337169 .[11] S. Mashayekh, M. Stadler, G. Cardoso, M. Heleno, A mixed integer linear programming approach for optimal DER portfolio, sizing, and placement in multi-energy mi-crogrids, Applied Energy 187 (2017) 154–168. doi: 10.1016/j.apenergy.2016.11.020 .URL https://www.sciencedirect.com/science/ article/pii/S0306261916316051 
+
+[12] M. Schulz, T. Kemmler, J. Kumm, K. Hufendiek, B. Thomas, A more realistic heat pump control approach by application of an integrated two-part control, Energies 13 (11) (2020) 2752. doi:10.3390/en13112752 .URL https://www.mdpi.com/1996-1073/13/11/27 52 
+
+[13] C. Schick, N. Klempp, K. Hufendiek, Role and impact of prosumers in a sector-integrated energy system with high renewable shares, IEEE Transactions on Power Systems 37 (4) (2022) 3286–3298. doi:10.1109/TPWRS.2020 .3040654 .URL https://ieeexplore.ieee.org/document/9 272680 
+
+[14] M. J. Risbeck, C. T. Maravelias, J. B. Rawlings, R. D. Turney, A mixed-integer linear programming model for real-time cost optimization of building heating, ventila-tion, and air conditioning equipment, Energy and Build-ings 142 (2017) 220–235. doi:10.1016/j.enbuild. 2017.02.048 .[15] H. Saboori, M. Mohammadi, R. Taghe, Virtual power plant (VPP), definition, concept, components and types, in: 2011 Asia-Pacific Power and Energy Engineering 17 Conference, 2011-03, pp. 1–4, ISSN: 2157-4847. doi: 10.1109/APPEEC.2011.5749026 .URL https://ieeexplore.ieee.org/document/5 749026/?arnumber=5749026 
+
+[16] B. Marinescu, O. Gomis-Bellmunt, F. Dörfler, H. Schulte, L. Sigrist, Dynamic virtual power plant: A new concept for grid integration of renewable energy sources, IEEE Access 10 (2022) 104980–104995, conference Name: IEEE Access. doi:10.1109/ACCESS.2022.3205731 .URL https://ieeexplore.ieee.org/document/9 885182/?arnumber=9885182 
+
+[17] V. Häberle, M. W. Fisher, E. Prieto-Araujo, F. Dörfler, Control design of dynamic virtual power plants: An adap-tive divide-and-conquer approach, IEEE Transactions on Power Systems 37 (5) (2022) 4040–4053, conference Name: IEEE Transactions on Power Systems. doi: 10.1109/TPWRS.2021.3139775 .URL https://ieeexplore.ieee.org/document/9 667320/?arnumber=9667320 
+
+[18] S. Abdelkader, J. Amissah, O. Abdel-Rahim, Virtual power plants: an in-depth analysis of their advancements and importance as crucial players in modern power sys-tems, Energy, Sustainability and Society 14 (1) (2024-08-27) 52. doi:10.1186/s13705-024-00483-y .URL https://doi.org/10.1186/s13705-024-004 83-y 
+
+[19] T. Samad, M. Bauer, S. Borto ff , S. Di Cairano, L. Fagiano, P. F. Odgaard, R. R. Rhinehart, R. Sánchez-Peña, A. Ser-bezov, F. Ankersen, P. Goupil, B. Grosman, M. Heertjes, I. Mareels, R. Sosseh, Industry engagement with control research: Perspective and messages, Annual Reviews in Control 49 (2020) 1–14. doi:10.1016/j.arcontrol. 2020.03.002 .URL https://www.sciencedirect.com/science/ article/pii/S1367578820300080 
+
+[20] M. Descamps, N. Lamaison, M. Vallée, R. Bavière, Oper-ational control of a multi-energy district heating system: Comparison of model-predictive control and rule-based control, in: Proceedings of ECOS 2019 - the 32nd In-ternational Conference on E ffi ciency, Cost, Optimization, Simulation and Environmental Impact of Energy Systems, 2019, pp. 2079–2089. [21] S. Farahani, Z. Lukszo, T. Keviczky, B. De Schutter, R. Murray, Robust model predictive control for an uncer-tain smart thermal grid, in: Proceedings of the 2016 Eu-ropean Control Conference (ECC), 2017, pp. 1195–1200. 
+
+doi:10.1109/ECC.2016.7810452 .[22] D. Hering, M. Cansev, E. Tamassia, A. Xhonneux, D. Müller, Temperature control of a low-temperature district heating network with model predictive control and mixed-integer quadratically constrained program-ming, Energy 224 (2021) 120140. doi:10.1016/j. energy.2021.120140 .[23] D. Quaggiotto, J. Vivian, A. Zarrella, Management of a district heating network using model predictive control with and without thermal storage, Opt. Eng. 22 (3) (2021) 1897–1919. doi:10.1007/s11081-021-09644-w .[24] C. Saletti, A. Gambarotta, M. Morini, Development, anal-ysis and application of a predictive controller to a small-scale district heating system, Appl. Therm. Eng. 165 (2020) 114558. doi:10.1016/j.applthermaleng .2019.114558 .[25] D. Vanhoudt, B. Claessens, R. Salenbien, J. Desmedt, An active control strategy for district heating networks and the e ff ect of di ff erent thermal energy storage config-urations, Energy Build. 158 (2018) 1317–1327. doi: 10.1016/J.ENBUILD.2017.11.018 .[26] F. Verrilli, S. Srinivasan, G. Gambino, M. Canelli, M. Hi-manka, C. Del Vecchio, M. Sasso, L. Glielmo, Model pre-dictive control-based optimal operations of district heat-ing system with thermal energy storage and flexible loads, IEEE Trans. Autom. Sci. Eng. 14 (2) (2017) 547–557. 
+
+doi:10.1109/TASE.2016.2618948 .[27] L. B. de Giuli, A. La Bella, R. Scattolini, Physics-informed neural network modeling and predictive control of district heating systems, IEEE Transactions on Control Systems Technology 32 (4) (2024) 1182–1195, confer-ence Name: IEEE Transactions on Control Systems Tech-nology. doi:10.1109/TCST.2024.3355476 .URL https://ieeexplore.ieee.org/document/1 0418494/?arnumber=10418494 
+
+[28] M. Rose, C. A. Hans, J. Schi ff er, A Predictive Oper-ation Controller for an Electro-Thermal Microgrid Uti-lizing Variable Flow Temperatures, IFAC-PapersOnLine 56 (2) (2023) 5444–5450. [29] V. N. Behrunani, H. Cai, P. Heer, R. S. Smith, J. Lygeros, Distributed multi-horizon model predictive control for network of energy hubs, Control Engineering Practice 147 (2024) 105922. doi:10.1016/j.conengprac.2024. 105922 .URL https://www.sciencedirect.com/science/ article/pii/S0967066124000820 
+
+[30] M. I. El-Afifi, A. A. Eladl, M. M. El-Saadawi, B. E. Sed-hom, S. F. Osman, Coordinated distributed model predic-tive control for multi energy carrier systems, Scientific Reports 14 (1) (2024) 27688. doi:10.1038/s41598 -024-78314-5 .URL https://www.nature.com/articles/s41598 -024-78314-5 
+
+[31] B. Leitner, E. Widl, W. Gawlik, R. Hofmann, Control assessment in coupled local district heating and electri-cal distribution grids: Model predictive control of elec-tric booster heaters, Energy 210 (2020) 118540. doi: 10.1016/j.energy.2020.118540 .URL https://www.sciencedirect.com/science/ article/pii/S0360544220316480 
+
+[32] F. Verrilli, A. Parisio, L. Glielmo, Stochastic model pre-dictive control for optimal energy management of dis-trict heating power plants, in: 2016 IEEE 55th Confer-ence on Decision and Control (CDC), 2016, pp. 807–812. 
+
+doi:10.1109/CDC.2016.7798367 .URL https://ieeexplore.ieee.org/document/7 
+
+18 798367/ 
+
+[33] H. Hoshino, T. J. Koo, Y.-C. Chu, Y. Susuki, Model predictive control of smart districts participating in fre-quency regulation market: a case study of using heat-ing network storage, SICE Journal of Control, Measure-ment, and System Integration 17 (1) (2024) 365–377. 
+
+doi:10.1080/18824889.2024.2402103 .URL https://doi.org/10.1080/18824889.2024. 2402103 
+
+[34] M. Felczak, G. d. Mey, B. Wiecek, P. Chatzipanagiotou, V. Chatziathanasiou, Dynamic thermal heat pipes analy-sis: Thermal impedance in start-up condition, Microelec-tronics Journal 93 (2019) 104639. [35] A. De Lorenzi, A. Gambarotta, E. Marzi, M. Morini, C. Saletti, Predictive control of a combined heat and power plant for grid flexibility under demand uncertainty, Applied Energy 314 (2022) 118934. [36] K. Purchala, L. Meeus, D. Van Dommelen, R. Belmans, Usefulness of DC power flow for active power flow anal-ysis, in: IEEE Power Engineering Society General Meet-ing, 2005, 2005, pp. 454–459. [37] M. J. Risbeck, J. B. Rawlings, Economic model predic-tive control for time-varying cost and peak demand charge optimization, IEEE Transactions on Automatic Control 65 (7) (2020) 2957–2968. doi:10.1109/TAC.2019 .2939633 .URL https://ieeexplore.ieee.org/document/8 825493/ 
+
+[38] J. B. Rawlings, D. Q. Mayne, M. Diehl, Model predic-tive control: theory, computation, and design, 2nd Edition, Nob Hill Publishing, Madison, Wisconsin, 2017. [39] L. Grüne, Economic receding horizon control without ter-minal constraints, Automatica 49 (3) (2013) 725–734. 
+
+doi:10.1016/j.automatica.2012.12.003 .URL https://www.sciencedirect.com/science/ article/pii/S0005109812006024 
+
+[40] L. Schwenkel, A. Hadorn, M. A. Müller, F. Allgöwer, Lin-early discounted economic MPC without terminal condi-tions for periodic optimal operation 159 111393. doi: 10.1016/j.automatica.2023.111393 .URL https://www.sciencedirect.com/science/ article/pii/S0005109823005605 
+
+[41] A. Bemporad, M. Morari, Control of systems integrat-ing logic, dynamics, and constraints, Automatica 35 (3) (1999) 407–427. doi:10.1016/S0005-1098(98)001 78-2 .URL https://linkinghub.elsevier.com/retrie ve/pii/S0005109898001782 
+
+[42] AGFW, Stromnetzdienliche großwärmepumpen: Doku-mentation und videos des online-workshops vom 05.12.2024, videomitschnitte und Präsentationen (Netzbetreibersicht, Stadtwerkesicht, Herstellersicht). Accessed 10 March 2026 (Dec. 2024). URL https://www.gwp-forum.de/news/allgemein /veroeffentlicht-dokumentation-und-videos-d es-online-workshops-vom-05-12-2024-stromne tzdienliche-grosswaermepumpen 
+
+[43] M. Jesper, F. Schlosser, F. Pag, T. G. Walmsley, B. Schmitt, K. Vajen, Large-scale heat pumps: Uptake and performance modelling of market-available devices, Renewable and Sustainable Energy Reviews 137 (2021) 110646. doi:10.1016/j.rser.2020.110646 .URL https://www.sciencedirect.com/science/ article/pii/S1364032120309308 
+
+[44] T. Weber, N. Strobel, T. Kohne, J. Wolber, E. Abele, Re-alistic modeling of a combined heat and power plant in the context of mixed integer linear programming, Energy Informatics 1 (S1) (2018) 27. [45] H. Hottel, A. Whillier, Evaluation of flat-plate solar col-lector performance, Trans. Conf. Use of Solar Energy; () 3 (Thermal Processes) Part 2 (01 1955). URL https://www.osti.gov/biblio/5057828 
+
+[46] B. Matthiss, A. Azzam, J. Binder, Thermal Building Mod-els for Energy Management Systems, in: 2023 IEEE Inter-national Conference on Environment and Electrical Engi-neering and 2023 IEEE Industrial and Commercial Power Systems Europe (EEEIC / I&CPS Europe), 2023, pp. 1–6. [47] F. Xu, L. Hao, L. Chen, Q. Chen, M. Wei, Y. Min, Inte-grated heat and power optimal dispatch method consider-ing the district heating networks flow rate regulation for wind power accommodation, Energy 263 (2023) 125656. 
+
+doi:10.1016/j.energy.2022.125656 .URL https://www.sciencedirect.com/science/ article/pii/S0360544222025427 
+
+[48] J. B. Rawlings, M. J. Risbeck, Model predictive control with discrete actuators: Theory and application, Automat-ica 78 (2017) 258–265. doi:10.1016/j.automatica .2016.12.024 .[49] Ministerium für Umwelt, Klima und Energiewirtschaft Baden-Württemberg, Start für das höchstleistungsrechen-zentrum an der universität stuttgart, press release, April 17 (2025). URL https://www.baden-wuerttemberg.de/de/se rvice/presse/pressemitteilung/pid/start-fue r-das-hoechstleistungsrechenzentrum-an-der -universitaet-stuttgart-1 
+
+[50] D. Angeli, R. Amrit, J. B. Rawlings, On average perfor-mance and stability of economic model predictive control 57 (7) 1615–1626. doi:10.1109/TAC.2011.2179349 .URL https://ieeexplore.ieee.org/document/6 099558 
+
+[51] P. Mohajerin Esfahani, D. Kuhn, Data-driven distribution-ally robust optimization using the wasserstein metric: per-formance guarantees and tractable reformulations 171 (1) 115–166. doi:10.1007/s10107-017-1172-1 .URL https://doi.org/10.1007/s10107-017-117 2-1 
+
+[52] N. Recke, M. H. d. Badyn, Distributionally robust model predictive control for virtual power plants. arXiv:2605 .14642[eess.SY] , doi:10.48550/arXiv.2605.14 642 .URL http://arxiv.org/abs/2605.14642 
+
+19

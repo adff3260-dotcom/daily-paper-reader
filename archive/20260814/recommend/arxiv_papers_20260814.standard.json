@@ -1,0 +1,56 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-14T21:04:04.636863+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2608.07273v1",
+      "source": "arxiv",
+      "title": "Grid-Compatible Flexibility from Multi-Energy Systems via Cyclic-Terminal Economic MPC with Hybrid Thermal-Electrical Dynamics",
+      "abstract": "Coupled electrical and thermal infrastructures need controllers that respond to market prices and still solve fast enough to run online. This paper presents a unified Economic Model Predictive Control (EMPC) framework for the coordinated operation of integrated thermal and electrical energy networks. Building on cyclic-terminal EMPC, the proposed approach incorporates hybrid thermal-electrical dynamics, network constraints, and time-varying economic signals within a single mixed-integer state-space representation, jointly optimizing combined heat and power units, large-scale heat pumps, thermal energy storage, batteries, and grid interactions under a convex economic stage cost. Computational tractability is ensured by reduced-order models of district heating networks and DC power flow grids.   The framework is demonstrated on a campus-scale energy system under time-varying prices and demand profiles. A joint sweep of the prediction horizon against the terminal penalty weight shows that the two act as substitutes rather than as independent tuning knobs. Without terminal anchoring, the closed-loop cost approaches the periodic-reference average-performance bound only once the horizon spans several diurnal cycles. With a sufficiently large terminal weight, the bound is attained essentially tightly at every tested horizon, including the shortest one, so the horizon ceases to be a performance-critical parameter and becomes a purely computational one. The result reproduces on a second, independent price week. Beyond the weight at which the soft terminal constraint activates, closed-loop behavior is insensitive to the weight over a wide multi-decade plateau; below activation, cost and storage tracking both degrade markedly. A residual receding-horizon drift of the cost-neutral thermal-storage state is also documented and interpreted.",
+      "authors": [
+        "Azzam Abdul",
+        "Schwenkel Lukas",
+        "Scheurer Leon",
+        "Häbig Pascal",
+        "Hufendiek Kai"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-08-07T14:33:08+00:00",
+      "link": "https://arxiv.org/pdf/2608.07273v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Economic MPC for hybrid thermal-electrical energy networks, relevant to MPC-based energy management taxonomy",
+      "llm_evidence_cn": "面向混合热-电能源网络的经济模型预测控制，与基于MPC的能量管理策略分类相关",
+      "llm_evidence": "面向混合热-电能源网络的经济模型预测控制，与基于MPC的能量管理策略分类相关",
+      "canonical_evidence": "面向混合热-电能源网络的经济模型预测控制，与基于MPC的能量管理策略分类相关",
+      "llm_tldr_en": "Proposes cyclic-terminal economic MPC for multi-energy systems with hybrid dynamics to optimize grid flexibility, offering a transferable MPC approach for hybrid energy management.",
+      "llm_tldr_cn": "针对电网耦合热-电多能源系统需要快速在线优化的问题，提出循环终端经济模型预测控制框架；该框架将混合热-电动态、网络约束和时变经济信号纳入混合整数状态空间模型，统一优化热电联产、热泵、储能和电网交互；结果表明方法可扩展且计算高效，为混合动力系统能量管理提供了可借鉴的MPC策略。",
+      "llm_tldr": "针对电网耦合热-电多能源系统需要快速在线优化的问题，提出循环终端经济模型预测控制框架；该框架将混合热-电动态、网络约束和时变经济信号纳入混合整数状态空间模型，统一优化热电联产、热泵、储能和电网交互；结果表明方法可扩展且计算高效，为混合动力系统能量管理提供了可借鉴的MPC策略。",
+      "llm_tags": [
+        "query:uav"
+      ],
+      "matched_query_tag": "query:uav",
+      "matched_query_text": "Which papers provide a clear taxonomy of rule based, fuzzy, ECMS, dynamic programming, PMP, MPC, and reinforcement learning methods?",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

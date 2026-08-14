@@ -1,0 +1,24 @@
+{
+  "label": "2026-08-14",
+  "date": "2026-08-14",
+  "generated_at": "2026-08-14T21:06:04",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202608/14/2608.07273v1-grid-compatible-flexibility-from-multi-energy-systems-via-cyclic-terminal-economic-mpc-with-hybrid-thermal-electrical-dynamics",
+      "section": "quick",
+      "title_en": "Grid-Compatible Flexibility from Multi-Energy Systems via Cyclic-Terminal Economic MPC with Hybrid Thermal-Electrical Dynamics",
+      "authors": "Azzam Abdul, Schwenkel Lukas, Scheurer Leon, Häbig Pascal, Hufendiek Kai",
+      "date": "2026-08-07",
+      "pdf": "https://arxiv.org/pdf/2608.07273v1",
+      "score": "6.0",
+      "evidence": "面向混合热-电能源网络的经济模型预测控制，与基于MPC的能量管理策略分类相关",
+      "tldr": "耦合电热基础设施需要响应市场价格的控制器，同时满足在线快速求解。本文提出统一经济模型预测控制框架，基于cyclic-terminal EMPC，以混合整数状态空间表示融合混合热-电动态和网络约束，联合优化CHP、大规模热泵、储热、电池及电网交互。在校园尺度系统上，终端权重与预测时域显示为可替代调节：终端权重足够大时，最短时域即可紧达周期参考平均性能界，且闭环行为对权重宽范围不敏感。这使时域不再是性能关键参数，仅为计算参数，提升了在线运行可行性。",
+      "tags": "query:uav",
+      "abstract_en": "Coupled electrical and thermal infrastructures need controllers that respond to market prices and still solve fast enough to run online. This paper presents a unified Economic Model Predictive Control (EMPC) framework for the coordinated operation of integrated thermal and electrical energy networks. Building on cyclic-terminal EMPC, the proposed approach incorporates hybrid thermal-electrical dynamics, network constraints, and time-varying economic signals within a single mixed-integer state-space representation, jointly optimizing combined heat and power units, large-scale heat pumps, thermal energy storage, batteries, and grid interactions under a convex economic stage cost. Computational tractability is ensured by reduced-order models of district heating networks and DC power flow grids.   The framework is demonstrated on a campus-scale energy system under time-varying prices and demand profiles. A joint sweep of the prediction horizon against the terminal penalty weight shows that the two act as substitutes rather than as independent tuning knobs. Without terminal anchoring, the closed-loop cost approaches the periodic-reference average-performance bound only once the horizon spans several diurnal cycles. With a sufficiently large terminal weight, the bound is attained essentially tightly at every tested horizon, including the shortest one, so the horizon ceases to be a performance-critical parameter and becomes a purely computational one. The result reproduces on a second, independent price week. Beyond the weight at which the soft terminal constraint activates, closed-loop behavior is insensitive to the weight over a wide multi-decade plateau; below activation, cost and storage tracking both degrade markedly. A residual receding-horizon drift of the cost-neutral thermal-storage state is also documented and interpreted.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
