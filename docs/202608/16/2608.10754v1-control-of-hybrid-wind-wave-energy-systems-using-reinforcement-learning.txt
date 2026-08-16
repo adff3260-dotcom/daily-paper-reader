@@ -1,0 +1,983 @@
+Title: Control of hybrid wind-wave energy systems using reinforcement learning
+
+URL Source: https://arxiv.org/pdf/2608.10754v1
+
+Published Time: Wed, 12 Aug 2026 01:08:16 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+# Control of hybrid wind-wave energy systems using reinforcement learning ⋆
+
+## Zechuan Lin a,∗, Kemeng Chen b, Maosen Fan b, Xiaofan Li c,d , Xi Xiao b and John V. Ringwood a
+
+> a
+
+Centre for Ocean Energy Research, Maynooth University, Maynooth, W23 F2H6, Co. Kildare, Ireland 
+
+> b
+
+Department of Electrical Engineering, Tsinghua University, Beijing, 100084, China 
+
+> c
+
+Department of Mechanical Engineering, The University of Hong Kong, Hong Kong SAR, China 
+
+> d
+
+Swire Institute of Marine Science, The University of Hong Kong, Hong Kong SAR, China 
+
+A R T I C L E I N F O 
+
+Keywords :wave energy converter floating offshore wind turbine hybrid wind-wave energy system reinforcement learning proximal policy optimization 
+
+A B S T R A C T 
+
+Integrating wave energy converters (WECs) with floating offshore wind turbines (FOWTs), to form hybrid wind-wave energy (HWWE) systems, is a promising approach to achieve further cost reduction for offshore renewable energy. In such systems, the control of the integrated WECs plays an important role, with the potential to generate additional wave energy while simultaneously suppressing floating platform motion. However, HWWE systems are characterized by complex dynamics, making accurate modelling only viable through numerical simulation, and posing significant challenges for control design. This paper proposes a reinforcement learning (RL) control framework for HWWE systems, in which the real-time control policy is learned directly through interactions with high-fidelity simulation. A numerical model is established for a HWWE system consisting of an IEA 15 MW wind turbine, a VolturnUS semi-submersible platform, and three torus-type WECs, which is then employed as the RL training environment. Control performance is evaluated in terms of both wave energy generation and platform motion reduction, two competing objectives, from a Pareto perspective. It is shown that the proposed RL controller achieves substantial Pareto improvements over conventional control strategies, e.g., over 75% higher wave energy capture at the same platform motion level, or nearly 50% lower motion at the same energy capture level, thereby significantly extending the attainable performance boundary of HWWE systems. 
+
+## 1. Introduction 
+
+Large-scale development of offshore renewable energy could play a pivotal role in accelerating the global energy transition and achieving net-zero emissions. In recent years, the concept of integrating wave energy converters (WECs) with floating offshore wind turbines (FOWTs), to form hy-brid wind-wave energy (HWWE) systems, has received in-creasing attention [1, 2]. HWWE systems offer a number of advantages over FOWT-only or WEC-only systems, in-cluding a shared floating platform and mooring system with lower per-unit electricity cost [2], more efficient exploitation of ocean space, and motion suppression effects provided by WEC integration [3]. A number of HWWE system concepts have been pro-posed, such as the spar-torus combination [4] and the com-bination of semi-submersible FOWTs with point-absorber WECs [5], flap-type WECs [6], or oscillating water columns (OWCs) [7]. In general, HWWE systems are characterized by strongly coupled multibody, multi-degree-of-freedom, and multiphysics dynamics. While relatively mature tools exist for modelling standalone FOWTs and WECs, no es-tablished commercial software is currently available for coupled FOWT-WEC analysis. Consequently, a variety of  
+
+> ⋆
+
+This wors was supported by the Sustainable Energy Authority of Ire-land through the RDD Energise Fellowship under Grant No. 25/RDDF/793. 
+
+> ∗
+
+Corresponding author  
+
+> Zechuan.Lin@mu.ie
+
+(Z. Lin); ckm22@mails.tsinghua.edu.cn (K. Chen); fms24@mails.tsinghua.edu.cn (M. Fan); lixf@hku.hk (X. Li);  
+
+> xiao_xi@tsinghua.edu.cn
+
+(X. Xiao); John.Ringwood@mu.ie (J.V. Ringwood) 
+
+> ORCID
+
+(s): 
+
+numerical frameworks, mainly aiming to couple individual FOWT and WEC simulation tools, have been developed [8], such as SIMO-RIFLEX-AeroDyn [6], OpenFAST-AQWA [5], OpenFAST-WEC-Sim [9], OpenFAST-WAFDUT with an in-house multibody dynamic solver [10], computational fluid dynamics (CFD) simulation [3], as well as analytical models in the frequency domain [11]. Meanwhile, valuable wave tank experiments have been performed for model val-idation and design analysis [6, 12, 13]. Overall, numerical and experimental studies have demonstrated the advantages of HWWE systems over their wind-only counterparts, in-cluding increased energy capture and reduced platform pitch motion [14]. The performance of HWWE systems is further improved through design optimization of WEC buoy shape, size, layout, etc [15, 16, 17, 18]. Throughout existing research, it has been recognized that the control of WECs, through power take-off (PTO) systems, has an important impact on energy capture and platform motion response [19]. However, while control of standalone WECs has been extensively studied, WEC con-trol in HWWE systems remains a less explored area [8]. Most existing studies adopt passive PTO control, usually de-scribed by a linear damping coefficient; in addition, constant or quadratic damping are also considered [11, 20]. In some studies, the damping coefficient is selected according to the energy-maximizing (impedance-matching) condition of standalone WECs [18, 21]. The impact of damping is further examined in [5], and various algorithms are employed to optimize the damping coefficient, taking into account both the energy and stability objectives [9, 20]. Reactive control, 
+
+Z. Lin et al.: Preprint submitted to Elsevier Page 1 of 16 arXiv:2608.10754v1 [eess.SY] 11 Aug 2026 Control of hybrid wind-wave energy systems using reinforcement learning 
+
+in which a PTO stiffness term is added to the damping force, is further covered by a number of studies. A small positive stiffness is used, in [22], to provide a mechanical restoring effect. The effect of PTO stiffness is thoroughly examined in [17, 19], where positive stiffness is shown to reduce wave energy capture while improving platform stability, whereas lower or negative stiffness tends to produce the opposite effect. Other relatively simple control strategies are also devel-oped. A gain-scheduling strategy is proposed for damping control of integrated OWCs in [7]. Also, a bang-bang control law is employed to switch the damping coefficient according to platform motion states [23]. A wave-period-dependent switching strategy is proposed to control OWC valves, fol-lowing an analysis of control influence on the response amplitude operator [24]. A ‘sky-hook’ control strategy is developed for the integrated OWCs, and a linearized model is developed to analyze the impact of the control coeffi-cient through root-locus analysis [25]. Fuzzy logic control is investigated in [26, 27], where empirical mappings from platform motion to desired OWC valve commands are estab-lished. In general, the above simple, or empirically designed, controllers are straightforward to implement, and can be tuned directly against numerical simulation or experiment. However, such controllers inherently offer limited control flexibility; e.g., reactive control usually contains only two tunable coefficients (damping and stiffness), which can lead to substantial suboptimality under the complex dynamics of HWWE systems, as well as varying wind-wave conditions. In contrast, model predictive control (MPC) has been explored for HWWE systems in a few studies. In [28], the hybrid platform dynamics are linearized around an equilib-rium point to obtain the prediction model, and real-time PTO forces are solved via online optimization. In [29], MPC is applied to a HWWE system with an M4 WEC, where multi-ple objectives, including energy capture and platform motion suppression, are taken into account, to achieve a suitable bal-ance. Related works also include MPC for co-located wind-wave energy systems (i.e., without mechanical connection) [30] and an active pumping system inside a FOWT (without WECs) [31]. However, despite the optimization-based for-mulation, MPC relies on simplified, control-oriented models to enable online optimization, which may introduce substan-tial model mismatch [28], and consequently degrade control performance. Hence, a key research gap in HWWE control lies in developing a controller that offers flexible real-time control beyond empirical control laws, while being optimized di-rectly against high-fidelity simulations or experiments [8]. To address this gap, this paper proposes, for the first time, a reinforcement learning (RL) control framework for HWWE systems. RL offers unique advantages, by using neural net-works (NNs) to learn a real-time control policy directly through interaction with the simulation environment, and has seen successful application in standalone WECs [32, 33]. Moreover, once trained, the NN-based control policy can be evaluated efficiently in real time without solving on-line optimization problems, making RL a promising solution for the complex control of HWWE systems. In this paper, a numerical model of a HWWE plat-form, incorporating coupled aero-hydro-structural-mooring dynamics, is established using MOST [34] and WEC-Sim [35]. Linear damping and reactive control are first devel-oped and examined, to serve as control benchmarks. This includes both the homogeneous (HOM) and heterogeneous (HET) reactive control configurations, where all WECs use identical coefficients in the former case, and independently selected coefficients in the latter. Importantly, control perfor-mance is evaluated in terms of both wave energy generation and platform motion suppression, two conflicting control objectives, from a Pareto perspective. A multi-objective Bayesian optimization framework is employed to identify the Pareto fronts of HOM and HET reactive control. With these clear benchmarks, an RL control framework is then designed, which adopts the proximal policy optimization (PPO) algorithm [36]. The RL controller targets a reward function involving energy and stability objectives, which are balanced by a weighting factor, and is trained through iterative interactions against the numerical simulation en-vironment. A main finding of this work is the strong per-formance demonstrated by RL control, which achieves a substantially improved Pareto front compared with HOM and HET reactive control, simultaneously enabling higher wave energy generation and lower platform motion, and thereby expanding the achievable performance boundary of HWWE systems. The remainder of this paper is organized as follows. The considered HWWE system and the numerical model are described in Section II. The benchmark HOM and HET reactive controllers are developed and analyzed in detail in Section III. The RL controller, and the associated training framework, are presented in Section IV and comprehen-sively evaluated in Section V. Conclusions are drawn in Section VI. 
+
+## 2. Numerical modelling 
+
+2.1. System description 
+
+In this study, a HWWE platform, consisting of an IEA 15 MW wind turbine [37], a VolturnUS semi-submersible platform [38], a three-point symmetrical mooring system, and three torus-type cylindrical WECs is considered, as shown in Fig. 1; key parameters are listed in Table 1. This type of hybrid platform is also investigated in, e.g., [9, 16, 20]. The integrated WECs move along the outer columns in the vertical direction, i.e., in relative heave motion. The WEC size is selected to be relatively small compared to the dominant wavelength, so that the WECs approach the conditions of point absorbers. Each WEC is connected to the platform through a PTO system, so that electrical power can be generated from relative heave motion. The considered PTO system can be either a linear generator system [39] or a mechanical-transmission-based rotary generator system [40]. In both cases, the PTO is able to produce a commanded   
+
+> Z. Lin et al.: Preprint submitted to Elsevier Page 2 of 16
+
+Control of hybrid wind-wave energy systems using reinforcement learning 
+
+Figure 1: Structure of the HWWE platform. Yellow part: the VolturnUS platform. Red part: the torus-type WECs. 
+
+Table 1 
+
+Main parameters of the HWWE system. For detailed definitions of the wind turbine and VolturnUS platform, see [37, 38]. Category Parameter Value Platform Arm length 51.75 m Outer column diameter 12.5 m Inner column diameter 10 m Freeboard 15 m Draft 20 m WEC Outer diameter 20 m Freeboard 4 m Draft 4 m Mooring Length 850 m Diameter 0.33 m Linear mass 685 kg/m Water depth 200 m PTO Friction coefficient 𝑅 fric 30 kN/(m/s) Maximum force 𝐹 max 2000 kN Loss coefficient 𝛼 1.2e-5 kW/(kN) 2
+
+force on the WEC, and the PTO power can be bidirectional. Accordingly, the control task is to determine the optimal PTO force commands, in order to optimize the overall per-formance of the HWWE system. The wind and wave conditions used for the case study are obtained from the M4 buoy measurements of the Irish Weather Buoy Network, operated by the Marine Institute, Ireland [41]. The buoy is located in the Atlantic Ocean to the northwest of Ireland at 55.0 ◦N, 10.0 ◦W. The selected data covers the five-year period from 2021 to 2025 and includes hourly measured wind speed (WS), significant wave height (Hs), and peak wave period (Tp). The probability distributions of wind and wave conditions are shown in Fig. 2. For ease of testing and illustration, three representative Wind speed (m/s)      
+
+> 0510 15 20 25
+> Probability
+> 00.05 0.1
+
+(a) Wind speed distribution. Peak period, Tp (s)    
+
+> 510 15 20
+> Significant wave height, Hs (m)
+> 246810 12 14
+> 00.01 0.02 0.03 0.04 0.05 Joint probability
+
+(b) Joint distribution of significant wave height (Hs) and peak period (Tp). 
+
+Figure 2: Wind and wave conditions. The selected representa-tive conditions are marked with red triangles. 
+
+wind-wave conditions, with (WS, Hs, Tp) being (8 m/s, 2 m, 8 s), (10 m/s, 3 m, 11 s), and (14 m/s, 5 m, 13 s), respectively, are selected for the case study. These conditions represent progressively increasing wind-wave energy levels and cover a broad operating range, including the main energy pro-duction region, and more energetic conditions that impose greater challenges on platform stability. It is assumed that the mean (turbulent) wind direction and the wave propagation direction are both aligned with the x-axis, with the HWWE platform oriented to face the prevailing incoming wind and waves, as shown in Fig. 1. 
+
+2.2. Numerical modelling framework 
+
+The numerical model of the HWWE platform is devel-oped using MOST, a simulation tool developed by Politec-nico di Torino [34]. MOST is built upon WEC-Sim [35] and extends its capability by adding wind turbine models. Hence, MOST enables coupled simulation of HWWE sys-tems in a unified MATLAB environment, which is particu-larly convenient for control design. The accuracy of MOST for simulating the VolturnUS platform has been verified against commercial software [34] and through experimental campaigns [42, 43]. This section outlines the fundamental modelling approaches adopted in MOST. 
+
+2.2.1. Multibody dynamics 
+
+The equation of motion of the multibody system can be expressed, in a general form, as 
+
+𝐌 (𝝃 (𝑡 )) ̈ 𝝃 (𝑡 ) + 𝐡 (𝝃 (𝑡 ),̇ 𝝃 (𝑡 )) = 𝐅 (𝑡 ) + 𝐅 c(𝑡 ), (1) 
+
+Z. Lin et al.: Preprint submitted to Elsevier Page 3 of 16 Control of hybrid wind-wave energy systems using reinforcement learning 
+
+where 𝝃 (𝑡 ) = [𝝃 T0 (𝑡 ), 𝝃 T1 (𝑡 ), 𝝃 T2 (𝑡 ), 𝝃 T3 (𝑡 )]T is the generalized-coordinate vector of the multibody system, with 𝝃 𝑖 (𝑡 ) =[𝑥 𝑖 (𝑡 ), 𝑦 𝑖 (𝑡 ), 𝑧 𝑖 (𝑡 ), 𝜃 x 
+
+> 𝑖
+
+(𝑡 ), 𝜃 y 
+
+> 𝑖
+
+(𝑡 ), 𝜃 z 
+
+> 𝑖
+
+(𝑡 )] T describing the six-degree-of-freedom pose of the 𝑖 -th body, in terms of surge, sway, heave, roll, pitch, and yaw, respectively, as defined in Fig. 1; here, 𝑖 = 0 denotes the VolturnUS platform, and 𝑖 = 1 , 2, 3
+
+denote the three WECs, respectively. 𝐌 (𝝃 (𝑡 )) is the mass matrix, 𝐡 (𝝃 (𝑡 ),̇ 𝝃 (𝑡 )) collects the additional inertial terms, including Coriolis, centrifugal, and gyroscopic effects, 𝐅 (𝑡 )
+
+is the load vector resulting from all non-constraint (aero-dynamic, hydrodynamic, hydrostatic, mooring, mechanical friction, and PTO) loads, and 𝐅 c(𝑡 ) is the constraint load vector associated with the reaction forces and moments required to enforce the kinematic constraints between the platform and WECs (WECs are constrained to move only vertically relative to the platform): 
+
+𝐠 (𝝃 (𝑡 )) = 𝟎 , (2) where 𝐠 (⋅) denotes the constraint operator. The constraint load 𝐅 c(𝑡 ) is related to (2) through 
+
+𝐅 c(𝑡 ) = − 
+
+( 𝜕 𝐠 
+
+𝜕 𝝃 
+
+)T
+
+𝝀 (𝑡 ), (3) where 𝝀 (𝑡 ) is the vector of Lagrangian multipliers. Within MOST, constrained multibody dynamics (1) (2) (3) are solved using Simscape Multibody, with a vertical prismatic joint connecting each WEC to the platform. 
+
+2.2.2. Aerodynamic loads 
+
+In MOST, the aerodynamic loads acting on the turbine blades can be described as 
+
+𝐅 aero (𝑡 ) =  (𝐮 w(𝐫 , 𝑡 ), 𝝃 h(𝑡 ),̇ 𝝃 h(𝑡 ), 𝜓 r (𝑡 ),̇𝜓 r (𝑡 ), 𝜙 (𝑡 )) , (4) where 𝐮 w(𝐫 , 𝑡 ) denotes the wind velocity field, with 𝐫 de-noting the spatial position, 𝝃 h(𝑡 ) and ̇ 𝝃 h(𝑡 ) are the hub pose and the corresponding translational and angular velocities, respectively, 𝜓 r (𝑡 ) and ̇ 𝜓 r (𝑡 ) are the rotor azimuth angle and rotational speed, respectively, 𝜙 (𝑡 ) is the collective blade pitch angle, and the operator (⋅) denotes the aerodynamic load model, in which the blade-element momentum equa-tions are solved at each time step. The turbulent wind field 
+
+𝐮 w(𝐫 , 𝑡 ) is generated, for a specified mean wind speed, using TurbSim [44]. The wind turbine control adopts a conven-tional baseline control [45], which uses the rotor speed as the feedback input and provides the generator torque and collective blade pitch commands. 
+
+2.2.3. Hydrodynamic loads 
+
+The wave excitation load acting on the 𝑖 -th body is simulated as 
+
+𝐅 exc ,𝑖 (𝑡 ) = 
+
+> 𝑁 𝜔
+
+∑
+
+> 𝑘 =1
+
+ℜ {𝐄 𝑖 (𝑗𝜔 𝑘 )𝐴 (𝑗𝜔 𝑘 )𝑒 𝑗𝜔 𝑘 𝑡 } , 𝑖 = 0 , 1, 2, 3,
+
+(5) where 𝐄 𝑖 (𝑗𝜔 𝑘 ) is the complex frequency-domain excitation coefficient at frequency 𝜔 𝑘 , 𝐴 (𝑗𝜔 𝑘 ) is the complex wave amplitude coefficient, and 𝑁 𝜔 is the number of sampled frequencies. For a sea state specified by the significant wave height and peak wave period, the waves are modelled using the JONSWAP spectrum following IEC TS 62600-2 ED2 Annex C.2 (2019), with randomized phases assigned to the frequency components, to obtain 𝐴 (𝑗𝜔 𝑘 ).The radiation loads acting on all bodies, including mu-tual radiation interactions, can be jointly described by 
+
+𝐅 rad (𝑡 ) = − 𝐌 ∞̈ 𝝃 (𝑡 ) − ∫
+
+> 𝑡
+> −∞
+
+𝐊 rad (𝑡 − 𝜏 )̇ 𝝃 (𝜏 ) d 𝜏, (6) where 𝐌 ∞ is the infinite-frequency added mass matrix, and 
+
+𝐊 rad (𝑡 ) is the matrix-valued radiation retardation function; both are obtained from the frequency-dependent added mass 𝐌 a(𝜔 ) and radiation damping 𝐑 a(𝜔 ), as 𝐌 ∞ =lim 𝜔 →∞ 𝐌 a(𝜔 ) and 𝐊 rad (𝑡 ) = (2∕ 𝜋 ) ∫ ∞0 𝐑 a(𝜔 ) cos( 𝜔𝑡 ) d 𝜔 .The hydrostatic restoring loads acting on the 𝑖 -th body are described by 
+
+𝐅 rest ,𝑖 (𝑡 ) = 𝐅 g,𝑖 + 𝐅 b,𝑖 − 𝐊 hs ,𝑖 Δ𝝃 𝑖 (𝑡 ), 𝑖 = 0 , 1, 2, 3, (7) where 𝐅 g,𝑖 and 𝐅 b,𝑖 are the gravitational and buoyancy loads, respectively, 𝐊 hs ,𝑖 is the hydrostatic stiffness matrix, and 
+
+Δ𝝃 𝑖 (𝑡 ) denotes the pose deviation from static equilibrium. Within the WEC-Sim framework, geometry meshes for all bodies are first established, and the boundary-element method software NEMOH [46] is then applied to calculate the hydrostatic and hydrodynamic parameters. In addition, to compensate for the limitations of linear potential-flow theory, the viscous loads acting on the 𝑖 -th body are modelled using drag terms as 
+
+𝐅 vis ,𝑖 (𝑡 ) = − 𝐃 vis ,𝑖 ||̇𝝃 𝑖 (𝑡 )|| ⊙̇ 𝝃 𝑖 (𝑡 ), 𝑖 = 0 , 1, 2, 3, (8) where 𝐃 vis ,𝑖 is the quadratic drag coefficient matrix, and ⊙
+
+denotes element-wise product. For the platform, the drag coefficients are calibrated values provided by MOST [34]. For the WECs, only the viscous force in the heave direction, which is the dominant motion direction, is considered, and the coefficient is determined from the Morison equation [47] as 𝐷 vis ,z,𝑖 = (1∕2) 𝜌𝐶 d𝐴 cs , 𝑖 = 1 , 2, 3, where 𝜌 is the water density, 𝐴 cs is the WEC cross-sectional area, and 𝐶 d is the drag coefficient, assumed to be 1 [48] in this study. 
+
+2.2.4. Mooring loads 
+
+The mooring system can be modelled as a quasi-static catenary system within MOST, where the dynamic mooring inertia is neglected, and the line tensions are determined from the instantaneous platform pose as 
+
+𝐅 moor (𝑡 ) =  (𝝃 0(𝑡 )) , (9) where the operator (⋅) represents the mooring load model, which is evaluated by solving the static catenary equations for each mooring line. This formulation captures the nonlin-ear restoring effect of the mooring system, while avoiding the computational cost of a fully dynamic mooring model.   
+
+> Z. Lin et al.: Preprint submitted to Elsevier Page 4 of 16 Control of hybrid wind-wave energy systems using reinforcement learning
+
+2.2.5. Mechanical friction forces 
+
+The mechanical friction force associated with each PTO is modelled using a linear damping term, namely, 
+
+𝐹 fric ,𝑖 (𝑡 ) = − 𝑅 fric ̇ 𝜁 𝑖 (𝑡 ), 𝑖 = 1 , 2, 3, (10) where 𝜁 𝑖 (𝑡 ) denotes the relative heave displacement between the WEC and the platform, and 𝑅 fric is the friction damp-ing coefficient. Since friction depends on the detailed me-chanical design, friction modelling is highly device-specific and difficult to anticipate without experimental testing [49]. Therefore, a representative value is adopted in this study, where 𝑅 fric is assumed to be one-tenth of the peak radiation damping of the WEC in the heave direction; the value is listed in Table 1. 
+
+2.3. PTO characteristics 
+
+The focused control task is to determine the optimal PTO forces to be applied on the WECs. However, considering the PTO force limit 𝐹 max imposed by the generator capacity, whose assumed value is listed in Table 1, the commanded PTO force needs to be saturated as 
+
+𝐹 PTO ,𝑖 (𝑡 ) = clip 
+
+(
+
+𝐹 0PTO ,𝑖 (𝑡 ), −𝐹 max , 𝐹 max 
+
+)
+
+, 𝑖 = 1 , 2, 3,
+
+(11) where 𝐹 0PTO ,𝑖 (𝑡 ) is the PTO force commanded by the WEC controller, 𝐹 PTO ,𝑖 (𝑡 ) is the actual PTO force acting on the WEC, and clip( ⋅) denotes the clipping function such that 
+
+clip( 𝐹 , −𝐹 max , 𝐹 max ) = min{max{ 𝐹 , −𝐹 max }, 𝐹 max }. (12) The captured mechanical power can be calculated as 
+
+𝑃 mech (𝑡 ) = − 
+
+> 3
+
+∑
+
+> 𝑖 =1
+
+𝐹 PTO ,𝑖 (𝑡 )̇ 𝜁 𝑖 (𝑡 ). (13) The electrical efficiency of the generator is another impor-tant factor to account for. In this study, a simple yet repre-sentative electrical loss model [50] is applied, where the loss power is assumed to vary quadratically with the generator force, so the electrical power output can be described as 
+
+𝑃 elec (𝑡 ) = 𝑃 mech (𝑡 ) − 
+
+> 3
+
+∑
+
+> 𝑖 =1
+
+𝛼 (𝐹 PTO ,𝑖 (𝑡 ))2 , (14) where 𝛼 , listed in Table 1, is the loss coefficient assumed to yield an efficiency of 96%, a reasonable efficiency level for electrical generators, at a representative generator operating point of (0.6 m/s, 2000 kN), selected to represent the main operating range. 
+
+2.4. Preliminary analysis 
+
+The HWWE platform with zero PTO control forces, i.e., with all WECs moving freely along the PTO guide, is first simulated and compared with the wind-only platform. The simulation sampling time is 0.02 s. The platform motion 46810 12 14 -2 024                 
+
+> Wind speed (m/s) Wave elevation (m)
+> Wind speed Wave elevation
+> Time (s)
+> 60 80 100 120 140 160 180 246
+> Platform pitch (deg)
+> Wind-only Hybrid wind-wave
+> Figure 3: Motion trajectories of the wind-only and HWWE platforms, as well as the wind speed and wave elevation profiles.
+
+response is shown in Fig. 3, where the instantaneous turbu-lent wind speed and wave elevation are also illustrated, for reference. Under the wind load, the platform pitch motion, as the dominant rotational mode, exhibits a continuous bias. While no control forces are applied by the WEC PTOs, the HWWE platform exhibits slightly smaller pitch motion compared to the wind-only platform, which is partly due to the increase in the moment of inertia resulting from WEC integration; similar conclusions are also drawn in [9]. 
+
+## 3. Linear damping and reactive control 
+
+Before introducing the RL controller, this section first defines the control performance metrics used throughout the study, and then develops the two benchmark control strategies, namely HOM and HET reactive control. 
+
+3.1. Control evaluation metrics 
+
+Two performance metrics are of primary concern in this study, when designing and evaluating control strategies. The first metric, 𝐽 1, reflects the wave energy production capability and is defined as the average electrical power output, namely, 
+
+𝐽 1 =̄ 𝑃 = 1
+
+𝑇 f ∫
+
+> 𝑇 f
+> 0
+
+𝑃 elec (𝑡 )d 𝑡, (15) where ̄ 𝑃 is the average electrical power, and 𝑇 f is the ter-minal time of simulation evaluation. Note that, as is widely adopted by existing HWWE research [14], the focus here is on wave energy capture rather than wind energy output, which is only indirectly affected by WEC motion; however, this effect will also be briefly examined later. The second metric, 𝐽 2, characterizes the platform motion suppression effect and is defined as the root mean square (RMS) value of the platform pitch angle, namely, 
+
+𝐽 2 = 𝜃 RMS =
+
+√
+
+1
+
+𝑇 f ∫
+
+> 𝑇 f
+> 0
+
+(𝜃 y0 (𝑡 ))2 d𝑡, (16)          
+
+> Z. Lin et al.: Preprint submitted to Elsevier Page 5 of 16 Control of hybrid wind-wave energy systems using reinforcement learning 246
+> Platform pitch (deg) Time (s)
+> 60 80 100 120 140 160 180 010 20 30
+> Wave energy (MJ)  Rg=300 kN/(m/s) Rg=1000 kN/(m/s) Rg=8000 kN/(m/s)
+> Figure 4: Damping control trajectories with different damping coefficients.
+
+where 𝜃 RMS is the pitch RMS value. Note that different measures of platform pitch response have been adopted in previous studies, including the mean pitch drift [9], which reflects the shift in equilibrium position, and the pitch re-sponse amplitude operator [5] or standard deviation [28], which quantify the magnitude of dynamic oscillation. For simplicity and ease of comparison, this study uses the RMS value as a unified scalar metric. In particular, since 𝜃 RMS =√
+
+mean (𝜃 y0
+
+)2 + std (𝜃 y0
+
+)2, the RMS value can account for both the mean pitch drift and the dynamic pitch fluctuation. 
+
+3.2. Homogeneous (HOM) damping and reactive control 
+
+HOM control refers to the control scheme in which all three PTOs use identical control coefficients. In HOM damping control, the PTO forces are described by 
+
+𝐹 0PTO ,𝑖 (𝑡 ) = − 𝑅 ġ 𝜁 𝑖 (𝑡 ), 𝑖 = 1 , 2, 3, (17) where 𝑅 g ≥ 0 is the uniform PTO damping coefficient. The platform motion and energy output trajectories, under different 𝑅 g values, are shown in Fig. 4. When the damping is small, damping only slightly affects pitch motion, whereas a very large damping can reduce the pitch variation, while the change in mean drift is limited. On the other hand, a medium damping value yields the highest energy pro-duction, outperforming small- and large-damping control. These observations are further confirmed in Fig. 5 where, regarding the pitch RMS value, the overall impact of damp-ing is limited, while the energy production trend exhibits a typical single-peak pattern. It can be inferred that the energy and stability objectives are not totally antagonistic in HOM damping control. Without affecting pitch RMS too much, the optimal damping can be conveniently selected at the energy peak point, as in the case of standalone WEC control; similar approaches are also adopted in [21, 18]. Alternatively, a stiffness term can be added to the PTO force, yielding HOM reactive control 
+
+𝐹 0PTO ,𝑖 (𝑡 ) = − 𝑅 ġ 𝜁 𝑖 (𝑡 ) − 𝐾 g𝜁 𝑖 (𝑡 ), 𝑖 = 1 , 2, 3, (18) PTO damping (kN/(m/s))      
+
+> 2000 4000 6000 8000 10000
+> Pitch RMS (deg)
+> 3.4 3.6 3.8 44.2
+> Electrical power (kW)
+> 0100 200 300 400 500 600
+> Pitch RMS Electrical power
+> Figure 5: Impact of the damping coefficient.
+
+where 𝐾 g is the uniform PTO stiffness coefficient, and can be either positive or negative. From the perspective of the WEC, a positive stiffness increases the restoring force when the buoy deviates from its equilibrium position, whereas a negative stiffness reduces the effective restoring force. Notably, because point-absorber-type WECs usually have a natural period shorter than the dominant wave period, energy-maximizing control of a standalone WEC usually re-quires the PTO to provide a negative stiffness, exaggerating WEC motion. With this background, the control trajectories obtained with different PTO stiffness values are shown in Fig. 6. As expected, a smaller, more negative, stiffness yields higher energy generation. However, a smaller stiffness also leads to significantly larger platform pitch motion. This important phenomenon, consistent with previous analyses in [17, 19], can be understood through a simple force analysis. When the platform pitches away from its initial position, the hydro-static equilibrium positions of the WECs deviate from the PTO zero positions used in reactive control (18). A positive PTO stiffness then generates a force that tends to restore the WECs toward those initial positions. The corresponding reaction force acting on the platform, in turn, produces a restoring moment that tends to drive the platform back to-ward its initial pitch angle. In other words, a positive stiffness provides a stabilizing effect on the platform. In contrast, a negative PTO stiffness tends to amplify the platform pitch deviation, exerting destabilizing effects. The impact of PTO stiffness is further illustrated in Fig. 7, which compares the buoy displacement and PTO force under damping control and positive-stiffness reactive con-trol. Reactive control maintains smaller WEC displacements by applying an additional restoring force, with a continuous, non-zero bias. Apparently, such force profiles are associated with larger reactive power exchange and higher electrical losses, and are therefore less favorable for energy production. The overall impact of PTO coefficient values is shown in the parametric sweep result in Fig. 8, where damping control, as a special case of reactive control with zero stiffness, is highlighted by the red lines. It is confirmed that, overall, decreasing the stiffness toward more negative values increases energy generation, but also amplifies platform   
+
+> Z. Lin et al.: Preprint submitted to Elsevier Page 6 of 16
+
+Control of hybrid wind-wave energy systems using reinforcement learning 2468      
+
+> Platform pitch (deg) Time (s)
+> 60 80 100 120 140 160 180 010 20 30 40
+> Wave energy (MJ)  Rg=1000 kN/(m/s), K g=-200 kN/m Rg=1000 kN/(m/s), K g=100 kN/m Rg=1000 kN/(m/s), K g=1000 kN/m
+
+Figure 6: Reactive control trajectories with different stiffness coefficients. -5 0510       
+
+> PTO disp. (m)
+> Damping: R g=1000 kN/(m/s), PTO1 Damping: R g=1000 kN/(m/s), PTO2/3 Reactive: R g=1000 kN/(m/s), K g=1000 kN/m, PTO1 Reactive: R g=1000 kN/(m/s), K g=1000 kN/m, PTO2/3 -1000 01000 2000
+> PTO force (kN) Time (s)
+> 60 80 100 120 140 160 180 -2000 -1000 0
+> PTO force (kN)
+
+Figure 7: Control trajectories of damping and reactive control. 
+
+pitch motion. Hence, in contrast to the damping control case, energy and stability appear to be conflicting objectives for reactive control, mainly due to the stiffness effect, as analyzed previously. A stiffness value smaller than the range shown in Fig. 8 will cause very significant platform pitch motion, and is therefore not considered in the study. The tradeoff between energy capture and platform mo-tion suppression can be jointly described using a Pareto front, which denotes the performance boundary along which no objective can be further improved without degrading the other. The parametric sweep results, as well as the Pareto front defined by the swept samples, are shown in Fig. 9. Overall, HOM reactive control is restricted by a limited degree of freedom, with a linear control law and only two tunable parameters. Further control optimization would, ide-ally, push the Pareto front to the upper left. 10000 4000 25000 
+
+PTO damping (kN/(m/s)) 
+
+> 3
+> Pitch RMS (deg)
+> 42000
+
+PTO stiffness (kN/m)  
+
+> 5600
+> 22.5 33.5 44.5 5
+> Reactive control Damping control 10000 4000 05000
+
+PTO damping (kN/(m/s)) 
+
+> 200
+> Electrical power (kW)
+> 2000
+
+PTO stiffness (kN/m)  
+
+> 400 600 00
+> 0100 200 300 400 500
+> Reactive control Damping control
+
+Figure 8: Parametric sweep result of HOM reactive control coefficients. Pitch RMS (deg)      
+
+> 123456
+> Electrical power (kW)
+> -100 0100 200 300 400 500 600
+> Sampled performance Sampled Pareto front
+
+Figure 9: Performance samples of HOM reactive control, obtained from parametric sweep. 
+
+3.3. Heterogeneous (HET) reactive control 
+
+Hereafter, damping control is treated as a special case of reactive control, and both are uniformly referred to as reactive control. In contrast to HOM reactive control, HET reactive control means that different PTOs utilize different control coefficients. In this study, since the HWWE platform is oriented toward the predominant wind-wave direction (both assumed to be the x-axis direction), the two down-wave WECs, namely WECs 2 and 3, experience nearly identical operating conditions, whereas the up-wave WEC, namely WEC 1, operates under a different condition. Hence, two sets of reactive control coefficients can be applied for 
+
+Z. Lin et al.: Preprint submitted to Elsevier Page 7 of 16 Control of hybrid wind-wave energy systems using reinforcement learning 
+
+PTO 1 and PTO 2, 3, respectively, as 
+
+𝐹 0PTO ,𝑖 (𝑡 ) = − 𝑅 g,1̇ 𝜁 𝑖 (𝑡 ) − 𝐾 g,1𝜁 𝑖 (𝑡 ), 𝑖 = 1 
+
+𝐹 0PTO ,𝑖 (𝑡 ) = − 𝑅 g,2̇ 𝜁 𝑖 (𝑡 ) − 𝐾 g,2𝜁 𝑖 (𝑡 ), 𝑖 = 2 , 3, (19) where 𝑅 g,1∕2 , 𝐾 g,1∕2 are the PTO damping and stiffness values, respectively. A similar heterogenous control setting is also adopted in [20, 22]. Notably, HET reactive control in-troduces two additional tunable parameters, thereby offering greater flexibility to improve control performance. However, since HET control involves four degrees of freedom, the evaluation of control coefficients is not as straightforward as in HOM control, for which a simple 2-D parametric sweep can be applied. In particular, the evaluation of each control candidate requires one round of numerical simulation, so the resulting computational cost would be prohibitive if a 4-D parameter sweep is to be adopted. Moreover, even in the 2-D case, a parametric sweep cannot identify the exact Pareto front, since only a prede-fined grid of discrete coefficient values is evaluated. Hence, to identify the Pareto fronts for both HOM and HET re-active controllers, a multi-objective Bayesian optimization framework, based on the batch expected hypervolume im-provement (qEHVI) algorithm [51], is adopted. The basic principle is to construct Gaussian process (GP) surrogate models of the objective functions, from limited simulation data, and use GP-predicted distributions to identify the most promising control candidates by maximizing the expected improvement in Pareto hypervolume. Detailed associated algorithmic procedures are outlined in the Appendix. The Pareto optimization results, for the three considered wind-wave conditions selected from Fig. 2, are shown in Fig. 10. It can be seen that HET control, with two additional degrees of freedom, improves the Pareto front beyond HOM control. However, this improvement is relatively limited and occurs mainly in the intermediate range of the two objec-tives. This result indicates that, within the linear control framework, introducing spatially heterogeneous control co-efficients provides only moderate additional flexibility, and that both HOM and HET control remain rather constrained in handling the complex dynamics of the HWWE platform. 
+
+## 4. Reinforcement-learning-based control 
+
+To overcome the performance limitations of conven-tional control methods for the HWWE platform, this sec-tion proposes a reinforcement learning (RL)-based control framework, aiming at directly learning a real-time (nonlin-ear) control policy from interactions with the high-fidelity numerical model. 
+
+4.1. Outline of PPO algorithm 
+
+In RL, the control problem is formulated as a Markov decision process in which, at each control step, the controller observes the system state 𝐬 𝑘 , generates an action 𝐚 𝑘 , receives an immediate reward 𝑟 𝑘 , and arrives at a next state 𝐬 𝑘 +1 .The objective is to learn a control policy, namely, a mapping Pitch RMS (deg)                                    
+
+> 0.5 11.5 22.5 33.5
+> Electrical power (kW)
+> 050 100 150 200 Wind speed = 8 m/s, H s= 2 m, T p= 8 s
+> HOM Pareto front HET Pareto front
+> 1.05 1.1 1.15 1.2 60 70 80 90 100 Pitch RMS (deg)
+> 1.5 22.5 33.5 44.5 5
+> Electrical power (kW)
+> 0100 200 300 400 500 600 Wind speed = 10 m/s, H s= 3 m, T p= 11 s
+> HOM Pareto front HET Pareto front
+> 2.4 2.6 2.8 350 400 450 500 Pitch RMS (deg)
+> 1.5 22.5 3
+> Electrical power (kW)
+> 400 600 800 1000 1200 1400 Wind speed = 14 m/s, H s= 5 m, T p= 13 s
+> HOM Pareto front HET Pareto front
+> 1.78 1.8 1.82 1.84 1.86 1.88 950 1000 1050 1100
+
+Figure 10: Pareto fronts of the HOM and HET reactive controllers, obtained using Bayesian optimization. 
+
+from state to action, that maximizes the expected cumulative reward. Proximal policy optimization (PPO) employs an actor-critic architecture to achieve this objective [36]. The actor 
+
+𝜋 𝜽 (𝐚 𝑘 |𝐬 𝑘 ) represents the control policy, whereas the critic 
+
+𝑉 𝝓 (𝐬 𝑘 ) estimates the expected cumulative reward from state 
+
+𝐬 𝑘 ; here, 𝜽 and 𝝓 denote the parameters of the actor and critic neural networks, respectively. For continuous control action, the actor represents the action using a diagonal Gaussian distribution, 
+
+𝐚 𝑘 ∼ 𝜋 𝜽 (⋅|𝐬 𝑘 ) =  (𝝁 𝜽 (𝐬 𝑘 ), diag [𝝈 2
+
+> 𝜽
+
+(𝐬 𝑘 )]) , (20) where 𝝁 𝜽 and 𝝈 𝜽 are generated by the actor network. During each episode with 𝑁 steps, the frozen old policy, 
+
+𝜋 𝜽 old , interacts with the environment and collects a trajectory 
+
+{𝐬 𝑘 , 𝐚 𝑘 , 𝑟 𝑘 , 𝐬 𝑘 +1 }𝑁 −1  
+
+> 𝑘 =0
+
+. The frozen old critic, 𝑉 𝝓 old , is then used to evaluate how much better or worse each sampled 
+
+Z. Lin et al.: Preprint submitted to Elsevier Page 8 of 16 Control of hybrid wind-wave energy systems using reinforcement learning 
+
+action is, compared with the expected return at the corre-sponding state. This relative performance is quantified, using generalized advantage estimation (GAE), as 
+
+𝛿 𝑘 = 𝑟 𝑘 + 𝛾𝑉 𝝓 old (𝐬 𝑘 +1 ) − 𝑉 𝝓 old (𝐬 𝑘 ), (21) ̂𝐴 𝑘 = 𝛿 𝑘 + 𝛾𝜆̂𝐴 𝑘 +1 , (22) where 𝛾 is the discount factor for future rewards, 𝛿 𝑘 is the temporal-difference error, 𝜆 is the GAE coefficient, and ̂𝐴 𝑘 is the advantage estimate. A positive ̂ 𝐴 𝑘 indicates that the sampled action performs better than expected, and vice versa. According to the policy gradient principle, the actor should increase the probability of actions with positive ad-vantages and decrease that of actions with negative advan-tages. PPO performs this update using the probability ratio 
+
+𝜌 𝑘 (𝜽 ) = 𝜋 𝜽 (𝐚 𝑘 |𝐬 𝑘 )
+
+𝜋 𝜽 old (𝐚 𝑘 |𝐬 𝑘 ) (23) and maximizes the clipped surrogate objective 
+
+𝐿 clip (𝜽 )= 1
+
+𝑁 
+
+> 𝑁 −1
+
+∑
+
+> 𝑘 =0
+
+min {𝜌 𝑘 (𝜽 )̂𝐴 𝑘 , clip (𝜌 𝑘 (𝜽 ), 1 − 𝜖, 1 + 𝜖 )̂ 𝐴 𝑘 
+
+} ,
+
+(24) where 𝜖 is the clipping coefficient. The clipping operation prevents excessively large changes between the updated and rollout policies, thereby improving training stability [36]. An entropy regularization term is further included to maintain exploration. The actor 𝜋 𝜽 is therefore updated by minimizing 
+
+actor = − 𝐿 clip (𝜽 ) − 𝑐 ent 
+
+1
+
+𝑁 
+
+> 𝑁 −1
+
+∑
+
+> 𝑘 =0
+
+ [𝜋 𝜽 (⋅ ∣ 𝐬 𝑘 )] , (25) where [⋅] denotes the policy entropy and 𝑐 ent is the entropy coefficient. The entropy term prevents the action distribution from collapsing into an overly deterministic policy through-out training, sustaining exploration capability [36]. Meanwhile, the critic 𝑉 𝝓 is trained to approximate the return associated with each state. Defining the return target as 𝑉 ∗ 
+
+> 𝑘
+
+=̂ 𝐴 𝑘 + 𝑉 𝝓 old (𝐬 𝑘 ), the critic is updated by minimizing 
+
+critic = 1
+
+𝑁 
+
+> 𝑁 −1
+
+∑
+
+> 𝑘 =0
+
+(𝑉 𝝓 (𝐬 𝑘 ) − 𝑉 ∗
+
+> 𝑘
+
+)2 . (26) After actor and critic optimizations, the updated actor is used as the rollout policy for the next episode. 
+
+4.2. RL problem formulation 
+
+While RL algorithms have been well established through extensive studies, their practical application requires a dedi-cated formulation of the specific control task within the RL framework. For the HWWE system, the RL environment is directly provided by the numerical simulation model, without the need for model simplifications, as in [28]. A sampling period of 𝑇 s=0.2 s is selected for the RL agent. The control action is defined straightforwardly as the (normalized) commanded forces for the three WECs, namely, 
+
+𝐚 𝑘 ∶= 1
+
+F
+
+[
+
+𝐹 0PTO ,1,𝑘 , 𝐹 0PTO ,2,𝑘 , 𝐹 0PTO ,3,𝑘 
+
+]T
+
+, (27) where F is the scaling factor for normalization, as listed in Table 2. The action remains constant over each control interval, according to the zero-order-hold convention. The selection of observation variables requires further consideration, since the selected variables should provide an approximate Markov representation of system dynamics that are relevant to the control objectives. It is well known that, in addition to WEC motion measurements, optimal WEC control, under irregular waves, generally relies on instanta-neous and future information on the incident waves [32, 52]. Meanwhile, platform motion control requires direct platform motion measurements, and can further benefit from wind speed information and the blade pitch state. In this study, it is reasonably assumed that the available measurements include the wave elevations at the WEC locations, which can be obtained from up-wave buoy measurements and wave field reconstruction models [53], and the wind speed, which can be obtained from a nacelle-mounted anemometer. Accordingly, the state is defined as 
+
+𝐬 𝑘 ∶= 
+
+[ 𝜻 T
+
+> 𝑘
+
+𝜁 
+
+,̇ 𝜻 T
+
+> 𝑘
+
+̇ 𝜁 
+
+, 𝜼 T
+
+> 𝑘
+
+𝜂 
+
+,̇ 𝜼 T
+
+> 𝑘
+
+̇𝜂 
+
+,𝜃 y0,𝑘 
+
+𝜃 
+
+,̇ 𝜃 y0,𝑘 
+
+̇ 𝜃 
+
+, 𝐮 Tw,𝑘 
+
+u
+
+, 𝜙 𝑘 
+
+𝜙 
+
+]T
+
+, (28) which includes the positions of the three buoys 𝜻 𝑘 =
+
+[𝜁 1,𝑘 , 𝜁 2,𝑘 , 𝜁 3,𝑘 
+
+]T and the corresponding velocities ̇ 𝜻 𝑘 , the wave elevations 𝜼 𝑘 = [𝜂 1,𝑘 , 𝜂 2,𝑘 , 𝜂 3,𝑘 
+
+]T and their time derivatives ̇ 𝜼 𝑘 , the platform pitch angle 𝜃 y0,𝑘 and angular velocity ̇ 𝜃 y0,𝑘 , the wind velocity at the turbine hub 𝐮 w,𝑘 , and the collective blade pitch angle 𝜙 𝑘 ; the associated scaling factors 𝜁 , ̇𝜁 , 𝜂 , ̇ 𝜂 , 𝜃 , ̇ 𝜃 , u, and 𝜙 are listed in Table 2. Specifically, the inclusion of the time derivatives of wave elevation is to incorporate certain wave dynamics for the RL agent [32]. Also note that wave excitation forces are (reasonably) not assumed available, since estimation of excitation forces generally requires a dynamic model of the system [54]. For the considered HWWE system, model-based excitation force estimation is difficult, due to the complex dynamics. Meanwhile, the RL reward function is designed as the weighted sum of two objectives: energy production and platform motion suppression, respectively: 
+
+𝑟 𝑘 ∶ = 𝛽𝑟 e,𝑘 + (1 − 𝛽 )𝑟 s,𝑘 ,𝑟 e,𝑘 = 1
+
+F𝜁 
+
+> 3
+
+∑
+
+> 𝑖 =1
+
+[
+
+−𝐹 PTO ,𝑖,𝑘 
+
+(𝜁 𝑖,𝑘 +1 − 𝜁 𝑖,𝑘 
+
+) − 𝛼𝑇 s𝐹 2PTO ,𝑖,𝑘 
+
+]
+
+,𝑟 s,𝑘 = − 1
+
+2
+
+> 𝜃
+
+𝑇 s
+
+2
+
+((
+
+𝜃 y0,𝑘 
+
+)2
+
++
+
+(
+
+𝜃 y0,𝑘 +1 
+
+)2)
+
+,  
+
+> Z. Lin et al.: Preprint submitted to Elsevier Page 9 of 16 Control of hybrid wind-wave energy systems using reinforcement learning
+
+(29) where 𝛽 is the weighting factor, and 𝑟 e,𝑘 and 𝑟 s,𝑘 are discrete-time calculations of one-step electrical energy output and the integral of pitch motion squared, consistent with (15) and (16), respectively. The weighting factor 𝛽 is a key control parameter that reflects the designer’s preference about con-trol performance, and will guide the RL agent toward dif-ferent tradeoffs between the conflicting objectives of energy capture and platform stability. 
+
+4.3. Training framework 
+
+Following the RL formulation, a RL training framework is designed for the HWWE system, in which the PPO al-gorithm is implemented in PyTorch and interacts with the MOST simulation environment in MATLAB. Each training episode consists of a time-domain simulation lasting 20 peak wave periods. During the simulation, the actor obtained from the previous episode generates the PTO control actions at each control step. Note that, during the training process, the actions are sampled from the Gaussian policy, parameterized by the actor network to enable exploration. In the implemen-tation of a trained actor, however, only the mean actions are used. Different random seeds are adopted across episodes to generate distinct (randomized) time-domain wind and wave profiles. Throughout each simulation, the trajectories of state, action, and reward are collected. After the simulation, the discounted returns and GAEs are calculated from the tra-jectory and then used to update the actor and critic networks. Both the actor and critic are fully connected neural net-works with two hidden layers, each containing 128 neurons and using the rectified linear unit (ReLU) activation func-tion. The actor contains two output branches for the mean and standard deviation of the Gaussian policy, respectively. A hyperbolic tangent (tanh) activation function is applied to the mean output to constrain the PTO force within the prescribed limit, while a sigmoid function is applied to the standard deviation output to ensure positiveness and boundedness. After each episode, the actor and critic parameters are updated separately, using the Adam optimizer [55] and full-batch gradient-based optimization over all collected trajec-tory samples. The optimization is repeated for predefined numbers of epochs, using prescribed learning rates. The updated actor is then used to generate the control actions in the subsequent episode. The key algorithm parameters are summarized in Table 2, which are selected through preliminary sensitivity analysis by considering both training performance and computational efficiency. 
+
+## 5. Validation results 
+
+5.1. Traning process 
+
+A typical RL training process, with weighting factor 
+
+𝛽 = 0.9 and under the (WS, Hs, Tp)=(10 m/s, 3 m, 11 s) condition, is shown in Fig. 11. As the control policy is iteratively updated, the total episode reward increases                                                  
+
+> Table 2
+> RL training and normalization parameters. Category Parameter Value Algorithm Number of episodes 100 Actor learning rate 5e-4 Critic learning rate 5e-4 Actor number of epoches 10 Critic number of epoches 20 Discount factor 𝛾 0.99 GAE coefficient 𝜆 0.95 Clip coefficient 𝜖 0.2 Entropy coefficient 𝑐 ent 0.01 Scaling PTO force F=𝐹 max 2000 kN WEC position 𝜁 3 m WEC velocity ̇𝜁 3 m/s Wave elevation 𝜂 5 m Wave elevation derivative ̇𝜂 5 m/s Pitch angle 𝜃 0.05 rad Pitch angular velocity ̇𝜃 0.01 rad/s Wind speed u20 m/s Blade pitch angle 𝜙 30 deg Episode
+> 10 20 30 40 50 60 70 80 90 100
+> Episode reward
+> -60 -50 -40 -30 -20 -10 010
+> Critic loss
+> 00.05 0.1 0.15 0.2 0.25 Episode reward Critic loss
+> Figure 11: Example of the RL training process. The thin lines gives the true value, while the thick lines represent the moving average.
+
+gradually and then fluctuates around a relatively stable level. The fluctuation is mainly due to the randomized realiza-tion of wind and wave profiles. Meanwhile, the critic loss, which represents the value function approximation error, as defined in (26), remains relatively large during the early training stage, and then decreases as the actor approaches convergence, indicating that the critic provides an increas-ingly accurate representation of the value function. Overall, the learning process exhibits relatively stable convergence, which is partly attributed to the episode-based training pro-cedure, in which the actor and critic are updated using full-batch gradient-based optimization over the complete trajectory. A sensitivity analysis of RL hyperparameters is further shown in Fig. 12, where the impact of the actor and critic learning rates is examined. For simplicity, the same learning rate is used for both networks. In general, an excessively small learning rate results in slow convergence, whereas an excessively large learning rate slightly degrades the final per-formance, due to less stable network updates. Accordingly, a learning rate of 5e-4 is selected in this study.   
+
+> Z. Lin et al.: Preprint submitted to Elsevier Page 10 of 16
+
+Control of hybrid wind-wave energy systems using reinforcement learning Episode             
+
+> 10 20 30 40 50 60 70 80 90 100
+> Episode reward
+> -70 -60 -50 -40 -30 -20 -10 010 ALR, CLR=1e-04 ALR, CLR=5e-04 ALR, CLR=2e-03 ALR, CLR=5e-03 70 80 90 -12 -10 -8 -6 -4 -2 0
+
+Figure 12: Impact of actor learning rate (ALR) and critic learning rate (CLR) on RL training performance. 0200 400 600     
+
+> Electrical power (kW) Episode
+> 20 40 60 80 100 012345
+> Pitch RMS (deg)  β=0.6
+> β=0.8
+> β=0.9
+> β=0.95
+
+Figure 13: Evaluated electrical power and pitch RMS values of the actors obtained through the RL training process, under different weight factors 𝛽 .
+
+The actor obtained after each training episode is evalu-ated in a separate simulation, using wind and wave profiles generated with a random seed different from those used for training. Four values of the weighting factor 𝛽 are consid-ered, with the corresponding evaluation results shown in Fig. 13. As the training progresses, the RL agent gradually increases energy capture, and reduces platform pitch motion at the same time, consistent with the reward evolution shown in Fig. 11. A larger 𝛽 places greater emphasis on energy generation and therefore leads to a policy with higher energy output, but also larger platform pitch motion. These results again demonstrate the tradeoff between energy and stability objectives, and confirm that 𝛽 serves as a tuning parameter reflecting the preferred balance between the two objectives. 
+
+5.2. Evaluation results 
+
+A trained actor, selected from the training process shown in Fig. 11, is compared with a HOM reactive controller 0123      
+
+> Pitch (deg)
+> 010 20 30
+> Wave energy (MJ)  Reactive: R g=4500 kN/(m/s), K g=900 kN/m RL: WF=[0.1, 0.9], episode=90
+> -2 024
+> PTO disp. (m)  RL, PTO1 RL, PTO2/3 Reactive, PTO1 Reactive, PTO2/3
+> -1000 01000 2000
+> PTO force (kN) Time (s)
+> 60 80 100 120 140 160 180 -2000 -1000 0
+> PTO force (kN)
+
+Figure 14: Example of control trajectories of HOM reactive control and RL control. 
+
+selected from the Pareto front in Fig. 10, with parame-ters [𝑅 g, 𝐾 g]=[4500 kN/(m/s), 900 kN/m] and performance 
+
+[𝜃 RMS ,̄ 𝑃 ] ≈ [2.3 deg, 385 kW]; the control trajecories are shown in Fig. 14. The RL controller simultaneously re-duces platform pitch motion and increases electrical energy generation. Note that, while RL control results in smaller buoy displacement and greater PTO force efforts, with in-creased electrical losses, net electrical energy is still im-proved. Moreover, the PTO force constraint is strictly sat-isfied through the bounded output of the actor network. This comparison provides a straightforward demonstration that the RL controller can improve both objectives simul-taneously, beyond the performance limit of HOM reactive control. To comprehensively validate the effectiveness of RL control, in a Pareto sense, all three wind-wave conditions selected from Fig. 2 are considered, together with different values of the weighting factor 𝛽 . For each wind-wave condi-tion, the Pareto fronts obtained using HOM reactive control, HET reactive control, and RL control are jointly compared in Fig. 15. The performance improvement brought by RL is impres-sive. First, the control preference posed by the weight factor 
+
+𝛽 can be observed again, which directs the performance towards different regions. The performance points, obtained with different 𝛽 , jointly form the RL control Pareto front. It is clear that RL achieves significantly improved Pareto values, 
+
+Z. Lin et al.: Preprint submitted to Elsevier Page 11 of 16 Control of hybrid wind-wave energy systems using reinforcement learning Pitch RMS (deg)                                             
+
+> 00.5 11.5 22.5 33.5
+> Total electrical power (kW)
+> -50 050 100 150 200 250
+> Wind speed = 8 m/s, H s= 2 m, T p= 8 s
+> HOM Pareto front HET Pareto front RL, β=0.6 RL, β=0.8 RL, β=0.9 RL, β=0.95 RL, β=0.98 RL Pareto front Pitch RMS (deg)
+> 11.5 22.5 33.5 44.5 55.5
+> Total electrical power (kW)
+> -100 0100 200 300 400 500 600 700 800
+> Wind speed = 10 m/s, H s= 3 m, T p= 11 s
+> HOM Pareto front HET Pareto front RL, β=0.6 RL, β=0.8 RL, β=0.9 RL, β=0.95 RL, β=0.98 RL Pareto front Pitch RMS (deg)
+> 11.5 22.5 3
+> Total electrical power (kW)
+> -200 0200 400 600 800 1000 1200 1400 1600
+> Wind speed = 14 m/s, H s= 5 m, T p= 13 s
+> HOM Pareto front HET Pareto front RL, β=0.6 RL, β=0.8 RL, β=0.9 RL, β=0.95 RL, β=0.98 RL Pareto front
+
+Figure 15: Pareto fronts for RL control, compared with HOM and HET reactive control. For RL control, the performance of each actor during the iteration process is displayed, with colors from light to dark corresponding to the episode order. 
+
+compared with the HOM and HET reactive controllers, un-der all the considered wind-wave conditions; in other words, RL control offers a superior performance tradeoff between energy capture and platform motion suppression for control designers. For example, for the second wind-wave condition in Fig. 15, for the same level of platform pitch motion 
+
+Table 3 
+
+Overall performance comparison between the selected reactive and RL controllers. Performance metric Reactive RL Wind power avg. (MW) 11.623 11.671 Wave power avg. (MW) 0.386 0.598 Surge RMS (m) 19.338 19.567 Sway RMS (m) 0.895 0.793 Heave RMS (m) 0.307 0.296 Roll RMS (deg) 0.227 0.319 Pitch RMS (deg) 2.309 1.796 Yaw RMS (deg) 1.686 1.762 
+
+(2.3 deg), RL control is capable of generating ∼75% more wave energy, compared to HOM and HET reactive control; conversely, for the same lavel of energy generation (385 kW), RL control can reduce the platform pitch RMS value by nearly 50%. Such improved performance mainly arises from the nonlinear, real-time control law represented by the RL policy, and from the direct learning through interactions with the numerical model. Also, it should be acknowledged that RL also benefits from the inclusion of more observation signals than reactive control. In addition to wave energy capture and platform pitch motion, which are two primary control objectives considered in most HWWE studies, other relevant performance metrics are also evaluated, including wind power generation and the remaining platform motion modes. The same HOM reactive and RL controllers examined in Fig. 14 are compared, with the results summarized in Table 3. By influencing platform motion, the RL controller yields a slightly higher wind power output than reactive control, although this improvement is rather limited compared with the increase in wave energy capture. RL control also slightly reduces platform heave while increasing roll motion. This increase may arise be-cause the RL formulation does not explicitly impose an iden-tical (symmetric) policy for WECs 2 and 3; consequently, the learned controller may apply different PTO forces to the two WECs, introducing asymmetric loading and thereby increasing the roll response. Changes are also observed in surge, sway, and yaw; however, because the WECs operate primarily in the vertical direction, these modes are less directly affected by WEC control, and the corresponding differences remain limited. 
+
+## 6. Conclusion 
+
+This study proposes an RL-based control framework for WECs in HWWE systems, with the objective of increasing wave energy production while suppressing the motion of the floating platform. First, a numerical simulation model is established using MOST, incorporating coupled aero-hydro-structural-mooring dynamics, together with realistic PTO characteristics, such as force limits and electrical losses. As benchmark strategies, HOM linear damping and reactive control are first investigated. It is shown that PTO damp-ing mainly affects energy capture while having a limited 
+
+Z. Lin et al.: Preprint submitted to Elsevier Page 12 of 16 Control of hybrid wind-wave energy systems using reinforcement learning 
+
+influence on platform pitch RMS. PTO stiffness, in contrast, has a pronounced effect on both objectives. Specifically, small or negative stiffness can enhance energy capture but is detrimental to platform stability, whereas large, positive stiffness produces the opposite effect, revealing a strong tradeoff between energy generation and motion suppression objectives. Heterogeneous (HET) reactive control is further introduced as an extension of HOM control with greater control flexibility. The Pareto fronts for HOM and HET reac-tive control are identified using Bayesian optimization. The results show that HOM reactive control is constrained by a limited performance tradeoff, while the additional flexibility of HET control yields rather limited improvement. Importantly, an RL control framework, based on the PPO algorithm, is then developed. The control input includes the motion states of the WECs and the FOWT, together with relevant wind and wave variables, while the reward function is formulated as a weighted combination of wave energy cap-ture and platform motion suppression. The RL agent learns the control policy through direct interaction with the numer-ical model. With appropriate tuning of the training parame-ters, stable convergence of the RL algorithm is achieved, and the weighting factor in the reward function effectively guides the agent to learn control policies with different preferences between the two objectives. Comprehensive testing under different wind-wave conditions demonstrates that RL control achieves substantially improved Pareto fronts compared with both HOM and HET reactive control. For example, at the same level of platform oscillation, RL control can generate more than 75% additional wave energy; conversely, for the same wave energy generation, RL control can reduce the platform pitch RMS by nearly 50%. In addition, RL control only has limited impacts on wind power generation and other platform motion modes. Overall, RL control proves to be a powerful approach for extending the attainable performance envelope of HWWE systems. 
+
+## 7. Acknowledgements 
+
+This wors was supported by the Sustainable Energy Authority of Ireland through the RDD Energise Fellowship under Grant No. 25/RDDF/793. 
+
+## A. Multi-objective Bayesian optimization 
+
+The aim of the optimization is to identify the Pareto front, with respect to wave power maximization and plat-form pitch RMS minimization, using a limited number of computationally demanding, yet parallelizable, simulations. The optimization is performed using the qEHVI method [51]. This framework is applied to both the HOM and HET reactive control. Take the HET reactive control as an example, the opti-mization variables are defined as 
+
+𝐱 = [log 10 
+
+(𝑅 g,1
+
+) , 𝐾 g,1, log 10 
+
+(𝑅 g,2
+
+) , 𝐾 g,2
+
+]T , (30) and the two maximization objectives are 
+
+𝑓 1(𝐱 ) = − 𝜃 RMS (𝐱 ), 𝑓 2(𝐱 ) = ̄ 𝑃 (𝐱 ). (31) The design variables and objective values are further nor-malized to the interval [0 , 1] , according to the prescribed bounds. 
+
+Step 1: Initial sampling and simulation evaluation. 
+
+An initial set of 𝑁 0 design points, {𝐱 (1) , … , 𝐱 (𝑁 0)}, is first generated over the parameter domain, using Latin hypercube sampling (LHS). Each point is evaluated using the numerical model, forming the initial dataset 
+
+0 = {𝐱 (𝑖 ), 𝐟 (𝐱 (𝑖 ))}𝑁 0 
+
+> 𝑖 =1
+
+, (32) where 𝐟 = [ 𝑓 1, 𝑓 2]T.
+
+Step 2: Gaussian-process surrogate modelling. In the 
+
+𝑛 -th iteration of Bayesian optimization, suppose that 𝑁 𝑛 
+
+design points have been evaluated, with the available dataset 
+
+𝑛 = {𝐱 (𝑖 ), 𝐟 (𝐱 (𝑖 ))}𝑁 𝑛  
+
+> 𝑖 =1
+
+. (33) The two objective functions are modelled, independently, as random functions using Gaussian processes (GPs): 
+
+𝑓 𝑚 (⋅) ∼  (𝑚 𝑚 (⋅), 𝑘 𝑚 (⋅, ⋅)) , 𝑚 = 1 , 2, (34) where 𝑚 𝑚 (𝐱 ) = 𝔼 [𝑓 𝑚 (𝐱 )] is the mean function, and 𝑘 𝑚 (𝐱 , 𝐱 ′) = Cov [𝑓 𝑚 (𝐱 ), 𝑓 𝑚 (𝐱 ′)] is the covariance function between the objective values at two given design points 𝐱 and 𝐱 ′. A constant mean function and an automatic relevance deter-mination squared-exponential (ARD-SE) covariance kernel function are adopted 
+
+𝑚 𝑚 (𝐱 ) = 𝛽 𝑚 ,𝑘 𝑚 (𝐱 , 𝐱 ′) = 𝜎 2 
+
+> 𝑓 ,𝑚
+
+exp 
+
+⎡⎢⎢⎣
+
+− 12
+
+> 4
+
+∑
+
+> 𝑑 =1
+
+(𝑥 𝑑 − 𝑥 ′
+
+> 𝑑
+
+)2
+
+𝓁 2
+
+> 𝑚,𝑑
+
+⎤⎥⎥⎦
+
+, 𝑚 = 1 , 2,
+
+(35) where 𝛽 𝑚 is the constant mean, 𝜎 2 
+
+> 𝑓 ,𝑚
+
+is the kernel variance, 
+
+𝑥 𝑑 and 𝑥 ′ 
+
+> 𝑑
+
+denote the 𝑑 th elements of 𝐱 and 𝐱 ′, respectively, and 𝓁 𝑚,𝑑 is the characteristic length scale of the 𝑑 th design variable for objective 𝑚 . Hence, the covariance between two objective values decreases, as the corresponding design points become farther apart. For objective 𝑚 , the evaluated 𝑁 𝑛 design points and the corresponding objective values form the following matrices 
+
+𝐗 𝑛 =
+
+⎡⎢⎢⎣(𝐱 (1) )T
+
+⋮
+
+(𝐱 (𝑁 𝑛 ))T
+
+⎤⎥⎥⎦
+
+, 𝐲 𝑚,𝑛 =
+
+⎡⎢⎢⎣
+
+𝑓 𝑚 (𝐱 (1) )
+
+⋮
+
+𝑓 𝑚 (𝐱 (𝑁 𝑛 ))
+
+⎤⎥⎥⎦
+
+. (36) Consider any set of 𝑁 ∗ unevaluated design points 
+
+𝐗 ∗ =
+
+⎡⎢⎢⎢⎢⎣(
+
+𝐱 (1) ∗
+
+)T
+
+⋮
+
+(
+
+𝐱 (𝑁 ∗)∗
+
+)T
+
+⎤⎥⎥⎥⎥⎦
+
+. (37)   
+
+> Z. Lin et al.: Preprint submitted to Elsevier Page 13 of 16
+
+Control of hybrid wind-wave energy systems using reinforcement learning 
+
+Table 4 
+
+Bayesian optimization parameters. Parameter HOM HET Damping range [100,10000] kN/(m/s) Stiffness range [-200,4000] kN/m Initial LHS samples 40 100 Number of iterations 10 25 Candidate pool size 5000 15000 Shortlist size 150 300 qEHVI MC samples, 𝑁 MC 512 512 Batch size, 𝑞 20 40 
+
+Conditioning the GP model on the evaluated dataset 𝑛 
+
+gives the joint posterior distribution 
+
+𝐟 𝑚 (𝐗 ∗) ∣ 𝑛 ∼  (𝝁 𝑚,𝑛 (𝐗 ∗), 𝚺 𝑚,𝑛 (𝐗 ∗)) , 𝑚 = 1 , 2,
+
+(38) where 𝐟 𝑚 (𝐗 ∗) = 
+
+[
+
+𝑓 𝑚 (𝐱 (1) ∗ ), ..., 𝑓 𝑚 (𝐱 (𝑁 ∗)∗ )
+
+]T
+
+, and the posterior mean and covariance can be calculated as 
+
+𝝁 𝑚,𝑛 (𝐗 ∗) = 𝛽 𝑚 𝟏 𝑁 ∗ + 𝐊 𝑚 (𝐗 ∗, 𝐗 𝑛 )𝐂 −1 
+
+> 𝑚,𝑛
+
+(
+
+𝐲 𝑚,𝑛 − 𝛽 𝑚 𝟏 𝑁 𝑛 
+
+)
+
+,
+
+𝚺 𝑚,𝑛 (𝐗 ∗) = 𝐊 𝑚 (𝐗 ∗, 𝐗 ∗) − 𝐊 𝑚 (𝐗 ∗, 𝐗 𝑛 )𝐂 −1 
+
+> 𝑚,𝑛
+
+𝐊 𝑚 (𝐗 𝑛 , 𝐗 ∗)
+
+𝐂 𝑚,𝑛 =𝐊 𝑚 (𝐗 𝑛 , 𝐗 𝑛 ) + 𝜎 2
+
+> 𝜖,𝑚
+
+𝐈 𝑁 𝑛 ,
+
+(39) where 𝐊 𝑚 (𝐗 ∗, 𝐗 𝑛 ) denotes the kernel matrix between the de-sign points contained in 𝐗 ∗ and 𝐗 𝑛 , 𝟏 𝑁 is an 𝑁 -dimensional vector of ones, 𝐈 𝑁 𝑛 is the 𝑁 𝑛 -dimensional identity matrix, and 𝜎 2 
+
+> 𝜖,𝑚
+
+is a small number, introduced to improve numeri-cal conditions. The posterior mean represents the predicted objective values, while the posterior covariance quantifies both the uncertainty of each prediction and the statistical correlation among different unevaluated designs. 
+
+Step 3: Construction of the current Pareto front. For the available dataset 𝑛 , the current approximation of Pareto front is defined as 
+
+𝑛 = {𝐟 (𝐱 (𝑖 )) ∶ ∄ 𝑗 such that 𝐟 (𝐱 (𝑗 )) ≻ 𝐟 (𝐱 (𝑖 ))} . (40) where 𝐚 ≻ 𝐛 denotes that 𝑎 𝑚 ≥ 𝑏 𝑚 for all objectives and 
+
+𝑎 𝑚 > 𝑏 𝑚 for at least one objective. The convergence and coverage of the current Pareto front are quantified by the hypervolume. Given a fixed reference point 𝐫 , the hypervolume is denoted as 
+
+HV (𝑛 ; 𝐫 ) , (41) which, for the present two-objective problem, is the area of the objective space dominated by the Pareto front and bounded by a reference point. In implementation, the ref-erence point is manually selected for each wind-wave condi-tion, to represent a poor performance across all objectives. 
+
+Step 4: Selection of the next simulation batch. For an unevaluated candidate batch 𝐗 𝑞 , the expected hypervolume improvement can be approximately calculated using Monte Carlo (MC) sampling from the joint GP posterior ̂𝛼 𝑞 EHVI 
+
+(𝐗 𝑞 
+
+)
+
+= 1
+
+𝑁 MC 
+
+> 𝑁 MC
+
+∑
+
+> 𝑖 =1
+
+[HV (𝑛 ∪ 𝐟 (𝑖 )(𝐗 𝑞 ); 𝐫 ) − HV (𝑛 ; 𝐫 )] , (42) where 𝐟 (𝑖 )(𝐗 𝑞 ) is the 𝑖 th joint posterior sample, and 𝑁 MC 
+
+is the number of samples. The most promising batch 𝐗 ∗ 
+
+> 𝑞
+
+is selected such that 
+
+𝐗 ∗ 
+
+> 𝑞
+
+≈ arg max 
+
+> 𝐗 𝑞
+
+̂ 𝛼 𝑞 EHVI 
+
+(𝐗 𝑞 
+
+) (43) which, in implementation, is approximately maximized us-ing a greedy approach based on [51, 56]. Specifically, a large candidate pool for 𝐗 𝑞 is first generated using LHS, and candidates close to previously evaluated design points are re-moved. A single-point evaluation of EHVI is then performed for each candidate alone, and the candidates with the highest EHVI values form a shortlist. Within the shortlist, the batch is constructed sequentially by selecting one candidate at each step, according to the greedy qEHVI approach in [51, 56]. 
+
+Step 5: Simulation evaluation and update. The selected batch of design parameters 𝐗 ∗ 
+
+> 𝑞
+
+are evaluated in parallel using the numerical simulation model. The new simulation results are then appended to the dataset as 
+
+𝑛 +1 = 𝑛 ∪
+
+{
+
+𝐗 ∗ 
+
+> 𝑞
+
+, 𝐟 (𝐗 ∗ 
+
+> 𝑞
+
+)
+
+}
+
+, (44) and the above procedures are repeated iteratively for a pre-scribed number of times. The overall algorithmic parameters are listed in Table 4. 
+
+## References           
+
+> [1] L. Wan, T. Moan, Z. Gao, and W. Shi, “A review on the technical de-velopment of combined wind and wave energy conversion systems,”
+> Energy , vol. 294, p. 130885, 2024. [2] T. Hallak and C. Guedes Soares, “Overview of the recent develop-ments in hybrid floating wind-wave platforms,” Journal of Marine Science and Application , vol. 24, no. 1, pp. 98–119, 2025. [3] Y. Yi, K. Sun, Y. Liu, X. Shao, J. Zhang, R. Zhu, and H.-D. Yao, “Study on the motion suppression effect of point absorber arrays in-tegrated with floating wind turbines using CFD simulation,” Energy ,p. 140664, 2026. [4] M. J. Muliawan, M. Karimirad, and T. Moan, “Dynamic response and power performance of a combined spar-type floating wind turbine and coaxial floating wave energy converter,” Renewable energy , vol. 50, pp. 47–57, 2013. [5] M. Han, H. Shi, F. Cao, K. Zhu, B. Liu, M. Yu, and Z. Wei, “Dynamic characteristics and parameter analysis of a floating hybrid wind-wave energy system based on a novel coupled numerical framework,”
+> Energy Conversion and Management , vol. 312, p. 118558, 2024. [6] Z. Gao, T. Moan, L. Wan, and C. Michailides, “Comparative numer-ical and experimental study of two combined wind and wave energy concepts,” Journal of Ocean Engineering and Science , vol. 1, no. 1, pp. 36–51, 2016.
+
+Z. Lin et al.: Preprint submitted to Elsevier Page 14 of 16 Control of hybrid wind-wave energy systems using reinforcement learning 
+
+[7] D. Zhang, Z. Chen, X. Liu, J. Sun, H. Yu, W. Zeng, Y. Ying, Y. Sun, L. Cui, S. Yang et al. , “A coupled numerical framework for hybrid floating offshore wind turbine and oscillating water column wave energy converters,” Energy Conversion and Management , vol. 267, p. 115933, 2022. [8] M. L. Celesti, G. Mattiazzo, and N. Faedo, “Towards modelling and control strategies for hybrid wind-wave energy converters: Challenges and opportunities,” Renewable and Sustainable Energy Reviews , vol. 224, p. 116080, 2025. [9] T. Wang, D. Li, D. Greaves, M. Hann, K. Zhu, Y. Li, H. Gong, J. Tao, F. Cao, and H. Shi, “Numerical modelling and PTO damping optimization of an IEA-15-MW-VolturnUS-WEC hybrid system in real sea states,” Energy , vol. 330, p. 136693, 2025. [10] B. Zhou, J. Hu, Y. Wang, P. Jin, F. Jing, and D. Ning, “Coupled dynamic and power generation characteristics of a hybrid system consisting of a semi-submersible wind turbine and an array of heaving wave energy converters,” Renewable Energy , vol. 214, pp. 23–38, 2023. [11] K. Zhu, H. Shi, S. Michele, M. Han, and F. Cao, “Analytical study on dynamic performance of a hybrid system in real sea states,” Energy ,vol. 290, p. 130259, 2024. [12] C. Michailides, Z. Gao, and T. Moan, “Experimental study of the functionality of a semisubmersible wind turbine combined with flap-type wave energy converters,” Renewable Energy , vol. 93, pp. 675– 690, 2016. [13] J. Gaspar, M. Kamarlouei, F. Thiebaut, and C. G. Soares, “Compen-sation of a hybrid platform dynamics using wave energy converters in different sea state conditions,” Renewable Energy , vol. 177, pp. 871– 883, 2021. [14] N. Y. Sergiienko, L. Xue, L. S. da Silva, B. Ding, and B. S. Cazzolato, “Statistical analysis of floating hybrid wind–wave energy systems,” 
+
+Applied Energy , vol. 401, p. 126669, 2025. [15] Y. Wang, W. Shi, C. Michailides, L. Wan, H. Kim, and X. Li, “Wec shape effect on the motion response and power performance of a combined wind-wave energy converter,” Ocean Engineering , vol. 250, p. 111038, 2022. [16] M. Neshat, N. Y. Sergiienko, M. M. Nezhad, L. S. da Silva, E. Amini, R. Marsooli, D. A. Garcia, and S. Mirjalili, “Enhancing the perfor-mance of hybrid wave-wind energy systems through a fast and adap-tive chaotic multi-objective swarm optimisation method,” Applied energy , vol. 362, p. 122955, 2024. [17] J. Hu, B. Zhou, C. Vogel, P. Liu, R. Willden, K. Sun, J. Zang, J. Geng, P. Jin, L. Cui et al. , “Optimal design and performance analysis of a hybrid system combing a floating wind platform and wave energy converters,” Applied energy , vol. 269, p. 114998, 2020. [18] F. Cao, M. Yu, M. Han, B. Liu, Z. Wei, J. Jiang, H. Tian, H. Shi, and Y. Li, “Wecs microarray effect on the coupled dynamic response and power performance of a floating combined wind and wave energy system,” Renewable Energy , vol. 219, p. 119476, 2023. [19] Y. Si, Z. Chen, W. Zeng, J. Sun, D. Zhang, X. Ma, and P. Qian, “The influence of power-take-off control on the dynamic response and power output of combined semi-submersible floating wind turbine and point-absorber wave energy converters,” Ocean Engineering , vol. 227, p. 108835, 2021. [20] T. Wang, D. Li, K. Zhu, F. Cao, D. Greaves, M. Hann, and H. Shi, “Enhancing energy capture of a wave-wind hybrid system through pto configuration optimization and wec control,” Ocean Engineering , vol. 354, p. 124747, 2026. [21] S. Bayat and L. Zuo, “Multidisciplinary control codesign of a spar– torus hybrid wind-wave energy system,” Journal of Mechanical De-sign , vol. 148, no. 6, p. 061703, 2026. [22] Y. Li, M. C. Ong, K. Wang, L. Li, and Z. Cheng, “Power per-formance and dynamic responses of an integrated system with a semi-submersible wind turbine and four torus-shaped wave energy converters,” Ocean Engineering , vol. 259, p. 111810, 2022. [23] Z. Chen, J. Yu, J. Sun, M. Tan, S. Yang, Y. Ying, P. Qian, D. Zhang, and Y. Si, “Load reduction of semi-submersible floating wind turbines by integrating heaving-type wave energy converters with bang-bang control,” Frontiers in Energy Research , vol. 10, p. 929307, 2022. [24] P. Aboutalebi, F. Mzoughi, I. Garrido, and A. J. Garrido, “A control technique for hybrid floating offshore wind turbines using oscillating water columns for generated power fluctuation reduction,” Journal of Computational Design and Engineering , vol. 10, no. 1, pp. 250–265, 2023. [25] H. Zhu and S. Yoshida, “Experiment-based modeling and control of a floating wind-wave hybrid system for damping enhancement,” IEEE Journal of Oceanic Engineering , vol. 51, no. 1, pp. 446–459, 2025. [26] I. Ahmad, F. M’zoughi, P. Aboutalebi, I. Garrido, and A. J. Garrido, “Fuzzy logic control of an artificial neural network-based floating offshore wind turbine model integrated with four oscillating water columns,” Ocean Engineering , vol. 269, p. 113578, 2023. [27] F. M’zoughi, I. Garrido, A. J. Garrido, and M. De La Sen, “Fuzzy airflow-based active structural control of integrated oscillating water columns for the enhancement of floating offshore wind turbine stabi-lization,” International Journal of Energy Research , vol. 2023, no. 1, p. 4938451, 2023. [28] H. Zhu, “Optimal semi-active control for a hybrid wind-wave energy system on motion reduction,” IEEE Transactions on Sustainable Energy , vol. 14, no. 1, pp. 75–82, 2022. [29] H. Zhao, P. Stansby, Z. Liao, and G. Li, “Multi-objective optimal control of a hybrid offshore wind turbine platform integrated with multi-float wave energy converters,” Energy , vol. 312, p. 133547, 2024. [30] F. Meng, N. Sergiienko, B. Ding, B. Zhou, L. S. P. Da Silva, B. Caz-zolato, and Y. Li, “Co-located offshore wind–wave energy systems: Can motion suppression and reliable power generation be achieved simultaneously?” Applied Energy , vol. 331, p. 120373, 2023. [31] P. Wang, H. Bai, D. Apsley, P. Stansby, and G. Li, “Multi-objective non-causal optimal control of an active pumping system for a floating wind platform,” IEEE Transactions on Sustainable Energy , 2026. [32] K. Chen, X. Huang, Z. Lin, Y. Han, and X. Xiao, “Design and tank testing of reinforcement learning control for wave energy converters,” 
+
+IEEE Transactions on Sustainable Energy , vol. 15, no. 4, pp. 2534– 2546, 2024. [33] K. Chen, Z. Lin, Y. Han, X. Zhu, X. Huang, and X. Xiao, “Multi-agent reinforcement learning control for point-absorber wave energy converter arrays,” Renewable Energy , p. 125174, 2026. [34] M. Sirigu, E. Faraggiana, A. Ghigo, and G. Bracco, “Development of most, a fast simulation model for optimisation of floating offshore wind turbines in simscape multibody,” in Journal of Physics: Confer-ence Series , vol. 2257, no. 1. IOP Publishing, 2022, p. 012003. [35] M. Shabara, A. Keester, S. Husain, D. Ogden, J. Grasberger, D. For-bush, K. Ruehl, and J. Leon, “Review on recent wec-sim applications developments in v6.0,” in Proceedings of the 2024 UMERC+METS Marine Energy Research Conference , Duluth, MN, USA, 2024. [36] J. Schulman, F. Wolski, P. Dhariwal, A. Radford, and O. Klimov, “Proximal policy optimization algorithms,” arXiv preprint arXiv:1707.06347 , 2017. [37] E. Gaertner, J. Rinker, L. Sethuraman, F. Zahle, B. Anderson, G. Barter, N. Abbas, F. Meng, P. Bortolotti, W. Skrzypinski et al. ,“Definition of the iea 15-megawatt offshore reference wind turbine,” 2020. [38] C. Allen, A. Viscelli, H. Dagher, A. Goupee, E. Gaertner, N. Abbas, M. Hall, and G. Barter, “Definition of the umaine volturnus-s refer-ence platform developed for the iea wind 15-megawatt offshore refer-ence wind turbine,” National Renewable Energy Laboratory (NREL), Golden, CO (United States , Tech. Rep., 2020. [39] M. Chen, L. Huang, H. Yang, J. Yang, Z. Zhu, Y. Li, and F. Shen, “Thrust generation mechanism of a hybrid excitation field modulated transverse flux linear generator by magnetic field modulation theory,” 
+
+IEEE Transactions on Industrial Electronics , 2026. [40] X. Huang, Z. Lin, K. Chen, J. Zhou, and X. Xiao, “Improving wave-to-wire efficiency of direct-drive wave energy converters with loss-aware model predictive control and variable dc voltage control,” IEEE Transactions on Industrial Electronics , vol. 72, no. 2, pp. 1561–1570, 2024. 
+
+Z. Lin et al.: Preprint submitted to Elsevier Page 15 of 16 Control of hybrid wind-wave energy systems using reinforcement learning 
+
+[41] Marine Institute, “Irish marine data buoy observation network (imdbon) real time data 2002–present,” 2018, dataset identifier: ie.marine.data:dataset.2783; revised 1 June 2023; accessed 22 July 2026. [Online]. Available: https://data.marine.ie/geonetwork/srv/eng/ catalog.search#/metadata/ie.marine.data:dataset.2783 [42] F. Niosi, O. DellEdera, L. Dutto, and G. Bracco, “A comparison between different numerical models and experimental tests for the study of floating offshore wind turbines,” International Journal of Offshore and Polar Engineering , vol. 34, no. 03, pp. 263–272, 2024. [43] S. Yu, E. Ransley, L. Qian, Y. Zhou, S. Brown, D. Greaves, M. Hann, A. Holcombe, E. Edwards, T. Tosdevin et al. , “Modelling the hydro-dynamic response of a floating offshore wind turbine–a comparative study,” Applied Ocean Research , vol. 155, p. 104441, 2025. [44] B. Jonkman et al. , “Turbsim users guide v2. 00.00,” Natl. Renew. Energy Lab , 2014. [45] M. H. Hansen, A. Hansen, T. J. Larsen, S. Øye, P. Sørensen, and P. Fuglsang, “Control design for a pitch-regulated, variable speed wind turbine,” 2005. [46] R. Kurnia and G. Ducrozet, “Nemoh: Open-source boundary element solver for computation of first-and second-order hydrodynamic loads in the frequency domain,” Computer Physics Communications , vol. 292, p. 108885, 2023. [47] J. R. Morison, J. W. Johnson, and S. A. Schaaf, “The force exerted by surface waves on piles,” Journal of Petroleum Technology , vol. 2, no. 05, pp. 149–154, 1950. [48] F. Fusco and J. V. Ringwood, “Hierarchical robust control of os-cillating wave energy converters with uncertain dynamics,” IEEE Transactions on Sustainable Energy , vol. 5, no. 3, pp. 958–966, 2014. [49] Z. Lin, X. Huang, and X. Xiao, “Fast model predictive control system for wave energy converters with wave tank tests,” IEEE Transactions on Industrial Electronics , vol. 70, no. 7, pp. 6887–6897, 2022. [50] Z. Lin, J. Zhou, X. Huang, K. Chen, X. Xiao, and J. V. Ringwood, “On loss-aware optimal control of wave energy converters with electrical power take-offs,” IEEE Transactions on Sustainable Energy , vol. 15, no. 4, pp. 2209–2218, 2024. [51] S. Daulton, M. Balandat, and E. Bakshy, “Differentiable expected hypervolume improvement for parallel multi-objective bayesian op-timization,” Advances in neural information processing systems ,vol. 33, pp. 9851–9864, 2020. [52] Z. Lin and J. V. Ringwood, “Efficient pseudo-decentralized control of wave energy arrays,” IEEE Transactions on Sustainable Energy ,vol. 16, no. 4, pp. 2648–2658, 2025. [53] M. Belmont, J. Horwood, R. Thurley, and J. Baker, “Filters for linear sea-wave prediction,” Ocean Engineering , vol. 33, no. 17-18, pp. 2332–2351, 2006. [54] Z. Lin, X. Huang, X. Xiao, and J. V. Ringwood, “A sensitivity analysis of wave energy converter model predictive control systems with wave excitation force estimation and prediction,” IEEE Transactions on Control Systems Technology , vol. 33, no. 1, pp. 136–147, 2024. [55] D. P. Kingma and J. Ba, “Adam: A method for stochastic optimiza-tion,” arXiv preprint arXiv:1412.6980 , 2014. [56] J. Wilson, F. Hutter, and M. Deisenroth, “Maximizing acquisition functions for bayesian optimization,” Advances in neural information processing systems , vol. 31, 2018. 
+
+Z. Lin et al.: Preprint submitted to Elsevier Page 16 of 16

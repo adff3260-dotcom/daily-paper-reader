@@ -1,0 +1,24 @@
+{
+  "label": "2026-08-16",
+  "date": "2026-08-16",
+  "generated_at": "2026-08-16T19:43:59",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202608/16/2608.10754v1-control-of-hybrid-wind-wave-energy-systems-using-reinforcement-learning",
+      "section": "quick",
+      "title_en": "Control of hybrid wind-wave energy systems using reinforcement learning",
+      "authors": "Zechuan Lin, Kemeng Chen, Maosen Fan, Xiaofan Li, Xi Xiao, John V. Ringwood",
+      "date": "2026-08-11",
+      "pdf": "https://arxiv.org/pdf/2608.10754v1",
+      "score": "6.0",
+      "evidence": "混合能源系统的强化学习控制",
+      "tldr": "混合风浪能系统集成波浪能转换器与漂浮式海上风机，有望降低海上可再生能源成本，但系统动力学复杂，控制设计困难。本文提出强化学习控制框架，通过与高保真数值仿真交互直接学习实时控制策略，模型包含IEA 15 MW风机、VolturnUS半潜平台和三个环型WEC。在波浪能发电与平台运动抑制两个竞争目标下，相比传统策略取得显著Pareto改进：同等平台运动时波浪能捕获提高75%以上，或同等能量捕获时运动降低近50%。该方法显著扩展了混合风浪能系统可达性能边界。",
+      "tags": "query:uav",
+      "abstract_en": "Integrating wave energy converters (WECs) with floating offshore wind turbines (FOWTs), to form hybrid wind-wave energy (HWWE) systems, is a promising approach to achieve further cost reduction for offshore renewable energy. In such systems, the control of the integrated WECs plays an important role, with the potential to generate additional wave energy while simultaneously suppressing floating platform motion. However, HWWE systems are characterized by complex dynamics, making accurate modelling only viable through numerical simulation, and posing significant challenges for control design. This paper proposes a reinforcement learning (RL) control framework for HWWE systems, in which the real-time control policy is learned directly through interactions with high-fidelity simulation. A numerical model is established for a HWWE system consisting of an IEA 15 MW wind turbine, a VolturnUS semi-submersible platform, and three torus-type WECs, which is then employed as the RL training environment. Control performance is evaluated in terms of both wave energy generation and platform motion reduction, two competing objectives, from a Pareto perspective. It is shown that the proposed RL controller achieves substantial Pareto improvements over conventional control strategies, e.g., over 75\\% higher wave energy capture at the same platform motion level, or nearly 50\\% lower motion at the same energy capture level, thereby significantly extending the attainable performance boundary of HWWE systems.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
