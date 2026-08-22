@@ -1,0 +1,24 @@
+{
+  "label": "2026-08-22",
+  "date": "2026-08-22",
+  "generated_at": "2026-08-22T19:34:12",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202608/22/2608.15087v1-agentic-ai-enabled-solar-powered-high-altitude-platforms-for-sustainable-sagins",
+      "section": "deep",
+      "title_en": "Agentic AI-Enabled Solar-Powered High-Altitude Platforms for Sustainable SAGINs",
+      "authors": "Haoxiang Luo, Bang Huang, Mohamed-Slim Alouini",
+      "date": "2026-08-15",
+      "pdf": "https://arxiv.org/pdf/2608.15087v1",
+      "score": "8.0",
+      "evidence": "智能体AI框架感知能量状态并管理电池保持",
+      "tldr": "空天地一体化网络中通信、计算与能源紧密耦合，太阳能高空平台需全局协同优化。本文提出HAP原生Agentic AI框架，持续感知多维状态，闭环协调动作，并采用多时间尺度分层控制。灾难恢复案例表明，该框架在回程拥塞、流量激增和太阳能下降时，能效、任务完成率和时延均优于基线。该工作为可持续弹性空天地网络智能奠定基础，并指出可信控制、多平台协作和数字孪生适应等关键方向。",
+      "tags": "query:uav",
+      "abstract_en": "Space-Air-Ground Integrated Networks (SAGINs) can extend connectivity, but their communication, computing, and platform operations create tightly coupled energy demands. Solar-powered High-Altitude Platforms (HAPs) offer a promising middle layer by combining persistent regional coverage, renewable-energy harvesting, and onboard computing. However, realizing this potential requires more than optimizing individual links or processors, as radio transmission, task execution, backhaul use, and battery preservation share a common energy budget. Therefore, we introduce a HAP-native Agentic AI framework. It continuously perceives communication, computing, energy, mobility, and mission states; invokes quantitative tools for prediction and verification; and coordinates executable actions through a closed control loop. Then, a multi-timescale design separates fast radio control from task orchestration and long-term energy planning. Furthermore, a disaster-recovery case study illustrates how the framework responds to backhaul congestion, traffic surges, and declining solar generation, improving energy efficiency, task completion, and latency over other baselines. We finally identify trustworthy control, collaborative multi-HAP orchestration, and digital-twin-assisted lifelong adaptation as key steps toward deployable, sustainable, and resilient SAGIN intelligence.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
