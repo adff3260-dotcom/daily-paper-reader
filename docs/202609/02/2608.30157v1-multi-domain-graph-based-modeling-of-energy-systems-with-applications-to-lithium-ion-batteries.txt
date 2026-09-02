@@ -1,0 +1,392 @@
+Title: Multi-Domain Graph-Based Modeling of Energy Systems with Applications to Lithium-Ion Batteries
+
+URL Source: https://arxiv.org/pdf/2608.30157v1
+
+Published Time: Tue, 01 Sep 2026 02:21:50 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# Multi-Domain Graph-Based Modeling of Energy Systems with Applications to Lithium-Ion Batteries 
+
+Mahsa Hemmat ∗ Andrew G. Alleyne ∗∗ Department of Mechanical Engineering, University of Minnesota, Minneapolis, MN 55455 USA (e-mail: hemma031@umn.edu, alleyne@umn.edu). 
+
+Abstract: Graph-based models have been shown to provide a structured representation for complex multi-domain energy systems but face limitations when edge power flows depend on non-adjacent states or when a single edge carries multiple power-flow types driven by different inputs. This paper proposes two general extensions to address these limitations: a recursive state-to-input feedback scheme that embeds non-adjacent state dependencies into edge inputs without altering the graph structure, and a parallel edge decomposition method that represents composite interactions using sets of single-input edges while preserving energy conservation at the vertices. The extended framework is demonstrated on a lithium-ion battery module consisting of 36 parallel cells, and the resulting model predicts module temperatures with errors below 1 °C. Validation on this electro-thermal battery system demonstrates the effectiveness of the extended framework for multi-domain systems that cannot be represented by previously established graph-based formulations, and indicates its potential for broader application to complex energy systems in control and design studies. 
+
+Keywords: Graph-based modeling; multi-domain energy systems; Li-ion battery modeling 1. INTRODUCTION Modern energy systems, such as electrified vehicles, are large interconnected systems composed of distinct com-ponents — battery packs, motors, power electronics, and thermal management subsystems — that couple electrical, thermal, and mechanical domains and therefore involve strong cross-domain interactions (Williams et al., 2018; Koeln et al., 2020). Capturing the behavior of such systems with sufficient fidelity for estimation, monitoring, and con-trol requires models that span multiple physical domains simultaneously and scale to the large number of states that result from their interconnected structure (Aksland et al., 2019). While conventional state-space models can represent such dynamics, the complexity, multi-domain nature, and modular physical construction of these sys-tems motivate a modeling framework that goes beyond a single monolithic equation set. Graph-based models provide such a modeling framework by representing system components as vertices and their physical interactions as edges, with each edge encoding a power exchange between its connected vertices formulated to satisfy conservation of energy (Koeln et al., 2016). While the graph-based model ultimately takes the form of an ordinary differential equation (ODE) system, it is more than a representational choice, as the graph structure itself offers additional capabilities that a state-space formulation does not naturally provide. The framework is inherently modular, where each subsystem of a large energy system,  
+
+> ©2026 the authors. This work has been accepted to IFAC for publication under a Creative Commons Licence CC-BY-NC-ND.
+
+for example an electric motor or a converter in an elec-trified vehicle, can be modeled and validated separately and then used as a reusable graph-based component. A full system model is then built by interconnecting these components through edges that capture their couplings across electrical, thermal, and mechanical domains; this process is referred to as scalable composition (Park and Pangborn, 2023). This scalable composition and its sys-tematic nature reduce implementation errors that com-monly occur in manual large-scale formulations, such as inconsistent sign conventions, missing coupling terms, or index mismatches. The component-based structure of the framework further supports a plug-and-play mode of operation in which alternative system architectures and component configurations can be evaluated by modifying only the inter-component couplings, leaving the internal dynamics of each component unchanged, which makes it well-suited for systematic design and control evaluation. In addition to these benefits, the graph structure also enables the use of graph theory techniques for formal analysis of system interconnections, supporting applications such as model decomposition and hierarchical control design (Pisani et al., 2026). These features have enabled graph-based modeling to be applied across a broad range of multi-domain en-ergy systems, including aircraft electro-thermal systems (Williams et al., 2018; Koeln et al., 2020; Aksland et al., 2022), liquid-cooling and thermal-fluid networks (Yang et al., 2018; Lionello et al., 2020; Russell et al., 2022), high-pressure hydraulic networks (Niederberger et al., 2018), and electro-thermal components in electric vehi-arXiv:2608.30157v1 [eess.SY] 31 Aug 2026 cles (Docimo and Alleyne, 2018). To support these appli-cations, an open-source MATLAB/Simulink toolbox has been developed to facilitate the generation and anal-ysis of graph-based models across multiple energy do-mains, and is publicly available at the GitHub repository 
+
+psu-PAC-Lab/graph-model-toolbox (Pisani et al., 2026). Despite this broad applicability, current graph-based for-mulations have limitations that restrict their use in a wider class of multi-domain energy systems. In existing graph-based formulations, an edge power flow is written as a function of variables at its head and tail vertices and explicit edge inputs (Koeln et al., 2016; Aksland and Alleyne, 2021). The first limitation occurs when an edge depends on a state in a vertex that is neither its head nor its tail, referred to here as a non-adjacent vertex. In that case, the framework lacks a standard mechanism to express this cross-vertex dependence within the existing graph-based formulation. Also, in current graph-based literature, an edge typically has a single input (Koeln et al., 2016; Aksland and Alleyne, 2021). In practice, however, an edge may deliver the sum of distinct power-flow types, each governed by a different input. Therefore, a method is needed that enables such edges while preserving the original dynamics and exact energy balance at the vertices and maintaining consistency with the graph formulation. These two limitations are common in coupled multi-domain energy systems (for example, electro-thermal systems), yet prior graph-based studies have not provided a general, systematic solution. This paper addresses these limitations by introducing two general modeling strategies for graph-based energy-system models. First, a recursive state-to-input feedback scheme is formulated that allows edge power flows to depend on states in non-adjacent vertices while remaining consistent with the prior graph-based formulation. Second, a parallel edge decomposition is proposed for composite edges, in which distinct power-flow types with different inputs are represented by separate edges whose contributions sum at the vertex, preserving the original dynamics and exact energy balance. The remainder of this paper is organized as follows. Sec-tion 2 introduces the fundamental graph-based modeling framework and then extends it with two methods, the recursive state-to-input feedback method and the parallel edge decomposition method, that address the limitations discussed earlier. Section 3 applies the proposed methods to a Li-ion battery module, presents its graph-based for-mulation, and compares model predictions with experi-mental temperature measurements. Section 4 concludes the paper by summarizing the main contributions and outlining directions for future research. 2. GRAPH-BASED MODELING FRAMEWORK 
+
+2.1 Graph-based Modeling Fundamentals 
+
+Graphs provide a general mathematical framework for representing various types of interconnected systems. In this work, an oriented graph G = (V, E ) with vertex set V = {vi}Nv 
+
+> i=1
+
+and edge set E = {ej }Ne 
+
+> j=1
+
+is used to represent an energy system, where vertices correspond 𝑣 !     
+
+> 𝑣 "
+> 𝑣 #
+> 𝑒 !
+> 𝑃 !"#$
+> 𝑒 %
+> 𝑒 &𝑒 '
+> 𝑒 (
+> 𝐼𝑛𝑡𝑒𝑟𝑛𝑎𝑙 𝑃𝑜𝑤𝑒𝑟 𝐹𝑙𝑜𝑤: 𝑃 "= 𝑓 "(𝑥 !, 𝑥 ", 𝑢 ")𝐸𝑥𝑡𝑒𝑟𝑛𝑎𝑙 𝑆𝑜𝑢𝑟𝑐𝑒 𝑃𝑜𝑤𝑒𝑟 𝐹𝑙𝑜𝑤 𝑆𝑡𝑎𝑡𝑒 𝑉𝑒𝑟𝑡𝑒𝑥 ∈ 𝑉 $:𝐶𝑥 #̇= 𝑃 !− 𝑃 "− 𝑃 #
+> 𝐸𝑥𝑡𝑒𝑟𝑛𝑎𝑙 𝑆𝑖𝑛𝑘 𝑉𝑒𝑟𝑡𝑒𝑥 ∈ 𝑉 %
+> 𝑣 )&
+> 𝐸𝑥𝑡𝑒𝑟𝑛𝑎𝑙 𝑆𝑜𝑢𝑟𝑐𝑒 𝑉𝑒𝑟𝑡𝑒𝑥 ∈ 𝑉 %
+> 𝑣 )!
+> 𝑃 &"#$
+> 𝐸𝑥𝑡𝑒𝑟𝑛𝑎𝑙 𝑆𝑖𝑛𝑘 𝑃𝑜𝑤𝑒𝑟 𝐹𝑙𝑜𝑤
+
+Fig. 1. Generic example of a graph-based model to energy storage elements and edges represent power exchange interactions, called power flows, between them. Each edge is oriented from its tail vertex to its head vertex, defined as positive power flow by convention. Figure 1 shows a generic example of such a graph model. The vertex set V is partitioned into two subsets: dynamic vertices Vd and external sink/source vertices Vs, so that 
+
+V = Vd ∪ Vs with Nd = |Vd| and Ns = |Vs|. Each dynamic vertex vi ∈ Vd stores energy and, in the single-state vertex formulation, carries a scalar state xi with an associated capacitance Ci > 0; these states are modeled and solved for within the framework, and are collected in the full state vector x ∈ RNd . The physical meaning of 
+
+Ci and xi depends on the underlying subsystem’s domain: electrical vertices use capacitors or inductors with voltage or current states, mechanical vertices use masses or inertias with velocity or angular speed states, and thermal vertices use thermal capacitances with temperature states; further details on this mapping can be found in Aksland and Alleyne (2021). This paper adopts the single-state vertex formulation, in which each dynamic vertex is associated with a single scalar state xi; an extended graph-based formulation that allows each vertex to store a vector of states, i.e. multi-state vertices, is described in Russell et al. (2022), but it is not considered further here. External sink/source vertices in Vs, each associated with a scalar variable xsi , do not store energy. They serve as boundary interfaces through which the system exchanges power with its surroundings, and their quantities are specified externally, typically by neighboring subsystems or the ambient environment, and treated as disturbances to the system rather than solved for within the model. The edges in E are grouped into two categories: internal edges Eint and external edges Eext , so that E = Eint ∪Eext 
+
+with Nint = |Eint | and Next = |Eext |. Each internal edge 
+
+ej ∈ Eint carries a power flow Pj within the system, determined by the states of its adjacent vertices and a corresponding edge input. For an internal edge ej , the power flow is written in general as 
+
+Pj = fj
+
+ xtail  
+
+> j
+
+, x head  
+
+> j
+
+, u j
+
+ , (1) where fj (·) is an arbitrary nonlinear function of the tail and head states and a scalar input uj . The internal power flows are collected in the vector P ∈ RNint .External edges represent external power flows and are collected in a vector P ext ∈ RNext . These flows represent exchanges with the surroundings and are specified directly by the environment or neighboring subsystems. They are not functions of the system states and can be computed outside the model and supplied to the graph-based frame-work as disturbances. The different edge types and their connections to internal and external source/sink vertices are illustrated schematically in Fig. 1. With the vertex sets and edge categories defined, applying conservation of energy at a dynamic vertex vi ∈ Vd then yields the local state dynamics: 
+
+Ci ˙xi = X 
+
+> ej∈Ehead
+> i, int
+
+Pj − X 
+
+> ej∈Etail
+> i, int
+
+Pj + X 
+
+> ek∈Ehead
+> i, ext
+
+P ext  
+
+> k
+
+− X 
+
+> ek∈Etail
+> i, ext
+
+P ext  
+
+> k
+
+,
+
+(2) where Ehead  
+
+> i, int
+
+and Etail  
+
+> i, int
+
+denote the sets of internal edges entering and leaving the vertex, and Ehead  
+
+> i, ext
+
+and Etail 
+
+> i, ext
+
+represent the corresponding sets for external edges. The connectivity between vertices and internal edges is encoded in an incidence matrix M = [ mij ], formed over the vertices in Vd ∪ Vs and the internal edges in Eint ,with dimension ( Nd + Ns) × Nint . Each entry mij indicates how internal edge ej is oriented with respect to vertex vi:
+
+mij = 1 if vi is the tail of ej , mij = −1 if vi is the head of 
+
+ej , and mij = 0 otherwise. With the dynamic vertices in Vd
+
+ordered first and the sink/source vertices in Vs following, the incidence matrix is written in block form 
+
+M =
+
+MM
+
+
+
+, (3) where M ∈ RNd×Nint contains the rows associated with dynamic vertices and maps internal edge flows to the state dynamics, and M ∈ RNs×Nint contains the rows associated with the sink/source vertices. External power flows are mapped to the dynamic vertices through an interconnection matrix D = [ dij ] ∈ RNd×Next .The entry dij describes how external flow P ext  
+
+> j
+
+is connected to a dynamic vertex vi ∈ Vd: dij = 1 if vi is the head of the external flow, dij = −1 if vi is the tail, and dij = 0 otherwise. Using these interconnection matrices, the dynamics of the graph-based model can be written in compact form as 
+
+C ˙x = − M P (x, x s, u ) + DP ext , (4) where C = diag( Ci) is the diagonal matrix of capacitances, 
+
+x ∈ RNd is the state vector, xs ∈ RNs collects the variables associated with the sink/source vertices, u is the vector of edge inputs, P (x, x s, u ) ∈ RNint is the vector of internal power flows defined by the edge law in (1), and 
+
+P ext ∈ RNext is the vector of external power flows. 
+
+2.2 Recursive State-to-Input Feedback Method 
+
+In the existing graph formulation, each internal power flow is written as a function of the adjacent vertex states and an edge input, as in (1), but in multi-domain models some power flows also depend on non-adjacent states. A typical example is an electrical or mechanical edge whose parameters vary with a thermal state elsewhere in the graph. In these cases, the physical law is written in the form Pj = fj
+
+ xtail  
+
+> j
+
+, x head  
+
+> j
+
+, g (xℓ), where xℓ is a non-adjacent state and g(·) represents how that state influences the edge. The mapping g(·) may return the state itself (e.g., g(xℓ) = xℓ) or a property derived from it, such as a temperature-dependent resistance. Such non-adjacent 𝑣 !   
+
+> 𝑣 "
+> 𝑣 !
+> 𝑒 !
+> 𝑒 "
+> 𝑒 #
+> 𝒖 𝟏 = 𝒈(𝒙 𝟐 )𝑃 != 𝑓 !𝑥 !, 𝑥 #, 𝑢 !
+> 𝑥 !
+> Edge Inputs Calculated States
+> 𝑢 !
+> 𝑥 #
+> 𝑥 "𝑢 "
+> 𝑢 #
+> 𝑔(. ) 𝑔(𝑥 ")
+
+Fig. 2. Recursive state-to-input feedback method within a graph-based model. dependencies do not fit the existing edge structure, which is restricted to adjacent states and edge inputs, and therefore cannot be represented directly within the usual formulation. The recursive state-to-input feedback method restores the previously established edge structure while retaining these non-adjacent dependencies. A selected non-adjacent state is exposed as an output of the graph model, y = xℓ,mapped through g(·) to define the edge input uj =
+
+g(y) = g(xℓ), and then used in the existing edge law 
+
+Pj = fj
+
+ xtail  
+
+> j
+
+, x head  
+
+> j
+
+, u j
+
+. In this way, the dependence on the non-adjacent state xℓ is carried through the edge input rather than as an additional state argument. In this method, the feedback is purely algebraic and internal to the model’s signal structure, so it does not introduce any new dynamics or control law and the state dynamics remain unchanged. Fig. 2 illustrates this construction. The blue block repre-sents the internal graph model with state vector x and internal power flows P . An internal edge between vertices 
+
+v1 and v3 is influenced by a non-adjacent vertex v2: its state is read out as y = x2, mapped through g(·) to form the edge input uj = g(x2), and then used in the edge law. The edge therefore still appears only between v1 and v3
+
+in the graph and incidence matrix, while its power flow depends on the remote state x2 through the state-to-input feedback loop. 
+
+2.3 Parallel Edge Decomposition Method 
+
+In the existing graph formulation, although the internal edge law (1) with function fj (·) can represent any non-linear behavior, it is often convenient for analysis and implementation to express the edge law using the aggre-gated polynomial form introduced in Aksland and Alleyne (2021). In this representation, each power flow Pj is writ-ten as 
+
+Pj = gj (xt, x h, u j ) c1xt + c2xh + c3xhxt + c4x2
+
+> t
+
++ c5xhx2 
+
+> t
+
++ c6xhxtuj + c7x2 
+
+> t
+
+uj + c8x3
+
+> t
+
+ (5) where xt = xtail  
+
+> j
+
+and xh = xhead  
+
+> j
+
+are the tail and head vertex states, ck are constant aggregated coefficients, and 
+
+gj (·) is any scalar function of the adjacent vertex states and the edge input. In practice, gj is typically implemented as a lookup table to capture property variations that are difficult to represent analytically. Every common power-flow interaction in thermal, electrical, and mechanical en-ergy systems can be described by a single monomial or a combination of the monomials in (5), and by selecting which coefficients ck are nonzero, this template reproduces a wide variety of common edge models across these do-mains; examples are reported in Pisani et al. (2026). A key observation from both (1) and (5) is that each edge is defined with exactly one input uj . In some multi-domain systems, however, the physical power flow along a single interaction may naturally appear as a sum of terms from the polynomial template (5), each driven by its own input. For instance, 
+
+e1 : P1 = u1,1 xt + u1,2 xtxh, (6) is an abstract motivating example in which two power-flow types, xt and xtxh, are each driven by a separate input; a concrete physical realization of this structure appears in Section 3. The total flow cannot be written as fj (xt, x h, u j )with a single effective input, so the interaction cannot be assigned to a single edge under (5). To represent such interactions while remaining consistent with the graph-based framework, this work introduces a parallel edge decomposition method. When the total power flow along a physical connection is a sum of power-flow types from (5), each driven by its own input, the interaction is modeled as a set of parallel edges sharing the same head and tail vertices. For the example above, the decomposition is 
+
+e1a : P1a = u1,1 xt= f1,1(xt, x h, u 1,1),e1b : P1b = u1,2 xtxh= f1,2(xt, x h, u 1,2). (7) The two edges connect the same pair of vertices and produce the same net effect on the vertex balances, but each now conforms to the single-input edge structure (1) and can be incorporated into the graph model without modifying the underlying formulation. Fig. 3 illustrates the decomposition. The left panel shows a single power flow written as the sum of two structurally different terms acting through one physical interaction. The right panel shows the equivalent representation after replacing that interaction with two parallel edges sharing the same head and tail vertices, each carrying one power-flow type with a single assigned input following the edge law (1). Because the total power into and out of each vertex is preserved, the vertex dynamics remain unchanged. The parallel edge decomposition is particularly useful in combination with the recursive state-to-input feedback method. When that method introduces additional effective inputs for a single physical connection, the decomposition assigns each input to a separate parallel edge, separating the associated power-flow types while preserving the pre-viously established graph-based structure. 3. VALIDATION OF GRAPH-BASED MODELING METHODS ON A LI-ION BATTERY MODULE To evaluate the proposed modeling framework, a Li-ion battery system is selected and compared against experi-mental test data. This system is multi-domain and exhibits both non-adjacent state dependencies and composite heat-generation mechanisms, precisely the limitations that the prior graph-based formulation cannot handle. Because the system cannot be represented within the prior formulation 𝑣 !                 
+
+> 𝑣 !
+> 𝑒 "
+> 𝐶𝑥 !̇= 𝑃 !"#$ − 𝑃 !% − 𝑃 !&
+> ⇛ 𝐶𝑥 !̇= 𝑃 !"#$ − 𝑃 !
+> 𝑣 "
+> 𝑣 !
+> 𝑒 "# 𝑒 "$
+> 𝑒 != 𝑓 !,! 𝑥 !, 𝑥 (, 𝑢 !,!
+> + 𝑓 !,( (𝑥 !, 𝑥 (, 𝑢 !,( )
+> 𝑃 "%&' 𝑃 "%&'
+> ⇛ 𝑒 != 𝑒 !% + 𝑒 !&
+> 𝐶𝑥 !̇= 𝑃 !"#$ − 𝑃 !
+> (a) (b)
+> 𝑒 !% = 𝑓 !,! 𝑥 !, 𝑥 (, 𝑢 !,!
+> 𝑒 !& = 𝑓 !,( 𝑥 !, 𝑥 (, 𝑢 !,(
+
+Fig. 3. Parallel-edge decomposition of a multi-input power flow within a graph-based model without the proposed extensions, it serves as a direct test case for evaluating the methods introduced in this work. Validation is performed by comparing model predictions against experimental measurements. 
+
+3.1 Module Architecture and Electro-Thermal Dynamics 
+
+For experimental validation, the University of Minnesota Solar Vehicle Project (SVP) battery pack is used. This pack consists of blocks of 36 cells connected in parallel (36P), and 36 of these blocks connected in series (36S), resulting in an overall 36P36S architecture. Each 36P block is referred to as a module. For simplicity, the validation focuses on a single module. Fig. 4(a) shows the pack with one 36P module highlighted. Two temperature sensors were installed on this module: one placed near the geometric center of the 36P block to measure the internal module temperature Tmod , and another mounted on the side board adjacent to the same block to measure a representative side temperature Ts.Following the framework in Hemmat (2026), these two measurements motivate a two-node thermal network with one electrochemical node at Tmod and one structural node at Ts. Each 36P block is treated as a single lumped module with uniform behavior, as sketched in Fig. 4(b), and its thermal dynamics are captured by two first-order energy balances for the module and side-board nodes, using the equivalent thermal circuit shown in Fig. 4(c). Because some properties in these thermal dynamics depend on state of charge (SOC), SOC is also modeled by the Coulomb counting method. Thus, the governing equations are ˙SOC = − Imod 
+
+3600 Bcap ,mod 
+
+, (8) 𝑇 !"# 
+
+> 𝑇 $
+
+..  
+
+> 36P
+> 𝑇 $
+> 𝑇 $
+> 𝑇 !"#
+> 𝑇 !"#
+> (a) (b) (c)
+
+Fig. 4. SVP module layout and its equivalent thermal network Cth ,mod ˙Tmod = Imod 
+
+ Vocv ,mod − VT, mod 
+
+
+
+− Imod Tmod 
+
+ ∂V ocv 
+
+∂T 
+
+
+
+> mod
+
++ Ts − Tmod 
+
+RCS 
+
+(9) 
+
+Cth ,s ˙Ts = Tmod − Ts
+
+RCS 
+
++ Tamb − Ts
+
+RSA 
+
+. (10) Here Bcap ,mod is the usable capacity of the module (Ah), and Imod is the measured module current (A, posi-tive for discharge). The term Imod 
+
+ Vocv ,mod − VT, mod 
+
+
+
+represents irreversible Joule heating, where Vocv ,mod is the open-circuit module voltage (V) as a function of SOC and VT, mod is the measured terminal voltage (V). The term Imod Tmod 
+
+ ∂V ocv /∂T )mod represents reversible entropic heating, where (∂V ocv /∂T )mod is the SOC-dependent entropic coefficient of the module (V/K). Both heating terms have units of watts. The parameters Cth ,mod 
+
+and Cth ,s are the thermal capacitances (J/K) of the mod-ule and side nodes, respectively. The resistances RCS and 
+
+RSA are the effective thermal resistances (K/W) between the module and side nodes and between the side node and ambient, respectively, accounting for conduction through the pack structure and natural convection with the sur-rounding air. The structure of these equations matches the module-level formulation in earlier validated thermal modeling work on the same pack (Hemmat, 2026), except that heat transfer between adjacent modules is neglected. This approxima-tion is reasonable because the experiments were performed without active cooling and under nearly uniform ambient conditions, and all series modules are assumed identical so that they experience similar heating. Parameters are taken directly from Hemmat (2026), as the present experiments use the same pack under sim-ilar loading and cooling conditions. For the 36P mod-ule ( Nparallel = 36, Nseries = 1), Bcap ,mod = 162 Ah, 
+
+Cth ,mod = 2100 J /K, Cth ,s = 35 J /K, RCS = 40 K /W, and RSA = 60 K /W. Because Nseries = 1, the module OCV and entropic coefficient are identical to the single-cell properties; their characterization follows Hemmat (2026). 
+
+3.2 Graph-Based Formulation of the Battery Module 
+
+To represent the battery module in the graph-based frame-work, all state balances must be written in power form. The temperature dynamics in (9)–(10) already appear in this form. The SOC equation (8) is rewritten in power form as 3600 Bcap ,mod Vocv ,mod ˙SOC = −Vocv ,mod Imod , (11) which is used in place of (8) for graph-based modeling. Using (11) together with the thermal balances, the module is represented by the three dynamic vertices shown in Fig. 5, with states 
+
+x1 = SOC , x2 = Tmod , x3 = Ts,
+
+and corresponding capacitances 
+
+C1 = 3600 Bcap ,mod Vocv ,mod (SOC) ,C2 = Cth ,mod , C3 = Cth ,s.
+
+The electro-thermal interaction connecting the current source to the module-temperature vertex carries the total internal heat generation, 𝑉 !"# − 𝑆𝑂𝐶      
+
+> Look-up Function
+> 𝜕𝑉 !"#
+> 𝜕𝑇 − 𝑆𝑂𝐶
+> Look-up Table
+> 𝑢 !
+> 𝑢 "
+> 𝑆𝑂𝐶 𝑆𝑂𝐶 𝑆𝑂𝐶
+> 𝑉 #$%
+> 𝜕𝑉 #$%
+> 𝜕𝑇
+> 𝑆𝑂𝐶
+> 𝑇 !"#
+> 𝑇 $
+> 𝑇 %&'
+> 𝐼 𝐼 ) 𝑉 !"# 𝑃 (!%)
+> 𝐼 ) 𝑉 !"#
+> −𝐼 ) 𝑇 &!) ) 𝜕𝑉 !"#
+> 𝜕𝑇 𝑇 &!) − 𝑇 $
+> 𝑅 *+
+> 𝑇 $− 𝑇 %&'
+> 𝑅 +,
+
+Fig. 5. Graph-based representation of the battery module. 
+
+P = Imod Vocv ,mod (SOC) −Imod Tmod 
+
+ ∂V ocv 
+
+∂T 
+
+
+
+> mod
+
+(SOC) ,
+
+(12) which is the only edge in the module model that requires the two methods introduced earlier. Method 1 (recursive state-to-input feedback) is used be-cause both Vocv and ∂V ocv /∂T in (12) depend on the non-adjacent state SOC. The SOC state is exposed as an output and mapped to the edge inputs 
+
+u1,1 = Vocv ,mod (SOC) , u1,2 =
+
+ ∂V ocv 
+
+∂T 
+
+
+
+> mod
+
+(SOC) ,
+
+so that the edge retains the edge structure (1). Method 2 (parallel edge decomposition) is required be-cause (12) contains two structurally different power-flow types, xtu1,1 and xtxhu1,2. These cannot be represented by a single edge with one input. The interaction is therefore decomposed into two parallel edges, 
+
+P1 = Imod u1,1, P2 = −Imod Tmod u1,2,
+
+with the original heat generation recovered by P = P1+P2.Both edges share the same head and tail vertices, and each conforms to the single-input edge form (1). All remaining edge functions, which already match the edge structure (1), appear in Fig. 5 along with the complete graph model. The electrical power Pload =
+
+VT, mod Imod , appearing in the Tmod balance represents the power demanded by the external system and is modeled as an external edge, since both VT, mod and Imod are mea-sured. Applying (2) at each dynamic vertex recovers the original ODEs (9)–(11), verifying the graph model for the battery module. With the measured current Imod , ambient temperature 
+
+Tamb , and power load Pload provided as disturbances, the battery module dynamics can be simulated within the graph-based framework. 
+
+3.3 Validation Results 
+
+In the validation experiment, the full pack, including the chosen module, is discharged from near 100% to about 20% SOC under a constant-current (CC) load of 30 A at room temperature. The cooling fans are removed so that heat rejection is dominated by ambient passive cooling. The measured current, power load ( VT, mod .I mod ), and ambient temperature are used as disturbances to the graph-based (a) (b) Fig. 6. Comparison of experimental and simulated module and side temperatures during a 30 A CC discharge. battery module model, and the simulated temperatures are compared with the module temperature sensor measure-ments, as reported in Fig. 6. Fig. 6(a) shows the internal module temperature Tmod and Fig. 6(b) shows the side temperature Ts. In both cases, the graph-based model tracks the measurements closely over the discharge session, indicating that the graph-based formulation captures the module thermal behavior with sufficient fidelity while re-maining compatible with the proposed modeling methods. 4. CONCLUSION This paper extends graph-based modeling of multi-domain energy systems by introducing two general methods that address common limitations in prior formulations. A re-cursive state-to-input feedback scheme is formulated to represent power flows that depend on non-adjacent states while retaining the previously established edge structure and incidence representation. A parallel edge decompo-sition method is proposed for composite interactions in which a single physical connection carries multiple power flows driven by different inputs. The proposed methods are applied to construct an electro-thermal graph-based model of a Li-ion battery module, providing a concrete application of the extended framework. Both methods preserve conservation of energy at the ver-tices and act locally at the component level, so com-ponents that use the recursive feedback or parallel edge constructions can be interconnected directly with compo-nents modeled using prior graph-based formulations with-out altering the system-level representation. As a result, the extended framework maintains the modularity and scalability of the graph-based approach for larger energy systems. Future work will focus on applying the extended frame-work to larger and more complex energy systems, such as battery packs with active cooling, and on integrating the proposed methods with multi-state graph-based formula-tions to further expand the applicability of graph-based models. DECLARATION OF GENERATIVE AI AND AI-ASSISTED TECHNOLOGIES IN THE WRITING PROCESS During the preparation of this work, the author(s) used ChatGPT (OpenAI) to improve the English grammar and writing style of the manuscript. After using this tool, the author(s) reviewed and edited the content as needed and take(s) full responsibility for the content of the publication. REFERENCES Aksland, C. and Alleyne, A. (2021). Hierarchical model-based predictive controller for a hybrid uav powertrain. 
+
+Control Eng. Pract. , 115, 104883. Aksland, C., Bixel, T., Raymond, L., Rottmayer, M., and Alleyne, A. (2019). Graph-based electro-mechanical modeling of a hybrid unmanned aerial vehicle for real-time applications. In Proc. American Control Conf. (ACC) .Aksland, C., Tannous, P., Wagenmaker, M., Pangborn, H., and Alleyne, A. (2022). Hierarchical predictive control of an unmanned aerial vehicle integrated power, propulsion, and thermal management system. IEEE Trans. Control Syst. Technol. , 1–16. Docimo, D. and Alleyne, A. (2018). Electro-thermal graph-based modeling for hierarchical control with ap-plication to an electric vehicle. In Proc. IEEE Conf. Control Technol. Appl. (CCTA) .Hemmat, M. (2026). A control-oriented electro-thermal modeling framework for lithium-ion battery packs. Mas-ter’s thesis. University of Minnesota, Minneapolis, MN. Koeln, J., Pangborn, H., Williams, M., Kawamura, M., and Alleyne, A. (2020). Hierarchical control of aircraft electro-thermal systems. IEEE Trans. Control Syst. Technol. , 28(4), 1218–1232. Koeln, J., Williams, M., Pangborn, H., and Alleyne, A. (2016). Experimental validation of graph-based model-ing for thermal fluid power flow systems. In Proc. ASME Dynamic Systems and Control Conf. (DSCC) .Lionello, M., Rampazzo, M., Beghi, A., Varagnolo, D., and Vesterlund, M. (2020). Graph-based modelling and simulation of liquid immersion cooling systems. Energy (Oxf.) , 207, 118238. Niederberger, S., Orjuela, R., Schleuniger, P., Anderegg, R., and Basset, M. (2018). A graph-based modelling methodology for high-pressure networks applied on wa-terjet machining. Mechatronics (Oxf.) , 55, 115–128. Park, S. and Pangborn, H. (2023). Lifted graph-based modeling for linear predictive control of nonlinear en-ergy systems. In Proc. IEEE Conf. Control Technol. Appl. (CCTA) .Pisani, J., Aksland, C., Renkert, P., Broniszewski, J., Vyas, V., Alleyne, A., Jain, N., Docimo, D., Koeln, J., and Pangborn, H. (2026). Graph-based modeling, control, and optimization for multi-domain and multi-timescale energy systems. In Proc. American Control Conf. (ACC) .Russell, K., Aksland, C., and Alleyne, A. (2022). Graph-based dynamic modeling of two-phase heat exchangers in vapor compression systems. Int. J. Refrig. , 137, 244– 256. Williams, M., Koeln, J., Pangborn, H., and Alleyne, A. (2018). Dynamical graph models of aircraft electrical, thermal, and turbomachinery components. J. Dyn. Syst. Meas. Control , 140(4), 041013. Yang, S., Chagas, M., and Ordonez, J. (2018). Modeling, cross-validation, and optimization of a shipboard inte-grated energy system cooling network. Appl. Therm. Eng. , 145, 516–527.

@@ -1,0 +1,53 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-09-02T22:14:10.612836+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2608.30157v1",
+      "source": "arxiv",
+      "title": "Multi-Domain Graph-Based Modeling of Energy Systems with Applications to Lithium-Ion Batteries",
+      "abstract": "Graph-based models have been shown to provide a structured representation for complex multi-domain energy systems but face limitations when edge power flows depend on non-adjacent states or when a single edge carries multiple power-flow types driven by different inputs. This paper proposes two general extensions to address these limitations: a recursive state-to-input feedback scheme that embeds non-adjacent state dependencies into edge inputs without altering the graph structure, and a parallel edge decomposition method that represents composite interactions using sets of single-input edges while preserving energy conservation at the vertices. The extended framework is demonstrated on a lithium-ion battery module consisting of 36 parallel cells, and the resulting model predicts module temperatures with errors below 1°C. Validation on this electro-thermal battery system demonstrates the effectiveness of the extended framework for multi-domain systems that cannot be represented by previously established graph-based formulations, and indicates its potential for broader application to complex energy systems in control and design studies.",
+      "authors": [
+        "Mahsa Hemmat",
+        "Andrew G. Alleyne"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-08-31T02:18:35+00:00",
+      "link": "https://arxiv.org/pdf/2608.30157v1",
+      "tags": [
+        "keyword:UAV",
+        "query:UAV"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "graph-based modeling for lithium-ion battery modules, enabling system modeling for hybrid UAV energy systems",
+      "llm_evidence_cn": "基于图的锂离子电池模块建模，支持混合动力无人机能源系统建模",
+      "llm_evidence": "基于图的锂离子电池模块建模，支持混合动力无人机能源系统建模",
+      "canonical_evidence": "基于图的锂离子电池模块建模，支持混合动力无人机能源系统建模",
+      "llm_tldr_en": "Proposes graph-based extensions for modeling multi-domain energy systems, demonstrated on a lithium-ion battery module.",
+      "llm_tldr_cn": "针对多域能源系统图模型在边功率流依赖非相邻状态或多输入时存在的局限，提出递归状态-输入反馈与并行边分解两种扩展方法，在保持图结构与能量守恒的同时增强表达力。通过在锂离子电池模块上的应用验证了框架的有效性，为混合动力无人机电池系统建模提供了通用工具。",
+      "llm_tldr": "针对多域能源系统图模型在边功率流依赖非相邻状态或多输入时存在的局限，提出递归状态-输入反馈与并行边分解两种扩展方法，在保持图结构与能量守恒的同时增强表达力。通过在锂离子电池模块上的应用验证了框架的有效性，为混合动力无人机电池系统建模提供了通用工具。",
+      "llm_tags": [
+        "query:uav:composite"
+      ],
+      "matched_query_tag": "query:uav:composite",
+      "matched_query_text": "Papers central to 查找关于混合动力无人机和混合电推垂直起降飞行器能量管理策略的综述论文和代表性研究。重点关注串联混合动力无人机、燃料电池/电池混合动力无人机、内燃机-发电机/电池混合动力无人机和混合电推垂直起降飞行器。总结主要的能量管理方法，包括基于规则控制、模糊逻辑控制、等效消耗最小化策略、自适应等效消耗最小化策略、动态规划、庞特里亚金极小值原理、模型预测控制和强化学习。优先考虑讨论系统建模、基于任务剖面的功率分配、电池荷电状态维持控制、降低油耗、发电机瞬态抑制、电池老化、实时实现以及实验或硬件验证的论文。识别当前局限性和潜在研究空白，以支持混合动力无人机能量管理的未来创新。, especially work that connects or combines: UAV power management; fuel cell battery UAV; hybrid-electric propulsion; energy management strategy for hybrid electric unmanned aerial vehicles; | English keyword            | 中文含义       | | -------------------------- | ---------- | | hybrid-powered UAV         | 混合动力无人机    | | energy management strategy | 能量管理策略     | | hybrid-electric propulsion | 混合电推进      | | series hybrid UAV          | 串联混动无人机    | | fuel cell battery UAV      | 燃料电池/电池无人机 | | UAV power management       | 无人机功率管理    |; equivalent consumption minimization strategy for hybrid electric vehicles; Which papers provide a clear taxonomy of rule based, fuzzy, ECMS, dynamic programming, PMP, MPC, and reinforcement learning methods?; What are the unsolved problems in hybrid UAV energy management, such as SOC control, fuel consumption, generator transients, and mission adaptation?; What are the main categories of energy management strategies for hybrid powered UAVs?; What are the current limitations and research gaps in hybrid UAV energy management?.",
+      "matched_requirement_id": "req-composite-uav",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

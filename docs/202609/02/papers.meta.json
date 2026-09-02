@@ -1,0 +1,24 @@
+{
+  "label": "2026-09-02",
+  "date": "2026-09-02",
+  "generated_at": "2026-09-02T22:15:35",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202609/02/2608.30157v1-multi-domain-graph-based-modeling-of-energy-systems-with-applications-to-lithium-ion-batteries",
+      "section": "quick",
+      "title_en": "Multi-Domain Graph-Based Modeling of Energy Systems with Applications to Lithium-Ion Batteries",
+      "authors": "Mahsa Hemmat, Andrew G. Alleyne",
+      "date": "2026-08-31",
+      "pdf": "https://arxiv.org/pdf/2608.30157v1",
+      "score": "6.0",
+      "evidence": "基于图的锂离子电池模块建模，支持混合动力无人机能源系统建模",
+      "tldr": "针对图模型在多域能源系统中存在的非相邻状态依赖和复合边功率流表达限制，本文提出两种扩展：递归状态到输入反馈在不改变图结构下嵌入非相邻依赖，并行边分解用单输入边集表示复合相互作用并保持顶点能量守恒。在36个并联电池的锂电池模块上验证，温度预测误差低于1°C，表明扩展框架能表示以往图公式无法处理的多域系统，适用于复杂能源系统控制与设计。",
+      "tags": "query:uav",
+      "abstract_en": "Graph-based models have been shown to provide a structured representation for complex multi-domain energy systems but face limitations when edge power flows depend on non-adjacent states or when a single edge carries multiple power-flow types driven by different inputs. This paper proposes two general extensions to address these limitations: a recursive state-to-input feedback scheme that embeds non-adjacent state dependencies into edge inputs without altering the graph structure, and a parallel edge decomposition method that represents composite interactions using sets of single-input edges while preserving energy conservation at the vertices. The extended framework is demonstrated on a lithium-ion battery module consisting of 36 parallel cells, and the resulting model predicts module temperatures with errors below 1°C. Validation on this electro-thermal battery system demonstrates the effectiveness of the extended framework for multi-domain systems that cannot be represented by previously established graph-based formulations, and indicates its potential for broader application to complex energy systems in control and design studies.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
