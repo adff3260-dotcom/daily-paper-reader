@@ -6,26 +6,28 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-09-02
-- 运行时间：2026-09-02 22:15:05 UTC
+- 最新运行日期：2026-09-03
+- 运行时间：2026-09-03 23:02:43 UTC
 - 运行状态：成功
-- 本次总论文数：1
+- 本次总论文数：2
 - 精读区：0
-- 速读区：1
+- 速读区：2
 
 ### 今日简报（AI）
-今天只速读了一篇，聚焦“多域图建模能源系统 + 锂离子电池应用”的交叉研究。  
-最值得关注的方向是：用图结构统一描述能源系统中的多个域，并落到锂电池场景。  
-建议把它作为入口，后续围绕“图建模 + 电池管理/能源系统”做主题扩展阅读。
-- 详情：[/202609/02/README](/202609/02/README)
+今日速读两篇论文：多域图建模用于锂电池系统，以及策略引导终端成分的经济模型预测控制。
+最值得
+- 详情：[/202609/03/README](/202609/03/README)
 
 ### 精读区论文标签
 - 本次无精读推荐。
 
 ### 速读区论文标签
-1. [Multi-Domain Graph-Based Modeling of Energy Systems with Applications to Lithium-Ion Batteries](/202609/02/2608.30157v1-multi-domain-graph-based-modeling-of-energy-systems-with-applications-to-lithium-ion-batteries)  
+1. [Multi-Domain Graph-Based Modeling of Energy Systems with Applications to Lithium-Ion Batteries](/202609/03/2608.30157v1-multi-domain-graph-based-modeling-of-energy-systems-with-applications-to-lithium-ion-batteries)  
    标签：评分：6.0/10、query:uav
-   evidence：基于图的锂离子电池模块建模，支持混合动力无人机能源系统建模
+   evidence：基于图建模锂离子电池系统，支持电池状态监测
+2. [Economic Model Predictive Control with Policy-Guided Terminal Ingredients](/202609/03/2609.02628v1-economic-model-predictive-control-with-policy-guided-terminal-ingredients)  
+   标签：评分：6.0/10、query:uav
+   evidence：提出策略引导终端成分的新型MPC框架，与能量管理中的MPC方法相关
 
 
 <div class="dpr-home-promo-card">

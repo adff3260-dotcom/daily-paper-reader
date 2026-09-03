@@ -1,0 +1,648 @@
+Title: Economic Model Predictive Control with Policy-Guided Terminal Ingredients
+
+URL Source: https://arxiv.org/pdf/2609.02628v1
+
+Published Time: Thu, 03 Sep 2026 01:11:26 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# Economic Model Predictive Control with Policy-Guided Terminal Ingredients 
+
+Salim Msaad and Robert D. McAllister 
+
+Abstract — Conventional designs for model predictive control typically rely on terminal costs and constraints derived from a steady state to guarantee closed-loop stability and performance. However, this dependence on a steady-state assumption limits the applicability of this control method to systems in which such a fixed operating point is either not available or not desirable. This work introduces a novel framework, termed policy-guided MPC, to address this limitation. Our approach constructs terminal costs and constraints using a known sub-optimal control policy. Specifically, the terminal region is defined around a center determined by a rollout of the policy, and a penalty on deviation from this center is used to define the terminal cost. This method obviates the need for a steady state or reference trajectory. Closed-loop performance guarantees are established relative to the guiding policy, for both finite and infinite horizon problems. The effectiveness of the proposed framework is demonstrated through numerical simulations on an energy management example. 
+
+I. I NTRODUCTION 
+
+Model predictive control (MPC) is widely applied in industry due to its capability to manage constraints and multivariable systems while optimizing performance [1]. At each time step, MPC solves an optimal control problem over a finite horizon and applies only the first control input to the system. Depending on the cost function used in the optimal control problem, MPC can be classified into two main formulations. The first formulation, known as tracking MPC, is used when a specific reference setpoint or trajectory represents the desired operating condition and the goal is to minimize deviations from this reference. The second formulation, known as economic MPC, is typically considered when the goal is to optimize a specific per-formance metric, such as energy consumption, production throughput, or economic profit. In economic MPC, the cost function directly reflects this performance metric, rather than a tracking error. This allows the controller to explicitly optimize the operational objectives of the system, making it particularly well suited for applications in which the optimal operation does not consist of a fixed steady state or trajectory. While tracking MPC typically assumes a positive definite stage cost, economic MPC does not necessarily satisfy this assumption. This fundamental difference gives rise to distinct theoretical properties and challenges for economic MPC. The first closed-loop stability results for economic MPC were based on the optimal steady state of the system. In [2], the optimal steady state is determined and included as a terminal equality constraint in the optimal control problem.  
+
+> The authors are with the Delft Center for Systems and Control, Delft University of Technology, 2628 Delft, The Netherlands (e-mail: {s.msaad, r.d.mcallister }@tudelft.nl).
+
+Stability is ensured under the assumptions of model linearity and convex stage cost. Diehl et al. [3] employ the same methodology and identify a Lyapunov function for problems satisfying strong duality of the steady-state optimization problem. This analysis is further generalized by Angeli et al. [4] to economic MPC problems meeting dissipativity conditions on the system dynamics. The authors also provide results for periodic reference trajectories which are later extended to generic time-varying reference trajectories in [5]. In [6], the authors relax the equality constraint on the optimal steady state, replacing it with a terminal cost and a terminal region constraint. An alternative method to terminal constraint design con-sists in the use of generalized terminal ingredients, where the terminal constraint is left as a free variable, rather than being fixed a priori. Building on the work of Ferramosca et al. 
+
+[7], Fagiano and Teel [8] propose a method that allows any admissible fixed point to serve as a terminal constraint. The framework was later extended in [9] and [10] through the use of a self-tuning terminal cost. The use of generalized terminal ingredients avoids computing the optimal steady state and enlarges the feasibility set. Nevertheless, this approach still relies on steady states for terminal constraint construction, and performance guarantees remain relative to the optimal steady state. In the absence of terminal constraints, Gr¨ une [11] es-tablishes closed-loop stability and near-optimal performance guarantees under stronger assumptions based on control-lability and turnpike properties. Recent results extend this approach to optimal infinite horizon trajectories provided these trajectories satisfy an infinite horizon turnpike property [12]. In both cases, sufficiently long horizons are required for these performance guarantees. All of the results mentioned above form a strong foun-dation for stability and performance guarantees in economic MPC. However, the design of terminal costs and constraints around a steady state can suffer from performance limita-tions. Such limitations occur when even the optimal steady state yields unsatisfactory performance, performing signifi-cantly worse than other feasible operating trajectories. This work addresses these issues by utilizing an existing control policy. For a large number of applications, there exists—or it is easy to design—a sub-optimal control policy that achieves modest performance. Of particular interest are applications where this policy is significantly better than maintaining the optimal steady state. This policy may be obtained from ex-isting control algorithms, expert heuristics, or reinforcement learning. We propose a novel approach, termed policy-guided arXiv:2609.02628v1 [eess.SY] 2 Sep 2026 MPC (PG-MPC), to construct terminal costs and constraints based on this policy. In contrast to existing methods to design terminal costs/constraints, this approach provides closed-loop performance guarantees relative to the chosen policy rather than a steady state. The main contributions of this work are threefold. First, we introduce the policy-guided MPC framework. Second, we establish closed-loop performance guarantees relative to the guiding policy. Third, we demonstrate the effectiveness of the proposed approach through numerical simulations on an energy management example with time-varying prices. II. P OLICY -G UIDED MODEL PREDICTIVE CONTROL 
+
+A. Problem Formulation 
+
+We consider the discrete-time dynamical system 
+
+x+ = f (x, u ) f : X × U → Rn (1) in which x ∈ X ⊆ Rn is the state and u ∈ U ⊆ Rm is the input. Here X and U denote the state and input constraint sets, respectively. For this system, we consider the stage cost 
+
+ℓ : X × U → R≥0 to quantify the relative performance of different state/input combinations. We make the following standard regularity assumption for this system and stage cost. 
+
+Assumption 1 (Continuous functions and closed sets): 
+
+The functions f : X × U → Rn and ℓ : X × U → R≥0 are continuous, X is closed, and U is compact. The standard optimal control problem is to select an input trajectory that minimizes the infinite-horizon discounted cost function from an initial state x(0) :
+
+> ∞
+
+X
+
+> k=0
+
+γkℓ(x(k), u (k)) s.t. (1) in which γ ∈ (0 , 1] is the discount factor. 
+
+B. Available policy 
+
+We assume that an initial sub-optimal policy π(·) is already available for the system. This policy may be obtained from existing control algorithms, prior domain expertise, or reinforcement learning. However, a crucial practical re-quirement in the subsequently proposed MPC framework is that evaluating this policy is computationally efficient. Thus, constructing this initial policy using methods that are computationally demanding to evaluate, such as MPC, may not be desirable. Let ϕπ (k; x) denote the state at time k given the initial state x for the autonomous, closed-loop system x+ =
+
+f (x, π (x)) . To streamline notation, we define the stage cost along this closed-loop trajectory as 
+
+ℓπ (k, x ) := ℓ(ϕπ (k; x), π (ϕπ (k; x))) .
+
+For this policy, there exists a corresponding value function 
+
+Jπ (x) defined as 
+
+Jπ (x) := 
+
+> ∞
+
+X
+
+> k=0
+
+γkℓ(ϕπ (k; x), π (ϕπ (k; x))) 
+
+and, by definition, satisfying the Bellman equation 
+
+Jπ (x) = ℓ(x, π (x)) + γJ π (f (x, π (x))) ∀x ∈ X
+
+Moreover, we make the following assumption. 
+
+Assumption 2 (Policy assumptions):  
+
+> •
+
+The policy is state and input constraint-satisfying, i.e. 
+
+π(x) ∈ U, f (x, π (x)) ∈ X ∀x ∈ X. 
+
+> •
+
+The function Jπ (x) is finite, i.e. 
+
+Jπ (x) < ∞ ∀x ∈ X
+
+and Lipschitz continuous, i.e., there exists a constant 
+
+L > 0 such that: 
+
+|Jπ (x1) − Jπ (x2)| ≤ L|x1 − x2| ∀x1, x 2 ∈ X
+
+Here and in all subsequent sections, |·| represents the Euclidean norm. 
+
+C. Policy-Guided MPC Framework 
+
+In conventional MPC methods, terminal costs and con-straints are constructed based on a steady state or fixed reference trajectory, defined a priori for the system. Policy-guided MPC instead actively constructs and modifies these terminal costs and constraints based on the available policy. Specifically, we define the terminal cost Vf (x, x f ) and the terminal constraint set Xf (xf ) with respect to a central point 
+
+xf ∈ X that is updated at each time step using the available policy π(·). Using two design parameters τ ≥ 0 and ρ > 0,we define: 
+
+Vf (x, x f ) := ρ|x − xf |
+
+Xf (xf ) := {x ∈ X | | x − xf | ≤ τ }
+
+Moreover, we introduce the policy approximation error d as: 
+
+d := max {0, (L − ρ)τ }
+
+The role of d in the PG-MPC framework is established in Section III-A, where we show that smaller values of d yield tighter performance bounds relative to the guiding policy. Notably, achieving d = 0 does not require knowledge of 
+
+Jπ (x) or the Lipschitz constant L; it suffices to choose a sufficiently large ρ or to set τ = 0 . However, excessively large ρ or τ = 0 reduces PG-MPC’s freedom to optimize. For a horizon N ≥ 1, let ˆϕ(k; x, u) denote the predicted state at time k ∈ IN 
+
+> 0
+
+, where Iba := {a, a + 1 , . . . , b } denotes the integer interval from a to b, for the dynamics in (1) given the initial state x ∈ X and the input trajectory u =(u(0) , u (1) , . . . , u (N − 1)) ∈ UN . We then define the PG-MPC objective function VN : X × X × UN → R as: 
+
+VN (x, x f , u) :=  
+
+> N−1
+
+X
+
+> k=0
+
+γkℓ( ˆϕ(k; x, u), u (k)) + γN Vf ( ˆϕ(N ; x, u), x f )
+
+The input constraint set is defined as all feasible input trajectories that drive the system from the initial state x to the terminal region Xf (xf ), while satisfying the state constraints at all intermediate time steps: 
+
+UN (x, x f ) := 
+
+
+
+u ∈ UN ˆϕ(k; x, u) ∈ X ∀k ∈ IN −11 ,
+
+ˆϕ(N ; x, u) ∈ Xf (xf )
+
+
+
+The feasible set for the pair (x, x f ) is then defined as all pairs that result in a non-empty input constraint set: 
+
+ZN := {(x, x f ) ∈ X × X | U N (x, x f )̸ = ∅} .
+
+Policy-guided MPC then solves the following optimization problem at each time step: 
+
+V 0 
+
+> N
+
+(x, x f ) := min    
+
+> u∈U N(x,x f)
+
+VN (x, x f , u) (2) and the optimal solution to this problem is denoted as 
+
+u0(x, x f ) := ( u0(0; x, x f ), u 0(1; x, x f ),. . ., u 0(N−1; x, x f )) 
+
+Given this optimal solution, only the first input is applied to the system at each time step. We define the PG-MPC control policy as: 
+
+κ(x, x f ) = u0(0; x, x f )
+
+At each time step, we update xf by rolling out the policy 
+
+π(·) from the last state of the optimal predicted trajectory. Thus, we consider the following closed-loop dynamics for the pair (x, x f ):
+
+x+ = h1(x, x f ) := f (x, u 0(0; x, x f )) 
+
+x+ 
+
+> f
+
+= h2(x, x f ) := f (x0(N ), π (x0(N ))) 
+
+x0(N ) = ˆϕ(N ; x, u0(x, x f )) 
+
+(3) The closed-loop dynamics of the pair (x, x f ) are illus-trated in Fig. 1. Note that the next central point x+ 
+
+> f
+
+is obtained by rolling out the policy π(·) from the last predicted state of the optimal trajectory , rather than from the current central point xf . For the first time step, however, the initial central point xf (0) is defined as the state obtained by rolling out the policy π(·) from the initial state x(0) for N steps, i.e., we have that 
+
+xf (0) = ϕπ (N ; x(0)) .
+
+III. C LOSED -LOOP GUARANTEES 
+
+To streamline notation, we define the extended state as 
+
+z := ( x, x f ) ∈ Z N and describe the dynamics of z via the difference equation 
+
+z+ = ( x+, x + 
+
+> f
+
+) = h(z) := ( h1(x, x f ), h 2(x, x f )) (4) We now consider the closed-loop extended state from the initial state x ∈ X. Given the initial state x ∈ X and the dynamics in (4), let ψ(k; x) denote the closed-loop extended state at time k, i.e., ψ(·) satisfies 
+
+ψ(0; x) = ( x, ϕ π (N ; x)) 
+
+ψ(k + 1; x) = h(ψ(k; x)) ∀k ∈ I∞
+
+> 0
+
+Thus, we have the closed-loop state at time k, denoted as 
+
+ϕκ(k; x) and defined such that 
+
+(ϕκ(k; x), · ) = ψ(k; x).PG-MPC solution at                   
+
+> N-step rollout of policy from PG-MPC solution at
+> Fig. 1. Illustration of the closed-loop dynamics of the pair (x, x f)for policy-guided MPC. For the first time step, the initial central point xfis defined as the state obtained by rolling out the policy π(·)from the initial state xfor Nsteps. The next state x+is obtained by applying the first input of the optimal input trajectory, while the next central point x+
+> fis obtained by rolling out for one step the policy π(·)from the last predicted state of the optimal trajectory. This is repeated for all subsequent time steps.
+
+To streamline notation, we define the stage cost along the PG-MPC closed-loop trajectory as 
+
+ℓκ(k, x ) := ℓ(ϕκ(k; x), κ (ψ(k; x))) .
+
+To analyze the closed-loop properties of policy-guided MPC, we frequently make use of the following candidate solution for the optimization problem in (2): For any z =(x, x f ), we denote the candidate solution for z+ as 
+
+˜u+ = ζ(z) := 
+
+
+
+u0(1; z), . . . , u 0(N − 1; z),π  ˆϕ(N ; x, u0(z))  (5) To guarantee that the MPC optimization problem remains feasible at all times, we next establish that ZN is positively invariant. 
+
+Definition 1 (Positive invariance): The set Z is positive invariant for the system z+ = f (z) if f (z) ∈ Z for all 
+
+z ∈ Z .
+
+Lemma 1: If Assumptions 1 and 2 hold, then for each 
+
+z ∈ Z N a solution to the optimization problem in (2) exists, the set ZN is positive invariant for the system in (4), and the closed-loop (extended) state trajectories ψ(k; x) are well defined for all x ∈ X and k ∈ I∞ 
+
+> 0
+
+.
+
+Proof: We have that Vf (·) is continuous and Xf is compact by definition. Combined with regularity conditions in Assumption 1, we satisfy the standard requirements to ensure that a solution to the MPC optimization problem in (2) exists for all z ∈ Z N [1, Prop. 2.4]. Choose any z ∈ Z N . For z+ = h(z), we consider the candidate solution ˜u+ = ζ(z). Clearly, ˜u+ ∈ UN . Since the inputs u0(1; z), . . . , u 0(N − 1; z) were feasible for z, the intermediate predicted states satisfy ˆϕ(k; x+, ˜u+) = ˆϕ(k +1; x, u0(z)) ∈ X for all k ∈ IN −11 . Since the first N − 2
+
+inputs are the same as the solution for z, we have that 
+
+x0(N ) := ˆϕ(N ; x, u0(z)) = ˆϕ(N − 1; x+, ˜u+)
+
+and therefore 
+
+ˆϕ(N ; x+, ˜u+) = f (x0(N ), π (x0(N ))) = x+ 
+
+> f
+
+∈ Xf (x+ 
+
+> f
+
+).
+
+Furthermore, x+ 
+
+> f
+
+∈ X since the policy satisfies the state constraints by Assumption 2. Thus, we have that ˜u+ ∈UN (z+) and therefore z+ ∈ Z N . Since the choice of z ∈ Z N
+
+was arbitrary, we have that ZN is positive invariant. Choose any initial x ∈ X. Then, we have that the initial 
+
+xf is defined as xf = ϕπ (N ; x). Thus, we have that this terminal state can be reached by using the same policy rollout. Specifically, we can define the input trajectory 
+
+˜u = ( π(ϕπ (0; x)) , π (ϕπ (1; x)) , . . . , π (ϕπ (N − 1; x))) 
+
+By recursive application of Assumption 2, we have that 
+
+˜u ∈ UN and ˆϕ(k; x, ˜u) = ϕπ (k; x) ∈ X for all k ∈ IN 
+
+> 1
+
+.In particular, ˆϕ(N ; x, ˜u) = ϕπ (N ; x) = xf ∈ Xf (xf ). Thus, 
+
+˜u ∈ U N (x, x f ) and therefore z = ( x, x f ) ∈ Z N . Therefore, 
+
+ψ(0; x) ∈ Z N and κ(ψ(0; x)) is well defined. Since ZN is positive invariant, PG-MPC remains feasible and ψ(k; x) is well defined. 
+
+A. Cost decrease inequality 
+
+To simplify the subsequent analysis, we define the shifted cost as the sum of the optimal MPC cost and the value function for the policy π(·) starting at the central point xf :
+
+¯V 0 
+
+> N
+
+(x, x f ) := V 0 
+
+> N
+
+(x, x f ) + γN Jπ (xf ) (6) For this shifted cost, we can establish the following cost decrease inequality. 
+
+Lemma 2 (Cost decrease inequality): If Assumptions 1and 2 hold, then we have that 
+
+γ ¯V 0 
+
+> N
+
+(x+, x + 
+
+> f
+
+) ≤ ¯V 0 
+
+> N
+
+(x, x f ) − ℓ(x, κ (x, x f )) + γN d (7) for all (x, x f ) ∈ Z N .
+
+Proof: For any (x, x f ) ∈ Z N , we denote the warm-start for (x+, x + 
+
+> f
+
+) as in (5). We therefore have that 
+
+γV N (x+, x + 
+
+> f
+
+, ˜u+) − V 0 
+
+> N
+
+(x, x f ) = 
+
+− ℓ(x, u 0(0; x, x f )) + γN ℓ(x0(N ), π (x0(N ))) 
+
+− γN Vf (x0(N ), x f )+ γN +1 Vf (f (x0(N ), π (x0(N ))) , x + 
+
+> f
+
+)
+
+(8) where x+ 
+
+> f
+
+= f (x0(N ), π (x0(N ))) and thus 
+
+Vf (f (x0(N ), π (x0(N ))) , x + 
+
+> f
+
+) = Vf (x+ 
+
+> f
+
+, x + 
+
+> f
+
+) = 0 
+
+From Assumption 2, we have that: 
+
+Jπ (x0(N )) − Jπ (xf ) ≤ L|x0(N ) − xf |
+
+Moreover, since Jπ (x) satisfies the Bellman equation we have 
+
+γJ π (x+ 
+
+> f
+
+)−Jπ (xf ) ≤ − ℓ(x0(N ), π (x0(N )))+ L|x0(N )−xf |
+
+Multiplying the above inequality by γN and adding it to the cost decrease equality in (8), we obtain: 
+
+γ
+
+
+
+VN (x+, x + 
+
+> f
+
+, ˜u+) + γN Jπ (x+ 
+
+> f
+
+)) 
+
+
+
+−
+
+
+
+V 0 
+
+> N
+
+(x, x f ) + γN Jπ (xf )
+
+
+
+≤ − ℓ(x, κ (x, x f )) −γN Vf (x0(N ), x f )+ γN L|x0(N ) − xf |
+
+in which 
+
+−γN Vf (x0(N ), x f ) + γN L|x0(N ) − xf |
+
+= γN (L − ρ)|x0(N ) − xf |≤ γN d
+
+Then, by optimality and from the definition of ¯V 0 
+
+> N
+
+(·), we obtain the cost decrease inequality in (7). 
+
+B. Nominal performance bounds 
+
+We now establish nominal performance bounds for the closed-loop system under the policy-guided MPC scheme. These results quantify how the long-term cost of the resulting policy-guided MPC control law κ(·) compares to that of the guiding policy π(·). In particular, we show that the cumulative cost of policy-guided MPC remains within a bounded deviation d from the cost achieved by the guiding policy, with the bound scaling with the discount factor γ and the prediction horizon N .
+
+Theorem 1 (Transient performance bound): If Assumptions 1 and 2 hold, then we have that for any 
+
+T ≥ 1: 
+
+> T−1
+
+X
+
+> k=0
+
+γkℓκ(k, x ) ≤ Jπ (x) + γNT −1X
+
+> k=0
+
+γkd (9) 
+
+Proof: Consider any initial state x ∈ X and define 
+
+xf := ϕπ (N ; x). We have that (x, x f ) = ψ(0; x) ∈ Z N and from Lemma 1, ψ(k; x) ∈ Z N for k ∈ I∞ 
+
+> 0
+
+.Repeated application of (7) along the closed-loop trajectory from k = 0 to T − 1 gives:  
+
+> T−1
+
+X
+
+> k=0
+
+γkℓκ(k, x ) + γT ¯V 0 
+
+> N
+
+(ψ(T ; x)) 
+
+≤ ¯V 0 
+
+> N
+
+(ψ(0; x)) + γNT −1X
+
+> k=0
+
+γkd
+
+We can also use the fact that xf := ϕπ (N ; x) to obtain 
+
+¯V 0 
+
+> N
+
+(ψ(0; x)) ≤ 
+
+> N−1
+
+X
+
+> k=0
+
+γkℓπ (k, x ) + γN Jπ (ϕπ (N ; x)) 
+
+Moreover, by definition of Jπ (·) we have that  
+
+> T−1
+
+X
+
+> k=0
+
+γkℓκ(k, x ) + γT ¯V 0 
+
+> N
+
+(ψ(T ; x)) ≤ Jπ (x) + γNT −1X
+
+> k=0
+
+γkd
+
+Since ℓ(·) ≥ 0 we have that ¯V 0 
+
+> N
+
+(·) ≥ 0, and the inequality in (9) follows. This finite horizon performance bound can be extended to the infinite horizon case as follows. Theorem 2 (Asymptotic performance bounds): If Assumptions 1 and 2 hold, then we have that for γ ∈ (0 , 1) :
+
+lim sup   
+
+> T→∞
+> T−1
+
+X
+
+> k=0
+
+γk ℓκ(k, x ) − ℓπ (k, x ) ≤ γN d
+
+1 − γ (10) and for γ = 1 :
+
+lim sup  
+
+> T→∞
+
+1
+
+T 
+
+> T−1
+
+X
+
+> k=0
+
+ ℓκ(k, x ) − ℓπ (k, x ) ≤ d (11) for all x ∈ X.
+
+Proof: For γ ∈ (0 , 1) , we start from the performance bound in (9). Given the definition of Jπ (·), in the limit as 
+
+T → ∞ , we obtain (10). For γ = 1 , (9) becomes  
+
+> T−1
+
+X
+
+> k=0
+
+ℓκ(k, x ) ≤ Jπ (x) + T d (12) We substitute the definition of Jπ (x) and divide by the horizon length T to obtain 
+
+1
+
+T 
+
+> T−1
+
+X
+
+> k=0
+
+ ℓκ(k, x ) − ℓπ (k, x ) ≤ 1
+
+T Jπ (ϕπ (T ; x)) + d
+
+Since ℓ(·) ≥ 0, the Bellman equation for γ = 1 implies that 0 ≤ Jπ (ϕπ (T ; x)) ≤ Jπ (x) < ∞ for all T . Hence, 
+
+Jπ (ϕπ (T ; x)) /T → 0 as T → ∞ , which yields (11). Finally, we consider the special case when γ = 1 and 
+
+d = 0 , which occurs when the terminal cost weight ρ is chosen to be at least as large as the Lipschitz constant L of the value function Jπ (·) or when the terminal region radius 
+
+τ is set to zero. 
+
+Corollary 1 (Asymptotic performance bounds for d = 0 ): 
+
+If Assumptions 1 and 2 hold, then we have that for γ = 1 
+
+and d = 0 :
+
+lim sup   
+
+> T→∞
+> T−1
+
+X
+
+> k=0
+
+ ℓκ(k, x ) − ℓπ (k, x ) ≤ 0 (13) for all x ∈ X.
+
+Proof: Setting d = 0 in (12) and substituting the definition of Jπ (x) yields (13) in the limit as T → ∞ .IV. N UMERICAL EXAMPLE 
+
+In this example, we analyze an optimal control problem in which the optimal steady state is not desirable. Consider an energy system with two batteries that coordinate with the grid to satisfy demand while minimizing costs under a time-varying energy price. The two batteries have different characteristics: a small battery with high efficiency and a large battery with lower efficiency but higher capacity. Let 
+
+x1(k) and x2(k) denote the energy stored in the small and large batteries, respectively. The dynamics of the system evolve as follows: 
+
+x1(k + 1) = x1(k) + η1u2(k) − 1 
+
+> η1
+
+u4(k),x2(k + 1) = x2(k) + η2u3(k) − 1 
+
+> η2
+
+u5(k), (14) Inputs u2(k) and u3(k) represent the energy drawn from the grid to charge the small and large batteries, while u4(k) and 
+
+u5(k) represent the energy discharged from the small and large batteries to satisfy demand. One more input, u1(k),represents the energy drawn from the grid to satisfy the demand directly. Finally, η1 and η2 are the efficiencies of the small and large batteries, respectively, set to η1 = 0 .99 
+
+and η2 = 0 .95 . At each time step, the system incurs a stage cost defined as the cost of energy drawn from the grid: 
+
+ℓ(x, u ) =  u1(k) + u2(k) + u3(k)p(k) (15) where p(k) represents the time-varying price of energy drawn from the grid. The energy price p(k) introduces time-varying dynamics; to fit the time-invariant framework in (1), we augment the state with the time index k. The full state is thus defined as x(k) = ( x1(k), x 2(k), k ). The system is subject to demand, input, and battery-state constraints, defined as: 
+
+u1(k) + u4(k) + u5(k) = Eref , (16a) 
+
+0 ≤ x1(k) ≤ 2400 , (16b) 
+
+0 ≤ x2(k) ≤ 33600 , (16c) 
+
+0 ≤ ui(k) ≤ 100 , ∀i = 1 , . . . , 5. (16d) Here, Eref = 40 is the constant energy demand that must be met at each time step by the combination of grid energy and battery discharges. The system is simulated over a24-day operating horizon with a sampling time of ∆t =0.5 hours, yielding 1152 time steps. The objective is to minimize the total cost of energy purchased from the grid over the operating horizon while satisfying the demand and constraints at each time step. Any steady state requires constant battery energy levels, precluding the load shifting needed to exploit the time-varying price structure. Consequently, designing terminal costs and constraints around any steady state would be inadequate for this problem. An alternative would be to construct a periodic trajectory a priori and use it to define a terminal equality constraint. However, this approach requires prior knowledge of the price profile and is fragile to model mismatch and disturbances. A standard MPC formulation that minimizes the stage cost in (15) over a prediction horizon of N = 48 steps (one day), subject to the dynamics in (14) and constraints in (16), is considered. The simulated closed-loop trajectory of this MPC controller is shown in Fig. 2. This controller fails to effectively utilize the batteries, resulting in high operational costs. In particular, the MPC is myopic, as it almost never charges the large battery. The small battery is preferred in the limited prediction horizon that it considers, as it is more efficient. We design a rule-based guiding policy π(·) that controls only the large battery, with decisions based solely on the cur-rent energy price p(k). When the price is below a threshold 
+
+¯p, the policy charges the large battery at a fixed rate while satisfying demand from the grid. When the price exceeds ¯p,demand is met by discharging the large battery, with the grid covering any shortfall: 
+
+π(x) = 
+
+(
+
+(Eref , 0, ¯u3, 0, 0) if p(k) < ¯p
+
+(Eref −u5, 0, 0, 0, u 5) if p(k) ≥ ¯p
+
+where ¯p = 2 is the price threshold, ¯u3 = 50 is the fixed charging rate, and u5 = min( Eref , x 2(k)) .PG-MPC uses the same prediction horizon and constraints as the standard MPC, with the rule-based policy determining the terminal-region center xf . The states x and xf always correspond to the same time index k, so their time-index components coincide. The terminal ingredients are therefore 
+
+Xf (xf ) = {x ∈ X | | x − xf | ≤ τ },Vf (x, x f ) = ρ|x − xf |.
+
+The two parameters play complementary roles. The radius τ
+
+delimits how far the predicted terminal state may deviate from the policy rollout: a small τ confines PG-MPC to trajectories ending close to the policy, while a large τ
+
+admits substantial deviations. Within this region, the weight 
+
+ρ determines how strongly the terminal state is drawn back towards xf : a large ρ keeps PG-MPC closely anchored to the guiding policy, whereas a small ρ allows it to exploit the economics of the prediction horizon and thereby improve upon the policy. This suggests selecting the two sequentially: 
+
+τ first, as the largest deviation from the policy rollout that is reachable within N steps and acceptable for the application, and ρ thereafter, trading improved performance against closer adherence to the policy. For the simulations, we set τ = 1680 and ρ = 1 .5. Through the policy-generated terminal center, PG-MPC overcomes the myopia of standard MPC while retaining its ability to optimize over the short prediction horizon. The closed-loop trajectory, shown in Fig. 2, confirms that PG-MPC effectively utilizes both bat-teries and achieves substantially lower costs than either the standard MPC or the rule-based policy alone. Importantly, this improvement is achieved without providing PG-MPC with any explicit knowledge of the price profile beyond that available to standard MPC; the additional information is embedded implicitly in the guiding policy through the price threshold ¯p. As a benchmark, the globally optimal trajectory is obtained by solving the full 24-day optimal control problem. PG-MPC incurs a total cost of 53245 ,which is 5.4% above the full-horizon optimum of 50527 ,whereas standard MPC and the rule-based policy incur 78104 
+
+and 70532 , i.e., 54 .6% and 39 .6% above the optimum. Demonstrating that the combination of a simple heuristic with a short-horizon PG-MPC formulation can significantly improve performance. V. C ONCLUSION 
+
+This work introduced PG-MPC, a framework that con-structs terminal costs and constraints from a given control policy rather than a steady state. We established closed-loop performance guarantees relative to the guiding policy and demonstrated the approach on an energy management exam-ple where steady-state-based designs are inadequate. Future work will investigate incorporating additional information 123                      
+
+> Price MPC
+> 050 100 Cost: 78104
+> R.B. Policy
+> 050 100 Cost: 70532
+> PG-MPC
+> 050 100 Cost: 53245 0246810 12 14 16 18 20 22 24 Time (days)
+> Optimal
+> 050 100 Cost: 50527
+> x1x2
+> Fig. 2. Simulation results for the energy management example over a 24-day horizon. The top panel shows the time-varying energy price p(k).The four lower panels compare the normalized battery-state trajectories,
+> 100 x1/2400 and 100 x2/33600 ,under standard MPC, the rule-based policy, PG-MPC, and the full-horizon optimal solution. Each controller panel reports its incurred total cost.
+
+into the terminal cost, stability in the case of a converging policy and inherent robustness. REFERENCES [1] J. B. Rawlings, D. Q. Mayne, and M. Diehl, Model predictive control: theory, computation, and design . Nob Hill Publishing Madison, WI, vol. 2. [2] J. B. Rawlings, D. Bonne, J. B. Jorgensen, A. N. Venkat, and S. B. Jorgensen, “Unreachable setpoints in model predictive control,” vol. 53, no. 9, pp. 2209–2215. [3] M. Diehl, R. Amrit, and J. B. Rawlings, “A lyapunov function for economic optimizing model predictive control,” vol. 56, no. 3, pp. 703–707. [4] D. Angeli, R. Amrit, and J. B. Rawlings, “On average performance and stability of economic model predictive control,” vol. 57, no. 7, pp. 1615–1626. [5] M. J. Risbeck and J. B. Rawlings, “Economic model predictive control for time-varying cost and peak demand charge optimization,” vol. 65, no. 7, pp. 2957–2968. [6] R. Amrit, J. B. Rawlings, and D. Angeli, “Economic optimization using model predictive control with a terminal cost,” vol. 35, no. 2, pp. 178–186. [7] A. Ferramosca, D. Limon, I. Alvarado, T. Alamo, and E. Camacho, “MPC for tracking with optimal closed-loop performance,” in 2008 47th IEEE Conference on Decision and Control . IEEE, pp. 4055– 4060. [8] L. Fagiano and A. R. Teel, “Generalized terminal state constraint for model predictive control,” vol. 49, no. 9, pp. 2622–2631. [9] M. A. M¨ uller, D. Angeli, and F. Allg¨ ower, “Economic model predictive control with self-tuning terminal cost,” vol. 19, no. 5, pp. 408–416. [10] ——, “On the performance of economic model predictive control with self-tuning terminal cost,” vol. 24, no. 8, pp. 1179–1186. [11] L. Gr¨ une, “Economic receding horizon control without terminal con-straints,” vol. 49, no. 3, pp. 725–734. [12] L. Gr¨ une and S. Pirkelmann, “Economic model predictive control for time-varying system: Performance and stability results,” Optimal Control Applications and Methods , vol. 41, no. 1, pp. 42–64, 2020.

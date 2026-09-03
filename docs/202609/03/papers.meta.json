@@ -1,0 +1,39 @@
+{
+  "label": "2026-09-03",
+  "date": "2026-09-03",
+  "generated_at": "2026-09-03T23:03:16",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202609/03/2608.30157v1-multi-domain-graph-based-modeling-of-energy-systems-with-applications-to-lithium-ion-batteries",
+      "section": "quick",
+      "title_en": "Multi-Domain Graph-Based Modeling of Energy Systems with Applications to Lithium-Ion Batteries",
+      "authors": "Mahsa Hemmat, Andrew G. Alleyne",
+      "date": "2026-08-31",
+      "pdf": "https://arxiv.org/pdf/2608.30157v1",
+      "score": "6.0",
+      "evidence": "基于图建模锂离子电池系统，支持电池状态监测",
+      "tldr": "现有图模型在多域能源系统建模中面临两大限制：边功率流依赖非相邻状态，以及单边承载多种功率流且驱动输入不同。本文提出递归状态到输入反馈方案和并行边分解方法，分别将非相邻依赖嵌入边输入、用单输入边集合表示复合交互，且保持顶点能量守恒。在36节并联锂离子电池模块上验证，模型温度预测误差低于1°C。该扩展框架有效突破了原有图模型约束，为复杂能源系统控制与设计研究提供了通用建模途径。",
+      "tags": "query:uav",
+      "abstract_en": "Graph-based models have been shown to provide a structured representation for complex multi-domain energy systems but face limitations when edge power flows depend on non-adjacent states or when a single edge carries multiple power-flow types driven by different inputs. This paper proposes two general extensions to address these limitations: a recursive state-to-input feedback scheme that embeds non-adjacent state dependencies into edge inputs without altering the graph structure, and a parallel edge decomposition method that represents composite interactions using sets of single-input edges while preserving energy conservation at the vertices. The extended framework is demonstrated on a lithium-ion battery module consisting of 36 parallel cells, and the resulting model predicts module temperatures with errors below 1°C. Validation on this electro-thermal battery system demonstrates the effectiveness of the extended framework for multi-domain systems that cannot be represented by previously established graph-based formulations, and indicates its potential for broader application to complex energy systems in control and design studies.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202609/03/2609.02628v1-economic-model-predictive-control-with-policy-guided-terminal-ingredients",
+      "section": "quick",
+      "title_en": "Economic Model Predictive Control with Policy-Guided Terminal Ingredients",
+      "authors": "Salim Msaad, Robert D. McAllister",
+      "date": "2026-09-02",
+      "pdf": "https://arxiv.org/pdf/2609.02628v1",
+      "score": "6.0",
+      "evidence": "提出策略引导终端成分的新型MPC框架，与能量管理中的MPC方法相关",
+      "tldr": "传统模型预测控制依赖稳态终端成本与约束，限制了其在无固定工作点或变工况系统中的应用。本文提出策略引导MPC框架，利用已知次优策略的rollout结果确定终端区域中心，并通过偏离该中心的惩罚构造终端成本。该方法完全摆脱了对稳态或参考轨迹的依赖，并为有限与无限时域问题建立了相对引导策略的闭环性能保证。数值仿真在能源管理场景中验证了该方法的有效性。",
+      "tags": "query:uav",
+      "abstract_en": "Conventional designs for model predictive control typically rely on terminal costs and constraints derived from a steady state to guarantee closed-loop stability and performance. However, this dependence on a steady-state assumption limits the applicability of this control method to systems in which such a fixed operating point is either not available or not desirable. This work introduces a novel framework, termed policy-guided MPC, to address this limitation. Our approach constructs terminal costs and constraints using a known sub-optimal control policy. Specifically, the terminal region is defined around a center determined by a rollout of the policy, and a penalty on deviation from this center is used to define the terminal cost. This method obviates the need for a steady state or reference trajectory. Closed-loop performance guarantees are established relative to the guiding policy, for both finite and infinite horizon problems. The effectiveness of the proposed framework is demonstrated through numerical simulations on an energy management example.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
